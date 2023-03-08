@@ -6,22 +6,25 @@
 class CmdLineArguments {
     public:
         CmdLineArguments (int &argc, char **argv);
-        std::string printCmdLineArguments ();
+        std::string verboseArguments ();
+        std::string helpMessage ();
         bool endsWith (std::string const &full_string, std::string const &ending);
 
         // Getter
         std::string operator[](std::string const &str) const;
-        const std::string& cmdLine() const;
+        const std::string& commandLine() const;
+        const std::string& commandName() const;
         bool verbose() const;
+        bool help() const;
 
     private:
         std::map<std::string, std::string> command_line_args;
-        std::string full_line;
+        std::string command_line;
         std::string unexpected_args;
+        std::string command_name;
 
-        bool help;
-        bool verboseoutput;
-        bool exit;
+        bool help_command;
+        bool verbose_output;
 
 };
 #endif // __CMD_LINE_ARGUMENTS_H_INCLUDED__
