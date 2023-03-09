@@ -126,44 +126,46 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
     }
 
 
-    // Check for odb-file and if it exists
-    if (this->command_line_args["odb-file"].empty()) {
-        cerr << "ODB file not provided on command line.\n";
-        perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
-    }
-    std::ifstream odb_file(this->command_line_args["odb-file"].c_str());
-    if (!odb_file) {
-        cerr << this->command_line_args["odb-file"] << " does not exist.\n";
-        perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
-    }
+    if (!this->help_command) {
+        // Check for odb-file and if it exists
+        if (this->command_line_args["odb-file"].empty()) {
+            cerr << "ODB file not provided on command line.\n";
+            perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+        }
+        std::ifstream odb_file(this->command_line_args["odb-file"].c_str());
+        if (!odb_file) {
+            cerr << this->command_line_args["odb-file"] << " does not exist.\n";
+            perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+        }
 
-    // Check for output file and if it exists
-    if (this->command_line_args["output-file"].empty()) {
-        string base_file_name = this->command_line_args["odb-file"];
-        base_file_name = base_file_name.substr(0,base_file_name.size()-4);  //remove '.odb'
-        this->command_line_args["output-file"] = base_file_name + ".h5"; 
+        // Check for output file and if it exists
+        if (this->command_line_args["output-file"].empty()) {
+            string base_file_name = this->command_line_args["odb-file"];
+            base_file_name = base_file_name.substr(0,base_file_name.size()-4);  //remove '.odb'
+            this->command_line_args["output-file"] = base_file_name + ".h5"; 
+        }
+        std::ifstream output_file(this->command_line_args["output-file"].c_str());
+        if (output_file) {
+            cerr << this->command_line_args["output-file"] << " already exists. Please provide a different name for the output file.\n";
+            perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+        }
+
+        // TODO: fix default values
+        // Set default values
+        if (this->command_line_args["odb-file-type"].empty()) { this->command_line_args["odb-file-type"] = "h5"; }
+        if (this->command_line_args["step"].empty()) { this->command_line_args["step"] = "all"; }
+        if (this->command_line_args["frame"].empty()) { this->command_line_args["frame"] = "all"; }
+        if (this->command_line_args["frame-value"].empty()) { this->command_line_args["frame-value"] = "all"; }
+        if (this->command_line_args["field"].empty()) { this->command_line_args["field"] = "all"; }
+        if (this->command_line_args["history"].empty()) { this->command_line_args["history"] = "all"; }
+        if (this->command_line_args["history-region"].empty()) { this->command_line_args["history-region"] = "all"; }
+        if (this->command_line_args["instance"].empty()) { this->command_line_args["instance"] = "all"; }
+
+        for (int i=1; i<argc; i++) { this->command_line += string(argv[i]) + " "; }  // concatenate options into single string
+        this->command_name = string(argv[0]);
+
+        if ((!this->unexpected_args.empty()) && (!this->help_command)) cout << "Unexpected arguments: " + this->unexpected_args + "\n";
     }
-    std::ifstream output_file(this->command_line_args["output-file"].c_str());
-    if (output_file) {
-        cerr << this->command_line_args["output-file"] << " already exists. Please provide a different name for the output file.\n";
-        perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
-    }
-
-    // TODO: fix default values
-    // Set default values
-    if (this->command_line_args["odb-file-type"].empty()) { this->command_line_args["odb-file-type"] = "h5"; }
-    if (this->command_line_args["step"].empty()) { this->command_line_args["step"] = "all"; }
-    if (this->command_line_args["frame"].empty()) { this->command_line_args["frame"] = "all"; }
-    if (this->command_line_args["frame-value"].empty()) { this->command_line_args["frame-value"] = "all"; }
-    if (this->command_line_args["field"].empty()) { this->command_line_args["field"] = "all"; }
-    if (this->command_line_args["history"].empty()) { this->command_line_args["history"] = "all"; }
-    if (this->command_line_args["history-region"].empty()) { this->command_line_args["history-region"] = "all"; }
-    if (this->command_line_args["instance"].empty()) { this->command_line_args["instance"] = "all"; }
-
-    for (int i=1; i<argc; i++) { this->command_line += string(argv[i]) + " "; }  // concatenate options into single string
-    this->command_name = string(argv[0]);
-
-    if ((!this->unexpected_args.empty()) && (!this->help_command)) cout << "Unexpected arguments: " + this->unexpected_args + "\n";
 
 }
 
