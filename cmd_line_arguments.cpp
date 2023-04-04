@@ -203,9 +203,9 @@ std::string CmdLineArguments::helpMessage () {
     std::string help_message;
 
     help_message += "usage: " + this->command_name + " [-h] [-v] [-o output_file_name.h5] [-t h5] [--step all] [--frame 0] [--frame-value frame_value] [--field field_name] [--history all] [--history-region all] [--instance instance_name] odb_file.odb\n\n";
-    help_message += "Extract data from an Abaqus odb file and store it in an hdf5 file\n\n";
-    help_message += "positional arguments:\n\todb_file.odb\tAbaqus odb file";
-    help_message += "optional arguments:\n";
+    help_message += "Extract data from an Abaqus odb file and store it in an hdf5 file\n";
+    help_message += "\npositional arguments:\n\todb_file.odb\tAbaqus odb file\n";
+    help_message += "\noptional arguments:\n";
     help_message += "\t-h,\t--help\tshow this help message and exit\n";
     help_message += "\t-v,\t--verbose\tturn on verbose logging\n";
     help_message += "\t-o,\t--output-file\tname of output file (default: <odb file name>.h5)\n";
