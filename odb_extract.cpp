@@ -39,8 +39,8 @@ int ABQmain(int argc, char **argv)
 //    logFile.log("Command Line used: "+cmdLineArgs.cmdLine() + "\n");
     if (command_line_args.help()) { cout<<command_line_args.helpMessage(); return 0; }
     if (command_line_args.verbose()) {
-        cout << "Command line used: "+ command_line_args.commandLine() + "\n";
-        cout << command_line_args.verboseArguments();
+        cout << "\nCommand line used:\n\t"+ command_line_args.commandLine() + "\n";
+        cout << "Arguments given:\n" + command_line_args.verboseArguments();
     }
 
     return 0;

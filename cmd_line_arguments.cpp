@@ -1,15 +1,10 @@
-#if (defined(HP) && (! defined(HKS_HPUXI)))
-#include <iostream.h>
-#else
 #include <iostream>
 
 #ifdef _WIN32
     #include <direct.h>
     #define getcwd _getcwd // MSFT "deprecation" warning
 #else
-    #include <unistd.h>
-#endif
-
+    #include <unistd.h>  // Needed for getopt and potentially other POSIX API
 #endif
 
 #include <string>
@@ -30,9 +25,9 @@
 using namespace std;
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-static const std::string slash="\\";
+static const string slash="\\";
 #else
-static const std::string slash="/";
+static const string slash="/";
 #endif
 
 #define CHAR_BUFF 100 // Size of buffer for holding string and int/double/float/etc.
@@ -55,6 +50,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
     this->command_line_args["history"] = "";
     this->command_line_args["history-region"] = "";
     this->command_line_args["instance"] = "";
+    this->command_line_args["log-file"] = "";
 
     while (1) {
         int option_index = 0;
@@ -70,6 +66,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             {"history",          required_argument, 0,  0 },
             {"history-region",   required_argument, 0,  0 },
             {"instance",         required_argument, 0,  0 },
+            {"log-file",         required_argument, 0,  0 },
             {0,0,0,0 }
         };
 
@@ -130,22 +127,34 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             cerr << "ODB file not provided on command line.\n";
             perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
-        std::ifstream odb_file(this->command_line_args["odb-file"].c_str());
+        ifstream odb_file(this->command_line_args["odb-file"].c_str());
         if (!odb_file) {
             cerr << this->command_line_args["odb-file"] << " does not exist.\n";
             perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
 
+        string base_file_name = this->command_line_args["odb-file"];
+        base_file_name = base_file_name.substr(0,base_file_name.size()-4);  //remove '.odb'
         // Check for output file and if it exists
         if (this->command_line_args["output-file"].empty()) {
-            string base_file_name = this->command_line_args["odb-file"];
-            base_file_name = base_file_name.substr(0,base_file_name.size()-4);  //remove '.odb'
             this->command_line_args["output-file"] = base_file_name + ".h5"; 
         }
-        std::ifstream output_file(this->command_line_args["output-file"].c_str());
+        // Check if output file already exists
+        ifstream output_file(this->command_line_args["output-file"].c_str());
         if (output_file) {
             cerr << this->command_line_args["output-file"] << " already exists. Please provide a different name for the output file.\n";
             perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+        }
+        // Create log file name if not provided
+        if (this->command_line_args["log-file"].empty()) {
+            this->command_line_args["log-file"] = base_file_name + ".odb_extract.log"; 
+        }
+        // Check if log file already exists
+        ifstream log_file(this->command_line_args["log-file"].c_str());
+        if (log_file) {
+            cerr << this->command_line_args["log-file"] << " already exists. This file will be overwritten.\n";
+            perror(""); // print error
+            // TODO: decide if overwriting the log is the functionality we want
         }
 
         // TODO: fix default values
@@ -169,7 +178,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
 
 }
 
-bool CmdLineArguments::endsWith (std::string const &full_string, std::string const &ending) {
+bool CmdLineArguments::endsWith (string const &full_string, string const &ending) {
     if (full_string.length() >= ending.length()) {
         return (0 == full_string.compare (full_string.length() - ending.length(), ending.length(), ending));
     } else {
@@ -177,37 +186,38 @@ bool CmdLineArguments::endsWith (std::string const &full_string, std::string con
     }
 }
 
-std::string CmdLineArguments::verboseArguments () {
-    std::string arguments;
+string CmdLineArguments::verboseArguments () {
+    string arguments;
     char floatBuff[CHAR_BUFF]; 
 
     arguments += "\n";
-    arguments += "input file: " + this->command_line_args["odb-file"] + "\n";
-    arguments += "output file: " + this->command_line_args["output-file"] + "\n";
-    arguments += "output file type: " + this->command_line_args["output-file-type"] + "\n";
-    if (this->verbose_output) { arguments += "verbose: True\n"; } else { arguments += "verbose: False\n"; }   
-    arguments += "step: " + this->command_line_args["step"] + "\n";
-    arguments += "frame: " + this->command_line_args["frame"] + "\n";
-    arguments += "frame value: " + this->command_line_args["frame-value"] + "\n";
-    arguments += "field: " + this->command_line_args["field"] + "\n";
-    arguments += "history: " + this->command_line_args["history"] + "\n";
-    arguments += "history region: " + this->command_line_args["history-region"] + "\n";
-    arguments += "instance: " + this->command_line_args["instance"] + "\n";
+    arguments += "\tinput file: " + this->command_line_args["odb-file"] + "\n";
+    arguments += "\toutput file: " + this->command_line_args["output-file"] + "\n";
+    arguments += "\toutput file type: " + this->command_line_args["output-file-type"] + "\n";
+    if (this->verbose_output) { arguments += "\tverbose: True\n"; } else { arguments += "\tverbose: False\n"; }   
+    arguments += "\tstep: " + this->command_line_args["step"] + "\n";
+    arguments += "\tframe: " + this->command_line_args["frame"] + "\n";
+    arguments += "\tframe value: " + this->command_line_args["frame-value"] + "\n";
+    arguments += "\tfield: " + this->command_line_args["field"] + "\n";
+    arguments += "\thistory: " + this->command_line_args["history"] + "\n";
+    arguments += "\thistory region: " + this->command_line_args["history-region"] + "\n";
+    arguments += "\tinstance: " + this->command_line_args["instance"] + "\n";
+    arguments += "\tlog file: " + this->command_line_args["log-file"] + "\n";
     // TODO: Add more here
     arguments += "\n";
 
     return arguments;
 }
 
-std::string CmdLineArguments::helpMessage () {
-    std::string help_message;
+string CmdLineArguments::helpMessage () {
+    string help_message;
 
     help_message += "usage: " + this->command_name + " [-h] [-v] [-o output_file_name.h5] [-t h5] [--step all] [--frame 0] [--frame-value frame_value] [--field field_name] [--history all] [--history-region all] [--instance instance_name] odb_file.odb\n\n";
     help_message += "Extract data from an Abaqus odb file and store it in an hdf5 file\n";
     help_message += "\npositional arguments:\n\todb_file.odb\tAbaqus odb file\n";
     help_message += "\noptional arguments:\n";
     help_message += "\t-h,\t--help\tshow this help message and exit\n";
-    help_message += "\t-v,\t--verbose\tturn on verbose logging\n";
+    help_message += "\t-v,\t--verbose\tturn on verbose logging to screen\n";
     help_message += "\t-o,\t--output-file\tname of output file (default: <odb file name>.h5)\n";
     help_message += "\t-t,\t--output-file-type\ttype of file to store output (default: h5)\n";
     help_message += "\t--step\tget information from specified step (default: all)\n";
@@ -225,15 +235,15 @@ std::string CmdLineArguments::helpMessage () {
 }
 
 // Getter
-std::string CmdLineArguments::operator[](std::string const &str) const {
-    std::string blank = "";
-    std::map<std::string, std::string>::const_iterator iter;
+string CmdLineArguments::operator[](string const &str) const {
+    string blank = "";
+    map<string, string>::const_iterator iter;
     iter = command_line_args.find(str);
     if (iter != command_line_args.end()) { return iter->second; }
     else { return blank; }
 }
 
-const std::string& CmdLineArguments::commandLine() const { return this->command_line; }
-const std::string& CmdLineArguments::commandName() const { return this->command_name; }
+const string& CmdLineArguments::commandLine() const { return this->command_line; }
+const string& CmdLineArguments::commandName() const { return this->command_name; }
 bool CmdLineArguments::verbose() const { return this->verbose_output; }
 bool CmdLineArguments::help() const { return this->help_command; }
