@@ -110,11 +110,6 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
                 break;
             }
 
-        /*
-            default: {
-                printf("?? getopt returned character code 0%o ??\n", c);
-            }
-        */
         }
     }
 
@@ -124,6 +119,9 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         else this->unexpected_args += first_arg;
         while (optind < argc) this->unexpected_args += string(argv[optind++]) + " ";
     }
+    this->command_name = string(argv[0]);
+    this->command_name.erase(this->command_name.find("./"), 2);  // Find and erase './' if present in command name
+
 
 
     if (!this->help_command) {
@@ -155,14 +153,16 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         if (this->command_line_args["odb-file-type"].empty()) { this->command_line_args["odb-file-type"] = "h5"; }
         if (this->command_line_args["step"].empty()) { this->command_line_args["step"] = "all"; }
         if (this->command_line_args["frame"].empty()) { this->command_line_args["frame"] = "all"; }
-        if (this->command_line_args["frame-value"].empty()) { this->command_line_args["frame-value"] = "all"; }
+        if (this->command_line_args["frame-value"].empty()) { this->command_line_args["frame-value"] = ""; }
         if (this->command_line_args["field"].empty()) { this->command_line_args["field"] = "all"; }
         if (this->command_line_args["history"].empty()) { this->command_line_args["history"] = "all"; }
         if (this->command_line_args["history-region"].empty()) { this->command_line_args["history-region"] = "all"; }
         if (this->command_line_args["instance"].empty()) { this->command_line_args["instance"] = "all"; }
 
-        for (int i=1; i<argc; i++) { this->command_line += string(argv[i]) + " "; }  // concatenate options into single string
-        this->command_name = string(argv[0]);
+        if (this->command_line_args["odb-file-type"].empty()) { this->command_line_args["odb-file-type"] = "h5"; }
+
+        this->command_line = this->command_name + " ";
+        for (int i=1; i<argc; ++i) { this->command_line += string(argv[i]) + " "; }  // concatenate options into single string
 
         if ((!this->unexpected_args.empty()) && (!this->help_command)) cout << "Unexpected arguments: " + this->unexpected_args + "\n";
     }

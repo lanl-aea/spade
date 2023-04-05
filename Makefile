@@ -80,4 +80,3 @@ $(abq_env):
 .PHONY : clean  # This will cause 'clean' to work even if a file is named clean
 clean : # A dash is used to ignore any errors caused by rm
 	-rm -f $(tool) $(objects) $(abq_env) $(tool).o
-
