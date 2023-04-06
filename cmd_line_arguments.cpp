@@ -24,15 +24,6 @@
 
 using namespace std;
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-static const string slash="\\";
-#else
-static const string slash="/";
-#endif
-
-#define CHAR_BUFF 100 // Size of buffer for holding string and int/double/float/etc.
-
-
 CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
 
     int c;
@@ -195,7 +186,6 @@ bool CmdLineArguments::endsWith (string const &full_string, string const &ending
 
 string CmdLineArguments::verboseArguments () {
     string arguments;
-    char floatBuff[CHAR_BUFF]; 
 
     arguments += "\n";
     arguments += "\tinput file: " + this->command_line_arguments["odb-file"] + "\n";

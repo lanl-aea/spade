@@ -1,7 +1,4 @@
 #include <iostream>
-
-using namespace std;
-
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -10,6 +7,8 @@ using namespace std;
 #include <cstdlib>
 
 #include <logging.h>
+
+using namespace std;
 
 Logging::Logging (string const &log_file_name, bool const &log_verbose, bool const &log_debug) {
 
