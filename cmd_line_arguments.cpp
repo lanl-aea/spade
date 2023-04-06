@@ -217,7 +217,7 @@ string CmdLineArguments::helpMessage () {
     help_message += "\npositional arguments:\n\todb_file.odb\tAbaqus odb file\n";
     help_message += "\noptional arguments:\n";
     help_message += "\t-h,\t--help\tshow this help message and exit\n";
-    help_message += "\t-v,\t--verbose\tturn on verbose logging to screen\n";
+    help_message += "\t-v,\t--verbose\tturn on verbose logging\n";
     help_message += "\t-o,\t--output-file\tname of output file (default: <odb file name>.h5)\n";
     help_message += "\t-t,\t--output-file-type\ttype of file to store output (default: h5)\n";
     help_message += "\t--step\tget information from specified step (default: all)\n";
