@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -7,6 +8,11 @@
 #include <cstdlib>
 
 using namespace std;
+
+#include <odb_API.h>
+#include <odb_Coupling.h>
+#include <odb_MPC.h>
+#include <odb_ShellSolidCoupling.h>
 
 #include <odb_parser.h>
 

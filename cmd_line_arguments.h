@@ -13,8 +13,8 @@ class CmdLineArguments {
         //! The constructor.
         /*!
           The constructor uses getopt to get the command line options. Then it verifies user input, sets defaults, and stores the values. It quits execution if there are fatal errors. 
-          \param argc integer of command line argument count
-          \param argv array of command line arguments
+          \param argc integer containing count of command line arguments
+          \param argv array containing command line arguments
         */
         CmdLineArguments (int &argc, char **argv);
         //! String of verbose arguments.

@@ -1,38 +1,33 @@
-//////////////////////////////////////////////////////////////////////////
-// Extract data from an Abaqus odb file and write the data to an hdf5 file
-//
-//
+/**
+  ******************************************************************************
+  * \file odb_extract.cpp
+  ******************************************************************************
+  * Extract data from an Abaqus odb file and write the data to an hdf5 file
+  ******************************************************************************
+  */
 
-#if (defined(HP) && (! defined(HKS_HPUXI)))
-#include <iostream.h>
-#else
+
 #include <iostream>
-
-#ifdef _WIN32
-    #include <direct.h>
-    #define getcwd _getcwd // MSFT "deprecation" warning
-#else
-    #include <unistd.h>
-#endif
-
-#endif
-
-
 #include <string>
 #include <map>
 #include <set>
 #include <fstream>
 #include <vector>
 
-// Begin local includes
 #include "cmd_line_arguments.h"
 #include "logging.h"
-// End local includes
+#include "odb_parser.h"
+#include "h5_writer.h"
 
 using namespace std;
 
+//! Main function called when code is compiled
+/*!
+  This function mostly sets up the various objects required to extract the data from the odb. Most of the work is then done by those objects.
+  \param argc integer containing count of command line arguments
+  \param argv array containing command line arguments
+*/
 int ABQmain(int argc, char **argv)
-//int main(int argc, char **argv)
 {
     CmdLineArguments command_line_arguments(argc, argv);
     if (command_line_arguments.help()) { cout<<command_line_arguments.helpMessage(); return 0; }  // If help option used, print help and exit

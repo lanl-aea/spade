@@ -151,7 +151,6 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         ifstream log_file(this->command_line_arguments["log-file"].c_str());
         if (log_file) {
             cerr << this->command_line_arguments["log-file"] << " already exists. File will be overwritten.\n";
-            perror(""); // print error
             // TODO: decide if overwriting the log is the functionality we want
         }
 
