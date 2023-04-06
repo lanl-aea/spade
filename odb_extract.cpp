@@ -35,6 +35,7 @@ int ABQmain(int argc, char **argv)
     log_file.log("\nCommand line used:\n"+ command_line_arguments.commandLine() + "\n");
     log_file.logVerbose("Arguments given:\n" + command_line_arguments.verboseArguments());
     log_file.logDebug("Debug logging turned on\n");
+    OdbParser odb_parser(command_line_arguments, log_file);
 
-    return 0;
+    return (0);
 }

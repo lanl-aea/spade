@@ -17,8 +17,7 @@ include_h5_sources = h5_writer.cpp
 include_odb_objects = odb_parser.o
 include_odb_sources = odb_parser.cpp
 
-#objects = $(include_local_objects) $(include_h5_objects) $(include_odb_objects)
-objects = $(include_local_objects) $(include_h5_objects)
+objects = $(include_local_objects) $(include_h5_objects) $(include_odb_objects)
 #link_exe_obj = $(objects) -static-libstdc++
 link_exe_obj = $(objects)
 abq_env = abaqus_v6.env
@@ -56,8 +55,7 @@ link_exe = $(GPP) -fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhd
 
 .DEFAULT_GOAL := $(tool)  # Not strictly necessary since the target is first
 # Compiling the main code requires all the object files as well as the env file
-#$(tool): $(include_local_objects) $(include_h5_objects) $(include_odb_objects) $(abq_env)
-$(tool): $(include_local_objects) $(include_h5_objects) $(abq_env)
+$(tool): $(include_local_objects) $(include_h5_objects) $(include_odb_objects) $(abq_env)
 	$(ABQ_CMD_PATH)/abq$(LATEST_ABAQUS) make job=$(tool).cpp
 
 $(include_local_objects): $(include_local_sources)

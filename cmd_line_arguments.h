@@ -1,5 +1,7 @@
 //! An object for holding command line arguments
 
+#include <map>
+
 #ifndef __CMD_LINE_ARGUMENTS_H_INCLUDED__
 #define __CMD_LINE_ARGUMENTS_H_INCLUDED__
 
