@@ -8,8 +8,8 @@
 
 SHELL:=/bin/bash
 
-include_local_objects = cmd_line_arguments.o
-include_local_sources = cmd_line_arguments.cpp
+include_local_objects = cmd_line_arguments.o logging.o
+include_local_sources = cmd_line_arguments.cpp logging.cpp
 
 include_h5_objects = h5_writer.o
 include_h5_sources = h5_writer.cpp

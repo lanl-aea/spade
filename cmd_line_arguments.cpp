@@ -39,18 +39,19 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
     this->command_line = "";
     this->unexpected_args = "";
     this->verbose_output = false;
+    this->debug_output = false;
     this->help_command = false;
-    this->command_line_args["odb-file"] = "";
-    this->command_line_args["output-file"] = "";
-    this->command_line_args["output-file-type"] = "";
-    this->command_line_args["step"] = "";
-    this->command_line_args["frame"] = "";
-    this->command_line_args["frame-value"] = "";
-    this->command_line_args["field"] = "";
-    this->command_line_args["history"] = "";
-    this->command_line_args["history-region"] = "";
-    this->command_line_args["instance"] = "";
-    this->command_line_args["log-file"] = "";
+    this->command_line_arguments["odb-file"] = "";
+    this->command_line_arguments["output-file"] = "";
+    this->command_line_arguments["output-file-type"] = "";
+    this->command_line_arguments["step"] = "";
+    this->command_line_arguments["frame"] = "";
+    this->command_line_arguments["frame-value"] = "";
+    this->command_line_arguments["field"] = "";
+    this->command_line_arguments["history"] = "";
+    this->command_line_arguments["history-region"] = "";
+    this->command_line_arguments["instance"] = "";
+    this->command_line_arguments["log-file"] = "";
 
     while (1) {
         int option_index = 0;
@@ -59,6 +60,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             {"output-file",      required_argument, 0,  'o'},
             {"output-file-type", required_argument, 0,  't'},
             {"verbose",          no_argument,       0,  'v'},
+            {"debug",            no_argument,       0,  'd'},
             {"step",             required_argument, 0,  0 },
             {"frame",            required_argument, 0,  0 },
             {"frame-value",      required_argument, 0,  0 },
@@ -70,14 +72,14 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             {0,0,0,0 }
         };
 
-        c = getopt_long(argc, argv, "ho:t:v", long_options, &option_index);
+        c = getopt_long(argc, argv, "ho:t:vd", long_options, &option_index);
         if (c == -1) break;
 
         switch (c) {
             case 0: {
                 string option_name =  string(long_options[option_index].name);
                 if (optarg)
-                    this->command_line_args[option_name] = string(optarg);
+                    this->command_line_arguments[option_name] = string(optarg);
                 break;
             }
 
@@ -91,15 +93,20 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
                 break;
             }
 
+            case 'd': {
+                this->debug_output = true;
+                break;
+            }
+
             case 'o': {
                 string option_arg = string(optarg);
-                this->command_line_args["output-file"] = optarg;
+                this->command_line_arguments["output-file"] = optarg;
                 break;
             }
 
             case 't': {
                 string option_arg = string(optarg);
-                this->command_line_args["output-file-type"] = optarg;
+                this->command_line_arguments["output-file-type"] = optarg;
                 break;
             }
 
@@ -112,7 +119,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
 
     if (optind < argc) {
         string first_arg = string(argv[optind++]);
-        if (endsWith(first_arg, ".odb")) this->command_line_args["odb-file"] = first_arg;
+        if (endsWith(first_arg, ".odb")) this->command_line_arguments["odb-file"] = first_arg;
         else this->unexpected_args += first_arg;
         while (optind < argc) this->unexpected_args += string(argv[optind++]) + " ";
     }
@@ -123,52 +130,52 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
 
     if (!this->help_command) {
         // Check for odb-file and if it exists
-        if (this->command_line_args["odb-file"].empty()) {
+        if (this->command_line_arguments["odb-file"].empty()) {
             cerr << "ODB file not provided on command line.\n";
             perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
-        ifstream odb_file(this->command_line_args["odb-file"].c_str());
+        ifstream odb_file(this->command_line_arguments["odb-file"].c_str());
         if (!odb_file) {
-            cerr << this->command_line_args["odb-file"] << " does not exist.\n";
+            cerr << this->command_line_arguments["odb-file"] << " does not exist.\n";
             perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
 
-        string base_file_name = this->command_line_args["odb-file"];
+        string base_file_name = this->command_line_arguments["odb-file"];
         base_file_name = base_file_name.substr(0,base_file_name.size()-4);  //remove '.odb'
         // Check for output file and if it exists
-        if (this->command_line_args["output-file"].empty()) {
-            this->command_line_args["output-file"] = base_file_name + ".h5"; 
+        if (this->command_line_arguments["output-file"].empty()) {
+            this->command_line_arguments["output-file"] = base_file_name + ".h5"; 
         }
         // Check if output file already exists
-        ifstream output_file(this->command_line_args["output-file"].c_str());
+        ifstream output_file(this->command_line_arguments["output-file"].c_str());
         if (output_file) {
-            cerr << this->command_line_args["output-file"] << " already exists. Please provide a different name for the output file.\n";
+            cerr << this->command_line_arguments["output-file"] << " already exists. Please provide a different name for the output file.\n";
             perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
         // Create log file name if not provided
-        if (this->command_line_args["log-file"].empty()) {
-            this->command_line_args["log-file"] = base_file_name + ".odb_extract.log"; 
+        if (this->command_line_arguments["log-file"].empty()) {
+            this->command_line_arguments["log-file"] = base_file_name + ".odb_extract.log"; 
         }
         // Check if log file already exists
-        ifstream log_file(this->command_line_args["log-file"].c_str());
+        ifstream log_file(this->command_line_arguments["log-file"].c_str());
         if (log_file) {
-            cerr << this->command_line_args["log-file"] << " already exists. This file will be overwritten.\n";
+            cerr << this->command_line_arguments["log-file"] << " already exists. File will be overwritten.\n";
             perror(""); // print error
             // TODO: decide if overwriting the log is the functionality we want
         }
 
         // TODO: fix default values
         // Set default values
-        if (this->command_line_args["odb-file-type"].empty()) { this->command_line_args["odb-file-type"] = "h5"; }
-        if (this->command_line_args["step"].empty()) { this->command_line_args["step"] = "all"; }
-        if (this->command_line_args["frame"].empty()) { this->command_line_args["frame"] = "all"; }
-        if (this->command_line_args["frame-value"].empty()) { this->command_line_args["frame-value"] = ""; }
-        if (this->command_line_args["field"].empty()) { this->command_line_args["field"] = "all"; }
-        if (this->command_line_args["history"].empty()) { this->command_line_args["history"] = "all"; }
-        if (this->command_line_args["history-region"].empty()) { this->command_line_args["history-region"] = "all"; }
-        if (this->command_line_args["instance"].empty()) { this->command_line_args["instance"] = "all"; }
+        if (this->command_line_arguments["odb-file-type"].empty()) { this->command_line_arguments["odb-file-type"] = "h5"; }
+        if (this->command_line_arguments["step"].empty()) { this->command_line_arguments["step"] = "all"; }
+        if (this->command_line_arguments["frame"].empty()) { this->command_line_arguments["frame"] = "all"; }
+        if (this->command_line_arguments["frame-value"].empty()) { this->command_line_arguments["frame-value"] = ""; }
+        if (this->command_line_arguments["field"].empty()) { this->command_line_arguments["field"] = "all"; }
+        if (this->command_line_arguments["history"].empty()) { this->command_line_arguments["history"] = "all"; }
+        if (this->command_line_arguments["history-region"].empty()) { this->command_line_arguments["history-region"] = "all"; }
+        if (this->command_line_arguments["instance"].empty()) { this->command_line_arguments["instance"] = "all"; }
 
-        if (this->command_line_args["odb-file-type"].empty()) { this->command_line_args["odb-file-type"] = "h5"; }
+        if (this->command_line_arguments["odb-file-type"].empty()) { this->command_line_arguments["odb-file-type"] = "h5"; }
 
         this->command_line = this->command_name + " ";
         for (int i=1; i<argc; ++i) { this->command_line += string(argv[i]) + " "; }  // concatenate options into single string
@@ -191,18 +198,18 @@ string CmdLineArguments::verboseArguments () {
     char floatBuff[CHAR_BUFF]; 
 
     arguments += "\n";
-    arguments += "\tinput file: " + this->command_line_args["odb-file"] + "\n";
-    arguments += "\toutput file: " + this->command_line_args["output-file"] + "\n";
-    arguments += "\toutput file type: " + this->command_line_args["output-file-type"] + "\n";
+    arguments += "\tinput file: " + this->command_line_arguments["odb-file"] + "\n";
+    arguments += "\toutput file: " + this->command_line_arguments["output-file"] + "\n";
+    arguments += "\toutput file type: " + this->command_line_arguments["output-file-type"] + "\n";
     if (this->verbose_output) { arguments += "\tverbose: True\n"; } else { arguments += "\tverbose: False\n"; }   
-    arguments += "\tstep: " + this->command_line_args["step"] + "\n";
-    arguments += "\tframe: " + this->command_line_args["frame"] + "\n";
-    arguments += "\tframe value: " + this->command_line_args["frame-value"] + "\n";
-    arguments += "\tfield: " + this->command_line_args["field"] + "\n";
-    arguments += "\thistory: " + this->command_line_args["history"] + "\n";
-    arguments += "\thistory region: " + this->command_line_args["history-region"] + "\n";
-    arguments += "\tinstance: " + this->command_line_args["instance"] + "\n";
-    arguments += "\tlog file: " + this->command_line_args["log-file"] + "\n";
+    arguments += "\tstep: " + this->command_line_arguments["step"] + "\n";
+    arguments += "\tframe: " + this->command_line_arguments["frame"] + "\n";
+    arguments += "\tframe value: " + this->command_line_arguments["frame-value"] + "\n";
+    arguments += "\tfield: " + this->command_line_arguments["field"] + "\n";
+    arguments += "\thistory: " + this->command_line_arguments["history"] + "\n";
+    arguments += "\thistory region: " + this->command_line_arguments["history-region"] + "\n";
+    arguments += "\tinstance: " + this->command_line_arguments["instance"] + "\n";
+    arguments += "\tlog file: " + this->command_line_arguments["log-file"] + "\n";
     // TODO: Add more here
     arguments += "\n";
 
@@ -238,12 +245,13 @@ string CmdLineArguments::helpMessage () {
 string CmdLineArguments::operator[](string const &str) const {
     string blank = "";
     map<string, string>::const_iterator iter;
-    iter = command_line_args.find(str);
-    if (iter != command_line_args.end()) { return iter->second; }
+    iter = command_line_arguments.find(str);
+    if (iter != command_line_arguments.end()) { return iter->second; }
     else { return blank; }
 }
 
 const string& CmdLineArguments::commandLine() const { return this->command_line; }
 const string& CmdLineArguments::commandName() const { return this->command_name; }
 bool CmdLineArguments::verbose() const { return this->verbose_output; }
+bool CmdLineArguments::debug() const { return this->debug_output; }
 bool CmdLineArguments::help() const { return this->help_command; }

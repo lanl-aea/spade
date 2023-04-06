@@ -3,8 +3,6 @@
 !Makefile
 !README.md
 !odb_extract.cpp
-!input_parser.h
-!input_parser.cpp
 !cmd_line_arguments.h
 !cmd_line_arguments.cpp
 !logging.h

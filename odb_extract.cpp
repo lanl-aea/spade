@@ -26,7 +26,7 @@
 
 // Begin local includes
 #include "cmd_line_arguments.h"
-//#include "logging.h"
+#include "logging.h"
 // End local includes
 
 using namespace std;
@@ -34,14 +34,12 @@ using namespace std;
 int ABQmain(int argc, char **argv)
 //int main(int argc, char **argv)
 {
-    CmdLineArguments command_line_args(argc, argv);
-//    Logging logFile(cmdLineArgs["logfilename"], cmdLineArgs.logDebug());
-//    logFile.log("Command Line used: "+cmdLineArgs.cmdLine() + "\n");
-    if (command_line_args.help()) { cout<<command_line_args.helpMessage(); return 0; }
-    if (command_line_args.verbose()) {
-        cout << "\nCommand line used:\n\t"+ command_line_args.commandLine() + "\n";
-        cout << "Arguments given:\n" + command_line_args.verboseArguments();
-    }
+    CmdLineArguments command_line_arguments(argc, argv);
+    if (command_line_arguments.help()) { cout<<command_line_arguments.helpMessage(); return 0; }  // If help option used, print help and exit
+    Logging log_file(command_line_arguments["log-file"], command_line_arguments.verbose(), command_line_arguments.debug());
+    log_file.log("\nCommand line used:\n"+ command_line_arguments.commandLine() + "\n");
+    log_file.logVerbose("Arguments given:\n" + command_line_arguments.verboseArguments());
+    log_file.logDebug("Debug logging turned on\n");
 
     return 0;
 }

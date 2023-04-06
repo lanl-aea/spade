@@ -1,0 +1,46 @@
+#include <iostream>
+
+using namespace std;
+
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <stdlib.h>
+#include <cstring>
+#include <cstdlib>
+
+#include <logging.h>
+
+Logging::Logging (string const &log_file_name, bool const &log_verbose, bool const &log_debug) {
+
+    this->log_file.open(log_file_name.c_str());
+    if (!this->log_file.is_open()) {
+        cerr << "Couldn't open: " << log_file_name << " Log messages will be printed to stdout.\n";
+        perror("");
+        this->output_stream = &std::cout;
+    } else { this->output_stream = &this->log_file; }
+    time_t now = time(0); // current date/time based on current system
+    char* dt = ctime(&now); // convert now to string form
+    *this->output_stream << "Started at: " << dt;
+    this->log_debug = log_debug;
+}
+Logging::~Logging () {
+
+    time_t now = time(0); 
+    char* dt = ctime(&now);
+    *this->output_stream << "Finished at: " << dt << endl;
+    if (this->log_file.is_open()) { this->log_file.close(); }
+}
+
+void Logging::log (string const &output) { *this->output_stream << output; }
+void Logging::logVerbose (string const &output) { if (this->log_verbose) { *this->output_stream << output; } }
+void Logging::logDebug (string const &output) { if (this->log_debug) { cout << output; } }
+
+void Logging::logErrorAndExit (string const &output) {
+    *this->output_stream << output << endl;
+    time_t now = time(0); 
+    char* dt = ctime(&now);
+    *this->output_stream << "Exited with error at: " << dt << endl;
+    if (this->log_file.is_open()) { this->log_file.close(); }
+    perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+}
