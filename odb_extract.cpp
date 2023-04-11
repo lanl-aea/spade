@@ -36,6 +36,10 @@ int ABQmain(int argc, char **argv)
     log_file.logVerbose("Arguments given:\n" + command_line_arguments.verboseArguments());
     log_file.logDebug("Debug logging turned on\n");
     OdbParser odb_parser(command_line_arguments, log_file);
+    log_file.logDebug("OdbParser object successfully created.\n");
+    H5Writer h5_writer(command_line_arguments, log_file, odb_parser);
+    log_file.logDebug("H5Writer object successfully created.\n");
+    log_file.logVerbose("Successful completion of " + command_line_arguments.commandName() + "\n");
 
     return (0);
 }

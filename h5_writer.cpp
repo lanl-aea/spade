@@ -1,0 +1,80 @@
+#if (defined(HP) && (! defined(HKS_HPUXI)))
+#include <iostream.h>                                                           
+#else
+#include <iostream>
+
+#ifdef _WIN32
+    #include <direct.h>
+    #define getcwd _getcwd // MSFT "deprecation" warning
+#else
+    #include <unistd.h>
+#endif
+
+using namespace std;
+#endif
+
+#include <string>
+#include <sstream>
+#include <map>
+#include <set>
+#include <fstream>
+#include <ctime>
+#include <algorithm>
+#include <functional>
+#include <cctype>
+#include <locale>
+#include <vector>
+#include <iterator>
+#include <regex>
+#include <stdlib.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <math.h>
+
+#include <cmd_line_arguments.h>
+#include <logging.h>
+#include <h5_writer.h>
+#include "H5Cpp.h"
+using namespace H5;
+
+#define CHAR_BUFF 100 // Size of buffer for holding string and int/double/float/etc.
+
+// trim from start (in place)
+static inline void ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(),
+            std::not1(std::ptr_fun<int, int>(std::isspace))));
+}
+
+// trim from end (in place)
+static inline void rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(),
+            std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+}
+
+// trim from both ends (in place)
+static inline void trim(std::string &s) {
+    ltrim(s);
+    rtrim(s);
+}
+
+H5Writer::H5Writer (CmdLineArguments const &command_line_arguments, Logging &log_file, OdbParser const &odb_parser) {
+// Write out data to hdf5 file
+
+    time_t now = time(0); // current date/time based on current system
+    char* dt = ctime(&now); // convert now to string form
+//    if (command_line_arguments.detailedOutput()) { logFile.log("Starting to parse input file: " + std::string(dt)); }
+
+    std::ifstream hdf5File (command_line_arguments["output-file"].c_str());
+    if (hdf5File) {
+//        logFile.logErrorAndExit(command_line_arguments["output-file"] + " already exists.");
+    } else {
+        const H5std_string FILE_NAME(command_line_arguments["output-file"]);
+//        H5File file(FILE_NAME, H5F_ACC);
+        H5File file(FILE_NAME, H5F_ACC_EXCL|H5F_ACC_TRUNC);
+//        hid_t fileId = file.getId();
+//        Group fileGroup = H5Gopen(fileId, SLASH_GROUP.c_str(), H5P_DEFAULT);
+//        Group unstructuredMeshGroup = H5Gopen(fileGroup.getId(), TOP_LEVEL_GROUP.c_str(), H5P_DEFAULT);
+//        if (command_line_arguments.detailedOutput()) { time_t now = time(0); dt = ctime(&now); logFile.log("Finished parsing input file: " + std::string(dt)); }
+    }
+    
+}
