@@ -22,6 +22,7 @@ Logging::Logging (string const &log_file_name, bool const &log_verbose, bool con
     char* dt = ctime(&now); // convert now to string form
     *this->output_stream << "Started at: " << dt;
     this->log_debug = log_debug;
+    this->log_verbose = log_verbose;
 }
 Logging::~Logging () {
 
