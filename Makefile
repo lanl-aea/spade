@@ -32,6 +32,7 @@ else
 ABQ_BASE_PATH = /apps/SIMULIA/EstProducts
 ABQ_CMD_PATH = /apps/abaqus/Commands
 H5_PATH=$(shell dirname $$(dirname $$(which h5c++)))
+H5_PATH=/projects/aea_compute/aea-2022
 GPP=$(shell which g++)
 endif
 
@@ -39,7 +40,9 @@ GPP_PATH=$(shell dirname $$(dirname $(GPP)))
 LATEST_ABAQUS = $(shell ls $(ABQ_BASE_PATH) | tail -n 1)
 ABQ_PATH = $(ABQ_BASE_PATH)/$(LATEST_ABAQUS)
 H5_FlAGS = -fPIC -I$(H5_PATH)/include/  -I. -I$(H5_PATH)/lib
-CC=$(GPP)
+#CC=$(GPP)
+CC=/usr/bin/g++
+CC_PATH=$(shell dirname $$(dirname $(CC)))
 
 ODB_FLAGS = -c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE \
 	      -DABQ_LINUX -DABQ_LNX86_64 -DSMA_GNUC -DFOR_TRAIL -DHAS_BOOL \
@@ -50,13 +53,17 @@ ODB_FLAGS = -c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE \
 	      -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 \
 	      -I$(ABQ_PATH)/linux_a64/code/include -I$(ABQ_PATH)/ \
 	      -I$(H5_PATH)/include/ -I. -I$(H5_PATH)/lib -static-libstdc++
-gpp_odb = $(CC) $(ODB_FLAGS)
-link_exe = $(GPP) -fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L$(GPP_PATH)/lib64 -L$(GPP_PATH)/lib -L$(H5_PATH)/lib -lstdc++
+gpp_odb = $(GPP) $(ODB_FLAGS)
+#gpp_odb = $(CC) $(ODB_FLAGS)
+#link_exe = $(GPP) -fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L$(GPP_PATH)/lib64 -L$(GPP_PATH)/lib -L$(H5_PATH)/lib -lstdc++
+link_exe = $(CC) -fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L$(CC_PATH)/lib64 -L$(CC_PATH)/lib -L$(H5_PATH)/lib -lstdc++
 
 .DEFAULT_GOAL := $(tool)  # Not strictly necessary since the target is first
 # Compiling the main code requires all the object files as well as the env file
 $(tool): $(include_local_objects) $(include_h5_objects) $(include_odb_objects) $(abq_env)
-	$(ABQ_CMD_PATH)/abq$(LATEST_ABAQUS) make job=$(tool).cpp
+	export PATH=/usr/bin:$$PATH; $(ABQ_CMD_PATH)/abq$(LATEST_ABAQUS) make job=$(tool).cpp
+#	$(ABQ_CMD_PATH)/abq$(LATEST_ABAQUS) make job=$(tool).cpp
+# TODO: Remove the export command above, remove hard coded value for CC, swith out commented lines for gpp_odb and link_exe
 
 $(include_local_objects): $(include_local_sources)
 	$(GPP) -I. -c $*.cpp -o $@

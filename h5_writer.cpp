@@ -62,19 +62,21 @@ H5Writer::H5Writer (CmdLineArguments const &command_line_arguments, Logging &log
 
     time_t now = time(0); // current date/time based on current system
     char* dt = ctime(&now); // convert now to string form
-//    if (command_line_arguments.detailedOutput()) { logFile.log("Starting to parse input file: " + std::string(dt)); }
+    log_file.logVerbose("Starting to parse input file: " + std::string(dt));
 
     std::ifstream hdf5File (command_line_arguments["output-file"].c_str());
+    log_file.logDebug("Creating hdf5 file " + command_line_arguments["output-file"] + "\n");
     if (hdf5File) {
-//        logFile.logErrorAndExit(command_line_arguments["output-file"] + " already exists.");
+        log_file.logErrorAndExit(command_line_arguments["output-file"] + " already exists.");
     } else {
         const H5std_string FILE_NAME(command_line_arguments["output-file"]);
 //        H5File file(FILE_NAME, H5F_ACC);
-        H5File file(FILE_NAME, H5F_ACC_EXCL|H5F_ACC_TRUNC);
+//        H5File file(FILE_NAME, H5F_ACC_EXCL|H5F_ACC_TRUNC);
+        H5File file(FILE_NAME, H5F_ACC_TRUNC);
 //        hid_t fileId = file.getId();
 //        Group fileGroup = H5Gopen(fileId, SLASH_GROUP.c_str(), H5P_DEFAULT);
 //        Group unstructuredMeshGroup = H5Gopen(fileGroup.getId(), TOP_LEVEL_GROUP.c_str(), H5P_DEFAULT);
-//        if (command_line_arguments.detailedOutput()) { time_t now = time(0); dt = ctime(&now); logFile.log("Finished parsing input file: " + std::string(dt)); }
+//        if (command_line_arguments.detailedOutput()) { time_t now = time(0); dt = ctime(&now); log_file.log("Finished parsing input file: " + std::string(dt)); }
     }
     
 }
