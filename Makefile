@@ -32,7 +32,7 @@ else
 ABQ_BASE_PATH = /apps/SIMULIA/EstProducts
 ABQ_CMD_PATH = /apps/abaqus/Commands
 H5_PATH=$(shell dirname $$(dirname $$(which h5c++)))
-H5_PATH=/projects/aea_compute/aea-2022
+#H5_PATH=/projects/aea_compute/aea-2022
 GPP=$(shell which g++)
 endif
 

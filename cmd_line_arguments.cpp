@@ -19,6 +19,10 @@
 #include <sys/stat.h>
 #include <stdio.h>     /* for printf */
 #include <getopt.h>
+#include <iomanip>
+#include <ctime>
+//#include <cctype>
+#include <algorithm>
 
 #include <cmd_line_arguments.h>
 
@@ -32,6 +36,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
     this->verbose_output = false;
     this->debug_output = false;
     this->help_command = false;
+    this->force_overwrite = false;
     this->command_line_arguments["odb-file"] = "";
     this->command_line_arguments["output-file"] = "";
     this->command_line_arguments["output-file-type"] = "";
@@ -43,6 +48,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
     this->command_line_arguments["history-region"] = "";
     this->command_line_arguments["instance"] = "";
     this->command_line_arguments["log-file"] = "";
+    this->start_time = this->getTimeStamp();
 
     while (1) {
         int option_index = 0;
@@ -52,6 +58,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             {"output-file-type", required_argument, 0,  't'},
             {"verbose",          no_argument,       0,  'v'},
             {"debug",            no_argument,       0,  'd'},
+            {"force-overwrite",  no_argument,       0,  'f'},
             {"step",             required_argument, 0,  0 },
             {"frame",            required_argument, 0,  0 },
             {"frame-value",      required_argument, 0,  0 },
@@ -101,6 +108,12 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
                 break;
             }
 
+            case 'f': {
+                string option_arg = string(optarg);
+                this->force_overwrite = true;
+                break;
+            }
+
             case '?': {
                 break;
             }
@@ -131,17 +144,25 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
 
-        string base_file_name = this->command_line_arguments["odb-file"];
-        base_file_name = base_file_name.substr(0,base_file_name.size()-4);  //remove '.odb'
-        // Check for output file and if it exists
+        string base_file_name = this->command_line_arguments["odb-file"].substr(0,this->command_line_arguments["odb-file"].size()-4);  //remove '.odb'
+
+        // Handle output file type
+        std::transform(this->command_line_arguments["output-file-type"].begin(), this->command_line_arguments["output-file-type"].end(), this->command_line_arguments["output-file-type"].begin(), ::tolower);
+        if ((this->command_line_arguments["output-file-type"] != "json") && (this->command_line_arguments["output-file-type"] != "yaml")) this->command_line_arguments["output-file-type"] = "h5";
+
+        // Handle output file name
         if (this->command_line_arguments["output-file"].empty()) {
-            this->command_line_arguments["output-file"] = base_file_name + ".h5"; 
+            this->command_line_arguments["output-file"] = base_file_name;
         }
+        string output_file_base = this->command_line_arguments["output-file"];
+        size_t lastdot = output_file_base.find_last_of(".");  // Find last dot character in file name
+        if (lastdot != std::string::npos) output_file_base = output_file_base.substr(0, lastdot);  // Strip off file extension
+        this->command_line_arguments["output-file"] = output_file_base + "." + this->command_line_arguments["output-file-type"];
         // Check if output file already exists
         ifstream output_file(this->command_line_arguments["output-file"].c_str());
         if (output_file) {
-            cerr << this->command_line_arguments["output-file"] << " already exists. Please provide a different name for the output file.\n";
-            perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+            cerr << this->command_line_arguments["output-file"] << " already exists. Appending time stamp to output file.\n";
+            this->command_line_arguments["output-file"] = this->command_line_arguments["output-file"].substr(0, this->command_line_arguments["output-file"].size()-3) + "_" + this->start_time + "." + this->command_line_arguments["output-file-type"]; 
         }
         // Create log file name if not provided
         if (this->command_line_arguments["log-file"].empty()) {
@@ -150,13 +171,19 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         // Check if log file already exists
         ifstream log_file(this->command_line_arguments["log-file"].c_str());
         if (log_file) {
-            cerr << this->command_line_arguments["log-file"] << " already exists. File will be overwritten.\n";
-            // TODO: decide if overwriting the log is the functionality we want
+            cerr << this->command_line_arguments["log-file"] << " already exists. Appending time stamp to log file.\n";
+            string log_base_name = this->command_line_arguments["log-file"];
+            string log_extension = ".log";
+            lastdot = this->command_line_arguments["log-file"].find_last_of(".");  // Find last dot character in file name
+            if (lastdot != std::string::npos) {
+                log_extension = log_base_name.substr(lastdot);  // Get file extension
+                log_base_name = log_base_name.substr(0,lastdot);  // Get base name
+            }
+            this->command_line_arguments["log-file"] = log_base_name + "_" + this->start_time + log_extension;
         }
 
         // TODO: fix default values
         // Set default values
-        if (this->command_line_arguments["odb-file-type"].empty()) { this->command_line_arguments["odb-file-type"] = "h5"; }
         if (this->command_line_arguments["step"].empty()) { this->command_line_arguments["step"] = "all"; }
         if (this->command_line_arguments["frame"].empty()) { this->command_line_arguments["frame"] = "all"; }
         if (this->command_line_arguments["frame-value"].empty()) { this->command_line_arguments["frame-value"] = ""; }
@@ -164,8 +191,6 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         if (this->command_line_arguments["history"].empty()) { this->command_line_arguments["history"] = "all"; }
         if (this->command_line_arguments["history-region"].empty()) { this->command_line_arguments["history-region"] = "all"; }
         if (this->command_line_arguments["instance"].empty()) { this->command_line_arguments["instance"] = "all"; }
-
-        if (this->command_line_arguments["odb-file-type"].empty()) { this->command_line_arguments["odb-file-type"] = "h5"; }
 
         this->command_line = this->command_name + " ";
         for (int i=1; i<argc; ++i) { this->command_line += string(argv[i]) + " "; }  // concatenate options into single string
@@ -216,6 +241,7 @@ string CmdLineArguments::helpMessage () {
     help_message += "\t-v,\t--verbose\tturn on verbose logging\n";
     help_message += "\t-o,\t--output-file\tname of output file (default: <odb file name>.h5)\n";
     help_message += "\t-t,\t--output-file-type\ttype of file to store output (default: h5)\n";
+    help_message += "\t-f,\t--force-overwrite\tif output file already exists, then over write the file\n";
     help_message += "\t--step\tget information from specified step (default: all)\n";
     help_message += "\t--frame\tget information from specified frame (default: all)\n";
     help_message += "\t--frame-value\tget information from specified frame (default: all)\n";
@@ -230,6 +256,14 @@ string CmdLineArguments::helpMessage () {
     return help_message;
 }
 
+string CmdLineArguments::getTimeStamp() {
+    std::time_t t = std::time(nullptr);
+    std::tm tm = *std::localtime(&t);
+    std::stringstream time_buffer;
+    time_buffer << std::put_time(&tm, "%Y%m%d-%H%M%S");
+    return time_buffer.str();
+}
+
 // Getter
 string CmdLineArguments::operator[](string const &str) const {
     string blank = "";
@@ -241,6 +275,8 @@ string CmdLineArguments::operator[](string const &str) const {
 
 const string& CmdLineArguments::commandLine() const { return this->command_line; }
 const string& CmdLineArguments::commandName() const { return this->command_name; }
+const string& CmdLineArguments::startTime() const { return this->start_time; }
 bool CmdLineArguments::verbose() const { return this->verbose_output; }
 bool CmdLineArguments::debug() const { return this->debug_output; }
+bool CmdLineArguments::force() const { return this->force_overwrite; }
 bool CmdLineArguments::help() const { return this->help_command; }
