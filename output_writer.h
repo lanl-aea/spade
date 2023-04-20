@@ -6,14 +6,14 @@
 #include "H5Cpp.h"
 using namespace H5;
 
-#ifndef __H5_WRITER_H_INCLUDED__
-#define __H5_WRITER_H_INCLUDED__
+#ifndef __OUTPUT_WRITER_H_INCLUDED__
+#define __OUTPUT_WRITER_H_INCLUDED__
 
 
 /*!
    This class handles the writing of the hdf5 file
 */
-class H5Writer {
+class OutputWriter {
     public:
         //! The constructor.
         /*!
@@ -22,7 +22,7 @@ class H5Writer {
           \param log_file Logging object for writing log messages
           \param odb_parser OdbParser object with the parsed data from the odb
         */
-        H5Writer (CmdLineArguments const &command_line_arguments, Logging &log_file, OdbParser const &odb_parser);
+        OutputWriter (CmdLineArguments const &command_line_arguments, Logging &log_file, OdbParser const &odb_parser);
 
 };
-#endif  // __H5_WRITER_H_INCLUDED__
+#endif  // __OUTPUT_WRITER_H_INCLUDED__

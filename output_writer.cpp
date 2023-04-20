@@ -33,7 +33,7 @@ using namespace std;
 
 #include <cmd_line_arguments.h>
 #include <logging.h>
-#include <h5_writer.h>
+#include <output_writer.h>
 #include "H5Cpp.h"
 using namespace H5;
 
@@ -57,7 +57,7 @@ static inline void trim(std::string &s) {
     rtrim(s);
 }
 
-H5Writer::H5Writer (CmdLineArguments const &command_line_arguments, Logging &log_file, OdbParser const &odb_parser) {
+OutputWriter::OutputWriter (CmdLineArguments const &command_line_arguments, Logging &log_file, OdbParser const &odb_parser) {
 // Write out data to hdf5 file
 
     time_t now = time(0); // current date/time based on current system
