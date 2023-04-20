@@ -18,9 +18,9 @@ using namespace std;
 #include <map>
 #include <set>
 #include <fstream>
-#include <ctime>
 #include <algorithm>
 #include <functional>
+#include <ctime>
 #include <cctype>
 #include <locale>
 #include <vector>
@@ -57,12 +57,19 @@ static inline void trim(std::string &s) {
     rtrim(s);
 }
 
-OutputWriter::OutputWriter (CmdLineArguments const &command_line_arguments, Logging &log_file, OdbParser const &odb_parser) {
-// Write out data to hdf5 file
+OutputWriter::OutputWriter (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser const &odb_parser) {
 
-    time_t now = time(0); // current date/time based on current system
-    char* dt = ctime(&now); // convert now to string form
-    log_file.logVerbose("Starting to parse input file: " + std::string(dt));
+    log_file.logVerbose("Starting to write output file: " + command_line_arguments.getTimeStamp(false) + "\n");
+
+    if (command_line_arguments["output-file-type"] == "h5") this->write_h5(command_line_arguments, log_file, odb_parser);
+    else if (command_line_arguments["output-file-type"] == "json") this->write_json(command_line_arguments, log_file, odb_parser);
+    else if (command_line_arguments["output-file-type"] == "yaml") this->write_yaml(command_line_arguments, log_file, odb_parser);
+
+    
+}
+
+void OutputWriter::write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser const &odb_parser) {
+// Write out data to hdf5 file
 
     std::ifstream hdf5File (command_line_arguments["output-file"].c_str());
     log_file.logDebug("Creating hdf5 file " + command_line_arguments["output-file"] + "\n");
@@ -78,5 +85,10 @@ OutputWriter::OutputWriter (CmdLineArguments const &command_line_arguments, Logg
 //        Group unstructuredMeshGroup = H5Gopen(fileGroup.getId(), TOP_LEVEL_GROUP.c_str(), H5P_DEFAULT);
 //        if (command_line_arguments.detailedOutput()) { time_t now = time(0); dt = ctime(&now); log_file.log("Finished parsing input file: " + std::string(dt)); }
     }
-    
+}
+
+void OutputWriter::write_yaml (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser const &odb_parser) {
+}
+
+void OutputWriter::write_json (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser const &odb_parser) {
 }

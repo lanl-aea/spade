@@ -48,7 +48,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
     this->command_line_arguments["history-region"] = "";
     this->command_line_arguments["instance"] = "";
     this->command_line_arguments["log-file"] = "";
-    this->start_time = this->getTimeStamp();
+    this->start_time = this->getTimeStamp(true);
 
     while (1) {
         int option_index = 0;
@@ -256,11 +256,15 @@ string CmdLineArguments::helpMessage () {
     return help_message;
 }
 
-string CmdLineArguments::getTimeStamp() {
+string CmdLineArguments::getTimeStamp(bool for_file) {
     std::time_t t = std::time(nullptr);
     std::tm tm = *std::localtime(&t);
     std::stringstream time_buffer;
-    time_buffer << std::put_time(&tm, "%Y%m%d-%H%M%S");
+    if (for_file) {
+        time_buffer << std::put_time(&tm, "%Y%m%d-%H%M%S");
+    } else {
+        time_buffer << std::put_time(&tm, "%a %b %d %H:%M:%S %Y");
+    }
     return time_buffer.str();
 }
 

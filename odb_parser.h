@@ -19,7 +19,7 @@ class OdbParser {
           \param command_line_arguments CmdLineArguments object storing command line arguments
           \param log_file Logging object for writing log messages
         */
-        OdbParser (CmdLineArguments const &command_line_arguments, Logging &log_file);
+        OdbParser (CmdLineArguments &command_line_arguments, Logging &log_file);
 
     private:
         string odb_name;

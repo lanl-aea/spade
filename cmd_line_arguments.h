@@ -40,12 +40,13 @@ class CmdLineArguments {
           \return boolean with answer
         */
         bool endsWith (string const &full_string, string const &ending);
-        //! Return a timestamp as a string in the format of YYMMDD-HHMMSS
+        //! Return a timestamp as a string.
         /*!
-          This function returns a string with a time stemp
+          This function returns a string with a time stamp.
+          \param for_file boolean indicating whether the string should be in a format for a file name
           \return string with the time stamp
         */
-        string getTimeStamp ();
+        string getTimeStamp (bool for_file);
 
         // Getter Functions
         // \sa is for "see also"
