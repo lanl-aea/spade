@@ -87,9 +87,14 @@ void OutputWriter::write_h5 (CmdLineArguments &command_line_arguments, Logging &
     H5::Attribute info_name;
     StrType str_type(0, H5T_VARIABLE);
     DataSpace att_space(H5S_SCALAR);
-    H5::Attribute name_attribute = info_group.createAttribute( "name", str_type, att_space );
     map<string, string> odb_info = odb_parser.odbInfo();
-    name_attribute.write( str_type, odb_info["name"] );
+    H5::Attribute name_attribute = info_group.createAttribute( "name", str_type, att_space ); name_attribute.write( str_type, odb_info["name"] );
+    H5::Attribute analysisTitle_attribute = info_group.createAttribute( "analysisTitle", str_type, att_space ); analysisTitle_attribute.write( str_type, odb_info["analysisTitle"] );
+    H5::Attribute description_attribute = info_group.createAttribute( "description", str_type, att_space ); description_attribute.write( str_type, odb_info["description"] );
+    H5::Attribute path_attribute = info_group.createAttribute( "path", str_type, att_space ); path_attribute.write( str_type, odb_info["path"] );
+//    std::stringstream bool_stream; bool_stream << std::boolalpha << odb_info["isReadOnly"]; string bool_string = bool_stream.str();
+//    cout << bool_string << endl;
+//    H5::Attribute isReadOnly_attribute = info_group.createAttribute( "isReadOnly", str_type, att_space ); isReadOnly_attribute.write( str_type, bool_string );
 
     /*
     H5::Exception::dontPrint();                             // suppress error messages
