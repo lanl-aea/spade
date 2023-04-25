@@ -57,7 +57,7 @@ static inline void trim(std::string &s) {
     rtrim(s);
 }
 
-OutputWriter::OutputWriter (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser const &odb_parser) {
+OutputWriter::OutputWriter (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser &odb_parser) {
 
     log_file.logVerbose("Starting to write output file: " + command_line_arguments.getTimeStamp(false) + "\n");
 
@@ -65,30 +65,52 @@ OutputWriter::OutputWriter (CmdLineArguments &command_line_arguments, Logging &l
     else if (command_line_arguments["output-file-type"] == "json") this->write_json(command_line_arguments, log_file, odb_parser);
     else if (command_line_arguments["output-file-type"] == "yaml") this->write_yaml(command_line_arguments, log_file, odb_parser);
 
+    log_file.logVerbose("Finished writing output file: " + command_line_arguments.getTimeStamp(false) + "\n");
     
 }
 
-void OutputWriter::write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser const &odb_parser) {
+void OutputWriter::write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser &odb_parser) {
 // Write out data to hdf5 file
 
     std::ifstream hdf5File (command_line_arguments["output-file"].c_str());
     log_file.logDebug("Creating hdf5 file " + command_line_arguments["output-file"] + "\n");
-    if (hdf5File) {
-        log_file.logErrorAndExit(command_line_arguments["output-file"] + " already exists.");
-    } else {
-        const H5std_string FILE_NAME(command_line_arguments["output-file"]);
-//        H5File file(FILE_NAME, H5F_ACC);
-//        H5File file(FILE_NAME, H5F_ACC_EXCL|H5F_ACC_TRUNC);
-        H5File file(FILE_NAME, H5F_ACC_TRUNC);
+    const H5std_string FILE_NAME(command_line_arguments["output-file"]);
+    H5File file(FILE_NAME, H5F_ACC_TRUNC);
 //        hid_t fileId = file.getId();
 //        Group fileGroup = H5Gopen(fileId, SLASH_GROUP.c_str(), H5P_DEFAULT);
 //        Group unstructuredMeshGroup = H5Gopen(fileGroup.getId(), TOP_LEVEL_GROUP.c_str(), H5P_DEFAULT);
-//        if (command_line_arguments.detailedOutput()) { time_t now = time(0); dt = ctime(&now); log_file.log("Finished parsing input file: " + std::string(dt)); }
+    string odb_group_name = "/odb";
+    H5::Group odb_group = file.createGroup(odb_group_name.c_str());
+    log_file.logDebug("Creating odb group for meta-data " + command_line_arguments["output-file"] + "\n");
+    string info_group_name = "/odb/info";
+    H5::Group info_group = file.createGroup(info_group_name.c_str());
+    H5::Attribute info_name;
+    StrType str_type(0, H5T_VARIABLE);
+    DataSpace att_space(H5S_SCALAR);
+    H5::Attribute name_attribute = info_group.createAttribute( "name", str_type, att_space );
+    map<string, string> odb_info = odb_parser.odbInfo();
+    name_attribute.write( str_type, odb_info["name"] );
+
+    /*
+    H5::Exception::dontPrint();                             // suppress error messages
+    string odb_group_name = "/test";
+    try         {
+      H5::Group group = file.openGroup  (group_name.c_str());
+      std::cerr<<" TEST: opened group\n";                   // for debugging
+    } catch (...) {
+      std::cerr<<" TEST: caught something\n";               // for debugging
+      H5::Group group = file.createGroup(group_name.c_str());
+      std::cerr<<" TEST: created group\n";                  // for debugging
     }
+    H5::Group group = file.openGroup  (group_name.c_str()); // for debugging
+    std::cerr<<" TEST: opened group\n";                     // for debugging
+    */
+
+    file.close();  // Close the hdf5 file
 }
 
-void OutputWriter::write_yaml (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser const &odb_parser) {
+void OutputWriter::write_yaml (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser &odb_parser) {
 }
 
-void OutputWriter::write_json (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser const &odb_parser) {
+void OutputWriter::write_json (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser &odb_parser) {
 }

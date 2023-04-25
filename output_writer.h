@@ -22,7 +22,7 @@ class OutputWriter {
           \param log_file Logging object for writing log messages
           \param odb_parser OdbParser object with the parsed data from the odb
         */
-        OutputWriter (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser const &odb_parser);
+        OutputWriter (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser &odb_parser);
         //! Write output to a YAML file.
         /*!
           Write the parsed odb data to a YAML formatted file
@@ -31,7 +31,7 @@ class OutputWriter {
           \param odb_parser OdbParser object with the parsed data from the odb
           \sa OutputWriter()
         */
-        void write_yaml (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser const &odb_parser);
+        void write_yaml (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser &odb_parser);
         //! Write output to a JSON file.
         /*!
           Write the parsed odb data to a JSON formatted file
@@ -40,7 +40,7 @@ class OutputWriter {
           \param odb_parser OdbParser object with the parsed data from the odb
           \sa OutputWriter()
         */
-        void write_json (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser const &odb_parser);
+        void write_json (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser &odb_parser);
         //! Write output to an HDF5 file.
         /*!
           Write the parsed odb data to an HDF5 formatted file
@@ -49,7 +49,7 @@ class OutputWriter {
           \param odb_parser OdbParser object with the parsed data from the odb
           \sa OutputWriter()
         */
-        void write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser const &odb_parser);
+        void write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser &odb_parser);
 
 };
 #endif  // __OUTPUT_WRITER_H_INCLUDED__

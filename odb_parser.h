@@ -20,11 +20,10 @@ class OdbParser {
           \param log_file Logging object for writing log messages
         */
         OdbParser (CmdLineArguments &command_line_arguments, Logging &log_file);
+        map<string, string> odbInfo();
 
     private:
-        string odb_name;
-        string analysis_title;
-        string path;
+        map<string, string> odb_info;
         bool is_read_only;
 };
 #endif  // __ODB_PARSER_H_INCLUDED__

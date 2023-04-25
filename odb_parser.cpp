@@ -22,6 +22,12 @@ OdbParser::OdbParser (CmdLineArguments &command_line_arguments, Logging &log_fil
     log_file.logDebug("Operating on file:" + command_line_arguments["odb-file"] + "\n");
     odb_Odb& odb = openOdb(file_name);
 //    odbE_printFullOdb(odb, printPath);    
+    this->odb_info["name"] = odb.name().CStr();
+    this->odb_info["analysisTitle"] = odb.analysisTitle().CStr();
+    this->odb_info["description"] = odb.description().CStr();
+    this->odb_info["path"] = odb.path().CStr();
 
     log_file.logDebug("Odb Parser object successfully created\n");
 }
+
+map<string, string> OdbParser::odbInfo() { return this->odb_info; }
