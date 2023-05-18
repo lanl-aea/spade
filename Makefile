@@ -39,7 +39,7 @@ endif
 GPP_PATH=$(shell dirname $$(dirname $(GPP)))
 LATEST_ABAQUS = $(shell ls $(ABQ_BASE_PATH) | tail -n 1)
 ABQ_PATH = $(ABQ_BASE_PATH)/$(LATEST_ABAQUS)
-H5_FlAGS = -fPIC -I$(H5_PATH)/include/  -I. -I$(H5_PATH)/lib
+H5_FLAGS = -fPIC -I$(H5_PATH)/include/  -I. -I$(H5_PATH)/lib
 #CC=$(GPP)
 CC=/usr/bin/g++
 CC_PATH=$(shell dirname $$(dirname $(CC)))
@@ -56,7 +56,9 @@ ODB_FLAGS = -c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE \
 gpp_odb = $(GPP) $(ODB_FLAGS)
 #gpp_odb = $(CC) $(ODB_FLAGS)
 #link_exe = $(GPP) -fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L$(GPP_PATH)/lib64 -L$(GPP_PATH)/lib -L$(H5_PATH)/lib -lstdc++
-link_exe = $(CC) -fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L$(CC_PATH)/lib64 -L$(CC_PATH)/lib -L$(H5_PATH)/lib -lstdc++
+link_exe = $(CC) -fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L$(CC_PATH)/lib64 -L$(CC_PATH)/lib -L$(H5_PATH)/lib -lstdc++ -Wl,-rpath,$(ABQ_PATH)/linux_a64/code/bin/,-rpath,$(H5_PATH)/lib
+# Using -Wl to pass -rpath to linker, -rpath tells the linker to use these paths
+# for dynamic linking rather than having to set LD_LIBRARY_PATH
 
 .DEFAULT_GOAL := $(tool)  # Not strictly necessary since the target is first
 # Compiling the main code requires all the object files as well as the env file
@@ -69,7 +71,7 @@ $(include_local_objects): $(include_local_sources)
 	$(GPP) -I. -c $*.cpp -o $@
 
 $(include_h5_objects): $(include_h5_sources)
-	$(GPP) $(H5_FlAGS) -c $*.cpp -o $@
+	$(GPP) $(H5_FLAGS) -c $*.cpp -o $@
 
 $(include_odb_objects): $(include_odb_sources)
 	$(GPP) $(ODB_FLAGS) -c $*.cpp -o $@
