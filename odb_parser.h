@@ -2,6 +2,7 @@
 
 #include "cmd_line_arguments.h"
 #include "logging.h"
+#include <odb_API.h>
 
 #ifndef __ODB_PARSER_H_INCLUDED__
 #define __ODB_PARSER_H_INCLUDED__
@@ -25,11 +26,19 @@ class OdbParser {
     public:
         //! The constructor.
         /*!
-          The constructor opens the odb file and stores and organizes the data from within
+          The constructor checks to see if the odb file needs to be upgraded, upgrades if necessary, then opens it and calls the function to process the odb
           \param command_line_arguments CmdLineArguments object storing command line arguments
           \param log_file Logging object for writing log messages
+          \sa process_odb()
         */
         OdbParser (CmdLineArguments &command_line_arguments, Logging &log_file);
+        //! Parse the open odb file
+        /*!
+          After the odb has been opened this function will do the parsing, including calling of other functions needed for parsing
+          \param odb odb_Odb an open odb object
+          \param log_file Logging object for writing log messages
+        */
+        void process_odb (odb_Odb const &odb, Logging &log_file);
 
         //Getters
 

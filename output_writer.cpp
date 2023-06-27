@@ -84,7 +84,7 @@ void OutputWriter::write_h5 (CmdLineArguments &command_line_arguments, Logging &
 
 //    H5::Group odb_group = file.createGroup(string("/odb").c_str());
     log_file.logDebug("Creating odb group for meta-data " + command_line_arguments["output-file"] + "\n");
-    create_top_level_groups(file, log_file);
+    create_top_level_groups(file, log_file, odb_parser);
 //    string job_data_group_name = "/odb/jobData";
 
     StrType str_type(0, H5T_VARIABLE);

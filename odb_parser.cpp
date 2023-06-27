@@ -32,17 +32,28 @@ OdbParser::OdbParser (CmdLineArguments &command_line_arguments, Logging &log_fil
         file_name = upgraded_file_name;
     }
 
-    odb_Odb& odb = openOdb(file_name, true);  // Open as read only
-//    odbE_printFullOdb(odb, printPath);    
+    try {  // Since the odb object isn't recognized outside the scope of the try/except, block the processing has to be done within the try block
+        odb_Odb& odb = openOdb(file_name, true);  // Open as read only
+        process_odb(odb, log_file);
+        odb.close();
+        log_file.logDebug("Odb Parser object successfully created\n");
+    }
+    catch(odb_BaseException& exc) {
+        string error_message = exc.UserReport().CStr();
+        log_file.logErrorAndExit("odbBaseException caught. Abaqus error message: " + error_message + "\n");
+    }
+    catch(...) {
+        log_file.logErrorAndExit("Unkown exception when attempting to open odb file.\n");
+    }
 
+}
+
+void OdbParser::process_odb(odb_Odb const &odb, Logging &log_file) {
     this->name = odb.name().CStr();
     this->analysisTitle = odb.analysisTitle().CStr();
     this->description = odb.description().CStr();
     this->path = odb.path().CStr();
     this->isReadOnly = odb.isReadOnly();
-
-    odb.close();
-    log_file.logDebug("Odb Parser object successfully created\n");
 }
 
 // Getters
