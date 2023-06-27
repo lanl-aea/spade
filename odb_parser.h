@@ -56,14 +56,12 @@ class OdbParser {
         map<string, string> job_data;
         /*
         odb_Assembly& rootAssembly;
-        odb_JobData jobData;
         odb_PartRepository& parts;
         odb_StepRepository& steps;
         odb_SectionCategoryRepository& sectionCategories;
         odb_SectorDefinition& sectorDefinition;
         odb_InteractionRepository& interactions;
         odb_InteractionPropertyRepository& interactionProperties;
-        odb_ConstraintRepository& constraints;
         */
         user_data userData;
 };
