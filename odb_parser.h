@@ -8,6 +8,16 @@
 
 using namespace std;
 
+struct root_assembly {
+};
+
+struct job_data {
+};
+
+struct user_data {
+  string name;
+};
+
 /*!
    This class holds all the data from the odb
 */
@@ -20,10 +30,41 @@ class OdbParser {
           \param log_file Logging object for writing log messages
         */
         OdbParser (CmdLineArguments &command_line_arguments, Logging &log_file);
-        map<string, string> odbInfo();
+
+        //Getters
+
+        //! Operator which allows class to be used like a map data structure.
+        /*!
+          This function returns the data found under the passed in string
+          \param key string indicating where to find odb data
+          \return odb data located at specified string
+        */
+        string operator[](string const &key) const;
+        //! Returns job data from the odb
+        /*!
+          The odb job data contains several strings which are returned by this function
+          \return map of odb job data
+        */
+        map<string, string> jobData();
 
     private:
-        map<string, string> odb_info;
-        bool is_read_only;
+        string name;
+        string analysisTitle;
+        string description;
+        string path;
+        string isReadOnly;
+        map<string, string> job_data;
+        /*
+        odb_Assembly& rootAssembly;
+        odb_JobData jobData;
+        odb_PartRepository& parts;
+        odb_StepRepository& steps;
+        odb_SectionCategoryRepository& sectionCategories;
+        odb_SectorDefinition& sectorDefinition;
+        odb_InteractionRepository& interactions;
+        odb_InteractionPropertyRepository& interactionProperties;
+        odb_ConstraintRepository& constraints;
+        */
+        user_data userData;
 };
 #endif  // __ODB_PARSER_H_INCLUDED__

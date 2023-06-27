@@ -72,26 +72,32 @@ OutputWriter::OutputWriter (CmdLineArguments &command_line_arguments, Logging &l
 void OutputWriter::write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser &odb_parser) {
 // Write out data to hdf5 file
 
+    // Open file for writing
     std::ifstream hdf5File (command_line_arguments["output-file"].c_str());
     log_file.logDebug("Creating hdf5 file " + command_line_arguments["output-file"] + "\n");
     const H5std_string FILE_NAME(command_line_arguments["output-file"]);
     H5File file(FILE_NAME, H5F_ACC_TRUNC);
+
 //        hid_t fileId = file.getId();
 //        Group fileGroup = H5Gopen(fileId, SLASH_GROUP.c_str(), H5P_DEFAULT);
 //        Group unstructuredMeshGroup = H5Gopen(fileGroup.getId(), TOP_LEVEL_GROUP.c_str(), H5P_DEFAULT);
-    string odb_group_name = "/odb";
-    H5::Group odb_group = file.createGroup(odb_group_name.c_str());
+
+//    H5::Group odb_group = file.createGroup(string("/odb").c_str());
     log_file.logDebug("Creating odb group for meta-data " + command_line_arguments["output-file"] + "\n");
-    string info_group_name = "/odb/info";
-    H5::Group info_group = file.createGroup(info_group_name.c_str());
-    H5::Attribute info_name;
+    create_top_level_groups(file, log_file);
+//    string job_data_group_name = "/odb/jobData";
+
     StrType str_type(0, H5T_VARIABLE);
     DataSpace att_space(H5S_SCALAR);
-    map<string, string> odb_info = odb_parser.odbInfo();
-    H5::Attribute name_attribute = info_group.createAttribute( "name", str_type, att_space ); name_attribute.write( str_type, odb_info["name"] );
-    H5::Attribute analysisTitle_attribute = info_group.createAttribute( "analysisTitle", str_type, att_space ); analysisTitle_attribute.write( str_type, odb_info["analysisTitle"] );
-    H5::Attribute description_attribute = info_group.createAttribute( "description", str_type, att_space ); description_attribute.write( str_type, odb_info["description"] );
-    H5::Attribute path_attribute = info_group.createAttribute( "path", str_type, att_space ); path_attribute.write( str_type, odb_info["path"] );
+    DataSpace str_space(H5S_SCALAR);
+    map<string, string> job_data = odb_parser.jobData();
+
+    H5::DataSet name_ds = this->odb_group.createDataSet( "name", str_type, str_space ); name_ds.write( odb_parser["name"], str_type );
+
+    H5::Attribute name_attribute = this->odb_group.createAttribute( "name", str_type, att_space ); name_attribute.write( str_type, odb_parser["name"] );
+    H5::Attribute analysisTitle_attribute = this->odb_group.createAttribute( "analysisTitle", str_type, att_space ); analysisTitle_attribute.write( str_type, odb_parser["analysisTitle"] );
+    H5::Attribute description_attribute = this->odb_group.createAttribute( "description", str_type, att_space ); description_attribute.write( str_type, odb_parser["description"] );
+    H5::Attribute path_attribute = this->odb_group.createAttribute( "path", str_type, att_space ); path_attribute.write( str_type, odb_parser["path"] );
 //    std::stringstream bool_stream; bool_stream << std::boolalpha << odb_info["isReadOnly"]; string bool_string = bool_stream.str();
 //    cout << bool_string << endl;
 //    H5::Attribute isReadOnly_attribute = info_group.createAttribute( "isReadOnly", str_type, att_space ); isReadOnly_attribute.write( str_type, bool_string );
@@ -112,6 +118,12 @@ void OutputWriter::write_h5 (CmdLineArguments &command_line_arguments, Logging &
     */
 
     file.close();  // Close the hdf5 file
+}
+
+void OutputWriter::create_top_level_groups (H5File &h5_file, Logging &log_file) {
+//    for(const string &group : groups)
+    this->odb_group = h5_file.createGroup(string("/odb").c_str());
+    this->job_data_group = h5_file.createGroup(string("/odb/jobData").c_str());
 }
 
 void OutputWriter::write_yaml (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser &odb_parser) {

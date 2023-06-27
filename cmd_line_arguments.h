@@ -53,7 +53,7 @@ class CmdLineArguments {
 
         //! Operator which allows class to be used like a map data structure.
         /*!
-          This function a command line option corresponding to the provided string.
+          This function returns a command line option corresponding to the provided string.
           \param str string containing the command line option
           \return value of command line option
           \sa CmdLineArguments()
