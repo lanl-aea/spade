@@ -58,7 +58,7 @@ class OutputWriter {
           \param odb_parser OdbParser object with the parsed data from the odb
           \sa write_h5()
         */
-        void create_top_level_groups (H5File &h5_file, Logging &log_file);
+        void create_top_level_groups (H5File &h5_file, Logging &log_file, OdbParser &odb_parser);
 
     private:
          H5::Group odb_group;

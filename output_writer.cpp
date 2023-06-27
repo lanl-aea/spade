@@ -120,10 +120,22 @@ void OutputWriter::write_h5 (CmdLineArguments &command_line_arguments, Logging &
     file.close();  // Close the hdf5 file
 }
 
-void OutputWriter::create_top_level_groups (H5File &h5_file, Logging &log_file) {
+void OutputWriter::create_top_level_groups (H5File &h5_file, Logging &log_file, OdbParser &odb_parser) {
 //    for(const string &group : groups)
     this->odb_group = h5_file.createGroup(string("/odb").c_str());
+    // TODO: potentially add amplitudes group
+    this->contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
+    // TODO: potentially add filters group
+    this->interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
     this->job_data_group = h5_file.createGroup(string("/odb/jobData").c_str());
+    // TODO: potentially add materials group
+    this->parts_group = h5_file.createGroup(string("/odb/parts").c_str());
+    this->root_assembly_group = h5_file.createGroup(string("/odb/rootAssembly").c_str());
+    this->section_categories_group = h5_file.createGroup(string("/odb/sectionCategories").c_str());
+    // TODO: add conditional to check that odb_parser has sector definition before adding the group
+    this->sector_definition_group = h5_file.createGroup(string("/odb/sectorDefinition").c_str());
+    this->steps_group = h5_file.createGroup(string("/odb/steps").c_str());
+    this->user_data_group = h5_file.createGroup(string("/odb/userData").c_str());
 }
 
 void OutputWriter::write_yaml (CmdLineArguments &command_line_arguments, Logging &log_file, OdbParser &odb_parser) {
