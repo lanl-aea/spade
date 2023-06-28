@@ -11,7 +11,13 @@ env = Environment(
     CC=user_env["CC"],
     CXX=user_env["CXX"]
 )
-env["abaqus"] = waves.builders.add_program(["/apps/abaqus/Commands/abq2022", "abq2022"], env)
+
+abaqus_paths = [
+    "/apps/abaqus/Commands/abq2023",
+     "/usr/projects/ea/DassaultSystemes/SIMULIA/Commands/abq2023",
+     "abq2023"
+]
+env["abaqus"] = waves.builders.add_program(abaqus_paths, env)
 
 odb_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE ", \
 	    "-DABQ_LINUX -DABQ_LNX86_64 -DSMA_GNUC -DFOR_TRAIL -DHAS_BOOL ", \
