@@ -63,12 +63,10 @@ void OdbParser::process_odb(odb_Odb const &odb, Logging &log_file) {
     this->job_data.name = jobData.name().CStr();
     this->job_data.precision = jobData.precision();
     odb_SequenceProductAddOn add_ons = jobData.productAddOns();
+    static const char * add_on_enum_strings[] = { "aqua", "design", "biorid", "cel", "soliter", "cavparallel" };
+    // Values gotten from: https://help.3ds.com/2023/English/DSSIMULIA_Established/SIMACAEKERRefMap/simaker-c-jobdatacpp.htm?contextscope=all
     for (int i=0; i<add_ons.size(); i++) {
-//        string add_on << add_ons.get(i);
-//        std::istringstream add_on(add_ons.get(i));
-        //TODO: figure out how to convert odb_Enum to string
-        string add_on;
-        this->job_data.productAddOns.push_back(add_on);
+        this->job_data.productAddOns.push_back(add_on_enum_strings[add_ons.constGet(i)]);
     }
     this->job_data.version = jobData.version().CStr();
 }
