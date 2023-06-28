@@ -22,7 +22,7 @@ before_script:
   - module use ${PWD}/modulefiles
   # Prefer the CI environment and fall back to AEA environment(s)
   - project_environment=odb-extract-env'
-  - environment_choices="aea-beta aea-release"
+  - environment_choices="${project_environment} aea-beta aea-release"
   - for env in ${environment_choices}; do if [[ -d "${aea_compute_path}/${env}" ]]; then environment=${env}; break; fi; done
   - echo ${environment}
   - module load ${environment}
