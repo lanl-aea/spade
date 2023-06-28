@@ -3,4 +3,5 @@ channels:
 
 dependencies:
   - hdf5
-  - compilers
+  - gxx==8.5.* 
+  - libstdcxx-ng==8.5.0
