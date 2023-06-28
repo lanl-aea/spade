@@ -1,8 +1,12 @@
 //! An object for holding the data from the odb
 
+#include <vector>
+
 #include "cmd_line_arguments.h"
 #include "logging.h"
+
 #include <odb_API.h>
+
 
 #ifndef __ODB_PARSER_H_INCLUDED__
 #define __ODB_PARSER_H_INCLUDED__
@@ -12,10 +16,18 @@ using namespace std;
 struct root_assembly {
 };
 
-struct job_data {
+struct job_data_type {
+    string analysisCode;
+    string creationTime;
+    string machineName;
+    string modificationTime;
+    string name;
+    string precision;
+    vector<string> productAddOns;
+    string version;
 };
 
-struct user_data {
+struct user_data_type {
   string name;
 };
 
@@ -54,7 +66,8 @@ class OdbParser {
           The odb job data contains several strings which are returned by this function
           \return map of odb job data
         */
-        map<string, string> jobData();
+//        map<string, string> jobData();
+        job_data_type jobData() const;
 
     private:
         string name;
@@ -62,7 +75,7 @@ class OdbParser {
         string description;
         string path;
         string isReadOnly;
-        map<string, string> job_data;
+        job_data_type job_data;
         /*
         odb_Assembly& rootAssembly;
         odb_PartRepository& parts;
@@ -72,6 +85,6 @@ class OdbParser {
         odb_InteractionRepository& interactions;
         odb_InteractionPropertyRepository& interactionProperties;
         */
-        user_data userData;
+        user_data_type user_data;
 };
 #endif  // __ODB_PARSER_H_INCLUDED__

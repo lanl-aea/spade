@@ -71,7 +71,7 @@ $(include_local_objects): $(include_local_sources)
 	$(GPP) -I. -c $*.cpp -o $@
 
 $(include_h5_objects): $(include_h5_sources)
-	$(GPP) $(H5_FLAGS) -c $*.cpp -o $@
+	$(GPP) $(H5_FLAGS) $(ODB_FLAGS) -c $*.cpp -o $@
 
 $(include_odb_objects): $(include_odb_sources)
 	$(GPP) $(ODB_FLAGS) -c $*.cpp -o $@

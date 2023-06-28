@@ -54,6 +54,22 @@ void OdbParser::process_odb(odb_Odb const &odb, Logging &log_file) {
     this->description = odb.description().CStr();
     this->path = odb.path().CStr();
     this->isReadOnly = odb.isReadOnly();
+
+    odb_JobData jobData = odb.jobData();
+    /*
+    this->job_data["analysisCode"] = jobData.analysisCode();
+    this->job_data["creationTime"] = jobData.creationTime().CStr();
+    this->job_data["machineName"] = jobData.machineName().CStr();
+    this->job_data["modificationTime"] = jobData.modificationTime().CStr();
+    this->job_data["name"] = jobData.name().CStr();
+    this->job_data["precision"] = jobData.precision();
+//    this->job_data["productAddOns"] = jobData.productAddOns();
+    odb_SequenceProductAddOn add_ons = jobData.productAddOns();
+    for (int i=0; i<add_ons.size(); i++) {
+        cout << add_ons.get(i) + "\n";
+    }
+    this->job_data["version"] = jobData.version().CStr();
+    */
 }
 
 // Getters
@@ -66,7 +82,8 @@ string OdbParser::operator[](string const &key) const {
     else { return ""; }
 }
 
-map<string, string> OdbParser::jobData() { return this->job_data; }
+//map<string, string> OdbParser::jobData() { return this->job_data; }
+job_data_type OdbParser::jobData() const { return this->job_data; }
 
         /*
         odb_Assembly& rootAssembly;

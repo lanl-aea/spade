@@ -90,7 +90,7 @@ void OutputWriter::write_h5 (CmdLineArguments &command_line_arguments, Logging &
     StrType str_type(0, H5T_VARIABLE);
     DataSpace att_space(H5S_SCALAR);
     DataSpace str_space(H5S_SCALAR);
-    map<string, string> job_data = odb_parser.jobData();
+    job_data_type job_data = odb_parser.jobData();
 
     H5::DataSet name_ds = this->odb_group.createDataSet( "name", str_type, str_space ); name_ds.write( odb_parser["name"], str_type );
 
