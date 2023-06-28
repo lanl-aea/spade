@@ -38,8 +38,9 @@ except (ModuleNotFoundError, LookupError) as err:
     warnings.warn(f"Setting version to 'None'. {err}", RuntimeWarning)
     version = "None"
 
-waves.builders.project_help_message()
 
+# Add aliases to help message so users know what build target options are available
+# This must come *after* all expected Alias definitions and SConscript files.
 def compiler_help(env):
     compiler_help_message = "\nEnvironment:\n"
     keys = [
@@ -53,4 +54,6 @@ def compiler_help(env):
             compiler_help_message += f"    {key}: {env[key]}\n"
     return compiler_help_message
 
+
+waves.builders.project_help_message()
 Help(compiler_help(env), append=True)
