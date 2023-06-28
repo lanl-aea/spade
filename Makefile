@@ -32,8 +32,6 @@ GPP_PATH=$(shell dirname $$(dirname $(GPP)))
 LATEST_ABAQUS = $(shell ls $(ABQ_BASE_PATH) | tail -n 1)
 ABQ_PATH = $(ABQ_BASE_PATH)/$(LATEST_ABAQUS)
 H5_FLAGS = -fPIC -I$(H5_PATH)/include/  -I. -I$(H5_PATH)/lib
-CC=/usr/bin/g++
-CC_PATH=$(shell dirname $$(dirname $(CC)))
 
 ODB_FLAGS = -c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE \
 	      -DABQ_LINUX -DABQ_LNX86_64 -DSMA_GNUC -DFOR_TRAIL -DHAS_BOOL \
@@ -53,7 +51,6 @@ link_exe = $(GPP) -fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhd
 # Compiling the main code requires all the object files as well as the env file
 $(tool): $(include_local_objects) $(include_h5_objects) $(include_odb_objects) $(abq_env)
 	$(ABQ_CMD_PATH)/abq$(LATEST_ABAQUS) make job=$(tool).cpp
-# TODO: Remove the export command above, remove hard coded value for CC, swith out commented lines for gpp_odb and link_exe
 
 $(include_local_objects): $(include_local_sources)
 	$(GPP) -I. -c $*.cpp -o $@
