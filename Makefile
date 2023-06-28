@@ -45,7 +45,7 @@ ODB_FLAGS = -c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE \
 	      -I$(ABQ_PATH)/linux_a64/code/include -I$(ABQ_PATH)/ \
 	      -I$(H5_PATH)/include/ -I. -I$(H5_PATH)/lib -static-libstdc++
 gpp_odb = $(GPP) $(ODB_FLAGS)
-link_exe = $(GPP) -fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L$(GPP_PATH)/lib64 -L$(GPP_PATH)/lib -L$(H5_PATH)/lib -lstdc++ -Wl,-rpath,$(ABQ_PATH)/linux_a64/code/bin/,-rpath,$(H5_PATH)/lib
+link_exe = $(GPP) -fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L$(GPP_PATH)/lib -lstdc++ -Wl,-rpath,$(ABQ_PATH)/linux_a64/code/bin/,-rpath,$(GPP_PATH)/lib
 # Using -Wl to pass -rpath to linker, -rpath tells the linker to use these paths
 # for dynamic linking rather than having to set LD_LIBRARY_PATH
 
