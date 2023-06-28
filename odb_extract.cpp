@@ -16,8 +16,7 @@
 
 #include "cmd_line_arguments.h"
 #include "logging.h"
-#include "odb_parser.h"
-#include "output_writer.h"
+#include "odb_extract_object.h"
 
 using namespace std;
 
@@ -35,10 +34,8 @@ int ABQmain(int argc, char **argv)
     log_file.log("\nCommand line used:\n"+ command_line_arguments.commandLine() + "\n");
     log_file.logVerbose("Arguments given:\n" + command_line_arguments.verboseArguments());
     log_file.logDebug("Debug logging turned on\n");
-    OdbParser odb_parser(command_line_arguments, log_file);
-    log_file.logDebug("OdbParser object successfully created.\n");
-    OutputWriter output_writer(command_line_arguments, log_file, odb_parser);
-    log_file.logDebug("OutputWriter object successfully created.\n");
+    OdbExtractObject odb_extract_object(command_line_arguments, log_file);
+    log_file.logDebug("OdbExtractObject object successfully created.\n");
     log_file.logVerbose("Successful completion of " + command_line_arguments.commandName() + "\n");
 
     return (0);

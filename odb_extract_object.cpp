@@ -1,0 +1,196 @@
+#if (defined(HP) && (! defined(HKS_HPUXI)))
+#include <iostream.h>                                                           
+#else
+#include <iostream>
+
+#ifdef _WIN32
+    #include <direct.h>
+    #define getcwd _getcwd // MSFT "deprecation" warning
+#else
+    #include <unistd.h>
+#endif
+
+using namespace std;
+#endif
+
+#include <iomanip>
+#include <cstring>
+#include <cstdlib>
+#include <string>
+#include <sstream>
+#include <map>
+#include <set>
+#include <fstream>
+#include <algorithm>
+#include <functional>
+#include <ctime>
+#include <cctype>
+#include <locale>
+#include <vector>
+#include <iterator>
+#include <regex>
+#include <stdlib.h>
+#include <dirent.h>
+#include <sys/stat.h>
+
+#include <odb_API.h>
+#include <odb_Coupling.h>
+#include <odb_MPC.h>
+#include <odb_ShellSolidCoupling.h>
+#include <odb_MaterialTypes.h>
+#include <odb_SectionTypes.h>
+
+#include "H5Cpp.h"
+using namespace H5;
+
+#include <odb_extract_object.h>
+
+OdbExtractObject::OdbExtractObject (CmdLineArguments &command_line_arguments, Logging &log_file) {
+    log_file.logVerbose("Starting to parse odb file: " + command_line_arguments.getTimeStamp(false) + "\n");
+    odb_String file_name = command_line_arguments["odb-file"].c_str();
+    log_file.logDebug("Operating on file:" + command_line_arguments["odb-file"] + "\n");
+
+    if (isUpgradeRequiredForOdb(file_name)) {
+        log_file.logDebug("Upgrade to odb required.\n");
+        odb_String upgraded_file_name = string("upgraded_" + command_line_arguments["odb-file"]).c_str();
+        log_file.log("Upgrading file:" + command_line_arguments["odb-file"] + "\n");
+        upgradeOdb(file_name, upgraded_file_name);
+        file_name = upgraded_file_name;
+    }
+
+    try {  // Since the odb object isn't recognized outside the scope of the try/except, block the processing has to be done within the try block
+        odb_Odb& odb = openOdb(file_name, true);  // Open as read only
+        process_odb(odb, log_file);
+        odb.close();
+        log_file.logDebug("Odb Parser object successfully created\n");
+    }
+    catch(odb_BaseException& exc) {
+        string error_message = exc.UserReport().CStr();
+        log_file.logErrorAndExit("odbBaseException caught. Abaqus error message: " + error_message + "\n");
+    }
+    catch(...) {
+        log_file.logErrorAndExit("Unkown exception when attempting to open odb file.\n");
+    }
+
+
+    log_file.logVerbose("Starting to write output file: " + command_line_arguments.getTimeStamp(false) + "\n");
+
+    if (command_line_arguments["output-file-type"] == "h5") this->write_h5(command_line_arguments, log_file);
+    else if (command_line_arguments["output-file-type"] == "json") this->write_json(command_line_arguments, log_file);
+    else if (command_line_arguments["output-file-type"] == "yaml") this->write_yaml(command_line_arguments, log_file);
+
+    log_file.logVerbose("Finished writing output file: " + command_line_arguments.getTimeStamp(false) + "\n");
+
+}
+
+void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
+
+    this->name = odb.name().CStr();
+    this->analysisTitle = odb.analysisTitle().CStr();
+    this->description = odb.description().CStr();
+    this->path = odb.path().CStr();
+    this->isReadOnly = odb.isReadOnly();
+
+    odb_JobData jobData = odb.jobData();
+    this->job_data.analysisCode = jobData.analysisCode();
+    this->job_data.creationTime = jobData.creationTime().CStr();
+    this->job_data.machineName = jobData.machineName().CStr();
+    this->job_data.modificationTime = jobData.modificationTime().CStr();
+    this->job_data.name = jobData.name().CStr();
+    this->job_data.precision = jobData.precision();
+    odb_SequenceProductAddOn add_ons = jobData.productAddOns();
+    static const char * add_on_enum_strings[] = { "aqua", "design", "biorid", "cel", "soliter", "cavparallel" };
+    // Values gotten from: https://help.3ds.com/2023/English/DSSIMULIA_Established/SIMACAEKERRefMap/simaker-c-jobdatacpp.htm?contextscope=all
+    for (int i=0; i<add_ons.size(); i++) {
+        this->job_data.productAddOns.push_back(add_on_enum_strings[add_ons.constGet(i)]);
+    }
+    this->job_data.version = jobData.version().CStr();
+
+    odb_PartRepository& parts = odb.parts();
+    odb_PartRepositoryIT iter(parts);    
+    for (iter.first(); !iter.isDone(); iter.next()) {
+        log_file.logVerbose("Starting to parse part: " + string(iter.currentKey().CStr()) + "\n");
+        odb_Part& part = parts[iter.currentKey()];
+    }
+
+
+}
+
+
+
+
+
+void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file) {
+// Write out data to hdf5 file
+
+    // Open file for writing
+    std::ifstream hdf5File (command_line_arguments["output-file"].c_str());
+    log_file.logDebug("Creating hdf5 file " + command_line_arguments["output-file"] + "\n");
+    const H5std_string FILE_NAME(command_line_arguments["output-file"]);
+    H5File file(FILE_NAME, H5F_ACC_TRUNC);
+
+//        hid_t fileId = file.getId();
+//        Group fileGroup = H5Gopen(fileId, SLASH_GROUP.c_str(), H5P_DEFAULT);
+//        Group unstructuredMeshGroup = H5Gopen(fileGroup.getId(), TOP_LEVEL_GROUP.c_str(), H5P_DEFAULT);
+
+//    H5::Group odb_group = file.createGroup(string("/odb").c_str());
+    log_file.logDebug("Creating odb group for meta-data " + command_line_arguments["output-file"] + "\n");
+    create_top_level_groups(file, log_file);
+//    string job_data_group_name = "/odb/jobData";
+
+    StrType str_type(0, H5T_VARIABLE);
+    DataSpace att_space(H5S_SCALAR);
+    DataSpace str_space(H5S_SCALAR);
+//    job_data_type job_data = this->job_data;
+
+    H5::DataSet name_ds = this->odb_group.createDataSet( "name", str_type, str_space ); name_ds.write( this->name, str_type );
+
+    H5::Attribute name_attribute = this->odb_group.createAttribute( "name", str_type, att_space ); name_attribute.write( str_type, this->name );
+    H5::Attribute analysisTitle_attribute = this->odb_group.createAttribute( "analysisTitle", str_type, att_space ); analysisTitle_attribute.write( str_type, this->analysisTitle );
+    H5::Attribute description_attribute = this->odb_group.createAttribute( "description", str_type, att_space ); description_attribute.write( str_type, this->description );
+    H5::Attribute path_attribute = this->odb_group.createAttribute( "path", str_type, att_space ); path_attribute.write( str_type, this->path );
+//    std::stringstream bool_stream; bool_stream << std::boolalpha << odb_info["isReadOnly"]; string bool_string = bool_stream.str();
+//    cout << bool_string << endl;
+//    H5::Attribute isReadOnly_attribute = info_group.createAttribute( "isReadOnly", str_type, att_space ); isReadOnly_attribute.write( str_type, bool_string );
+
+    /*
+    H5::Exception::dontPrint();                             // suppress error messages
+    string odb_group_name = "/test";
+    try         {
+      H5::Group group = file.openGroup  (group_name.c_str());
+      std::cerr<<" TEST: opened group\n";                   // for debugging
+    } catch (...) {
+      std::cerr<<" TEST: caught something\n";               // for debugging
+      H5::Group group = file.createGroup(group_name.c_str());
+      std::cerr<<" TEST: created group\n";                  // for debugging
+    }
+    H5::Group group = file.openGroup  (group_name.c_str()); // for debugging
+    std::cerr<<" TEST: opened group\n";                     // for debugging
+    */
+
+    file.close();  // Close the hdf5 file
+}
+
+void OdbExtractObject::create_top_level_groups (H5File &h5_file, Logging &log_file) {
+//    for(const string &group : groups)
+    this->odb_group = h5_file.createGroup(string("/odb").c_str());
+    // TODO: potentially add amplitudes group
+    this->contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
+    // TODO: potentially add filters group
+    this->interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
+    this->job_data_group = h5_file.createGroup(string("/odb/jobData").c_str());
+    // TODO: potentially add materials group
+    this->parts_group = h5_file.createGroup(string("/odb/parts").c_str());
+    this->root_assembly_group = h5_file.createGroup(string("/odb/rootAssembly").c_str());
+    this->section_categories_group = h5_file.createGroup(string("/odb/sectionCategories").c_str());
+    // TODO: add conditional to check that odb has sector definition before adding the group
+    this->sector_definition_group = h5_file.createGroup(string("/odb/sectorDefinition").c_str());
+    this->steps_group = h5_file.createGroup(string("/odb/steps").c_str());
+    this->user_data_group = h5_file.createGroup(string("/odb/userData").c_str());
+}
+
+void OdbExtractObject::write_yaml (CmdLineArguments &command_line_arguments, Logging &log_file) {
+}
+
+void OdbExtractObject::write_json (CmdLineArguments &command_line_arguments, Logging &log_file) {
+}

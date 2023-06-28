@@ -5,13 +5,14 @@ SHELL:=/bin/bash
 include_local_objects = cmd_line_arguments.o logging.o
 include_local_sources = cmd_line_arguments.cpp logging.cpp
 
-include_h5_objects = output_writer.o
-include_h5_sources = output_writer.cpp
+include_h5_objects = odb_extract_object.o
+include_h5_sources = odb_extract_object.cpp
 
-include_odb_objects = odb_parser.o
-include_odb_sources = odb_parser.cpp
+#include_odb_objects = odb_parser.o
+#include_odb_sources = odb_parser.cpp
 
-objects = $(include_local_objects) $(include_h5_objects) $(include_odb_objects)
+#objects = $(include_local_objects) $(include_h5_objects) $(include_odb_objects)
+objects = $(include_local_objects) $(include_h5_objects)
 link_exe_obj = $(objects)
 abq_env = abaqus_v6.env
 tool = odb_extract
@@ -49,7 +50,8 @@ link_exe = $(GPP) -fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhd
 
 .DEFAULT_GOAL := $(tool)  # Not strictly necessary since the target is first
 # Compiling the main code requires all the object files as well as the env file
-$(tool): $(include_local_objects) $(include_h5_objects) $(include_odb_objects) $(abq_env)
+#$(tool): $(include_local_objects) $(include_h5_objects) $(include_odb_objects) $(abq_env)
+$(tool): $(include_local_objects) $(include_h5_objects) $(abq_env)
 	$(ABQ_CMD_PATH)/abq$(LATEST_ABAQUS) make job=$(tool).cpp
 
 $(include_local_objects): $(include_local_sources)
@@ -58,8 +60,8 @@ $(include_local_objects): $(include_local_sources)
 $(include_h5_objects): $(include_h5_sources)
 	$(GPP) $(H5_FLAGS) $(ODB_FLAGS) -c $*.cpp -o $@
 
-$(include_odb_objects): $(include_odb_sources)
-	$(GPP) $(ODB_FLAGS) -c $*.cpp -o $@
+#$(include_odb_objects): $(include_odb_sources)
+#	$(GPP) $(ODB_FLAGS) -c $*.cpp -o $@
 
 .PHONY : $(abq_env)  # Even though a file is the target, I want it updated every time regardless
 # Two steps to create abaqus_v6.env, first move existing file, then create file

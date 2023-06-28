@@ -7,7 +7,5 @@
 !cmd_line_arguments.cpp
 !logging.h
 !logging.cpp
-!odb_parser.h
-!odb_parser.cpp
-!output_writer.h
-!output_writer.cpp
+!odb_extract_object.h
+!odb_extract_object.cpp
