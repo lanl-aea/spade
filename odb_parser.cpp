@@ -48,7 +48,7 @@ OdbParser::OdbParser (CmdLineArguments &command_line_arguments, Logging &log_fil
 
 }
 
-void OdbParser::process_odb(odb_Odb const &odb, Logging &log_file) {
+void OdbParser::process_odb(odb_Odb &odb, Logging &log_file) {
     this->name = odb.name().CStr();
     this->analysisTitle = odb.analysisTitle().CStr();
     this->description = odb.description().CStr();
@@ -69,6 +69,15 @@ void OdbParser::process_odb(odb_Odb const &odb, Logging &log_file) {
         this->job_data.productAddOns.push_back(add_on_enum_strings[add_ons.constGet(i)]);
     }
     this->job_data.version = jobData.version().CStr();
+
+    odb_PartRepository& parts = odb.parts();
+    odb_PartRepositoryIT iter(parts);    
+    for (iter.first(); !iter.isDone(); iter.next()) {
+        log_file.logVerbose("Starting to parse part: " + string(iter.currentKey().CStr()) + "\n");
+        odb_Part& part = parts[iter.currentKey()];
+    }
+
+
 }
 
 // Getters

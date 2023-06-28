@@ -30,6 +30,9 @@ struct job_data_type {
 struct user_data_type {
   string name;
 };
+struct part {
+  string name;
+};
 
 /*!
    This class holds all the data from the odb
@@ -50,7 +53,7 @@ class OdbParser {
           \param odb odb_Odb an open odb object
           \param log_file Logging object for writing log messages
         */
-        void process_odb (odb_Odb const &odb, Logging &log_file);
+        void process_odb (odb_Odb &odb, Logging &log_file);
 
         //Getters
 
@@ -76,6 +79,7 @@ class OdbParser {
         string path;
         string isReadOnly;
         job_data_type job_data;
+        vector<part> parts;
         /*
         odb_Assembly& rootAssembly;
         odb_PartRepository& parts;
