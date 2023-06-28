@@ -1,11 +1,5 @@
 #!/usr/bin/make -f
 
-# Variables:
-# GNU make recommends using lower case for variables that serve internal 
-# purposes in the makefile and upper case for parameters that control implicit
-# rules or for parameters that the user should override with command options
-# use make --just-print to see what commands are to be run without running them
-
 SHELL:=/bin/bash
 
 include_local_objects = cmd_line_arguments.o logging.o
@@ -18,7 +12,6 @@ include_odb_objects = odb_parser.o
 include_odb_sources = odb_parser.cpp
 
 objects = $(include_local_objects) $(include_h5_objects) $(include_odb_objects)
-#link_exe_obj = $(objects) -static-libstdc++
 link_exe_obj = $(objects)
 abq_env = abaqus_v6.env
 tool = odb_extract
@@ -32,7 +25,6 @@ else
 ABQ_BASE_PATH = /apps/SIMULIA/EstProducts
 ABQ_CMD_PATH = /apps/abaqus/Commands
 H5_PATH=$(shell dirname $$(dirname $$(which h5c++)))
-#H5_PATH=/projects/aea_compute/aea-2022
 GPP=$(shell which g++)
 endif
 
@@ -40,7 +32,6 @@ GPP_PATH=$(shell dirname $$(dirname $(GPP)))
 LATEST_ABAQUS = $(shell ls $(ABQ_BASE_PATH) | tail -n 1)
 ABQ_PATH = $(ABQ_BASE_PATH)/$(LATEST_ABAQUS)
 H5_FLAGS = -fPIC -I$(H5_PATH)/include/  -I. -I$(H5_PATH)/lib
-#CC=$(GPP)
 CC=/usr/bin/g++
 CC_PATH=$(shell dirname $$(dirname $(CC)))
 
@@ -61,8 +52,7 @@ link_exe = $(GPP) -fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhd
 .DEFAULT_GOAL := $(tool)  # Not strictly necessary since the target is first
 # Compiling the main code requires all the object files as well as the env file
 $(tool): $(include_local_objects) $(include_h5_objects) $(include_odb_objects) $(abq_env)
-	export PATH=/usr/bin:$$PATH; $(ABQ_CMD_PATH)/abq$(LATEST_ABAQUS) make job=$(tool).cpp
-#	$(ABQ_CMD_PATH)/abq$(LATEST_ABAQUS) make job=$(tool).cpp
+	$(ABQ_CMD_PATH)/abq$(LATEST_ABAQUS) make job=$(tool).cpp
 # TODO: Remove the export command above, remove hard coded value for CC, swith out commented lines for gpp_odb and link_exe
 
 $(include_local_objects): $(include_local_sources)
@@ -76,7 +66,7 @@ $(include_odb_objects): $(include_odb_sources)
 
 .PHONY : $(abq_env)  # Even though a file is the target, I want it updated every time regardless
 # Two steps to create abaqus_v6.env, first move existing file, then create file
-# If no existing file ignore mv error (indicated by dash in front) 
+# If no existing file ignore mv error (indicated by dash in front)
 $(abq_env):
 	-mv $(abq_env) $(abq_env).old
 	echo "compile_cpp='$(gpp_odb)'" >> $(abq_env)
