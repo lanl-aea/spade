@@ -5,3 +5,4 @@ dependencies:
   - hdf5
   - gxx==8.5.* 
   - libstdcxx-ng==8.5.0
+  - libgcc-ng==8.5.0
