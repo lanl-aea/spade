@@ -45,7 +45,6 @@ env.MergeFlags("-I.")
 objects.extend(env.Object("cmd_line_arguments.cpp"))
 objects.extend(env.Object("logging.cpp"))
 objects.extend(env.Object("output_writer.cpp", CXXFLAGS=h5_flags + odb_flags))
-objects.extend(env.Object("odb_parser.cpp", CXXFLAGS=odb_flags))
 
 # Build executable with Abaqus make
 env.Command(
