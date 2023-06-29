@@ -20,8 +20,8 @@ gpp_include = gpp_path / "include"
 
 abaqus_paths = [
     "/apps/abaqus/Commands/abq2023",
-     "/usr/projects/ea/DassaultSystemes/SIMULIA/Commands/abq2023",
-     "abq2023"
+    "/usr/projects/ea/DassaultSystemes/SIMULIA/Commands/abq2023",
+    "abq2023"
 ]
 env["abaqus"] = env.Detect(abaqus_paths)
 abaqus_installation, abaqus_code_bin, abaqus_code_include = utilities.return_abaqus_code_paths(env["abaqus"])
