@@ -31,8 +31,15 @@ def find_abaqus_paths(abaqus_program):
         abaqus_paths = None
     return abaqus_paths
 
-def return_abaqus_code_paths(abaqus_program, search_directory="code"):
+def return_abaqus_code_paths(abaqus_program, estproducts_directory="EstProducts", code_directory="code"):
     abaqus_paths = find_abaqus_paths(abaqus_program)
+
+    try:
+        abaqus_estproducts = next(path for path in abaqus_paths if path.name == estproducts_directory)
+    except StopIteration as err:
+        print(f"Could not find Abaqus '{estproducts_directory}' directory", file=sys.stderr)
+        abaqus_estproducts = None
+
     try:
         abaqus_code_path = next(path for path in abaqus_paths if path.name == search_directory)
     except StopIteration as err:
@@ -42,4 +49,5 @@ def return_abaqus_code_paths(abaqus_program, search_directory="code"):
     else:
         abaqus_code_bin = abaqus_code_path / "bin"
         abaqus_code_include = abaqus_code_path / "include"
-    return abaqus_code_bin, abaqus_code_include
+
+    return abaqus_estproducts, abaqus_code_bin, abaqus_code_include

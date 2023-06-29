@@ -14,13 +14,16 @@ env = Environment(
     CXX=user_env["CXX"]
 )
 
+gpp_path = pathlib.Path(env["CXX"]).resolve().parent
+gpp_lib = gpp_path / "lib"
+
 abaqus_paths = [
     "/apps/abaqus/Commands/abq2023",
      "/usr/projects/ea/DassaultSystemes/SIMULIA/Commands/abq2023",
      "abq2023"
 ]
 env["abaqus"] = env.Detect(abaqus_paths)
-abaqus_code_bin, abaqus_code_include = utilities.return_abaqus_code_paths(env["abaqus"])
+abaqus_estproducts, abaqus_code_bin, abaqus_code_include = utilities.return_abaqus_code_paths(env["abaqus"])
 
 odb_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE ", \
 	    "-DABQ_LINUX -DABQ_LNX86_64 -DSMA_GNUC -DFOR_TRAIL -DHAS_BOOL ", \
@@ -29,10 +32,9 @@ odb_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE ", 
 	    "-DHAVE_OPENGL -DHKS_OPEN_GL -DGL_GLEXT_PROTOTYPES ", \
 	    "-DMULTI_THREADING_ENABLED -D_REENTRANT -DABQ_MPI_SUPPORT -DBIT64 ", \
 	    "-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 ", \
-	    f"-I{abaqus_code_include} ", \
+	    f"-I{abaqus_code_include} -I{abaqus_estproducts} ", \
 	    "-I$(H5_PATH)/include/ -I. -I$(H5_PATH)/lib -static-libstdc++"
-abaqus_link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L$(GPP_PATH)/lib
--lstdc++ -Wl,-rpath,{abaqus_code_bin},-rpath,$(GPP_PATH)/lib"
+abaqus_link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L{gpp_lib} -lstdc++ -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
 
 env.MergeFlags(odb_flags)
 env.MergeFlags(abaqus_link_flags)
