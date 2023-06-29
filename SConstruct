@@ -14,7 +14,7 @@ env = Environment(
     CXX=user_env["CXX"]
 )
 
-gpp_path = pathlib.Path(env["CXX"]).resolve().parent
+gpp_path = pathlib.Path(env["CXX"]).resolve().parent.parent
 gpp_lib = gpp_path / "lib"
 gpp_include = gpp_path / "include"
 
@@ -37,7 +37,7 @@ odb_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE " \
 	    f"-I{gpp_include} -I. -I{gpp_lib} -static-libstdc++"
 abaqus_link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O " \
                     "-lhdf5 -lhdf5_cpp -L{gpp_lib} -lstdc++ -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
-h5_flags = "-fPIC -I{gpp_include} -I. -I{gpp_lib}"
+h5_flags = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
 local_flags = "-I."
 
 # Build static objects
