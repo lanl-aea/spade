@@ -63,18 +63,6 @@ env.Substfile(
     SUBST_DICT={"@compile_cpp@": compile_cpp, "@link_exe@": link_exe}
 )
 
-# Set project meta variables
-project_name = "odb_extract"
-project_dir = pathlib.Path(Dir(".").abspath)
-try:
-    import setuptools_scm
-    version = setuptools_scm.get_version()
-except (ModuleNotFoundError, LookupError) as err:
-    import warnings
-    warnings.warn(f"Setting version to 'None'. {err}", RuntimeWarning)
-    version = "None"
-
-
 # Add aliases to help message so users know what build target options are available
 # This must come *after* all expected Alias definitions and SConscript files.
 waves.builders.project_help_message()
