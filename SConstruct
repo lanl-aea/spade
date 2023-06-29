@@ -17,7 +17,7 @@ abaqus_paths = [
      "/usr/projects/ea/DassaultSystemes/SIMULIA/Commands/abq2023",
      "abq2023"
 ]
-env["abaqus"] = waves.builders.add_program(abaqus_paths, env)
+env["abaqus"] = env.Detect(abaqus_paths)
 
 odb_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE ", \
 	    "-DABQ_LINUX -DABQ_LNX86_64 -DSMA_GNUC -DFOR_TRAIL -DHAS_BOOL ", \
