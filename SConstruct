@@ -16,6 +16,7 @@ env = Environment(
 
 gpp_path = pathlib.Path(env["CXX"]).resolve().parent
 gpp_lib = gpp_path / "lib"
+gpp_include = gpp_path / "include"
 
 abaqus_paths = [
     "/apps/abaqus/Commands/abq2023",
@@ -33,7 +34,7 @@ odb_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE ", 
 	    "-DMULTI_THREADING_ENABLED -D_REENTRANT -DABQ_MPI_SUPPORT -DBIT64 ", \
 	    "-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 ", \
 	    f"-I{abaqus_code_include} -I{abaqus_estproducts} ", \
-	    "-I$(H5_PATH)/include/ -I. -I$(H5_PATH)/lib -static-libstdc++"
+	    f"-I{gpp_include} -I. -I{gpp_lib} -static-libstdc++"
 abaqus_link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L{gpp_lib} -lstdc++ -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
 
 env.MergeFlags(odb_flags)
