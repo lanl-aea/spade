@@ -40,15 +40,23 @@ abaqus_link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O 
 h5_flags = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
 
 # Build static objects
+objects = []
 env.MergeFlags("-I.")
-env.Object("cmd_line_arguments.cpp")
-env.Object("logging.cpp")
-env.Object("output_writer.cpp", CXXFLAGS=h5_flags + odb_flags)
-env.Object("odb_parser.cpp", CXXFLAGS=odb_flags)
+objects.extend(env.Object("cmd_line_arguments.cpp"))
+objects.extend(env.Object("logging.cpp"))
+objects.extend(env.Object("output_writer.cpp", CXXFLAGS=h5_flags + odb_flags))
+objects.extend(env.Object("odb_parser.cpp", CXXFLAGS=odb_flags))
+
+# Build executable with Abaqus make
+env.Command(
+    target=["odb_extract"],
+    source=["odb_extract.cpp"] + objects,
+    action=["${abaqus_program} make job=${TARGET.name}"],
+    abaqus_program=env["abaqus"]
+)
 
 # Write build abaqus environment file
 compile_cpp = f"{env['CXX']} {odb_flags}"
-# TODO: decide how to handle object files. Prefer to grab them from Task target list(s).
 link_exe = f"{env['CXX']} {abaqus_link_flags}"
 env.Substfile(
     "abaqus_v6.env.in",
