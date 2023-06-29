@@ -29,9 +29,10 @@ odb_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE ", 
 	    "-DHAVE_OPENGL -DHKS_OPEN_GL -DGL_GLEXT_PROTOTYPES ", \
 	    "-DMULTI_THREADING_ENABLED -D_REENTRANT -DABQ_MPI_SUPPORT -DBIT64 ", \
 	    "-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 ", \
-	    "-I$(ABQ_PATH)/linux_a64/code/include -I$(ABQ_PATH)/ ", \
+	    f"-I{abaqus_code_include} ", \
 	    "-I$(H5_PATH)/include/ -I. -I$(H5_PATH)/lib -static-libstdc++"
-abaqus_link_flags = "-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L$(GPP_PATH)/lib -lstdc++ -Wl,-rpath,$(ABQ_PATH)/linux_a64/code/bin/,-rpath,$(GPP_PATH)/lib"
+abaqus_link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L$(GPP_PATH)/lib
+-lstdc++ -Wl,-rpath,{abaqus_code_bin},-rpath,$(GPP_PATH)/lib"
 
 env.MergeFlags(odb_flags)
 env.MergeFlags(abaqus_link_flags)
