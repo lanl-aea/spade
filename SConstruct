@@ -20,7 +20,7 @@ abaqus_paths = [
      "abq2023"
 ]
 env["abaqus"] = env.Detect(abaqus_paths)
-abaqus_paths = utilities.find_abaqus_paths(env["abaqus"])
+abaqus_code_bin, abaqus_code_include = utilities.return_abaqus_code_paths(env["abaqus"])
 
 odb_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE ", \
 	    "-DABQ_LINUX -DABQ_LNX86_64 -DSMA_GNUC -DFOR_TRAIL -DHAS_BOOL ", \
