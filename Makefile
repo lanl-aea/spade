@@ -21,18 +21,16 @@ ifneq ($(wildcard /usr/projects/ea/SIMULIA/EstProducts/*),) # returns all entrie
 ABQ_BASE_PATH = /usr/projects/ea/SIMULIA/EstProducts
 ABQ_CMD_PATH = /usr/projects/ea/DassaultSystemes/SIMULIA/Commands
 GPP=$(shell module load gcc; which g++)
-H5_PATH=$(shell module load gcc; module load hdf5-serial; dirname $$(dirname $$(which h5c++)))
 else
 ABQ_BASE_PATH = /apps/SIMULIA/EstProducts
 ABQ_CMD_PATH = /apps/abaqus/Commands
-H5_PATH=$(shell dirname $$(dirname $$(which h5c++)))
 GPP=$(shell which g++)
 endif
 
 GPP_PATH=$(shell dirname $$(dirname $(GPP)))
 LATEST_ABAQUS = $(shell ls $(ABQ_BASE_PATH) | tail -n 1)
 ABQ_PATH = $(ABQ_BASE_PATH)/$(LATEST_ABAQUS)
-H5_FLAGS = -fPIC -I$(H5_PATH)/include/  -I. -I$(H5_PATH)/lib
+H5_FLAGS = -fPIC -I$(GPP_PATH)/include/  -I. -I$(GPP_PATH)/lib
 
 ODB_FLAGS = -c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE \
 	      -DABQ_LINUX -DABQ_LNX86_64 -DSMA_GNUC -DFOR_TRAIL -DHAS_BOOL \
@@ -42,7 +40,7 @@ ODB_FLAGS = -c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE \
 	      -DMULTI_THREADING_ENABLED -D_REENTRANT -DABQ_MPI_SUPPORT -DBIT64 \
 	      -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 \
 	      -I$(ABQ_PATH)/linux_a64/code/include -I$(ABQ_PATH)/ \
-	      -I$(H5_PATH)/include/ -I. -I$(H5_PATH)/lib -static-libstdc++
+	      -I$(GPP_PATH)/include/ -I. -I$(GPP_PATH)/lib -static-libstdc++
 gpp_odb = $(GPP) $(ODB_FLAGS)
 link_exe = $(GPP) -fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L$(GPP_PATH)/lib -lstdc++ -Wl,-rpath,$(ABQ_PATH)/linux_a64/code/bin/,-rpath,$(GPP_PATH)/lib
 # Using -Wl to pass -rpath to linker, -rpath tells the linker to use these paths
