@@ -5,6 +5,8 @@ import pathlib
 
 import waves
 
+import utilities
+
 user_env = os.environ.copy()
 env = Environment(
     ENV=user_env,
@@ -47,19 +49,5 @@ except (ModuleNotFoundError, LookupError) as err:
 
 # Add aliases to help message so users know what build target options are available
 # This must come *after* all expected Alias definitions and SConscript files.
-def compiler_help(env):
-    compiler_help_message = "\nEnvironment:\n"
-    keys = [
-        "CC", "CCVERSION", "CCFLAGS", "SHCCFLAGS", "CPPFLAGS", "CPPPATH", "CCCOM", "SHCCOM",
-        "CXX", "CXXVERSION", "CXXFLAGS", "SHCXXFLAGS", "CXXCOM", "SHCXXCOM",
-        "LINKFLAGS", "SHLINKFLAGS", "LIBPREFIX", "SHLIBSUFFIX", "LIBPATH", "SHOBJSUFFIX", "LIBS",
-        "STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME"
-    ]
-    for key in keys:
-        if key in env:
-            compiler_help_message += f"    {key}: {env[key]}\n"
-    return compiler_help_message
-
-
 waves.builders.project_help_message()
-Help(compiler_help(env), append=True)
+Help(utilities.compiler_help(env), append=True)
