@@ -38,11 +38,11 @@ odb_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE " \
 abaqus_link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O " \
                     "-lhdf5 -lhdf5_cpp -L{gpp_lib} -lstdc++ -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
 h5_flags = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
-local_flags = "-I."
 
 # Build static objects
-env.Object("cmd_line_arguments.cpp", CXXFLAGS=local_flags)
-env.Object("logging.cpp", CXXFLAGS=local_flags)
+env.MergeFlags("-I.")
+env.Object("cmd_line_arguments.cpp")
+env.Object("logging.cpp")
 env.Object("output_writer.cpp", CXXFLAGS=h5_flags + odb_flags)
 env.Object("odb_parser.cpp", CXXFLAGS=odb_flags)
 
