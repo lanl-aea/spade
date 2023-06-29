@@ -41,9 +41,9 @@ def return_abaqus_code_paths(abaqus_program, estproducts_directory="EstProducts"
         abaqus_estproducts = None
 
     try:
-        abaqus_code_path = next(path for path in abaqus_paths if path.name == search_directory)
+        abaqus_code_path = next(path for path in abaqus_paths if path.name == code_directory)
     except StopIteration as err:
-        print(f"Could not find Abaqus '{search_directory}' directory", file=sys.stderr)
+        print(f"Could not find Abaqus '{code_directory}' directory", file=sys.stderr)
         abaqus_code_bin = None
         abaqus_code_include = None
     else:

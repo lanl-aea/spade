@@ -37,8 +37,14 @@ odb_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE ", 
 	    f"-I{gpp_include} -I. -I{gpp_lib} -static-libstdc++"
 abaqus_link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -L{gpp_lib} -lstdc++ -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
 
-env.MergeFlags(odb_flags)
-env.MergeFlags(abaqus_link_flags)
+# Write build abaqus environment file
+compile_cpp = f"{env['CXX']} {odb_flags}"
+# TODO: decide how to handle object files. Prefer to grab them from Task target list(s).
+link_exe = f"{env['CXX']} {abaqus_link_flags}"
+env.Substfile(
+    "abaqus_v6.env.in",
+    SUBST_DICT={"@compile_cpp@": compile_cpp, "@link_exe@": link_exe}
+)
 
 # Set project meta variables
 project_name = "odb_extract"
