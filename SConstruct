@@ -24,7 +24,7 @@ abaqus_paths = [
      "abq2023"
 ]
 env["abaqus"] = env.Detect(abaqus_paths)
-abaqus_estproducts, abaqus_code_bin, abaqus_code_include = utilities.return_abaqus_code_paths(env["abaqus"])
+abaqus_installation, abaqus_code_bin, abaqus_code_include = utilities.return_abaqus_code_paths(env["abaqus"])
 
 odb_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE " \
 	    "-DABQ_LINUX -DABQ_LNX86_64 -DSMA_GNUC -DFOR_TRAIL -DHAS_BOOL " \
@@ -33,10 +33,17 @@ odb_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE " \
 	    "-DHAVE_OPENGL -DHKS_OPEN_GL -DGL_GLEXT_PROTOTYPES " \
 	    "-DMULTI_THREADING_ENABLED -D_REENTRANT -DABQ_MPI_SUPPORT -DBIT64 " \
 	    "-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 " \
-	    f"-I{abaqus_code_include} -I{abaqus_estproducts} " \
+	    f"-I{abaqus_code_include} -I{abaqus_installation} " \
 	    f"-I{gpp_include} -I. -I{gpp_lib} -static-libstdc++"
 abaqus_link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O " \
                     "-lhdf5 -lhdf5_cpp -L{gpp_lib} -lstdc++ -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
+
+# Build static objects
+env.MergeFlags(f"-fPIC -I{gpp_include} -I. -I{gpp_lib}")
+env.Object("cmd_line_arguments.cpp")
+env.Object("logging.cpp")
+env.Object("output_writer.cpp")
+env.Object("odb_parser.cpp")
 
 # Write build abaqus environment file
 compile_cpp = f"{env['CXX']} {odb_flags}"
