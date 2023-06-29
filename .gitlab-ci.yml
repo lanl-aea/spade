@@ -117,7 +117,7 @@ fast-test:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
     - project_root=${PWD}
-    - make
+    - scons
     - ./odb_extract -h
   tags:
     - shell-aea
