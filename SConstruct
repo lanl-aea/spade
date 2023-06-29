@@ -36,7 +36,7 @@ odb_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE " \
 	    f"-I{abaqus_code_include} -I{abaqus_installation} " \
 	    f"-I{gpp_include} -I. -I{gpp_lib} -static-libstdc++"
 abaqus_link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O " \
-                    "-lhdf5 -lhdf5_cpp -L{gpp_lib} -lstdc++ -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
+                    f"-lhdf5 -lhdf5_cpp -L{gpp_lib} -lstdc++ -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
 h5_flags = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
 
 # Build static objects
@@ -57,7 +57,7 @@ env.Command(
 
 # Write build abaqus environment file
 compile_cpp = f"{env['CXX']} {odb_flags}"
-link_exe = f"{env['CXX']} {abaqus_link_flags}"
+link_exe = f"{env['CXX']} {abaqus_link_flags} " + " ".join([target.name for target in objects])
 env.Substfile(
     "abaqus_v6.env.in",
     SUBST_DICT={"@compile_cpp@": compile_cpp, "@link_exe@": link_exe}
