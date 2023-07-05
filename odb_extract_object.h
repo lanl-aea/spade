@@ -114,7 +114,7 @@ class OdbExtractObject {
         string analysisTitle;
         string description;
         string path;
-        string isReadOnly;
+        bool isReadOnly;
         job_data_type job_data;
         vector<part> parts;
         /*

@@ -129,43 +129,21 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     const H5std_string FILE_NAME(command_line_arguments["output-file"]);
     H5File file(FILE_NAME, H5F_ACC_TRUNC);
 
-//        hid_t fileId = file.getId();
-//        Group fileGroup = H5Gopen(fileId, SLASH_GROUP.c_str(), H5P_DEFAULT);
-//        Group unstructuredMeshGroup = H5Gopen(fileGroup.getId(), TOP_LEVEL_GROUP.c_str(), H5P_DEFAULT);
-
 //    H5::Group odb_group = file.createGroup(string("/odb").c_str());
     log_file.logDebug("Creating odb group for meta-data " + command_line_arguments["output-file"] + "\n");
     create_top_level_groups(file, log_file);
-//    string job_data_group_name = "/odb/jobData";
 
-    H5::StrType str_type(0, H5T_VARIABLE);
-    H5::DataSpace att_space(H5S_SCALAR);
+//    string job_data_group_name = "/odb/jobData";
 //    job_data_type job_data = this->job_data;
 
-    write_string_dataset(this->odb_group, "name", this->name);
+//    write_string_dataset(this->odb_group, "name", this->name);
+    log_file.logVerbose("Writing top level attributes to odb group.\n");
     write_attribute(this->odb_group, "name", this->name);
-
-    H5::Attribute analysisTitle_attribute = this->odb_group.createAttribute( "analysisTitle", str_type, att_space ); analysisTitle_attribute.write( str_type, this->analysisTitle );
-    H5::Attribute description_attribute = this->odb_group.createAttribute( "description", str_type, att_space ); description_attribute.write( str_type, this->description );
-    H5::Attribute path_attribute = this->odb_group.createAttribute( "path", str_type, att_space ); path_attribute.write( str_type, this->path );
-//    std::stringstream bool_stream; bool_stream << std::boolalpha << odb_info["isReadOnly"]; string bool_string = bool_stream.str();
-//    cout << bool_string << endl;
-//    H5::Attribute isReadOnly_attribute = info_group.createAttribute( "isReadOnly", str_type, att_space ); isReadOnly_attribute.write( str_type, bool_string );
-
-    /*
-    H5::Exception::dontPrint();                             // suppress error messages
-    string odb_group_name = "/test";
-    try         {
-      H5::Group group = file.openGroup  (group_name.c_str());
-      std::cerr<<" TEST: opened group\n";                   // for debugging
-    } catch (...) {
-      std::cerr<<" TEST: caught something\n";               // for debugging
-      H5::Group group = file.createGroup(group_name.c_str());
-      std::cerr<<" TEST: created group\n";                  // for debugging
-    }
-    H5::Group group = file.openGroup  (group_name.c_str()); // for debugging
-    std::cerr<<" TEST: opened group\n";                     // for debugging
-    */
+    write_attribute(this->odb_group, "analysisTitle", this->analysisTitle);
+    write_attribute(this->odb_group, "description", this->description);
+    write_attribute(this->odb_group, "path", this->path);
+    stringstream bool_stream; bool_stream << std::boolalpha << this->isReadOnly; string bool_string = bool_stream.str();
+    write_attribute(this->odb_group, "isReadOnly", bool_string);
 
     file.close();  // Close the hdf5 file
 }
@@ -175,7 +153,7 @@ void OdbExtractObject::write_attribute(const H5::Group& group, const std::string
     H5::StrType string_type (0, string_value.size());  // Actual length of the passed in string
     H5::DataSpace attribute_space(H5S_SCALAR);
     H5::Attribute attribute = group.createAttribute(attribute_name, string_type, attribute_space);
-    attribute.write(string_type, this->name);
+    attribute.write(string_type, string_value);
 }
 
 void OdbExtractObject::write_string_dataset(const H5::Group& group, const std::string & dataset_name, const std::string & string_value) {
