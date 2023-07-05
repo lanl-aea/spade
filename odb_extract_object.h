@@ -84,6 +84,22 @@ class OdbExtractObject {
           \sa OdbExtractObject()
         */
         void write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file);
+        //! Write a string as an attribute
+        /*!
+          Create an attribute with a string using the passed-in values
+          \param group name of HDF5 group in which to write the new attribute
+          \param attribute_name Name of the new attribute where a string is to be written
+          \param string_value The string that should be written in the new attribute
+        */
+        void write_attribute(const H5::Group& group, const std::string & attribute_name, const std::string & string_value);
+        //! Write a string as a dataset
+        /*!
+          Create a dataset with a single string using the passed-in values
+          \param group name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where a string is to be written
+          \param string_value The string that should be written in the new dataset
+        */
+        void write_string_dataset(const H5::Group& group, const std::string & dataset_name, const std::string & string_value);
         //! Write Top level groups in hdf5 file
         /*!
           Create all top level data members of the odb inside of the hdf5 file

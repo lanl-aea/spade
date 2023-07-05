@@ -138,14 +138,13 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     create_top_level_groups(file, log_file);
 //    string job_data_group_name = "/odb/jobData";
 
-    StrType str_type(0, H5T_VARIABLE);
-    DataSpace att_space(H5S_SCALAR);
-    DataSpace str_space(H5S_SCALAR);
+    H5::StrType str_type(0, H5T_VARIABLE);
+    H5::DataSpace att_space(H5S_SCALAR);
 //    job_data_type job_data = this->job_data;
 
-    H5::DataSet name_ds = this->odb_group.createDataSet( "name", str_type, str_space ); name_ds.write( this->name, str_type );
+    write_string_dataset(this->odb_group, "name", this->name);
+    write_attribute(this->odb_group, "name", this->name);
 
-    H5::Attribute name_attribute = this->odb_group.createAttribute( "name", str_type, att_space ); name_attribute.write( str_type, this->name );
     H5::Attribute analysisTitle_attribute = this->odb_group.createAttribute( "analysisTitle", str_type, att_space ); analysisTitle_attribute.write( str_type, this->analysisTitle );
     H5::Attribute description_attribute = this->odb_group.createAttribute( "description", str_type, att_space ); description_attribute.write( str_type, this->description );
     H5::Attribute path_attribute = this->odb_group.createAttribute( "path", str_type, att_space ); path_attribute.write( str_type, this->path );
@@ -169,6 +168,22 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     */
 
     file.close();  // Close the hdf5 file
+}
+
+void OdbExtractObject::write_attribute(const H5::Group& group, const std::string & attribute_name, const std::string & string_value) {
+//    H5::StrType str_type(0, H5T_VARIABLE);
+    H5::StrType string_type (0, string_value.size());  // Actual length of the passed in string
+    H5::DataSpace attribute_space(H5S_SCALAR);
+    H5::Attribute attribute = group.createAttribute(attribute_name, string_type, attribute_space);
+    attribute.write(string_type, this->name);
+}
+
+void OdbExtractObject::write_string_dataset(const H5::Group& group, const std::string & dataset_name, const std::string & string_value) {
+    hsize_t dimensions[] = {1};
+    H5::DataSpace dataspace(1, dimensions);  // Just one string
+    H5::StrType string_type (0, string_value.size());  // Actual length of the passed in string
+    H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
+    dataset.write(&string_value[0], string_type);
 }
 
 void OdbExtractObject::create_top_level_groups (H5File &h5_file, Logging &log_file) {
