@@ -91,7 +91,7 @@ class OdbExtractObject {
           \param attribute_name Name of the new attribute where a string is to be written
           \param string_value The string that should be written in the new attribute
         */
-        void write_attribute(const H5::Group& group, const std::string & attribute_name, const std::string & string_value);
+        void write_attribute(const H5::Group& group, const string & attribute_name, const string & string_value);
         //! Write a string as a dataset
         /*!
           Create a dataset with a single string using the passed-in values
@@ -99,7 +99,15 @@ class OdbExtractObject {
           \param dataset_name Name of the new dataset where a string is to be written
           \param string_value The string that should be written in the new dataset
         */
-        void write_string_dataset(const H5::Group& group, const std::string & dataset_name, const std::string & string_value);
+        void write_string_dataset(const H5::Group& group, const string & dataset_name, const string & string_value);
+        //! Write a vector of strings as a dataset
+        /*!
+          Create a dataset with a vector of strings using the passed-in values
+          \param group name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where a string is to be written
+          \param string_values The vector of strings that should be written in the new dataset
+        */
+        void write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values);
         //! Write Top level groups in hdf5 file
         /*!
           Create all top level data members of the odb inside of the hdf5 file

@@ -85,19 +85,24 @@ OdbExtractObject::OdbExtractObject (CmdLineArguments &command_line_arguments, Lo
 
 void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
 
+    log_file.logVerbose("Reading top level attributes of odb.\n");
     this->name = odb.name().CStr();
     this->analysisTitle = odb.analysisTitle().CStr();
     this->description = odb.description().CStr();
     this->path = odb.path().CStr();
     this->isReadOnly = odb.isReadOnly();
 
+    log_file.logVerbose("Reading odb jobData.\n");
     odb_JobData jobData = odb.jobData();
-    this->job_data.analysisCode = jobData.analysisCode();
+    static const char * analysis_code_enum_strings[] = { "Abaqus Standard", "Abaqus Explicit", "Unknown Analysis Code" };
+    this->job_data.analysisCode = analysis_code_enum_strings[jobData.analysisCode()];
     this->job_data.creationTime = jobData.creationTime().CStr();
     this->job_data.machineName = jobData.machineName().CStr();
     this->job_data.modificationTime = jobData.modificationTime().CStr();
     this->job_data.name = jobData.name().CStr();
-    this->job_data.precision = jobData.precision();
+    static const char * precision_enum_strings[] = { "Double Precision", "Single Precision" };
+    this->job_data.precision = precision_enum_strings[jobData.precision()];
+
     odb_SequenceProductAddOn add_ons = jobData.productAddOns();
     static const char * add_on_enum_strings[] = { "aqua", "design", "biorid", "cel", "soliter", "cavparallel" };
     // Values gotten from: https://help.3ds.com/2023/English/DSSIMULIA_Established/SIMACAEKERRefMap/simaker-c-jobdatacpp.htm?contextscope=all
@@ -145,24 +150,46 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     stringstream bool_stream; bool_stream << std::boolalpha << this->isReadOnly; string bool_string = bool_stream.str();
     write_attribute(this->odb_group, "isReadOnly", bool_string);
 
+    log_file.logVerbose("Writing odb jobData.\n");
+    write_attribute(this->job_data_group, "analysisCode", this->job_data.analysisCode);
+    write_attribute(this->job_data_group, "creationTime", this->job_data.creationTime);
+    write_attribute(this->job_data_group, "machineName", this->job_data.machineName);
+    write_attribute(this->job_data_group, "modificationTime", this->job_data.modificationTime);
+    write_attribute(this->job_data_group, "name", this->job_data.name);
+    write_attribute(this->job_data_group, "precision", this->job_data.precision);
+    write_vector_string_dataset(this->job_data_group, "productAddOns", this->job_data.productAddOns);
+    write_attribute(this->job_data_group, "version", this->job_data.version);
+
+
     file.close();  // Close the hdf5 file
 }
 
-void OdbExtractObject::write_attribute(const H5::Group& group, const std::string & attribute_name, const std::string & string_value) {
-//    H5::StrType str_type(0, H5T_VARIABLE);
-    H5::StrType string_type (0, string_value.size());  // Actual length of the passed in string
-    H5::DataSpace attribute_space(H5S_SCALAR);
-    H5::Attribute attribute = group.createAttribute(attribute_name, string_type, attribute_space);
-    attribute.write(string_type, string_value);
+void OdbExtractObject::write_attribute(const H5::Group& group, const string & attribute_name, const string & string_value) {
+    if (!string_value.empty()) {
+        H5::StrType string_type (0, string_value.size());  // Actual length of the passed in string
+        H5::DataSpace attribute_space(H5S_SCALAR);
+        H5::Attribute attribute = group.createAttribute(attribute_name, string_type, attribute_space);
+        attribute.write(string_type, string_value);
+    }
 }
 
-void OdbExtractObject::write_string_dataset(const H5::Group& group, const std::string & dataset_name, const std::string & string_value) {
+void OdbExtractObject::write_string_dataset(const H5::Group& group, const string & dataset_name, const string & string_value) {
     hsize_t dimensions[] = {1};
     H5::DataSpace dataspace(1, dimensions);  // Just one string
-    H5::StrType string_type (0, string_value.size());  // Actual length of the passed in string
+    H5::StrType string_type (0, string_value.size());
     H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
     dataset.write(&string_value[0], string_type);
 }
+
+void OdbExtractObject::write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values) {
+//    hsize_t dimensions[] = {1};
+    hsize_t dimensions[1] = {hsize_t(string_values.size())};
+    H5::DataSpace dataspace(1, dimensions);  // Create a space for as many strings as are in the vector
+    H5::StrType string_type(0, H5T_VARIABLE);
+    H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
+    dataset.write(string_values.data(), string_type);
+}
+
 
 void OdbExtractObject::create_top_level_groups (H5File &h5_file, Logging &log_file) {
 //    for(const string &group : groups)
