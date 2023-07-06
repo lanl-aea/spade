@@ -139,7 +139,7 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
         for (int i=0; i<section_point_size; i++) {
             odb_SectionPoint section_point = section_category.sectionPoints(i);
             section_point_type point;
-            point.number = section_point.number();
+            point.number = to_string(section_point.number());
             point.description = section_point.description().CStr();
             category.sectionPoints.push_back(point);
         }
@@ -202,6 +202,16 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
 
     log_file.logVerbose("Writing odb section categories.\n");
     H5::Group section_categories_group = h5_file.createGroup(string("/odb/sectionCategories").c_str());
+    for (int i=0; i<this->section_categories.size(); i++) {
+        string category_group_name = "/odb/sectionCategories/" + this->section_categories[i].name;
+        H5::Group section_category_group = h5_file.createGroup(category_group_name.c_str());
+        write_string_dataset(section_category_group, "description", this->section_categories[i].description);
+        for (int j=0; j<this->section_categories[i].sectionPoints.size(); j++) {
+            string point_group_name = "/odb/sectionCategories/" + this->section_categories[i].name + "/" + this->section_categories[i].sectionPoints[j].number;
+            H5::Group section_point_group = h5_file.createGroup(point_group_name.c_str());
+            write_string_dataset(section_category_group, "description", this->section_categories[i].sectionPoints[j].description);
+        }
+    }
 
     this->contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
     this->interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());

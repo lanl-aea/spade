@@ -33,7 +33,7 @@ struct sector_definition_type {
 };
 
 struct section_point_type {
-    int number;
+    string number;
     string description;
 };
 
