@@ -94,13 +94,13 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
 
     log_file.logVerbose("Reading odb jobData.\n");
     odb_JobData jobData = odb.jobData();
-    static const char * analysis_code_enum_strings[] = { "Abaqus Standard", "Abaqus Explicit", "Unknown Analysis Code" };
+    static const char * analysis_code_enum_strings[] = { "Abaqus Explicit", "Abaqus Standard", "Unknown Analysis Code" };
     this->job_data.analysisCode = analysis_code_enum_strings[jobData.analysisCode()];
     this->job_data.creationTime = jobData.creationTime().CStr();
     this->job_data.machineName = jobData.machineName().CStr();
     this->job_data.modificationTime = jobData.modificationTime().CStr();
     this->job_data.name = jobData.name().CStr();
-    static const char * precision_enum_strings[] = { "Double Precision", "Single Precision" };
+    static const char * precision_enum_strings[] = { "Single Precision", "Double Precision" };
     this->job_data.precision = precision_enum_strings[jobData.precision()];
 
     odb_SequenceProductAddOn add_ons = jobData.productAddOns();
@@ -138,9 +138,6 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     log_file.logDebug("Creating odb group for meta-data " + command_line_arguments["output-file"] + "\n");
     create_top_level_groups(file, log_file);
 
-//    string job_data_group_name = "/odb/jobData";
-//    job_data_type job_data = this->job_data;
-
 //    write_string_dataset(this->odb_group, "name", this->name);
     log_file.logVerbose("Writing top level attributes to odb group.\n");
     write_attribute(this->odb_group, "name", this->name);
@@ -160,32 +157,38 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     write_vector_string_dataset(this->job_data_group, "productAddOns", this->job_data.productAddOns);
     write_attribute(this->job_data_group, "version", this->job_data.version);
 
+//    vector<string> temp_string = { "testing", "this", "vector" };
+//    std::vector<const char*> array_of_c_string = { "testing", "this", "vector" };
+
 
     file.close();  // Close the hdf5 file
 }
 
 void OdbExtractObject::write_attribute(const H5::Group& group, const string & attribute_name, const string & string_value) {
-    if (!string_value.empty()) {
-        H5::StrType string_type (0, string_value.size());  // Actual length of the passed in string
-        H5::DataSpace attribute_space(H5S_SCALAR);
-        H5::Attribute attribute = group.createAttribute(attribute_name, string_type, attribute_space);
-        attribute.write(string_type, string_value);
-    }
+    H5::DataSpace attribute_space(H5S_SCALAR);
+    int string_size = string_value.size();
+    if (string_size == 0) { string_size++; }  // If the string is empty, make the string size equal to one, as StrType must have a positive size
+    H5::StrType string_type (0, string_size);  // Use the length of the string or 1 if string is blank
+    H5::Attribute attribute = group.createAttribute(attribute_name, string_type, attribute_space);
+    attribute.write(string_type, string_value);
 }
 
 void OdbExtractObject::write_string_dataset(const H5::Group& group, const string & dataset_name, const string & string_value) {
     hsize_t dimensions[] = {1};
     H5::DataSpace dataspace(1, dimensions);  // Just one string
-    H5::StrType string_type (0, string_value.size());
+    int string_size = string_value.size();
+    if (string_size == 0) { string_size++; }  // If the string is empty, make the string size equal to one, as StrType must have a positive size
+    H5::StrType string_type (0, string_size);
     H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
     dataset.write(&string_value[0], string_type);
 }
 
-void OdbExtractObject::write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values) {
+void OdbExtractObject::write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<const char*> & string_values) {
 //    hsize_t dimensions[] = {1};
     hsize_t dimensions[1] = {hsize_t(string_values.size())};
     H5::DataSpace dataspace(1, dimensions);  // Create a space for as many strings as are in the vector
-    H5::StrType string_type(0, H5T_VARIABLE);
+//    H5::StrType string_type(0, H5T_VARIABLE);
+    H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE);
     H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
     dataset.write(string_values.data(), string_type);
 }

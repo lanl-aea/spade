@@ -25,7 +25,7 @@ struct job_data_type {
     string modificationTime;
     string name;
     string precision;
-    vector<string> productAddOns;
+    vector<const char*> productAddOns;
     string version;
 };
 
@@ -107,7 +107,8 @@ class OdbExtractObject {
           \param dataset_name Name of the new dataset where a string is to be written
           \param string_values The vector of strings that should be written in the new dataset
         */
-        void write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values);
+//        void write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values);
+        void write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<const char*> & string_values);
         //! Write Top level groups in hdf5 file
         /*!
           Create all top level data members of the odb inside of the hdf5 file
