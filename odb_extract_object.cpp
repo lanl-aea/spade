@@ -128,6 +128,7 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
         this->sector_definition.end_point  = "";
     }
 
+    log_file.logVerbose("Reading odb section category data.\n");
     odb_SectionCategoryRepositoryIT section_category_iter(odb.sectionCategories());
     for (section_category_iter.first(); !section_category_iter.isDone(); section_category_iter.next()) {
         odb_SectionCategory section_category = section_category_iter.currentValue();
@@ -173,36 +174,39 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
 
 //    write_string_dataset(this->odb_group, "name", this->name);
     log_file.logVerbose("Writing top level attributes to odb group.\n");
-    this->odb_group = h5_file.createGroup(string("/odb").c_str());
-    write_attribute(this->odb_group, "name", this->name);
-    write_attribute(this->odb_group, "analysisTitle", this->analysisTitle);
-    write_attribute(this->odb_group, "description", this->description);
-    write_attribute(this->odb_group, "path", this->path);
+    H5::Group odb_group = h5_file.createGroup(string("/odb").c_str());
+    write_attribute(odb_group, "name", this->name);
+    write_attribute(odb_group, "analysisTitle", this->analysisTitle);
+    write_attribute(odb_group, "description", this->description);
+    write_attribute(odb_group, "path", this->path);
     stringstream bool_stream; bool_stream << std::boolalpha << this->isReadOnly; string bool_string = bool_stream.str();
-    write_attribute(this->odb_group, "isReadOnly", bool_string);
+    write_attribute(odb_group, "isReadOnly", bool_string);
 
     log_file.logVerbose("Writing odb jobData.\n");
-    this->job_data_group = h5_file.createGroup(string("/odb/jobData").c_str());
-    write_attribute(this->job_data_group, "analysisCode", this->job_data.analysisCode);
-    write_attribute(this->job_data_group, "creationTime", this->job_data.creationTime);
-    write_attribute(this->job_data_group, "machineName", this->job_data.machineName);
-    write_attribute(this->job_data_group, "modificationTime", this->job_data.modificationTime);
-    write_attribute(this->job_data_group, "name", this->job_data.name);
-    write_attribute(this->job_data_group, "precision", this->job_data.precision);
-    write_vector_string_dataset(this->job_data_group, "productAddOns", this->job_data.productAddOns);
-    write_attribute(this->job_data_group, "version", this->job_data.version);
+    H5::Group job_data_group = h5_file.createGroup(string("/odb/jobData").c_str());
+    write_attribute(job_data_group, "analysisCode", this->job_data.analysisCode);
+    write_attribute(job_data_group, "creationTime", this->job_data.creationTime);
+    write_attribute(job_data_group, "machineName", this->job_data.machineName);
+    write_attribute(job_data_group, "modificationTime", this->job_data.modificationTime);
+    write_attribute(job_data_group, "name", this->job_data.name);
+    write_attribute(job_data_group, "precision", this->job_data.precision);
+    write_vector_string_dataset(job_data_group, "productAddOns", this->job_data.productAddOns);
+    write_attribute(job_data_group, "version", this->job_data.version);
 
-    this->sector_definition_group = h5_file.createGroup(string("/odb/sectorDefinition").c_str());
-    write_integer_dataset(this->sector_definition_group, "numSectors", this->sector_definition.numSectors);
+    log_file.logVerbose("Writing odb sector definition.\n");
+    H5::Group sector_definition_group = h5_file.createGroup(string("/odb/sectorDefinition").c_str());
+    write_integer_dataset(sector_definition_group, "numSectors", this->sector_definition.numSectors);
     H5::Group symmetry_axis_group = h5_file.createGroup(string("/odb/sectorDefinition/symmetryAxis").c_str());
     write_string_dataset(symmetry_axis_group, "StartPoint", this->sector_definition.start_point);
     write_string_dataset(symmetry_axis_group, "EndPoint", this->sector_definition.end_point);
+
+    log_file.logVerbose("Writing odb section categories.\n");
+    H5::Group section_categories_group = h5_file.createGroup(string("/odb/sectionCategories").c_str());
 
     this->contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
     this->interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
     this->parts_group = h5_file.createGroup(string("/odb/parts").c_str());
     this->root_assembly_group = h5_file.createGroup(string("/odb/rootAssembly").c_str());
-    this->section_categories_group = h5_file.createGroup(string("/odb/sectionCategories").c_str());
     this->steps_group = h5_file.createGroup(string("/odb/steps").c_str());
     this->user_data_group = h5_file.createGroup(string("/odb/userData").c_str());
 

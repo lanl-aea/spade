@@ -149,18 +149,14 @@ class OdbExtractObject {
         */
         user_data_type user_data;
 
-        H5::Group odb_group;
         // TODO: potentially add amplitudes group
         H5::Group contraints_group;
         // TODO: potentially add filters group
         H5::Group interactions_group;
-        H5::Group job_data_group;
         // TODO: potentially add materials group
         H5::Group parts_group;
         H5::Group root_assembly_group;
-        H5::Group section_categories_group;
         // TODO: add conditional to check that odb_parser has sector definition before adding the group
-        H5::Group sector_definition_group;
         H5::Group steps_group;
         H5::Group user_data_group;
 };
