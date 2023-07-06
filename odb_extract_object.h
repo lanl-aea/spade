@@ -15,9 +15,6 @@ using namespace H5;
 
 using namespace std;
 
-struct root_assembly {
-};
-
 struct job_data_type {
     string analysisCode;
     string creationTime;
@@ -29,11 +26,20 @@ struct job_data_type {
     string version;
 };
 
+struct sector_definition_type {
+    int numSectors;
+    float start_point[3];
+    float end_point[3];
+};
+
 struct user_data_type {
   string name;
 };
 struct part {
   string name;
+};
+
+struct root_assembly {
 };
 
 /*!
@@ -109,14 +115,6 @@ class OdbExtractObject {
         */
 //        void write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values);
         void write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<const char*> & string_values);
-        //! Write Top level groups in hdf5 file
-        /*!
-          Create all top level data members of the odb inside of the hdf5 file
-          \param h5_file HDF5 file in which to create gtop level groups
-          \param log_file Logging object for writing log messages
-          \sa write_h5()
-        */
-        void create_top_level_groups (H5File &h5_file, Logging &log_file);
 
     private:
         string name;
@@ -126,6 +124,7 @@ class OdbExtractObject {
         bool isReadOnly;
         job_data_type job_data;
         vector<part> parts;
+        sector_definition_type sector_definition;
         /*
         odb_Assembly& rootAssembly;
         odb_PartRepository& parts;

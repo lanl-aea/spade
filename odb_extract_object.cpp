@@ -102,7 +102,6 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
     this->job_data.name = jobData.name().CStr();
     static const char * precision_enum_strings[] = { "Single Precision", "Double Precision" };
     this->job_data.precision = precision_enum_strings[jobData.precision()];
-
     odb_SequenceProductAddOn add_ons = jobData.productAddOns();
     static const char * add_on_enum_strings[] = { "aqua", "design", "biorid", "cel", "soliter", "cavparallel" };
     // Values gotten from: https://help.3ds.com/2023/English/DSSIMULIA_Established/SIMACAEKERRefMap/simaker-c-jobdatacpp.htm?contextscope=all
@@ -110,6 +109,20 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
         this->job_data.productAddOns.push_back(add_on_enum_strings[add_ons.constGet(i)]);
     }
     this->job_data.version = jobData.version().CStr();
+
+    if (odb.hasSectorDefinition())
+    {
+        log_file.logVerbose("Reading odb sector definition.\n");
+	    odb_SectorDefinition sd = odb.sectorDefinition();
+        this->sector_definition.numSectors = sd.numSectors();
+	    odb_SequenceSequenceFloat symAx = sd.symmetryAxis();
+        this->sector_definition.start_point[0] = symAx[0][0];
+        this->sector_definition.start_point[1] = symAx[0][1];
+        this->sector_definition.start_point[2] = symAx[0][2];
+        this->sector_definition.end_point[0] = symAx[1][0];
+        this->sector_definition.end_point[1] = symAx[1][1];
+        this->sector_definition.end_point[2] = symAx[1][2];
+    }
 
     odb_PartRepository& parts = odb.parts();
     odb_PartRepositoryIT iter(parts);    
@@ -132,14 +145,14 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     std::ifstream hdf5File (command_line_arguments["output-file"].c_str());
     log_file.logDebug("Creating hdf5 file " + command_line_arguments["output-file"] + "\n");
     const H5std_string FILE_NAME(command_line_arguments["output-file"]);
-    H5File file(FILE_NAME, H5F_ACC_TRUNC);
+    H5File h5_file(FILE_NAME, H5F_ACC_TRUNC);
 
 //    H5::Group odb_group = file.createGroup(string("/odb").c_str());
     log_file.logDebug("Creating odb group for meta-data " + command_line_arguments["output-file"] + "\n");
-    create_top_level_groups(file, log_file);
 
 //    write_string_dataset(this->odb_group, "name", this->name);
     log_file.logVerbose("Writing top level attributes to odb group.\n");
+    this->odb_group = h5_file.createGroup(string("/odb").c_str());
     write_attribute(this->odb_group, "name", this->name);
     write_attribute(this->odb_group, "analysisTitle", this->analysisTitle);
     write_attribute(this->odb_group, "description", this->description);
@@ -148,6 +161,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     write_attribute(this->odb_group, "isReadOnly", bool_string);
 
     log_file.logVerbose("Writing odb jobData.\n");
+    this->job_data_group = h5_file.createGroup(string("/odb/jobData").c_str());
     write_attribute(this->job_data_group, "analysisCode", this->job_data.analysisCode);
     write_attribute(this->job_data_group, "creationTime", this->job_data.creationTime);
     write_attribute(this->job_data_group, "machineName", this->job_data.machineName);
@@ -157,11 +171,32 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     write_vector_string_dataset(this->job_data_group, "productAddOns", this->job_data.productAddOns);
     write_attribute(this->job_data_group, "version", this->job_data.version);
 
+    this->sector_definition_group = h5_file.createGroup(string("/odb/sectorDefinition").c_str());
+    if (this->sector_definition.numSectors > 0) {
+        /*
+        write_string_dataset(this->sector_definition_group, "numSectors", this->sector_definition.numSectors);
+        H5::Group symmetry_axis_group = h5_file.createGroup(string("/odb/sectorDefinition/symmetryAxis").c_str());
+        write_string_dataset(this->sector_definition_group, "numSectors", this->sector_definition.numSectors);
+        */
+    }
+
+    this->contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
+    this->interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
+    this->parts_group = h5_file.createGroup(string("/odb/parts").c_str());
+    this->root_assembly_group = h5_file.createGroup(string("/odb/rootAssembly").c_str());
+    this->section_categories_group = h5_file.createGroup(string("/odb/sectionCategories").c_str());
+    this->steps_group = h5_file.createGroup(string("/odb/steps").c_str());
+    this->user_data_group = h5_file.createGroup(string("/odb/userData").c_str());
+
 //    vector<string> temp_string = { "testing", "this", "vector" };
 //    std::vector<const char*> array_of_c_string = { "testing", "this", "vector" };
+//    for(const string &group : groups)
 
+    // TODO: potentially add amplitudes group
+    // TODO: potentially add filters group
+    // TODO: potentially add materials group
 
-    file.close();  // Close the hdf5 file
+    h5_file.close();  // Close the hdf5 file
 }
 
 void OdbExtractObject::write_attribute(const H5::Group& group, const string & attribute_name, const string & string_value) {
@@ -193,24 +228,6 @@ void OdbExtractObject::write_vector_string_dataset(const H5::Group& group, const
     dataset.write(string_values.data(), string_type);
 }
 
-
-void OdbExtractObject::create_top_level_groups (H5File &h5_file, Logging &log_file) {
-//    for(const string &group : groups)
-    this->odb_group = h5_file.createGroup(string("/odb").c_str());
-    // TODO: potentially add amplitudes group
-    this->contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
-    // TODO: potentially add filters group
-    this->interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
-    this->job_data_group = h5_file.createGroup(string("/odb/jobData").c_str());
-    // TODO: potentially add materials group
-    this->parts_group = h5_file.createGroup(string("/odb/parts").c_str());
-    this->root_assembly_group = h5_file.createGroup(string("/odb/rootAssembly").c_str());
-    this->section_categories_group = h5_file.createGroup(string("/odb/sectionCategories").c_str());
-    // TODO: add conditional to check that odb has sector definition before adding the group
-    this->sector_definition_group = h5_file.createGroup(string("/odb/sectorDefinition").c_str());
-    this->steps_group = h5_file.createGroup(string("/odb/steps").c_str());
-    this->user_data_group = h5_file.createGroup(string("/odb/userData").c_str());
-}
 
 void OdbExtractObject::write_yaml (CmdLineArguments &command_line_arguments, Logging &log_file) {
 }
