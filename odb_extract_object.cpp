@@ -116,12 +116,16 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
 	    odb_SectorDefinition sd = odb.sectorDefinition();
         this->sector_definition.numSectors = sd.numSectors();
 	    odb_SequenceSequenceFloat symAx = sd.symmetryAxis();
-        this->sector_definition.start_point[0] = symAx[0][0];
-        this->sector_definition.start_point[1] = symAx[0][1];
-        this->sector_definition.start_point[2] = symAx[0][2];
-        this->sector_definition.end_point[0] = symAx[1][0];
-        this->sector_definition.end_point[1] = symAx[1][1];
-        this->sector_definition.end_point[2] = symAx[1][2];
+        std::ostringstream ss;
+	    ss << "[" << symAx[0][0]<<","<<symAx[0][1]<<","<<symAx[0][2]<<"]";
+        this->sector_definition.start_point  = ss.str();
+        ss.str(""); ss.clear();  // First line clears the ostringstream, second line clears any error flags
+	    ss <<"[" << symAx[1][0]<<","<<symAx[1][1]<<","<<symAx[1][2]<<"]";
+        this->sector_definition.end_point  = ss.str();
+    } else {
+        this->sector_definition.numSectors = 0;
+        this->sector_definition.start_point  = "";
+        this->sector_definition.end_point  = "";
     }
 
     odb_PartRepository& parts = odb.parts();
@@ -172,13 +176,10 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     write_attribute(this->job_data_group, "version", this->job_data.version);
 
     this->sector_definition_group = h5_file.createGroup(string("/odb/sectorDefinition").c_str());
-    if (this->sector_definition.numSectors > 0) {
-        /*
-        write_string_dataset(this->sector_definition_group, "numSectors", this->sector_definition.numSectors);
-        H5::Group symmetry_axis_group = h5_file.createGroup(string("/odb/sectorDefinition/symmetryAxis").c_str());
-        write_string_dataset(this->sector_definition_group, "numSectors", this->sector_definition.numSectors);
-        */
-    }
+    write_integer_dataset(this->sector_definition_group, "numSectors", this->sector_definition.numSectors);
+    H5::Group symmetry_axis_group = h5_file.createGroup(string("/odb/sectorDefinition/symmetryAxis").c_str());
+    write_string_dataset(symmetry_axis_group, "StartPoint", this->sector_definition.start_point);
+    write_string_dataset(symmetry_axis_group, "EndPoint", this->sector_definition.end_point);
 
     this->contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
     this->interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
@@ -206,6 +207,7 @@ void OdbExtractObject::write_attribute(const H5::Group& group, const string & at
     H5::StrType string_type (0, string_size);  // Use the length of the string or 1 if string is blank
     H5::Attribute attribute = group.createAttribute(attribute_name, string_type, attribute_space);
     attribute.write(string_type, string_value);
+    attribute_space.close();
 }
 
 void OdbExtractObject::write_string_dataset(const H5::Group& group, const string & dataset_name, const string & string_value) {
@@ -216,6 +218,7 @@ void OdbExtractObject::write_string_dataset(const H5::Group& group, const string
     H5::StrType string_type (0, string_size);
     H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
     dataset.write(&string_value[0], string_type);
+    dataspace.close();
 }
 
 void OdbExtractObject::write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<const char*> & string_values) {
@@ -226,6 +229,18 @@ void OdbExtractObject::write_vector_string_dataset(const H5::Group& group, const
     H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE);
     H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
     dataset.write(string_values.data(), string_type);
+    dataspace.close();
+}
+
+void OdbExtractObject::write_integer_dataset(const H5::Group& group, const string & dataset_name, const int & int_value) {
+    hsize_t dimensions[] = {1};
+    H5::DataSpace dataspace(1, dimensions);  // Just one integer
+//    int integer_size = integer_value.size();
+//    if (integer_size == 0) { integer_size++; }  // If the integer is empty, make the integer size equal to one, as StrType must have a positive size
+//    H5::IntType integer_type (0, integer_size);
+    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::STD_I32BE, dataspace);
+    dataset.write(&int_value, H5::PredType::NATIVE_INT);
+    dataspace.close();
 }
 
 

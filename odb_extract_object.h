@@ -28,8 +28,10 @@ struct job_data_type {
 
 struct sector_definition_type {
     int numSectors;
-    float start_point[3];
-    float end_point[3];
+    string start_point;
+    string end_point;
+//    float start_point[3];
+//    float end_point[3];
 };
 
 struct user_data_type {
@@ -115,6 +117,7 @@ class OdbExtractObject {
         */
 //        void write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values);
         void write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<const char*> & string_values);
+        void write_integer_dataset(const H5::Group& group, const string & dataset_name, const int & int_value);
 
     private:
         string name;
