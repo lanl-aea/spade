@@ -128,11 +128,28 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
         this->sector_definition.end_point  = "";
     }
 
+    odb_SectionCategoryRepositoryIT section_category_iter(odb.sectionCategories());
+    for (section_category_iter.first(); !section_category_iter.isDone(); section_category_iter.next()) {
+        odb_SectionCategory section_category = section_category_iter.currentValue();
+        section_category_type category;
+        category.name = section_category.name().CStr();
+        category.description = section_category.description().CStr();
+        int section_point_size = section_category.sectionPoints().size();
+        for (int i=0; i<section_point_size; i++) {
+            odb_SectionPoint section_point = section_category.sectionPoints(i);
+            section_point_type point;
+            point.number = section_point.number();
+            point.description = section_point.description().CStr();
+            category.sectionPoints.push_back(point);
+        }
+        this->section_categories.push_back(category);
+    }
+
     odb_PartRepository& parts = odb.parts();
-    odb_PartRepositoryIT iter(parts);    
-    for (iter.first(); !iter.isDone(); iter.next()) {
-        log_file.logVerbose("Starting to parse part: " + string(iter.currentKey().CStr()) + "\n");
-        odb_Part& part = parts[iter.currentKey()];
+    odb_PartRepositoryIT parts_iter(parts);    
+    for (parts_iter.first(); !parts_iter.isDone(); parts_iter.next()) {
+        log_file.logVerbose("Starting to parse part: " + string(parts_iter.currentKey().CStr()) + "\n");
+        odb_Part& part = parts[parts_iter.currentKey()];
     }
 
 

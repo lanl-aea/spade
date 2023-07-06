@@ -30,8 +30,17 @@ struct sector_definition_type {
     int numSectors;
     string start_point;
     string end_point;
-//    float start_point[3];
-//    float end_point[3];
+};
+
+struct section_point_type {
+    int number;
+    string description;
+};
+
+struct section_category_type {
+    string name;
+    string description;
+    vector<section_point_type> sectionPoints;
 };
 
 struct user_data_type {
@@ -128,6 +137,7 @@ class OdbExtractObject {
         job_data_type job_data;
         vector<part> parts;
         sector_definition_type sector_definition;
+        vector<section_category_type> section_categories;
         /*
         odb_Assembly& rootAssembly;
         odb_PartRepository& parts;
