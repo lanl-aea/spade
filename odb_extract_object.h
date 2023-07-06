@@ -43,11 +43,38 @@ struct section_category_type {
     vector<section_point_type> sectionPoints;
 };
 
-struct user_data_type {
-  string name;
+struct user_xy_data_type {
+    string name;
+    string sourceDescription;
+    string contentDescription;
+    string positionDescription;
+    string xAxisLabel;
+    string yAxisLabel;
+    string legendLabel;
+    string description;
+    vector<vector<float>> data;
 };
+
+struct quantity_type {
+    string label;
+    string type;
+};
+
+struct user_data_type {
+    string name;
+    string sourceDescription;
+    string contentDescription;
+    string positionDescription;
+    string xValuesLabel;
+    string yValuesLabel;
+    quantity_type axis1QuantityType;
+    quantity_type axis2QuantityType;
+    string legendLabel;
+    vector<user_xy_data_type> xyDataObjects;
+};
+
 struct part {
-  string name;
+    string name;
 };
 
 struct root_assembly {
@@ -138,6 +165,7 @@ class OdbExtractObject {
         vector<part> parts;
         sector_definition_type sector_definition;
         vector<section_category_type> section_categories;
+        user_data_type user_data;
         /*
         odb_Assembly& rootAssembly;
         odb_PartRepository& parts;
@@ -147,7 +175,6 @@ class OdbExtractObject {
         odb_InteractionRepository& interactions;
         odb_InteractionPropertyRepository& interactionProperties;
         */
-        user_data_type user_data;
 
         // TODO: potentially add amplitudes group
         H5::Group contraints_group;

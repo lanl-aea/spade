@@ -146,6 +146,10 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
         this->section_categories.push_back(category);
     }
 
+    log_file.logVerbose("Reading odb user data.\n");
+    odb_UserData userData = odb.userData();
+    int user_data_size = odb.userData().xyDataObjects().size();
+
     odb_PartRepository& parts = odb.parts();
     odb_PartRepositoryIT parts_iter(parts);    
     for (parts_iter.first(); !parts_iter.isDone(); parts_iter.next()) {
