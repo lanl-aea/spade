@@ -147,8 +147,20 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
     }
 
     log_file.logVerbose("Reading odb user data.\n");
-    odb_UserData userData = odb.userData();
-    int user_data_size = odb.userData().xyDataObjects().size();
+    odb_UserXYDataRepositoryIT user_xy_data_iter(odb.userData().xyDataObjects());
+    for (user_xy_data_iter.first(); !user_xy_data_iter.isDone(); user_xy_data_iter.next()) {
+        odb_UserXYData userXYData = user_xy_data_iter.currentValue();
+        user_xy_data_type user_xy_data;
+        user_xy_data.name = userXYData.name().CStr();
+        user_xy_data.sourceDescription = userXYData.sourceDescription().CStr();
+        user_xy_data.contentDescription = userXYData.contentDescription().CStr();
+        user_xy_data.positionDescription = userXYData.positionDescription().CStr();
+        user_xy_data.xAxisLabel = userXYData.xAxisLabel().CStr();
+        user_xy_data.yAxisLabel = userXYData.yAxisLabel().CStr();
+        user_xy_data.legendLabel = userXYData.legendLabel().CStr();
+        user_xy_data.description = userXYData.description().CStr();
+        this->user_xy_data.push_back(user_xy_data);
+    }
 
     odb_PartRepository& parts = odb.parts();
     odb_PartRepositoryIT parts_iter(parts);    
@@ -217,12 +229,25 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
         }
     }
 
+    log_file.logVerbose("Writing odb user data.\n");
+    H5::Group user_data_group = h5_file.createGroup(string("/odb/userData").c_str());
+    for (int i=0; i<this->user_xy_data.size(); i++) {
+        string user_xy_data_name = "/odb/userData/" + this->user_xy_data[i].name;
+        H5::Group user_xy_data_group = h5_file.createGroup(user_xy_data_name.c_str());
+        write_string_dataset(user_xy_data_group, "sourceDescription", this->user_xy_data[i].sourceDescription);
+        write_string_dataset(user_xy_data_group, "contentDescription", this->user_xy_data[i].contentDescription);
+        write_string_dataset(user_xy_data_group, "positionDescription", this->user_xy_data[i].positionDescription);
+        write_string_dataset(user_xy_data_group, "xAxisLabel", this->user_xy_data[i].xAxisLabel);
+        write_string_dataset(user_xy_data_group, "yAxisLabel", this->user_xy_data[i].yAxisLabel);
+        write_string_dataset(user_xy_data_group, "legendLabel", this->user_xy_data[i].legendLabel);
+        write_string_dataset(user_xy_data_group, "description", this->user_xy_data[i].description);
+    }
+
     this->contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
     this->interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
     this->parts_group = h5_file.createGroup(string("/odb/parts").c_str());
     this->root_assembly_group = h5_file.createGroup(string("/odb/rootAssembly").c_str());
     this->steps_group = h5_file.createGroup(string("/odb/steps").c_str());
-    this->user_data_group = h5_file.createGroup(string("/odb/userData").c_str());
 
 //    vector<string> temp_string = { "testing", "this", "vector" };
 //    std::vector<const char*> array_of_c_string = { "testing", "this", "vector" };

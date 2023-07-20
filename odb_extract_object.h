@@ -55,24 +55,6 @@ struct user_xy_data_type {
     vector<vector<float>> data;
 };
 
-struct quantity_type {
-    string label;
-    string type;
-};
-
-struct user_data_type {
-    string name;
-    string sourceDescription;
-    string contentDescription;
-    string positionDescription;
-    string xValuesLabel;
-    string yValuesLabel;
-    quantity_type axis1QuantityType;
-    quantity_type axis2QuantityType;
-    string legendLabel;
-    vector<user_xy_data_type> xyDataObjects;
-};
-
 struct part {
     string name;
 };
@@ -165,7 +147,7 @@ class OdbExtractObject {
         vector<part> parts;
         sector_definition_type sector_definition;
         vector<section_category_type> section_categories;
-        user_data_type user_data;
+        vector<user_xy_data_type> user_xy_data;
         /*
         odb_Assembly& rootAssembly;
         odb_PartRepository& parts;
@@ -185,6 +167,5 @@ class OdbExtractObject {
         H5::Group root_assembly_group;
         // TODO: add conditional to check that odb_parser has sector definition before adding the group
         H5::Group steps_group;
-        H5::Group user_data_group;
 };
 #endif  // __ODB_EXTRACT_OBJECT_H_INCLUDED__
