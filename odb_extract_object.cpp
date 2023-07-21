@@ -174,6 +174,17 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
         user_xy_data.max_column_size = column_number;
         this->user_xy_data.push_back(user_xy_data);
     }
+    user_xy_data_type user_xy_data1;
+    for (int i=0; i<5; i++) {
+        vector<float> dimension1;
+        for (int j=0; j<4; j++) {
+            dimension1.push_back(i+j);
+        }
+        user_xy_data1.data.push_back(dimension1);
+    }
+    user_xy_data1.name = "Testing";
+    user_xy_data1.max_column_size = 4;
+    this->user_xy_data.push_back(user_xy_data1);
 
     odb_PartRepository& parts = odb.parts();
     odb_PartRepositoryIT parts_iter(parts);    
@@ -254,6 +265,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
         write_string_dataset(user_xy_data_group, "yAxisLabel", this->user_xy_data[i].yAxisLabel);
         write_string_dataset(user_xy_data_group, "legendLabel", this->user_xy_data[i].legendLabel);
         write_string_dataset(user_xy_data_group, "description", this->user_xy_data[i].description);
+        write_2D_float(user_xy_data_group, "data", this->user_xy_data[i].max_column_size, this->user_xy_data[i].data);
     }
 
     this->contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
@@ -324,12 +336,13 @@ void OdbExtractObject::write_2D_float(const H5::Group& group, const string & dat
     for( int i = 0; i<data_array.size(); ++i) {
         for( int j = 0; j<data_array[i].size(); ++j) {
             float_array[i][j] = data_array[i][j];
+            cout << float_array[i][j] << endl;
         }
     }
     hsize_t dimensions[] = {data_array.size(), max_column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
-    dataset.write(float_array, H5::PredType::NATIVE_INT);
+    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
+    dataset.write(float_array, H5::PredType::NATIVE_FLOAT);
     dataset.close();
     dataspace.close();
 }
