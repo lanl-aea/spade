@@ -174,17 +174,6 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
         user_xy_data.max_column_size = column_number;
         this->user_xy_data.push_back(user_xy_data);
     }
-    user_xy_data_type user_xy_data1;
-    for (int i=0; i<5; i++) {
-        vector<float> dimension1;
-        for (int j=0; j<4; j++) {
-            dimension1.push_back(i+j);
-        }
-        user_xy_data1.data.push_back(dimension1);
-    }
-    user_xy_data1.name = "Testing";
-    user_xy_data1.max_column_size = 4;
-    this->user_xy_data.push_back(user_xy_data1);
 
     odb_PartRepository& parts = odb.parts();
     odb_PartRepositoryIT parts_iter(parts);    
