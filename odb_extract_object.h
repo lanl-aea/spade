@@ -53,6 +53,7 @@ struct user_xy_data_type {
     string legendLabel;
     string description;
     vector<vector<float>> data;
+    int max_column_size;
 };
 
 struct part {
@@ -133,9 +134,9 @@ class OdbExtractObject {
           \param dataset_name Name of the new dataset where a string is to be written
           \param string_values The vector of strings that should be written in the new dataset
         */
-//        void write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values);
         void write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<const char*> & string_values);
         void write_integer_dataset(const H5::Group& group, const string & dataset_name, const int & int_value);
+        void write_2D_float(const H5::Group& group, const string & dataset_name, int & max_column_size, vector<vector<float>> & data_array);
 
     private:
         string name;

@@ -159,6 +159,19 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
         user_xy_data.yAxisLabel = userXYData.yAxisLabel().CStr();
         user_xy_data.legendLabel = userXYData.legendLabel().CStr();
         user_xy_data.description = userXYData.description().CStr();
+        odb_SequenceSequenceFloat user_xy_data_data;
+        userXYData.getData(user_xy_data_data);
+        int column_number = 0;
+        for (int i=0; i<user_xy_data_data.size(); i++) {
+            odb_SequenceFloat user_xy_data_data_dimension1 = user_xy_data_data[i];
+            if (user_xy_data_data_dimension1.size() > column_number) { column_number = user_xy_data_data_dimension1.size(); } // use the maximum for the number of columns
+            vector<float> dimension1;
+            for (int j=0; j<user_xy_data_data_dimension1.size(); j++) {
+                dimension1.push_back(user_xy_data_data_dimension1[j]);
+            }
+            user_xy_data.data.push_back(dimension1);
+        }
+        user_xy_data.max_column_size = column_number;
         this->user_xy_data.push_back(user_xy_data);
     }
 
@@ -278,6 +291,7 @@ void OdbExtractObject::write_string_dataset(const H5::Group& group, const string
     H5::StrType string_type (0, string_size);
     H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
     dataset.write(&string_value[0], string_type);
+    dataset.close();
     dataspace.close();
 }
 
@@ -289,6 +303,7 @@ void OdbExtractObject::write_vector_string_dataset(const H5::Group& group, const
     H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE);
     H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
     dataset.write(string_values.data(), string_type);
+    dataset.close();
     dataspace.close();
 }
 
@@ -300,6 +315,22 @@ void OdbExtractObject::write_integer_dataset(const H5::Group& group, const strin
 //    H5::IntType integer_type (0, integer_size);
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::STD_I32BE, dataspace);
     dataset.write(&int_value, H5::PredType::NATIVE_INT);
+    dataset.close();
+    dataspace.close();
+}
+
+void OdbExtractObject::write_2D_float(const H5::Group& group, const string & dataset_name, int & max_column_size, vector<vector<float>> & data_array) {
+    float float_array[data_array.size()][max_column_size]; // Need to convert vector to array with contiguous memory for H5 to process
+    for( int i = 0; i<data_array.size(); ++i) {
+        for( int j = 0; j<data_array[i].size(); ++j) {
+            float_array[i][j] = data_array[i][j];
+        }
+    }
+    hsize_t dimensions[] = {data_array.size(), max_column_size};
+    H5::DataSpace dataspace(2, dimensions);  // two dimensional data
+    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
+    dataset.write(float_array, H5::PredType::NATIVE_INT);
+    dataset.close();
     dataspace.close();
 }
 
