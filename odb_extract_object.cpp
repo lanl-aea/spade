@@ -246,6 +246,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     H5::Group user_data_group = h5_file.createGroup(string("/odb/userData").c_str());
     for (int i=0; i<this->user_xy_data.size(); i++) {
         string user_xy_data_name = "/odb/userData/" + this->user_xy_data[i].name;
+        log_file.logDebug("User data name:" + this->user_xy_data[i].name);
         H5::Group user_xy_data_group = h5_file.createGroup(user_xy_data_name.c_str());
         write_string_dataset(user_xy_data_group, "sourceDescription", this->user_xy_data[i].sourceDescription);
         write_string_dataset(user_xy_data_group, "contentDescription", this->user_xy_data[i].contentDescription);
@@ -325,7 +326,6 @@ void OdbExtractObject::write_2D_float(const H5::Group& group, const string & dat
     for( int i = 0; i<data_array.size(); ++i) {
         for( int j = 0; j<data_array[i].size(); ++j) {
             float_array[i][j] = data_array[i][j];
-            cout << float_array[i][j] << endl;
         }
     }
     hsize_t dimensions[] = {data_array.size(), max_column_size};
