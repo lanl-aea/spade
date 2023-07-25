@@ -135,18 +135,7 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
     odb_SectionCategoryRepositoryIT section_category_iter(odb.sectionCategories());
     for (section_category_iter.first(); !section_category_iter.isDone(); section_category_iter.next()) {
         odb_SectionCategory section_category = section_category_iter.currentValue();
-        section_category_type category;
-        category.name = section_category.name().CStr();
-        category.description = section_category.description().CStr();
-        int section_point_size = section_category.sectionPoints().size();
-        for (int i=0; i<section_point_size; i++) {
-            odb_SectionPoint section_point = section_category.sectionPoints(i);
-            section_point_type point;
-            point.number = to_string(section_point.number());
-            point.description = section_point.description().CStr();
-            category.sectionPoints.push_back(point);
-        }
-        this->section_categories.push_back(category);
+        this->section_categories.push_back(process_section_category(section_category, log_file));
     }
 
     log_file.logVerbose("Reading odb user data.");
@@ -219,14 +208,162 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
 
 }
 
+section_category_type OdbExtractObject::process_section_category (const odb_SectionCategory &section_category, Logging &log_file) {
+    section_category_type category;
+    category.name = section_category.name().CStr();
+    category.description = section_category.description().CStr();
+    for (int i=0; i<section_category.sectionPoints().size(); i++) {
+        odb_SectionPoint section_point = section_category.sectionPoints(i);
+        section_point_type point;
+        point.number = to_string(section_point.number());
+        point.description = section_point.description().CStr();
+        category.sectionPoints.push_back(point);
+    }
+    return category;
+}
+
+tangential_behavior_type OdbExtractObject::process_interaction_property (const odb_InteractionProperty &interaction_property, Logging &log_file) {
+//TODO: Some of the data types need to be adjusted (i.e. some are either the string 'NONE' or a float)
+    tangential_behavior_type interaction;
+    if (odb_isA(odb_ContactProperty, interaction_property)) {
+        odb_ContactProperty contact_property = odb_dynamicCast(odb_ContactProperty, interaction_property);
+        if (contact_property.hasValue()) {
+            odb_TangentialBehavior tangential_behavior = contact_property.tangentialBehavior();
+            if (tangential_behavior.hasValue()) {
+                interaction.formulation = tangential_behavior.formulation().CStr();
+                interaction.directionality = tangential_behavior.directionality().CStr();
+                interaction.slipRateDependency = tangential_behavior.slipRateDependency();
+                interaction.pressureDependency = tangential_behavior.pressureDependency();
+                interaction.temperatureDependency = tangential_behavior.temperatureDependency();
+                interaction.dependencies = tangential_behavior.dependencies();
+                interaction.exponentialDecayDefinition = tangential_behavior.exponentialDecayDefinition().CStr();
+
+                odb_SequenceSequenceDouble table_data = tangential_behavior.table();
+                int r = table_data.size();
+                for (int row = 0; row < r; row++) {
+                    int column_size = table_data[row].size();
+                    vector<double> columns;
+                    for (int column = 0; column < column_size; column++) {
+                        columns.push_back(table_data[row].constGet(column));
+                    }
+                    interaction.table.push_back(columns);
+                }
+                interaction.shearStressLimit = tangential_behavior.shearStressLimit();
+                interaction.maximumElasticSlip = tangential_behavior.maximumElasticSlip().CStr();
+                interaction.fraction = tangential_behavior.fraction();
+                interaction.absoluteDistance = tangential_behavior.absoluteDistance();
+                interaction.elasticSlipStiffness = tangential_behavior.elasticSlipStiffness();
+                interaction.nStateDependentVars = tangential_behavior.nStateDependentVars();
+                interaction.useProperties = tangential_behavior.useProperties();
+            }
+        }
+    } else {
+        log_file.logWarning("Unsupported Interaction Property Type");
+    }
+    return interaction;
+}
+
+odb_node_type OdbExtractObject::process_node (const odb_Node &node, Logging &log_file) {
+    odb_node_type new_node;
+    new_node.label = node.label();
+    const float * const coords = node.coordinates();
+    new_node.coordinates[0] = coords[0];
+    new_node.coordinates[1] = coords[1];
+    new_node.coordinates[2] = coords[2];
+    return new_node;
+}
+
+odb_element_type OdbExtractObject::process_element (const odb_Element &element, Logging &log_file) {
+    odb_element_type new_element;
+    new_element.label = element.label();
+    new_element.type = element.type().CStr();
+    int element_connectivity_size;
+    const int* const connectivity = element.connectivity(element_connectivity_size); 
+    for (int i=0; i < element_connectivity_size; i++) {
+        new_element.connectivity.push_back(connectivity[i]);
+    }
+    odb_SequenceString instance_names = element.instanceNames();
+    for (int i=0; i < instance_names.size(); i++) {
+        new_element.instanceNames.push_back(instance_names[i].CStr());
+    }
+    new_element.sectionCategory = process_section_category(element.sectionCategory(), log_file);
+    return new_element;
+}
+
+odb_set_type OdbExtractObject::process_set (const odb_Set &set, Logging &log_file) {
+    odb_set_type new_set;
+    if (set.name().empty()) {
+        log_file.logVerbose("Empty set.");
+        return new_set;
+    }
+
+    new_set.name = set.name().CStr();
+    switch(set.type()) {
+    case odb_Enum::NODE_SET:
+        new_set.type = "Node Set";
+        break;
+    case odb_Enum::ELEMENT_SET:
+        new_set.type = "Element Set";
+        break;
+    case odb_Enum::SURFACE_SET:
+        new_set.type = "Surface Set";
+        break;
+    }
+
+    odb_SequenceString names = set.instanceNames();
+    int numInstances = names.size();
+
+    static const char * face_enum_strings[] = { "FACE_UNKNOWN=0", "END1=1", "END2", "END3", "FACE1=11", "FACE2", "FACE3", "FACE4", "FACE5", "FACE6", "EDGE1=101", "EDGE2", "EDGE3", "EDGE4", "EDGE5", "EDGE6", "EDGE7", "EDGE8", "EDGE9", "EDGE10", "EDGE11", "EDGE12", "EDGE13", "EDGE14", "EDGE15", "EDGE16", "EDGE17", "EDGE18", "EDGE19", "EDGE20", "SPOS=1001", "SNEG=1002", "SIDE1=1001", "SIDE2=1002", "DOUBLE_SIDED=1003" };
+    
+    for (int i=0; i<names.size(); i++) {
+        odb_String name = names.constGet(i);        
+        new_set.instanceNames.push_back(name.CStr());
+        if (new_set.type == "Node Set") {
+            const odb_SequenceNode& set_nodes = set.nodes(name);
+            for (int n=0; n < set_nodes.size(); n++) {
+                new_set.nodes.push_back(process_node(set_nodes.node(n), log_file));
+            }	    
+        } else if (new_set.type == "Element Set") {
+            const odb_SequenceElement& set_elements = set.elements(name);
+            for (int n=0; n < set_elements.size(); n++) {
+                new_set.elements.push_back(process_element(set_elements.element(n), log_file));
+            }	    
+        } else if (new_set.type == "Surface Set") {
+            const odb_SequenceElement& set_elements = set.elements(name);
+            const odb_SequenceElementFace& set_faces = set.faces(name);
+            const odb_SequenceNode& set_nodes = set.nodes(name);
+
+            if(set_elements.size() && set_faces.size())
+            {
+                for (int n=0; n<set_elements.size(); n++) {
+                    new_set.elements.push_back(process_element(set_elements.element(n), log_file));
+                    new_set.faces.push_back(face_enum_strings[set_faces.constGet(n)]);
+                }
+            } else if(set_elements.size()) {
+                for (int n=0; n < set_elements.size(); n++) {
+                    new_set.elements.push_back(process_element(set_elements.element(n), log_file));
+                }
+            } else {
+                for (int n=0; n < set_nodes.size(); n++)  {
+                    new_set.nodes.push_back(process_node(set_nodes.node(n), log_file));
+                }
+            }
+	    
+        } else {
+            log_file.logWarning("Unknown set type.");
+        }
+    }
+    return new_set;
+}
+
 void OdbExtractObject::process_interactions (const odb_InteractionRepository &interactions, odb_Odb &odb, Logging &log_file) {
     odb_InteractionRepositoryIT interaction_iter(interactions);
     for (interaction_iter.first(); !interaction_iter.isDone(); interaction_iter.next()) {
+        contact_standard_type contact_standard;
         odb_Interaction interaction = interaction_iter.currentValue();
         if (odb_isA(odb_SurfaceToSurfaceContactStd,interaction_iter.currentValue())) {
             log_file.logVerbose("Standard Surface To Surface Contact Interaction.");
             odb_SurfaceToSurfaceContactStd sscs = odb_dynamicCast(odb_SurfaceToSurfaceContactStd,interaction_iter.currentValue());
-            contact_standard_type contact_standard;
 
             contact_standard.sliding = sscs.sliding().CStr();
             contact_standard.smooth = sscs.smooth();
@@ -244,41 +381,7 @@ void OdbExtractObject::process_interactions (const odb_InteractionRepository &in
 
             odb_String interaction_property_name =  sscs.interactionProperty();
             odb_InteractionProperty interaction_property = odb.interactionProperties().constGet(interaction_property_name);
-            if (odb_isA(odb_ContactProperty, interaction_property)) {
-                odb_ContactProperty contact_property = odb_dynamicCast(odb_ContactProperty, interaction_property);
-                if (contact_property.hasValue()) {
-                    odb_TangentialBehavior tangential_behavior = contact_property.tangentialBehavior();
-                    if (tangential_behavior.hasValue()) {
-                        contact_standard.interactionProperty.formulation = tangential_behavior.formulation().CStr();
-                        contact_standard.interactionProperty.directionality = tangential_behavior.directionality().CStr();
-                        contact_standard.interactionProperty.slipRateDependency = tangential_behavior.slipRateDependency();
-                        contact_standard.interactionProperty.pressureDependency = tangential_behavior.pressureDependency();
-                        contact_standard.interactionProperty.temperatureDependency = tangential_behavior.temperatureDependency();
-                        contact_standard.interactionProperty.dependencies = tangential_behavior.dependencies();
-                        contact_standard.interactionProperty.exponentialDecayDefinition = tangential_behavior.exponentialDecayDefinition().CStr();
-
-                        odb_SequenceSequenceDouble table_data = tangential_behavior.table();
-                        int r = table_data.size();
-                        for (int row = 0; row < r; row++) {
-                            int column_size = table_data[row].size();
-                            vector<double> columns;
-                            for (int column = 0; column < column_size; column++) {
-                                columns.push_back(table_data[row].constGet(column));
-                            }
-                            contact_standard.interactionProperty.table.push_back(columns);
-                        }
-                        contact_standard.interactionProperty.shearStressLimit = tangential_behavior.shearStressLimit();
-                        contact_standard.interactionProperty.maximumElasticSlip = tangential_behavior.maximumElasticSlip().CStr();
-                        contact_standard.interactionProperty.fraction = tangential_behavior.fraction();
-                        contact_standard.interactionProperty.absoluteDistance = tangential_behavior.absoluteDistance();
-                        contact_standard.interactionProperty.elasticSlipStiffness = tangential_behavior.elasticSlipStiffness();
-                        contact_standard.interactionProperty.nStateDependentVars = tangential_behavior.nStateDependentVars();
-                        contact_standard.interactionProperty.useProperties = tangential_behavior.useProperties();
-                    }
-                }
-            } else {
-                log_file.logWarning("Unsupported Interaction Property Type");
-            }
+            contact_standard.interactionProperty = process_interaction_property(interaction_property, log_file);
 
             odb_Set main = sscs.master();
 //            contact_standard.main = process_set(main);
@@ -298,9 +401,10 @@ void OdbExtractObject::process_interactions (const odb_InteractionRepository &in
         } else {
               log_file.logWarning("Unsupported Interaction Type.");
         }
-
+        this->standard_interactions.push_back(contact_standard);
     }
 }
+
 void OdbExtractObject::process_constraints (const odb_ConstraintRepository &constraints, odb_Odb &odb, Logging &log_file) {
     odb_ConstraintRepositoryIT constraint_iter(constraints);
     int constraint_number = 1;

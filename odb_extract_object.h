@@ -85,7 +85,7 @@ struct odb_element_type {
 
 struct odb_node_type {
     int label;
-    vector<float> coordinates;
+    float coordinates[3];
 };
 
 struct odb_set_type {
@@ -119,6 +119,9 @@ struct contact_standard_type {
     odb_set_type adjust;
 };
 
+struct contact_explicit_type {
+};
+
 struct part_type {
     string name;
 };
@@ -146,6 +149,53 @@ class OdbExtractObject {
           \param log_file Logging object for writing log messages
         */
         void process_odb (odb_Odb &odb, Logging &log_file);
+        //! Process odb_SectionCategory object from the odb file
+        /*!
+          Process odb_SectionCategory object and return the values in a section_category_type
+          \param section_category An odb_SectionCategory object in the odb
+          \param log_file Logging object for writing log messages
+          \return odb_node_type with data stored from the odb
+          \sa process_odb()
+        */
+        section_category_type process_section_category (const odb_SectionCategory &section_category, Logging &log_file);
+        //! Process interaction property object from the odb file
+        /*!
+          Process interaction property object and return the values in a tangential_behavior_type
+          \param interaction_property An odb_InteractionProperty object in the odb
+          \param log_file Logging object for writing log messages
+          \return tangential_behavior_type with data stored from the odb
+          \sa process_interactions()
+          \sa process_constraints()
+          \sa process_odb()
+        */
+        tangential_behavior_type process_interaction_property (const odb_InteractionProperty &interaction_property, Logging &log_file);
+        //! Process odb_Node object from the odb file
+        /*!
+          Process odb_Node object and return the values in an odb_node_type
+          \param node An odb_Node object in the odb
+          \param log_file Logging object for writing log messages
+          \return odb_node_type with data stored from the odb
+          \sa process_odb()
+        */
+        odb_node_type process_node (const odb_Node &node, Logging &log_file);
+        //! Process odb_Element object from the odb file
+        /*!
+          Process odb_Element property object and return the values in an odb_element_type
+          \param element An odb_Element object in the odb
+          \param log_file Logging object for writing log messages
+          \return odb_elment_type with data stored from the odb
+          \sa process_odb()
+        */
+        odb_element_type process_element (const odb_Element &element, Logging &log_file);
+        //! Process odb set object from the odb file
+        /*!
+          Process odb set object and return the values in an odb_set_type
+          \param set An odb_Set object in the odb
+          \param log_file Logging object for writing log messages
+          \return odb_set_type with data stored from the odb
+          \sa process_odb()
+        */
+        odb_set_type process_set (const odb_Set &set, Logging &log_file);
         //! Process interactions from the odb file
         /*!
           Process interactions and store the results
@@ -285,14 +335,12 @@ class OdbExtractObject {
         sector_definition_type sector_definition;
         vector<section_category_type> section_categories;
         vector<user_xy_data_type> user_xy_data;
+        vector<contact_standard_type> standard_interactions;
+        vector<contact_explicit_type> explicit_interactions;
         /*
         odb_Assembly& rootAssembly;
         odb_PartRepository& parts;
         odb_StepRepository& steps;
-        odb_SectionCategoryRepository& sectionCategories;
-        odb_SectorDefinition& sectorDefinition;
-        odb_InteractionRepository& interactions;
-        odb_InteractionPropertyRepository& interactionProperties;
         */
 
         // TODO: potentially add amplitudes group
