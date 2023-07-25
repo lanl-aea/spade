@@ -92,9 +92,11 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
     this->path = odb.path().CStr();
     this->isReadOnly = odb.isReadOnly();
 
+    // TODO: potentially figure out way to get amplitudes, filters, or materials
+
     log_file.logVerbose("Reading odb jobData.\n");
     odb_JobData jobData = odb.jobData();
-    static const char * analysis_code_enum_strings[] = { "Abaqus Explicit", "Abaqus Standard", "Unknown Analysis Code" };
+    static const char * analysis_code_enum_strings[] = { "Unknown Analysis Code", "Abaqus Standard", "Abaqus Explicit", "Abaqus CFD" };
     this->job_data.analysisCode = analysis_code_enum_strings[jobData.analysisCode()];
     this->job_data.creationTime = jobData.creationTime().CStr();
     this->job_data.machineName = jobData.machineName().CStr();
@@ -105,6 +107,7 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
     odb_SequenceProductAddOn add_ons = jobData.productAddOns();
     static const char * add_on_enum_strings[] = { "aqua", "design", "biorid", "cel", "soliter", "cavparallel" };
     // Values gotten from: https://help.3ds.com/2023/English/DSSIMULIA_Established/SIMACAEKERRefMap/simaker-c-jobdatacpp.htm?contextscope=all
+    // More values found at: /apps/SIMULIA/EstProducts/2023/SMAOdb/PublicInterfaces/odb_Enum.h
     for (int i=0; i<add_ons.size(); i++) {
         this->job_data.productAddOns.push_back(add_on_enum_strings[add_ons.constGet(i)]);
     }
