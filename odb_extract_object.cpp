@@ -226,6 +226,70 @@ void OdbExtractObject::process_interactions (const odb_InteractionRepository &in
         if (odb_isA(odb_SurfaceToSurfaceContactStd,interaction_iter.currentValue())) {
             log_file.logVerbose("Standard Surface To Surface Contact Interaction.");
             odb_SurfaceToSurfaceContactStd sscs = odb_dynamicCast(odb_SurfaceToSurfaceContactStd,interaction_iter.currentValue());
+            contact_standard_type contact_standard;
+
+            contact_standard.sliding = sscs.sliding().CStr();
+            contact_standard.smooth = sscs.smooth();
+            contact_standard.hcrit = sscs.hcrit();
+            contact_standard.limitSlideDistance = sscs.limitSlideDistance();
+            contact_standard.slideDistance = sscs.slideDistance();
+            contact_standard.extensionZone = sscs.extensionZone();
+            contact_standard.adjustMethod = sscs.adjustMethod().CStr();
+            contact_standard.adjustTolerance = sscs.adjustTolerance();
+            contact_standard.enforcement = sscs.enforcement().CStr();
+            contact_standard.thickness = sscs.thickness();
+            contact_standard.tied = sscs.tied();
+            contact_standard.contactTracking = sscs.contactTracking().CStr();
+            contact_standard.createStepName = sscs.createStepName().CStr();
+
+            odb_String interaction_property_name =  sscs.interactionProperty();
+            odb_InteractionProperty interaction_property = odb.interactionProperties().constGet(interaction_property_name);
+            if (odb_isA(odb_ContactProperty, interaction_property)) {
+                odb_ContactProperty contact_property = odb_dynamicCast(odb_ContactProperty, interaction_property);
+                if (contact_property.hasValue()) {
+                    odb_TangentialBehavior tangential_behavior = contact_property.tangentialBehavior();
+                    if (tangential_behavior.hasValue()) {
+                        contact_standard.interactionProperty.formulation = tangential_behavior.formulation().CStr();
+                        contact_standard.interactionProperty.directionality = tangential_behavior.directionality().CStr();
+                        contact_standard.interactionProperty.slipRateDependency = tangential_behavior.slipRateDependency();
+                        contact_standard.interactionProperty.pressureDependency = tangential_behavior.pressureDependency();
+                        contact_standard.interactionProperty.temperatureDependency = tangential_behavior.temperatureDependency();
+                        contact_standard.interactionProperty.dependencies = tangential_behavior.dependencies();
+                        contact_standard.interactionProperty.exponentialDecayDefinition = tangential_behavior.exponentialDecayDefinition().CStr();
+
+                        odb_SequenceSequenceDouble table_data = tangential_behavior.table();
+                        int r = table_data.size();
+                        for (int row = 0; row < r; row++) {
+                            int column_size = table_data[row].size();
+                            vector<double> columns;
+                            for (int column = 0; column < column_size; column++) {
+                                columns.push_back(table_data[row].constGet(column));
+                            }
+                            contact_standard.interactionProperty.table.push_back(columns);
+                        }
+                        contact_standard.interactionProperty.shearStressLimit = tangential_behavior.shearStressLimit();
+                        contact_standard.interactionProperty.maximumElasticSlip = tangential_behavior.maximumElasticSlip().CStr();
+                        contact_standard.interactionProperty.fraction = tangential_behavior.fraction();
+                        contact_standard.interactionProperty.absoluteDistance = tangential_behavior.absoluteDistance();
+                        contact_standard.interactionProperty.elasticSlipStiffness = tangential_behavior.elasticSlipStiffness();
+                        contact_standard.interactionProperty.nStateDependentVars = tangential_behavior.nStateDependentVars();
+                        contact_standard.interactionProperty.useProperties = tangential_behavior.useProperties();
+                    }
+                }
+            } else {
+                log_file.logWarning("Unsupported Interaction Property Type");
+            }
+
+            odb_Set main = sscs.master();
+//            contact_standard.main = process_set(main);
+
+            odb_Set secondary = sscs.slave();
+//            contact_standard.secondary = process_set(secondary);
+
+            odb_Set adjust = sscs.adjustSet();
+            if(!adjust.name().empty()) {
+//                contact_standard.adjust = process_set(adjust);
+            }
 
         } else if (odb_isA(odb_SurfaceToSurfaceContactStd,interaction_iter.currentValue())) {
             log_file.logVerbose("Explicit Surface To Surface Contact Interaction.");

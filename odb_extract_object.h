@@ -56,11 +56,74 @@ struct user_xy_data_type {
     int max_column_size;
 };
 
-struct part {
+
+struct tangential_behavior_type {
+    string formulation;
+    string directionality;
+    string slipRateDependency;  // Boolean
+    string pressureDependency;  // Boolean
+    string temperatureDependency;  // Boolean
+    int dependencies;
+    string exponentialDecayDefinition;
+    vector<vector <double>> table;
+    string shearStressLimit;  // String NONE or a double
+    string maximumElasticSlip;
+    double fraction;
+    string absoluteDistance;  // String NONE or a double
+    string elasticSlipStiffness;
+    string nStateDependentVars;
+    string useProperties;
+};
+
+struct odb_element_type {
+    int label;
+    string type;
+    vector<int> connectivity;
+    section_category_type sectionCategory;
+    vector<string> instanceNames;
+};
+
+struct odb_node_type {
+    int label;
+    vector<float> coordinates;
+};
+
+struct odb_set_type {
+    string name;
+    string type;  // Enum [NODE_SET, ELEMENT_SET, SURFACE_SET]
+    int size;
+    vector<string> instanceNames;
+    vector<odb_node_type> nodes;
+    vector<odb_element_type> elements;
+    vector<string> faces;
+};
+
+struct contact_standard_type {
+    string sliding;  // Symbolic Constant [FINITE, SMALL]
+    float smooth;
+    float hcrit;
+    string limitSlideDistance;
+    string slideDistance;
+    float extensionZone;
+    string adjustMethod;  // Symbolic Constant [NONE, OVERCLOSED, TOLERANCE, SET]
+    float adjustTolerance;
+    string enforcement;  // Symbolic Constant [NODE_TO_SURFACE, SURFACE_TO_SURFACE]
+    string thickness;  // Boolean
+    string tied;  // Boolean
+    string contactTracking;  // Symbolic Constant [ONE_CONFIG, TWO_CONFIG]
+    string createStepName;
+
+    tangential_behavior_type interactionProperty;
+    odb_set_type main;
+    odb_set_type secondary;
+    odb_set_type adjust;
+};
+
+struct part_type {
     string name;
 };
 
-struct root_assembly {
+struct root_assembly_type {
 };
 
 /*!
@@ -218,7 +281,7 @@ class OdbExtractObject {
         string path;
         bool isReadOnly;
         job_data_type job_data;
-        vector<part> parts;
+        vector<part_type> parts;
         sector_definition_type sector_definition;
         vector<section_category_type> section_categories;
         vector<user_xy_data_type> user_xy_data;
