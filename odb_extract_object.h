@@ -76,13 +76,70 @@ class OdbExtractObject {
           \sa process_odb()
         */
         OdbExtractObject (CmdLineArguments &command_line_arguments, Logging &log_file);
-        //! Parse the open odb file
+        //! Process the open odb file and store the results
         /*!
           After the odb has been opened this function will do the parsing, including calling of other functions needed for parsing
-          \param odb odb_Odb an open odb object
+          \param odb An open odb object
           \param log_file Logging object for writing log messages
         */
         void process_odb (odb_Odb &odb, Logging &log_file);
+        //! Process interactions from the odb file
+        /*!
+          Process interactions and store the results
+          \param interactions A repository of interactions in the odb
+          \param odb An open odb object
+          \param log_file Logging object for writing log messages
+          \sa process_odb()
+        */
+        void process_interactions (const odb_InteractionRepository &interactions, odb_Odb &odb, Logging &log_file);
+        //! Process constraints from the odb file
+        /*!
+          Process constraints and store the results
+          \param constraints A repository of constraints in the odb
+          \param odb An open odb object
+          \param log_file Logging object for writing log messages
+          \sa process_odb()
+        */
+        void process_constraints (const odb_ConstraintRepository &constraints, odb_Odb &odb, Logging &log_file);
+        //! Process a part from the odb file
+        /*!
+          Process a part object and store the results
+          \param part An odb part object
+          \param odb An open odb object
+          \param log_file Logging object for writing log messages
+          \sa process_odb()
+        */
+        void process_part (const odb_Part &part, odb_Odb &odb, Logging &log_file);
+        //! Process an instance from the odb file
+        /*!
+          Process an instance and store the results
+          \param instance An odb instance object
+          \param odb An open odb object
+          \param log_file Logging object for writing log messages
+          \param command_line_arguments CmdLineArguments object storing command line arguments
+          \sa process_odb()
+        */
+        void process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments);
+        //! Process the root assembly from the odb file
+        /*!
+          Process the root assembly and store the results
+          \param instance An odb instance object
+          \param odb An open odb object
+          \param log_file Logging object for writing log messages
+          \param command_line_arguments CmdLineArguments object storing command line arguments
+          \sa process_odb()
+        */
+        void process_root_assembly (const odb_Assembly &root_assembly, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments);
+        //! Process a step from the odb file
+        /*!
+          Process a step object and store the results
+          \param step An odb step object
+          \param odb An open odb object
+          \param log_file Logging object for writing log messages
+          \param command_line_arguments CmdLineArguments object storing command line arguments
+          \sa process_odb()
+        */
+        void process_step (const odb_Step &step, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments);
 
 
         //Functions for writing out the data
@@ -114,7 +171,7 @@ class OdbExtractObject {
         //! Write a string as an attribute
         /*!
           Create an attribute with a string using the passed-in values
-          \param group name of HDF5 group in which to write the new attribute
+          \param group Name of HDF5 group in which to write the new attribute
           \param attribute_name Name of the new attribute where a string is to be written
           \param string_value The string that should be written in the new attribute
         */
@@ -122,21 +179,37 @@ class OdbExtractObject {
         //! Write a string as a dataset
         /*!
           Create a dataset with a single string using the passed-in values
-          \param group name of HDF5 group in which to write the new dataset
+          \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where a string is to be written
           \param string_value The string that should be written in the new dataset
         */
         void write_string_dataset(const H5::Group& group, const string & dataset_name, const string & string_value);
         //! Write a vector of strings as a dataset
         /*!
-          Create a dataset with a vector of strings using the passed-in values
-          \param group name of HDF5 group in which to write the new dataset
-          \param dataset_name Name of the new dataset where a string is to be written
+          Create a dataset with an array of strings using the passed-in values
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where an array of strings is to be written
           \param string_values The vector of strings that should be written in the new dataset
         */
         void write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<const char*> & string_values);
+        //! Write an integer as a dataset
+        /*!
+          Create a dataset with an integer using the passed-in value
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where an integer is to be written
+          \param int_value The integer that should be written in the new dataset
+        */
         void write_integer_dataset(const H5::Group& group, const string & dataset_name, const int & int_value);
+        //! Write a vector of vectors of floats as a dataset
+        /*!
+          Create a dataset with a two-dimensional array of floats using the passed-in values
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where a two-dimensional array is to be written
+          \param max_column_size Integer indicating the column dimension, row dimension is determined by size of data_array
+          \param data_array The vector of vectors of floats that should be written in the new dataset
+        */
         void write_2D_float(const H5::Group& group, const string & dataset_name, int & max_column_size, vector<vector<float>> & data_array);
+
 
     private:
         string name;

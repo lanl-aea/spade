@@ -178,13 +178,74 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
         this->user_xy_data.push_back(user_xy_data);
     }
 
+    log_file.logVerbose("Reading odb interactions.\n");
+    odb_InteractionRepository interactions = odb.interactions();
+    if(interactions.size() > 0) {
+        process_interactions (interactions, odb, log_file);
+    }
+
+    log_file.logVerbose("Reading odb constraints.\n");
+    odb_ConstraintRepository constraints = odb.constraints();
+    if(constraints.size() > 0) {
+        process_constraints (constraints, odb, log_file);
+    }
+
     odb_PartRepository& parts = odb.parts();
     odb_PartRepositoryIT parts_iter(parts);    
     for (parts_iter.first(); !parts_iter.isDone(); parts_iter.next()) {
         log_file.logVerbose("Starting to parse part: " + string(parts_iter.currentKey().CStr()) + "\n");
-        odb_Part& part = parts[parts_iter.currentKey()];
+        odb_Part part = parts[parts_iter.currentKey()];
+// TODO: Write code to get parts
     }
 
+// TODO: Write code to get assembly
+
+    odb_InstanceRepository instances = odb.rootAssembly().instances();
+    odb_InstanceRepositoryIT instance_iter(instances);
+    for (instance_iter.first(); !instance_iter.isDone(); instance_iter.next()) 
+    {
+        odb_Instance inst = instances[instance_iter.currentKey()];
+// TODO: Write code to get instance
+    }
+
+    odb_StepRepository step_repository = odb.steps();
+    odb_StepRepositoryIT step_iter (step_repository);
+    for (step_iter.first(); !step_iter.isDone(); step_iter.next()) 
+    {
+        odb_Step current_step = step_repository[step_iter.currentKey()];
+// TODO: Write code to get steps
+    }
+
+
+}
+
+void OdbExtractObject::process_interactions (const odb_InteractionRepository &interactions, odb_Odb &odb, Logging &log_file) {
+    odb_InteractionRepositoryIT interaction_iter(interactions);
+    for (interaction_iter.first(); !interaction_iter.isDone(); interaction_iter.next()) {
+        odb_Interaction interaction = interaction_iter.currentValue();
+//        log_file.logVerbose("Reading odb interactions.\n");
+    }
+}
+void OdbExtractObject::process_constraints (const odb_ConstraintRepository &constraints, odb_Odb &odb, Logging &log_file) {
+    odb_ConstraintRepositoryIT constraint_iter(constraints);
+    int constraint_number = 1;
+
+    for (constraint_iter.first(); !constraint_iter.isDone(); constraint_iter.next()) {
+
+        constraint_number++;
+    }
+
+}
+void OdbExtractObject::process_part (const odb_Part &part, odb_Odb &odb, Logging &log_file) {
+
+}
+void OdbExtractObject::process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
+
+}
+void OdbExtractObject::process_root_assembly (const odb_Assembly &root_assembly, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
+
+}
+void OdbExtractObject::process_step (const odb_Step &step, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
 
 }
 
