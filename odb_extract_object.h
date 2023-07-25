@@ -121,8 +121,8 @@ struct contact_standard_type {
 
 struct contact_explicit_type {
     string sliding;  // Symbolic Constant [FINITE, SMALL]
-    string masterNoThick;
-    string slaveNoThick;
+    string mainNoThick;
+    string secondaryNoThick;
     string mechanicalConstraint;
     string weightingFactorType;
     float weightingFactor;

@@ -360,6 +360,7 @@ void OdbExtractObject::process_interactions (const odb_InteractionRepository &in
     odb_InteractionRepositoryIT interaction_iter(interactions);
     for (interaction_iter.first(); !interaction_iter.isDone(); interaction_iter.next()) {
         contact_standard_type contact_standard;
+        contact_explicit_type contact_explicit;
         odb_Interaction interaction = interaction_iter.currentValue();
         if (odb_isA(odb_SurfaceToSurfaceContactStd,interaction_iter.currentValue())) {
             log_file.logVerbose("Standard Surface To Surface Contact Interaction.");
@@ -379,8 +380,7 @@ void OdbExtractObject::process_interactions (const odb_InteractionRepository &in
             contact_standard.contactTracking = sscs.contactTracking().CStr();
             contact_standard.createStepName = sscs.createStepName().CStr();
 
-            odb_String interaction_property_name =  sscs.interactionProperty();
-            odb_InteractionProperty interaction_property = odb.interactionProperties().constGet(interaction_property_name);
+            odb_InteractionProperty interaction_property = odb.interactionProperties().constGet(sscs.interactionProperty());
             contact_standard.interactionProperty = process_interaction_property(interaction_property, log_file);
 
             odb_Set main = sscs.master();
@@ -395,11 +395,30 @@ void OdbExtractObject::process_interactions (const odb_InteractionRepository &in
         } else if (odb_isA(odb_SurfaceToSurfaceContactStd,interaction_iter.currentValue())) {
             log_file.logVerbose("Explicit Surface To Surface Contact Interaction.");
     	    odb_SurfaceToSurfaceContactExp ssce = odb_dynamicCast(odb_SurfaceToSurfaceContactExp,interaction_iter.currentValue());
+            contact_explicit.sliding = ssce.sliding().CStr();
+            contact_explicit.mainNoThick = ssce.masterNoThick();
+            contact_explicit.secondaryNoThick = ssce.slaveNoThick();
+            contact_explicit.mechanicalConstraint = ssce.mechanicalConstraint().CStr();
+            contact_explicit.weightingFactorType = ssce.weightingFactorType().CStr();
+            contact_explicit.weightingFactor = ssce.weightingFactor();
+            contact_explicit.createStepName = ssce.createStepName().CStr();
+
+            odb_InteractionProperty interaction_property = odb.interactionProperties().constGet(ssce.interactionProperty());
+            contact_explicit.interactionProperty = process_interaction_property(interaction_property, log_file);
+
+            contact_explicit.useReverseDatumAxis = ssce.useReverseDatumAxis();
+            contact_explicit.contactControls = ssce.contactControls().CStr();
+  
+            odb_Set main = ssce.master();
+            contact_explicit.main = process_set(main, log_file);
+            odb_Set secondary = ssce.slave();
+            contact_explicit.secondary = process_set(secondary, log_file);
 
         } else {
               log_file.logWarning("Unsupported Interaction Type.");
         }
         this->standard_interactions.push_back(contact_standard);
+        this->explicit_interactions.push_back(contact_explicit);
     }
 }
 
