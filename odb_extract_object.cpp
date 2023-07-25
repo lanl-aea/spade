@@ -427,7 +427,35 @@ void OdbExtractObject::process_constraints (const odb_ConstraintRepository &cons
     int constraint_number = 1;
 
     for (constraint_iter.first(); !constraint_iter.isDone(); constraint_iter.next()) {
-
+        if (odb_isA(odb_Tie,constraint_iter.currentValue())) {
+            log_file.logVerbose("Tie Constraint");
+            odb_Tie tie = odb_dynamicCast(odb_Tie,constraint_iter.currentValue());
+//TODO: write this function
+//            process_tie(tie, odb, log_file);
+        } else if (odb_isA(odb_DisplayBody,constraint_iter.currentValue())) {
+            log_file.logVerbose("Display Body Constraint");
+            odb_DisplayBody display_body = odb_dynamicCast(odb_DisplayBody,constraint_iter.currentValue());
+//TODO: write this function
+//            process_display_body(display_body, odb, log_file);
+        } else if (odb_isA(odb_Coupling,constraint_iter.currentValue())) {
+            log_file.logVerbose("Coupling Constraint");
+            odb_Coupling coupling = odb_dynamicCast(odb_Coupling,constraint_iter.currentValue());
+//TODO: write this function
+//            process_coupling(coupling, odb, log_file);
+        } else if (odb_isA(odb_MPC,constraint_iter.currentValue())) {
+            log_file.logVerbose("MPC Constraint");
+            odb_MPC mpc = odb_dynamicCast(odb_MPC,constraint_iter.currentValue());
+//TODO: write this function
+//            process_mpc(mpc, odb, log_file);
+        } else if (odb_isA(odb_ShellSolidCoupling,constraint_iter.currentValue())) {
+            log_file.logVerbose("Shell Solid Coupling Constraint");
+            odb_ShellSolidCoupling shell_solid_coupling = odb_dynamicCast(odb_ShellSolidCoupling,constraint_iter.currentValue());
+//TODO: write this function
+//            process_shell_solid_coupling(shell_solid_coupling, odb, log_file);
+        } else {
+            string constraint_name = constraint_iter.currentKey().CStr();
+            log_file.logWarning("Unsupported Constraint type for constraint: " + constraint_name);
+        }
         constraint_number++;
     }
 
