@@ -34,6 +34,12 @@ class Logging {
           \param output string containing the log message
         */
         void logVerbose (string const &output);
+        //! Function for logging a warning message
+        /*!
+          If something unextpected occurs, but execution may continue, the word 'WARNING' will be prepended to the log message
+          \param output string containing the log message
+        */
+        void logWarning (string const &output);
         // logDebug is for debugging and therefore there is no API documentation for it
         void logDebug (string const &output);
         //! Function for logging an error message and exiting the code.

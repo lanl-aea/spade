@@ -31,12 +31,12 @@ int ABQmain(int argc, char **argv)
     CmdLineArguments command_line_arguments(argc, argv);
     if (command_line_arguments.help()) { cout<<command_line_arguments.helpMessage(); return 0; }  // If help option used, print help and exit
     Logging log_file(command_line_arguments["log-file"], command_line_arguments.verbose(), command_line_arguments.debug());
-    log_file.log("\nCommand line used:\n"+ command_line_arguments.commandLine() + "\n");
+    log_file.log("\nCommand line used:\n"+ command_line_arguments.commandLine());
     log_file.logVerbose("Arguments given:\n" + command_line_arguments.verboseArguments());
-    log_file.logDebug("Debug logging turned on\n");
+    log_file.logDebug("Debug logging turned on");
     OdbExtractObject odb_extract_object(command_line_arguments, log_file);
-    log_file.logDebug("OdbExtractObject object successfully created.\n");
-    log_file.logVerbose("Successful completion of " + command_line_arguments.commandName() + "\n");
+    log_file.logDebug("OdbExtractObject object successfully created.");
+    log_file.logVerbose("Successful completion of " + command_line_arguments.commandName());
 
     return (0);
 }

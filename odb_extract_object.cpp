@@ -46,14 +46,14 @@ using namespace H5;
 #include <odb_extract_object.h>
 
 OdbExtractObject::OdbExtractObject (CmdLineArguments &command_line_arguments, Logging &log_file) {
-    log_file.logVerbose("Starting to parse odb file: " + command_line_arguments.getTimeStamp(false) + "\n");
+    log_file.logVerbose("Starting to parse odb file: " + command_line_arguments.getTimeStamp(false));
     odb_String file_name = command_line_arguments["odb-file"].c_str();
-    log_file.logDebug("Operating on file:" + command_line_arguments["odb-file"] + "\n");
+    log_file.logDebug("Operating on file:" + command_line_arguments["odb-file"]);
 
     if (isUpgradeRequiredForOdb(file_name)) {
-        log_file.logDebug("Upgrade to odb required.\n");
+        log_file.logDebug("Upgrade to odb required.");
         odb_String upgraded_file_name = string("upgraded_" + command_line_arguments["odb-file"]).c_str();
-        log_file.log("Upgrading file:" + command_line_arguments["odb-file"] + "\n");
+        log_file.log("Upgrading file:" + command_line_arguments["odb-file"]);
         upgradeOdb(file_name, upgraded_file_name);
         file_name = upgraded_file_name;
     }
@@ -62,30 +62,30 @@ OdbExtractObject::OdbExtractObject (CmdLineArguments &command_line_arguments, Lo
         odb_Odb& odb = openOdb(file_name, true);  // Open as read only
         process_odb(odb, log_file);
         odb.close();
-        log_file.logDebug("Odb Parser object successfully created\n");
+        log_file.logDebug("Odb Parser object successfully created.");
     }
     catch(odb_BaseException& exc) {
         string error_message = exc.UserReport().CStr();
-        log_file.logErrorAndExit("odbBaseException caught. Abaqus error message: " + error_message + "\n");
+        log_file.logErrorAndExit("odbBaseException caught. Abaqus error message: " + error_message);
     }
     catch(...) {
-        log_file.logErrorAndExit("Unkown exception when attempting to open odb file.\n");
+        log_file.logErrorAndExit("Unkown exception when attempting to open odb file.");
     }
 
 
-    log_file.logVerbose("Starting to write output file: " + command_line_arguments.getTimeStamp(false) + "\n");
+    log_file.logVerbose("Starting to write output file: " + command_line_arguments.getTimeStamp(false));
 
     if (command_line_arguments["output-file-type"] == "h5") this->write_h5(command_line_arguments, log_file);
     else if (command_line_arguments["output-file-type"] == "json") this->write_json(command_line_arguments, log_file);
     else if (command_line_arguments["output-file-type"] == "yaml") this->write_yaml(command_line_arguments, log_file);
 
-    log_file.logVerbose("Finished writing output file: " + command_line_arguments.getTimeStamp(false) + "\n");
+    log_file.logVerbose("Finished writing output file: " + command_line_arguments.getTimeStamp(false));
 
 }
 
 void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
 
-    log_file.logVerbose("Reading top level attributes of odb.\n");
+    log_file.logVerbose("Reading top level attributes of odb.");
     this->name = odb.name().CStr();
     this->analysisTitle = odb.analysisTitle().CStr();
     this->description = odb.description().CStr();
@@ -94,7 +94,7 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
 
     // TODO: potentially figure out way to get amplitudes, filters, or materials
 
-    log_file.logVerbose("Reading odb jobData.\n");
+    log_file.logVerbose("Reading odb jobData.");
     odb_JobData jobData = odb.jobData();
     static const char * analysis_code_enum_strings[] = { "Unknown Analysis Code", "Abaqus Standard", "Abaqus Explicit", "Abaqus CFD" };
     this->job_data.analysisCode = analysis_code_enum_strings[jobData.analysisCode()];
@@ -115,7 +115,7 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
 
     if (odb.hasSectorDefinition())
     {
-        log_file.logVerbose("Reading odb sector definition.\n");
+        log_file.logVerbose("Reading odb sector definition.");
 	    odb_SectorDefinition sd = odb.sectorDefinition();
         this->sector_definition.numSectors = sd.numSectors();
 	    odb_SequenceSequenceFloat symAx = sd.symmetryAxis();
@@ -131,7 +131,7 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
         this->sector_definition.end_point  = "";
     }
 
-    log_file.logVerbose("Reading odb section category data.\n");
+    log_file.logVerbose("Reading odb section category data.");
     odb_SectionCategoryRepositoryIT section_category_iter(odb.sectionCategories());
     for (section_category_iter.first(); !section_category_iter.isDone(); section_category_iter.next()) {
         odb_SectionCategory section_category = section_category_iter.currentValue();
@@ -149,7 +149,7 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
         this->section_categories.push_back(category);
     }
 
-    log_file.logVerbose("Reading odb user data.\n");
+    log_file.logVerbose("Reading odb user data.");
     odb_UserXYDataRepositoryIT user_xy_data_iter(odb.userData().xyDataObjects());
     for (user_xy_data_iter.first(); !user_xy_data_iter.isDone(); user_xy_data_iter.next()) {
         odb_UserXYData userXYData = user_xy_data_iter.currentValue();
@@ -178,13 +178,13 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
         this->user_xy_data.push_back(user_xy_data);
     }
 
-    log_file.logVerbose("Reading odb interactions.\n");
+    log_file.logVerbose("Reading odb interactions.");
     odb_InteractionRepository interactions = odb.interactions();
     if(interactions.size() > 0) {
         process_interactions (interactions, odb, log_file);
     }
 
-    log_file.logVerbose("Reading odb constraints.\n");
+    log_file.logVerbose("Reading odb constraints.");
     odb_ConstraintRepository constraints = odb.constraints();
     if(constraints.size() > 0) {
         process_constraints (constraints, odb, log_file);
@@ -193,7 +193,7 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
     odb_PartRepository& parts = odb.parts();
     odb_PartRepositoryIT parts_iter(parts);    
     for (parts_iter.first(); !parts_iter.isDone(); parts_iter.next()) {
-        log_file.logVerbose("Starting to parse part: " + string(parts_iter.currentKey().CStr()) + "\n");
+        log_file.logVerbose("Starting to parse part: " + string(parts_iter.currentKey().CStr()));
         odb_Part part = parts[parts_iter.currentKey()];
 // TODO: Write code to get parts
     }
@@ -223,7 +223,18 @@ void OdbExtractObject::process_interactions (const odb_InteractionRepository &in
     odb_InteractionRepositoryIT interaction_iter(interactions);
     for (interaction_iter.first(); !interaction_iter.isDone(); interaction_iter.next()) {
         odb_Interaction interaction = interaction_iter.currentValue();
-//        log_file.logVerbose("Reading odb interactions.\n");
+        if (odb_isA(odb_SurfaceToSurfaceContactStd,interaction_iter.currentValue())) {
+            log_file.logVerbose("Standard Surface To Surface Contact Interaction.");
+            odb_SurfaceToSurfaceContactStd sscs = odb_dynamicCast(odb_SurfaceToSurfaceContactStd,interaction_iter.currentValue());
+
+        } else if (odb_isA(odb_SurfaceToSurfaceContactStd,interaction_iter.currentValue())) {
+            log_file.logVerbose("Explicit Surface To Surface Contact Interaction.");
+    	    odb_SurfaceToSurfaceContactExp ssce = odb_dynamicCast(odb_SurfaceToSurfaceContactExp,interaction_iter.currentValue());
+
+        } else {
+              log_file.logWarning("Unsupported Interaction Type.");
+        }
+
     }
 }
 void OdbExtractObject::process_constraints (const odb_ConstraintRepository &constraints, odb_Odb &odb, Logging &log_file) {
@@ -258,15 +269,15 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
 
     // Open file for writing
     std::ifstream hdf5File (command_line_arguments["output-file"].c_str());
-    log_file.logDebug("Creating hdf5 file " + command_line_arguments["output-file"] + "\n");
+    log_file.logDebug("Creating hdf5 file " + command_line_arguments["output-file"]);
     const H5std_string FILE_NAME(command_line_arguments["output-file"]);
     H5File h5_file(FILE_NAME, H5F_ACC_TRUNC);
 
 //    H5::Group odb_group = file.createGroup(string("/odb").c_str());
-    log_file.logDebug("Creating odb group for meta-data " + command_line_arguments["output-file"] + "\n");
+    log_file.logDebug("Creating odb group for meta-data " + command_line_arguments["output-file"]);
 
 //    write_string_dataset(this->odb_group, "name", this->name);
-    log_file.logVerbose("Writing top level attributes to odb group.\n");
+    log_file.logVerbose("Writing top level attributes to odb group.");
     H5::Group odb_group = h5_file.createGroup(string("/odb").c_str());
     write_attribute(odb_group, "name", this->name);
     write_attribute(odb_group, "analysisTitle", this->analysisTitle);
@@ -275,7 +286,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     stringstream bool_stream; bool_stream << std::boolalpha << this->isReadOnly; string bool_string = bool_stream.str();
     write_attribute(odb_group, "isReadOnly", bool_string);
 
-    log_file.logVerbose("Writing odb jobData.\n");
+    log_file.logVerbose("Writing odb jobData.");
     H5::Group job_data_group = h5_file.createGroup(string("/odb/jobData").c_str());
     write_attribute(job_data_group, "analysisCode", this->job_data.analysisCode);
     write_attribute(job_data_group, "creationTime", this->job_data.creationTime);
@@ -286,14 +297,14 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     write_vector_string_dataset(job_data_group, "productAddOns", this->job_data.productAddOns);
     write_attribute(job_data_group, "version", this->job_data.version);
 
-    log_file.logVerbose("Writing odb sector definition.\n");
+    log_file.logVerbose("Writing odb sector definition.");
     H5::Group sector_definition_group = h5_file.createGroup(string("/odb/sectorDefinition").c_str());
     write_integer_dataset(sector_definition_group, "numSectors", this->sector_definition.numSectors);
     H5::Group symmetry_axis_group = h5_file.createGroup(string("/odb/sectorDefinition/symmetryAxis").c_str());
     write_string_dataset(symmetry_axis_group, "StartPoint", this->sector_definition.start_point);
     write_string_dataset(symmetry_axis_group, "EndPoint", this->sector_definition.end_point);
 
-    log_file.logVerbose("Writing odb section categories.\n");
+    log_file.logVerbose("Writing odb section categories.");
     H5::Group section_categories_group = h5_file.createGroup(string("/odb/sectionCategories").c_str());
     for (int i=0; i<this->section_categories.size(); i++) {
         string category_group_name = "/odb/sectionCategories/" + this->section_categories[i].name;
@@ -306,7 +317,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
         }
     }
 
-    log_file.logVerbose("Writing odb user data.\n");
+    log_file.logVerbose("Writing odb user data.");
     H5::Group user_data_group = h5_file.createGroup(string("/odb/userData").c_str());
     for (int i=0; i<this->user_xy_data.size(); i++) {
         string user_xy_data_name = "/odb/userData/" + this->user_xy_data[i].name;
