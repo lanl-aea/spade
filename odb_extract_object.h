@@ -120,6 +120,20 @@ struct contact_standard_type {
 };
 
 struct contact_explicit_type {
+    string sliding;  // Symbolic Constant [FINITE, SMALL]
+    string masterNoThick;
+    string slaveNoThick;
+    string mechanicalConstraint;
+    string weightingFactorType;
+    float weightingFactor;
+    string createStepName;
+    string useReverseDatumAxis;  // Boolean
+    string contactControls;
+  
+    tangential_behavior_type interactionProperty;
+    odb_set_type main;
+    odb_set_type secondary;
+ 
 };
 
 struct part_type {

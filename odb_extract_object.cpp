@@ -384,14 +384,12 @@ void OdbExtractObject::process_interactions (const odb_InteractionRepository &in
             contact_standard.interactionProperty = process_interaction_property(interaction_property, log_file);
 
             odb_Set main = sscs.master();
-//            contact_standard.main = process_set(main);
-
+            contact_standard.main = process_set(main, log_file);
             odb_Set secondary = sscs.slave();
-//            contact_standard.secondary = process_set(secondary);
-
+            contact_standard.secondary = process_set(secondary, log_file);
             odb_Set adjust = sscs.adjustSet();
             if(!adjust.name().empty()) {
-//                contact_standard.adjust = process_set(adjust);
+                contact_standard.adjust = process_set(adjust, log_file);
             }
 
         } else if (odb_isA(odb_SurfaceToSurfaceContactStd,interaction_iter.currentValue())) {
