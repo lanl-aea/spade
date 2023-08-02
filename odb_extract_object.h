@@ -346,11 +346,10 @@ class OdbExtractObject {
         /*!
           Process a Tie object and store the results
           \param tie An odb Tie object
-          \param odb An open odb object
           \param log_file Logging object for writing log messages
           \sa process_odb()
         */
-        tie_type process_tie (const odb_Tie &tie, odb_Odb &odb, Logging &log_file);
+        tie_type process_tie (const odb_Tie &tie, Logging &log_file);
         //! Process a display body constraint from the odb file
         /*!
           Process a display body object and store the results

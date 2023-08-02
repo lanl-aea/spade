@@ -430,31 +430,26 @@ void OdbExtractObject::process_constraints (const odb_ConstraintRepository &cons
         if (odb_isA(odb_Tie,constraint_iter.currentValue())) {
             log_file.logVerbose("Tie Constraint");
             odb_Tie tie = odb_dynamicCast(odb_Tie,constraint_iter.currentValue());
-//TODO: write this function
-            tie_type processed_tie = process_tie(tie, odb, log_file);
+            tie_type processed_tie = process_tie(tie, log_file);
             this->constraints.ties.push_back(processed_tie);
         } else if (odb_isA(odb_DisplayBody,constraint_iter.currentValue())) {
             log_file.logVerbose("Display Body Constraint");
             odb_DisplayBody display_body = odb_dynamicCast(odb_DisplayBody,constraint_iter.currentValue());
-//TODO: write this function
             display_body_type processed_display_body = process_display_body(display_body, odb, log_file);
             this->constraints.display_bodies.push_back(processed_display_body);
         } else if (odb_isA(odb_Coupling,constraint_iter.currentValue())) {
             log_file.logVerbose("Coupling Constraint");
             odb_Coupling coupling = odb_dynamicCast(odb_Coupling,constraint_iter.currentValue());
-//TODO: write this function
             coupling_type processed_coupling = process_coupling(coupling, odb, log_file);
             this->constraints.couplings.push_back(processed_coupling);
         } else if (odb_isA(odb_MPC,constraint_iter.currentValue())) {
             log_file.logVerbose("MPC Constraint");
             odb_MPC mpc = odb_dynamicCast(odb_MPC,constraint_iter.currentValue());
-//TODO: write this function
             mpc_type processed_mpc = process_mpc(mpc, odb, log_file);
             this->constraints.mpc.push_back(processed_mpc);
         } else if (odb_isA(odb_ShellSolidCoupling,constraint_iter.currentValue())) {
             log_file.logVerbose("Shell Solid Coupling Constraint");
             odb_ShellSolidCoupling shell_solid_coupling = odb_dynamicCast(odb_ShellSolidCoupling,constraint_iter.currentValue());
-//TODO: write this function
             shell_solid_coupling_type processed_shell_solid_coupling = process_shell_solid_coupling(shell_solid_coupling, odb, log_file);
             this->constraints.shell_solid_couplings.push_back(processed_shell_solid_coupling);
         } else {
@@ -466,23 +461,54 @@ void OdbExtractObject::process_constraints (const odb_ConstraintRepository &cons
 
 }
 
-tie_type OdbExtractObject::process_tie (const odb_Tie &tie, odb_Odb &odb, Logging &log_file) {
+tie_type OdbExtractObject::process_tie (const odb_Tie &tie, Logging &log_file) {
     tie_type new_tie;
+    if (tie.hasValue())
+    {
+        new_tie.main = process_set(tie.master(), log_file);
+        new_tie.secondary = process_set(tie.slave(), log_file);
+        new_tie.adjust = tie.adjust();
+        if (tie.adjust()) {
+            new_tie.positionToleranceMethod = tie.positionToleranceMethod().CStr();
+            if (new_tie.positionToleranceMethod == "SPECIFIED") {
+                new_tie.positionTolerance = tie.positionTolerance();
+            }
+        }
+        new_tie.tieRotations = tie.tieRotations();
+
+        new_tie.constraintRatioMethod = tie.constraintRatioMethod().CStr();
+        new_tie.constraintRatio = tie.constraintRatio();
+        new_tie.constraintEnforcement = tie.constraintEnforcement().CStr();
+        new_tie.thickness = tie.thickness();
+    }
     return new_tie;
 }
 display_body_type OdbExtractObject::process_display_body (const odb_DisplayBody &display_body, odb_Odb &odb, Logging &log_file) {
     display_body_type new_display_body;
+    if (display_body.hasValue())
+    {
+        new_display_body.instanceName = display_body.instanceName().CStr();
+        new_display_body.referenceNode1InstanceName = display_body.referenceNode1InstanceName().CStr();
+        new_display_body.referenceNode1Label = display_body.referenceNode1Label();
+        new_display_body.referenceNode2InstanceName = display_body.referenceNode2InstanceName().CStr();
+        new_display_body.referenceNode2Label = display_body.referenceNode2Label();
+        new_display_body.referenceNode3InstanceName = display_body.referenceNode3InstanceName().CStr();
+        new_display_body.referenceNode3Label = display_body.referenceNode3Label();
+    }
     return new_display_body;
 }
 coupling_type OdbExtractObject::process_coupling (const odb_Coupling &coupling, odb_Odb &odb, Logging &log_file) {
+//TODO: write this function
     coupling_type new_coupling;
     return new_coupling;
 }
 mpc_type OdbExtractObject::process_mpc (const odb_MPC &mpc, odb_Odb &odb, Logging &log_file) {
+//TODO: write this function
     mpc_type new_mpc;
     return new_mpc;
 }
 shell_solid_coupling_type OdbExtractObject::process_shell_solid_coupling (const odb_ShellSolidCoupling &shell_solid_coupling, odb_Odb &odb, Logging &log_file) {
+//TODO: write this function
     shell_solid_coupling_type new_shell_solid_coupling;
     return new_shell_solid_coupling;
 }
