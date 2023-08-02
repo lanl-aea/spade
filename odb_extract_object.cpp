@@ -521,6 +521,14 @@ coupling_type OdbExtractObject::process_coupling (const odb_Coupling &coupling, 
 mpc_type OdbExtractObject::process_mpc (const odb_MPC &mpc, odb_Odb &odb, Logging &log_file) {
 //TODO: write this function
     mpc_type new_mpc;
+    if (mpc.hasValue())
+    {
+        new_mpc.surface = process_set(mpc.surface(), log_file);
+        new_mpc.refPoint = process_set(mpc.refPoint(), log_file);
+        new_mpc.mpcType = mpc.mpcType().cStr();
+        new_mpc.userMode = mpc.userMode().cStr();
+        new_mpc.userType = mpc.userType();
+    }
     return new_mpc;
 }
 shell_solid_coupling_type OdbExtractObject::process_shell_solid_coupling (const odb_ShellSolidCoupling &shell_solid_coupling, odb_Odb &odb, Logging &log_file) {
