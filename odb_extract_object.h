@@ -201,6 +201,14 @@ struct shell_solid_coupling_type {
     string influenceDistance;
 };
 
+struct constraint_type {
+    vector<tie_type> ties;
+    vector<display_body_type> display_bodies;
+    vector<coupling_type> couplings;
+    vector<mpc_type> mpc;
+    vector<shell_solid_coupling_type> shell_solid_couplings;
+};
+
 
 
 struct part_type {
@@ -317,7 +325,7 @@ class OdbExtractObject {
         //! Process the root assembly from the odb file
         /*!
           Process the root assembly and store the results
-          \param instance An odb instance object
+          \param root_assembly An odb root assembly object
           \param odb An open odb object
           \param log_file Logging object for writing log messages
           \param command_line_arguments CmdLineArguments object storing command line arguments
@@ -334,6 +342,51 @@ class OdbExtractObject {
           \sa process_odb()
         */
         void process_step (const odb_Step &step, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments);
+        //! Process a tie constraint from the odb file
+        /*!
+          Process a Tie object and store the results
+          \param tie An odb Tie object
+          \param odb An open odb object
+          \param log_file Logging object for writing log messages
+          \sa process_odb()
+        */
+        tie_type process_tie (const odb_Tie &tie, odb_Odb &odb, Logging &log_file);
+        //! Process a display body constraint from the odb file
+        /*!
+          Process a display body object and store the results
+          \param display_body An odb display body object
+          \param odb An open odb object
+          \param log_file Logging object for writing log messages
+          \sa process_odb()
+        */
+        display_body_type process_display_body (const odb_DisplayBody &display_body, odb_Odb &odb, Logging &log_file);
+        //! Process a coupling constraint from the odb file
+        /*!
+          Process a coupling object and store the results
+          \param coupling An odb coupling object
+          \param odb An open odb object
+          \param log_file Logging object for writing log messages
+          \sa process_odb()
+        */
+        coupling_type process_coupling (const odb_Coupling &coupling, odb_Odb &odb, Logging &log_file);
+        //! Process a mpc from the odb file
+        /*!
+          Process a mpc object and store the results
+          \param mpc An odb mpc object
+          \param odb An open odb object
+          \param log_file Logging object for writing log messages
+          \sa process_odb()
+        */
+        mpc_type process_mpc (const odb_MPC &mpc, odb_Odb &odb, Logging &log_file);
+        //! Process a shell solid coupling constraint from the odb file
+        /*!
+          Process a shell solid coupling object and store the results
+          \param shell_solid_coupling An odb shell solid coupling object
+          \param odb An open odb object
+          \param log_file Logging object for writing log messages
+          \sa process_odb()
+        */
+        shell_solid_coupling_type process_shell_solid_coupling (const odb_ShellSolidCoupling &shell_solid_coupling, odb_Odb &odb, Logging &log_file);
 
 
         //Functions for writing out the data
@@ -418,6 +471,7 @@ class OdbExtractObject {
         vector<user_xy_data_type> user_xy_data;
         vector<contact_standard_type> standard_interactions;
         vector<contact_explicit_type> explicit_interactions;
+        constraint_type constraints;
         /*
         odb_Assembly& rootAssembly;
         odb_PartRepository& parts;
