@@ -136,6 +136,73 @@ struct contact_explicit_type {
  
 };
 
+struct tie_type {
+    odb_set_type main;
+    odb_set_type secondary;
+    bool adjust;
+    string positionToleranceMethod;
+    string positionTolerance;
+    bool tieRotations;
+    string constraintRatioMethod;
+    string constraintRatio;
+    string constraintEnforcement;
+    string thickness;
+};
+
+struct display_body_type {
+    string instanceName;
+    string referenceNode1InstanceName;
+    string referenceNode1Label;
+    string referenceNode2InstanceName;
+    string referenceNode2Label;
+    string referenceNode3InstanceName;
+    string referenceNode3Label;
+};
+
+struct datum_csys_type {
+    string name;
+    string type;
+    float x_axis[3];
+    float y_axis[3];
+    float z_axis[3];
+    float origin[3];
+};
+
+struct coupling_type {
+    odb_set_type surface;
+    odb_set_type refPoint;
+    odb_set_type nodes;
+    string couplingType;
+    string weightingMethod;
+    string influenceRadius;
+
+    bool u1;
+    bool u2;
+    bool u3;
+    bool ur1;
+    bool ur2;
+    bool ur3;
+};
+
+struct mpc_type {
+    odb_set_type surface;
+    odb_set_type refPoint;
+    string mpcType;
+    string userMode;
+    string userType;
+};
+
+struct shell_solid_coupling_type {
+    odb_set_type shellEdge;
+    odb_set_type solidFace;
+    string positionToleranceMethod;
+    string positionTolerance;
+    string influenceDistanceMethod;
+    string influenceDistance;
+};
+
+
+
 struct part_type {
     string name;
 };
