@@ -354,38 +354,34 @@ class OdbExtractObject {
         /*!
           Process a display body object and store the results
           \param display_body An odb display body object
-          \param odb An open odb object
           \param log_file Logging object for writing log messages
           \sa process_odb()
         */
-        display_body_type process_display_body (const odb_DisplayBody &display_body, odb_Odb &odb, Logging &log_file);
+        display_body_type process_display_body (const odb_DisplayBody &display_body, Logging &log_file);
         //! Process a coupling constraint from the odb file
         /*!
           Process a coupling object and store the results
           \param coupling An odb coupling object
-          \param odb An open odb object
           \param log_file Logging object for writing log messages
           \sa process_odb()
         */
-        coupling_type process_coupling (const odb_Coupling &coupling, odb_Odb &odb, Logging &log_file);
+        coupling_type process_coupling (const odb_Coupling &coupling, Logging &log_file);
         //! Process a mpc from the odb file
         /*!
           Process a mpc object and store the results
           \param mpc An odb mpc object
-          \param odb An open odb object
           \param log_file Logging object for writing log messages
           \sa process_odb()
         */
-        mpc_type process_mpc (const odb_MPC &mpc, odb_Odb &odb, Logging &log_file);
+        mpc_type process_mpc (const odb_MPC &mpc, Logging &log_file);
         //! Process a shell solid coupling constraint from the odb file
         /*!
           Process a shell solid coupling object and store the results
           \param shell_solid_coupling An odb shell solid coupling object
-          \param odb An open odb object
           \param log_file Logging object for writing log messages
           \sa process_odb()
         */
-        shell_solid_coupling_type process_shell_solid_coupling (const odb_ShellSolidCoupling &shell_solid_coupling, odb_Odb &odb, Logging &log_file);
+        shell_solid_coupling_type process_shell_solid_coupling (const odb_ShellSolidCoupling &shell_solid_coupling, Logging &log_file);
 
 
         //Functions for writing out the data

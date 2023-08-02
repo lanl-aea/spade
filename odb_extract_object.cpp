@@ -435,22 +435,22 @@ void OdbExtractObject::process_constraints (const odb_ConstraintRepository &cons
         } else if (odb_isA(odb_DisplayBody,constraint_iter.currentValue())) {
             log_file.logVerbose("Display Body Constraint");
             odb_DisplayBody display_body = odb_dynamicCast(odb_DisplayBody,constraint_iter.currentValue());
-            display_body_type processed_display_body = process_display_body(display_body, odb, log_file);
+            display_body_type processed_display_body = process_display_body(display_body, log_file);
             this->constraints.display_bodies.push_back(processed_display_body);
         } else if (odb_isA(odb_Coupling,constraint_iter.currentValue())) {
             log_file.logVerbose("Coupling Constraint");
             odb_Coupling coupling = odb_dynamicCast(odb_Coupling,constraint_iter.currentValue());
-            coupling_type processed_coupling = process_coupling(coupling, odb, log_file);
+            coupling_type processed_coupling = process_coupling(coupling, log_file);
             this->constraints.couplings.push_back(processed_coupling);
         } else if (odb_isA(odb_MPC,constraint_iter.currentValue())) {
             log_file.logVerbose("MPC Constraint");
             odb_MPC mpc = odb_dynamicCast(odb_MPC,constraint_iter.currentValue());
-            mpc_type processed_mpc = process_mpc(mpc, odb, log_file);
+            mpc_type processed_mpc = process_mpc(mpc, log_file);
             this->constraints.mpc.push_back(processed_mpc);
         } else if (odb_isA(odb_ShellSolidCoupling,constraint_iter.currentValue())) {
             log_file.logVerbose("Shell Solid Coupling Constraint");
             odb_ShellSolidCoupling shell_solid_coupling = odb_dynamicCast(odb_ShellSolidCoupling,constraint_iter.currentValue());
-            shell_solid_coupling_type processed_shell_solid_coupling = process_shell_solid_coupling(shell_solid_coupling, odb, log_file);
+            shell_solid_coupling_type processed_shell_solid_coupling = process_shell_solid_coupling(shell_solid_coupling, log_file);
             this->constraints.shell_solid_couplings.push_back(processed_shell_solid_coupling);
         } else {
             string constraint_name = constraint_iter.currentKey().CStr();
@@ -483,7 +483,7 @@ tie_type OdbExtractObject::process_tie (const odb_Tie &tie, Logging &log_file) {
     }
     return new_tie;
 }
-display_body_type OdbExtractObject::process_display_body (const odb_DisplayBody &display_body, odb_Odb &odb, Logging &log_file) {
+display_body_type OdbExtractObject::process_display_body (const odb_DisplayBody &display_body, Logging &log_file) {
     display_body_type new_display_body;
     if (display_body.hasValue())
     {
@@ -497,8 +497,7 @@ display_body_type OdbExtractObject::process_display_body (const odb_DisplayBody 
     }
     return new_display_body;
 }
-coupling_type OdbExtractObject::process_coupling (const odb_Coupling &coupling, odb_Odb &odb, Logging &log_file) {
-//TODO: write this function
+coupling_type OdbExtractObject::process_coupling (const odb_Coupling &coupling, Logging &log_file) {
     coupling_type new_coupling;
     if (coupling.hasValue())
     {
@@ -518,8 +517,7 @@ coupling_type OdbExtractObject::process_coupling (const odb_Coupling &coupling, 
     }
     return new_coupling;
 }
-mpc_type OdbExtractObject::process_mpc (const odb_MPC &mpc, odb_Odb &odb, Logging &log_file) {
-//TODO: write this function
+mpc_type OdbExtractObject::process_mpc (const odb_MPC &mpc, Logging &log_file) {
     mpc_type new_mpc;
     if (mpc.hasValue())
     {
@@ -531,9 +529,19 @@ mpc_type OdbExtractObject::process_mpc (const odb_MPC &mpc, odb_Odb &odb, Loggin
     }
     return new_mpc;
 }
-shell_solid_coupling_type OdbExtractObject::process_shell_solid_coupling (const odb_ShellSolidCoupling &shell_solid_coupling, odb_Odb &odb, Logging &log_file) {
+shell_solid_coupling_type OdbExtractObject::process_shell_solid_coupling (const odb_ShellSolidCoupling &shell_solid_coupling, Logging &log_file) {
 //TODO: write this function
     shell_solid_coupling_type new_shell_solid_coupling;
+	if (shell_solid_coupling.hasValue())
+	{
+        new_shell_solid_coupling.shellEdge = process_set(shell_solid_coupling.shellEdge(), log_file);
+        new_shell_solid_coupling.solidFace = process_set(shell_solid_coupling.solidFace(), log_file);
+        new_shell_solid_coupling.positionToleranceMethod = shell_solid_coupling.positionToleranceMethod().cStr();
+        new_shell_solid_coupling.positionTolerance = shell_solid_coupling.positionTolerance();
+        new_shell_solid_coupling.influenceDistanceMethod = shell_solid_coupling.influenceDistanceMethod().cStr();
+        new_shell_solid_coupling.influenceDistance = shell_solid_coupling.influenceDistance();
+
+	}
     return new_shell_solid_coupling;
 }
 
