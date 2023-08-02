@@ -500,6 +500,22 @@ display_body_type OdbExtractObject::process_display_body (const odb_DisplayBody 
 coupling_type OdbExtractObject::process_coupling (const odb_Coupling &coupling, odb_Odb &odb, Logging &log_file) {
 //TODO: write this function
     coupling_type new_coupling;
+    if (coupling.hasValue())
+    {
+        new_coupling.surface = process_set(coupling.surface(), log_file);
+        new_coupling.refPoint = process_set(coupling.refPoint(), log_file);
+           
+        new_coupling.couplingType = coupling.couplingType().cStr();
+        new_coupling.weightingMethod = coupling.weightingMethod().cStr();
+        new_coupling.influenceRadius = coupling.influenceRadius();
+        new_coupling.u1 = coupling.u1();
+        new_coupling.u2 = coupling.u2();
+        new_coupling.u3 = coupling.u3();
+        new_coupling.ur1 = coupling.ur1();
+        new_coupling.ur2 = coupling.ur2();
+        new_coupling.ur3 = coupling.ur3();
+        new_coupling.nodes = process_set(coupling.couplingNodes(), log_file);
+    }
     return new_coupling;
 }
 mpc_type OdbExtractObject::process_mpc (const odb_MPC &mpc, odb_Odb &odb, Logging &log_file) {
