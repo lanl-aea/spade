@@ -580,7 +580,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     write_attribute(odb_group, "analysisTitle", this->analysisTitle);
     write_attribute(odb_group, "description", this->description);
     write_attribute(odb_group, "path", this->path);
-    stringstream bool_stream; bool_stream << std::boolalpha << this->isReadOnly; string bool_string = bool_stream.str();
+    std::string bool_string = (this->isReadOnly) ? "true" : "false"; 
     write_attribute(odb_group, "isReadOnly", bool_string);
 
     log_file.logVerbose("Writing odb jobData.");
@@ -645,6 +645,22 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
 
 void OdbExtractObject::write_constraints(H5::H5File &h5_file, const string &group_name) {
     if (!this->constraints.ties.empty()) {
+        H5::Group ties_group = h5_file.createGroup((group_name + "/ties").c_str());
+        for (int i=0; i<this->constraints.ties.size(); i++) {
+            string tie_group_name = group_name + "/ties/" + to_string(i);
+            H5::Group tie_group = h5_file.createGroup(tie_group_name.c_str());
+            write_set(h5_file, tie_group_name, this->constraints.ties[i].main);
+            write_set(h5_file, tie_group_name, this->constraints.ties[i].secondary);
+            write_string_dataset(tie_group, "adjust", (this->constraints.ties[i].adjust) ? "true" : "false");
+            write_string_dataset(tie_group, "tieRotations", (this->constraints.ties[i].tieRotations) ? "true" : "false");
+            write_string_dataset(tie_group, "positionToleranceMethod", this->constraints.ties[i].positionToleranceMethod);
+            write_string_dataset(tie_group, "positionTolerance", this->constraints.ties[i].positionTolerance);
+            write_string_dataset(tie_group, "constraintRatioMethod", this->constraints.ties[i].constraintRatioMethod);
+            write_string_dataset(tie_group, "constraintRatio", this->constraints.ties[i].constraintRatio);
+            write_string_dataset(tie_group, "constraintEnforcement", this->constraints.ties[i].constraintEnforcement);
+            write_string_dataset(tie_group, "thickness", this->constraints.ties[i].thickness);
+        }
+//        std::string bool_string = (this->constraints.ties[i].adjust) ? "true" : "false"; 
 
     }
     if (!this->constraints.display_bodies.empty()) {
@@ -685,7 +701,6 @@ void OdbExtractObject::write_nodes(H5::H5File &h5_file, const string &group_name
 }
 
 void OdbExtractObject::write_set(H5::H5File &h5_file, const string &group_name, const set_type &set) {
-    // TODO
     if (!set.name.empty()) {
         string set_group_name = group_name + "/" + set.name;
         H5::Group set_group = h5_file.createGroup(set_group_name.c_str());
