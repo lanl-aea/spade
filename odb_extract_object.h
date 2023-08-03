@@ -22,7 +22,7 @@ struct job_data_type {
     string modificationTime;
     string name;
     string precision;
-    vector<const char*> productAddOns;
+    vector<string> productAddOns;
     string version;
 };
 
@@ -424,7 +424,7 @@ class OdbExtractObject {
           \param group_name Name of the new data where a string is to be written
           \param section_category The section category data to be written
         */
-        void write_section_category(H5::H5File &h5_file, const H5::Group &group, const string &group_name, section_category_type &section_category);
+        void write_section_category(H5::H5File &h5_file, const H5::Group &group, const string &group_name, const section_category_type &section_category);
         //! Write a string as an attribute
         /*!
           Create an attribute with a string using the passed-in values
@@ -448,7 +448,7 @@ class OdbExtractObject {
           \param dataset_name Name of the new dataset where an array of strings is to be written
           \param string_values The vector of strings that should be written in the new dataset
         */
-        void write_string_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<const char*> &string_values);
+        void write_string_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<string> &string_values);
         //! Write an integer as a dataset
         /*!
           Create a dataset with an integer using the passed-in value
@@ -464,7 +464,7 @@ class OdbExtractObject {
           \param dataset_name Name of the new dataset where the data is to be written
           \param int_array The integer array that should be written in the new dataset
         */
-        void write_integer_array_dataset(const H5::Group &group, const string &dataset_name, int array_size, int* int_array);
+        void write_integer_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const int* int_array);
         //! Write an integer vector as a dataset
         /*!
           Create an integer array from an integer vector and call write_integer_array_dataset
@@ -473,7 +473,7 @@ class OdbExtractObject {
           \param int_data The integer data that should be written in the new dataset
           \sa write_integer_array_dataset()
         */
-        void write_integer_vector_dataset(const H5::Group &group, const string &dataset_name, vector<int> &int_data);
+        void write_integer_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<int> &int_data);
         //! Write an float as a dataset
         /*!
           Create a dataset with a float using the passed-in value
@@ -489,7 +489,7 @@ class OdbExtractObject {
           \param dataset_name Name of the new dataset where the data is to be written
           \param float_array The float array that should be written in the new dataset
         */
-        void write_float_array_dataset(const H5::Group &group, const string &dataset_name, int array_size, float* float_array);
+        void write_float_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const float* float_array);
         //! Write an float vector as a dataset
         /*!
           Create a float array from a float vector and call write_float_array_dataset
@@ -498,7 +498,7 @@ class OdbExtractObject {
           \param float_data The float data that should be written in the new dataset
           \sa write_float_array_dataset()
         */
-        void write_float_vector_dataset(const H5::Group &group, const string &dataset_name, vector<float> &float_data);
+        void write_float_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<float> &float_data);
         //! Write an array of arrays of floats as a dataset
         /*!
           Create a dataset with a two-dimensional array of floats using the passed-in values
@@ -508,7 +508,7 @@ class OdbExtractObject {
           \param max_column_size Integer indicating the column dimension
           \param float_array A pointer to the array of arrays of floats that should be written in the new dataset
         */
-        void write_float_2D_array(const H5::Group &group, const string &dataset_name, int &row_size, int &column_size, float** &float_array);
+        void write_float_2D_array(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, float** &float_array);
         //! Write a vector of vectors of floats as a dataset
         /*!
           Create a dataset with a two-dimensional array of floats using the passed-in values
@@ -518,7 +518,7 @@ class OdbExtractObject {
           \param data_array The vector of vectors of floats that should be written in the new dataset
           \sa write_float_2D_array()
         */
-        void write_float_2D_vector(const H5::Group &group, const string &dataset_name, int &max_column_size, vector<vector<float>> &data_array);
+        void write_float_2D_vector(const H5::Group &group, const string &dataset_name, const int &max_column_size, vector<vector<float>> &data_array);
 
 
     private:
