@@ -410,6 +410,7 @@ class OdbExtractObject {
           \sa OdbExtractObject()
         */
         void write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file);
+        void write_section_category(H5::H5File &h5_file, const H5::Group &group, const string &group_name, section_category_type &section_category);
         //! Write a string as an attribute
         /*!
           Create an attribute with a string using the passed-in values

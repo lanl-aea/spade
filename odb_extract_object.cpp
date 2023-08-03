@@ -530,7 +530,6 @@ mpc_type OdbExtractObject::process_mpc (const odb_MPC &mpc, Logging &log_file) {
     return new_mpc;
 }
 shell_solid_coupling_type OdbExtractObject::process_shell_solid_coupling (const odb_ShellSolidCoupling &shell_solid_coupling, Logging &log_file) {
-//TODO: write this function
     shell_solid_coupling_type new_shell_solid_coupling;
 	if (shell_solid_coupling.hasValue())
 	{
@@ -607,12 +606,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     for (int i=0; i<this->section_categories.size(); i++) {
         string category_group_name = "/odb/sectionCategories/" + this->section_categories[i].name;
         H5::Group section_category_group = h5_file.createGroup(category_group_name.c_str());
-        write_string_dataset(section_category_group, "description", this->section_categories[i].description);
-        for (int j=0; j<this->section_categories[i].sectionPoints.size(); j++) {
-            string point_group_name = "/odb/sectionCategories/" + this->section_categories[i].name + "/" + this->section_categories[i].sectionPoints[j].number;
-            H5::Group section_point_group = h5_file.createGroup(point_group_name.c_str());
-            write_string_dataset(section_category_group, "description", this->section_categories[i].sectionPoints[j].description);
-        }
+        write_section_category(h5_file, section_category_group, category_group_name, this->section_categories[i]);
     }
 
     log_file.logVerbose("Writing odb user data.");
@@ -646,6 +640,15 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     // TODO: potentially add materials group
 
     h5_file.close();  // Close the hdf5 file
+}
+
+void OdbExtractObject::write_section_category(H5::H5File &h5_file, const H5::Group &group, const string &group_name, section_category_type &section_category) {
+    write_string_dataset(group, "description", section_category.description);
+    for (int j=0; j<section_category.sectionPoints.size(); j++) {
+        string point_group_name = group_name + "/" + section_category.sectionPoints[j].number;
+        H5::Group section_point_group = h5_file.createGroup(point_group_name.c_str());
+        write_string_dataset(section_point_group, "description", section_category.sectionPoints[j].description);
+    }
 }
 
 void OdbExtractObject::write_attribute(const H5::Group& group, const string & attribute_name, const string & string_value) {
