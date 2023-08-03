@@ -410,6 +410,12 @@ class OdbExtractObject {
           \sa OdbExtractObject()
         */
         void write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file);
+        void write_constraints(H5::H5File &h5_file, const string &group_name);
+        void write_element(H5::H5File &h5_file, const string &group_name, const element_type &element);
+        void write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type> &elements);
+        void write_node(H5::H5File &h5_file, const string &group_name, const node_type &node);
+        void write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type> &nodes);
+        void write_set(H5::H5File &h5_file, const string &group_name, const set_type &set);
         //! Write a section category type to an HDF5 file
         /*!
           Write data from section category type into an HDF5 file

@@ -664,7 +664,7 @@ void OdbExtractObject::write_constraints(H5::H5File &h5_file, const string &grou
 void OdbExtractObject::write_element(H5::H5File &h5_file, const string &group_name, const element_type &element) {
     H5::Group element_group = h5_file.createGroup((group_name + "/" + element.label).c_str());
     write_string_dataset(element_group, "type", element.type);
-    vector<int> connectivity;
+    write_int_vector_dataset(elment_group, "connectivity", element.connectivity);
     write_section_category(h5_file, element_group, group_name + "/" + elment.label + "/sectionCategory", element.sectionCategory);
     write_string_vector_dataset(elment_group, "instanceNames", element.instanceNames);
 }
@@ -676,12 +676,7 @@ void OdbExtractObject::write_elements(H5::H5File &h5_file, const string &group_n
 
 void OdbExtractObject::write_node(H5::H5File &h5_file, const string &group_name, const node_type &node) {
     H5::Group node_group = h5_file.createGroup((group_name + "/" + node.label).c_str());
-    hsize_t dimensions[] = {3};
-    H5::DataSpace dataspace(1, dimensions);
-    H5::DataSet dataset = node_group.createDataSet("coordinates", H5::PredType::NATIVE_FLOAT, dataspace);
-    dataset.write(node.coordinates, H5::PredType::NATIVE_FLOAT);
-    dataset.close();
-    dataspace.close();
+    write_float_array_dataset(node_group, group_name + "/" + node.label, 3, *node.coordinates);
 }
 
 void OdbExtractObject::write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type> &nodes) {
