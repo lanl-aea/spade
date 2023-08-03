@@ -645,9 +645,9 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
 
 void OdbExtractObject::write_constraints(H5::H5File &h5_file, const string &group_name) {
     if (!this->constraints.ties.empty()) {
-        H5::Group ties_group = h5_file.createGroup((group_name + "/ties").c_str());
+        H5::Group ties_group = h5_file.createGroup((group_name + "/tie").c_str());
         for (int i=0; i<this->constraints.ties.size(); i++) {
-            string tie_group_name = group_name + "/ties/" + to_string(i);
+            string tie_group_name = group_name + "/tie/" + to_string(i);
             H5::Group tie_group = h5_file.createGroup(tie_group_name.c_str());
             write_set(h5_file, tie_group_name, this->constraints.ties[i].main);
             write_set(h5_file, tie_group_name, this->constraints.ties[i].secondary);
@@ -660,20 +660,64 @@ void OdbExtractObject::write_constraints(H5::H5File &h5_file, const string &grou
             write_string_dataset(tie_group, "constraintEnforcement", this->constraints.ties[i].constraintEnforcement);
             write_string_dataset(tie_group, "thickness", this->constraints.ties[i].thickness);
         }
-//        std::string bool_string = (this->constraints.ties[i].adjust) ? "true" : "false"; 
-
     }
     if (!this->constraints.display_bodies.empty()) {
-
+        H5::Group display_bodies_group = h5_file.createGroup((group_name + "/displayBody").c_str());
+        for (int i=0; i<this->constraints.display_bodies.size(); i++) {
+            string display_body_group_name = group_name + "/displayBody/" + to_string(i);
+            H5::Group display_body_group = h5_file.createGroup(display_body_group_name.c_str());
+            write_string_dataset(display_body_group, "instanceName", this->constraints.display_bodies[i].instanceName);
+            write_string_dataset(display_body_group, "referenceNode1InstanceName", this->constraints.display_bodies[i].referenceNode1InstanceName);
+            write_string_dataset(display_body_group, "referenceNode1Label", this->constraints.display_bodies[i].referenceNode1Label);
+            write_string_dataset(display_body_group, "referenceNode2InstanceName", this->constraints.display_bodies[i].referenceNode2InstanceName);
+            write_string_dataset(display_body_group, "referenceNode2Label", this->constraints.display_bodies[i].referenceNode2Label);
+            write_string_dataset(display_body_group, "referenceNode3InstanceName", this->constraints.display_bodies[i].referenceNode3InstanceName);
+            write_string_dataset(display_body_group, "referenceNode3Label", this->constraints.display_bodies[i].referenceNode3Label);
+        }
     }
     if (!this->constraints.couplings.empty()) {
-
+        H5::Group couplings_group = h5_file.createGroup((group_name + "/coupling").c_str());
+        for (int i=0; i<this->constraints.couplings.size(); i++) {
+            string coupling_group_name = group_name + "/coupling/" + to_string(i);
+            H5::Group coupling_group = h5_file.createGroup(coupling_group_name.c_str());
+            write_set(h5_file, coupling_group_name, this->constraints.couplings[i].surface);
+            write_set(h5_file, coupling_group_name, this->constraints.couplings[i].refPoint);
+            write_set(h5_file, coupling_group_name, this->constraints.couplings[i].nodes);
+            write_string_dataset(coupling_group, "couplingType", this->constraints.couplings[i].couplingType);
+            write_string_dataset(coupling_group, "weightingMethod", this->constraints.couplings[i].weightingMethod);
+            write_string_dataset(coupling_group, "influenceRadius", this->constraints.couplings[i].influenceRadius);
+            write_string_dataset(coupling_group, "u1", (this->constraints.couplings[i].u1) ? "true" : "false");
+            write_string_dataset(coupling_group, "u2", (this->constraints.couplings[i].u2) ? "true" : "false");
+            write_string_dataset(coupling_group, "u3", (this->constraints.couplings[i].u3) ? "true" : "false");
+            write_string_dataset(coupling_group, "ur1", (this->constraints.couplings[i].ur1) ? "true" : "false");
+            write_string_dataset(coupling_group, "ur2", (this->constraints.couplings[i].ur2) ? "true" : "false");
+            write_string_dataset(coupling_group, "ur3", (this->constraints.couplings[i].ur3) ? "true" : "false");
+        }
     }
     if (!this->constraints.mpc.empty()) {
-
+        H5::Group mpcs_group = h5_file.createGroup((group_name + "/mpc").c_str());
+        for (int i=0; i<this->constraints.mpc.size(); i++) {
+            string mpc_group_name = group_name + "/mpc/" + to_string(i);
+            H5::Group mpc_group = h5_file.createGroup(mpc_group_name.c_str());
+            write_set(h5_file, mpc_group_name, this->constraints.mpc[i].surface);
+            write_set(h5_file, mpc_group_name, this->constraints.mpc[i].refPoint);
+            write_string_dataset(mpc_group, "mpcType", this->constraints.mpc[i].mpcType);
+            write_string_dataset(mpc_group, "userMode", this->constraints.mpc[i].userMode);
+            write_string_dataset(mpc_group, "userType", this->constraints.mpc[i].userType);
+        }
     }
     if (!this->constraints.shell_solid_couplings.empty()) {
-
+        H5::Group shell_solid_couplings_group = h5_file.createGroup((group_name + "/shellSolidCoupling").c_str());
+        for (int i=0; i<this->constraints.shell_solid_couplings.size(); i++) {
+            string shell_solid_coupling_group_name = group_name + "/shellSolidCoupling/" + to_string(i);
+            H5::Group shell_solid_coupling_group = h5_file.createGroup(shell_solid_coupling_group_name.c_str());
+            write_set(h5_file, shell_solid_coupling_group_name, this->constraints.shell_solid_couplings[i].shellEdge);
+            write_set(h5_file, shell_solid_coupling_group_name, this->constraints.shell_solid_couplings[i].solidFace);
+            write_string_dataset(shell_solid_coupling_group, "positionToleranceMethod", this->constraints.shell_solid_couplings[i].positionToleranceMethod);
+            write_string_dataset(shell_solid_coupling_group, "positionTolerance", this->constraints.shell_solid_couplings[i].positionTolerance);
+            write_string_dataset(shell_solid_coupling_group, "influenceDistanceMethod", this->constraints.shell_solid_couplings[i].influenceDistanceMethod);
+            write_string_dataset(shell_solid_coupling_group, "influenceDistance", this->constraints.shell_solid_couplings[i].influenceDistance);
+        }
     }
 }
 
