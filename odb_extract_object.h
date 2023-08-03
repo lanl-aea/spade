@@ -126,7 +126,7 @@ struct contact_explicit_type {
     string secondaryNoThick;
     string mechanicalConstraint;
     string weightingFactorType;
-    float weightingFactor;
+    double weightingFactor;
     string createStepName;
     string useReverseDatumAxis;  // Boolean
     string contactControls;

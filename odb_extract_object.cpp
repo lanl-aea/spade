@@ -398,8 +398,8 @@ void OdbExtractObject::process_interactions (const odb_InteractionRepository &in
             log_file.logVerbose("Explicit Surface To Surface Contact Interaction.");
     	    odb_SurfaceToSurfaceContactExp ssce = odb_dynamicCast(odb_SurfaceToSurfaceContactExp,interaction_iter.currentValue());
             contact_explicit.sliding = ssce.sliding().CStr();
-            contact_explicit.mainNoThick = ssce.masterNoThick();
-            contact_explicit.secondaryNoThick = ssce.slaveNoThick();
+            contact_explicit.mainNoThick = (ssce.masterNoThick()) ? "true" : "false";
+            contact_explicit.secondaryNoThick = (ssce.slaveNoThick()) ? "true" : "false";
             contact_explicit.mechanicalConstraint = ssce.mechanicalConstraint().CStr();
             contact_explicit.weightingFactorType = ssce.weightingFactorType().CStr();
             contact_explicit.weightingFactor = ssce.weightingFactor();
@@ -408,7 +408,7 @@ void OdbExtractObject::process_interactions (const odb_InteractionRepository &in
             odb_InteractionProperty interaction_property = odb.interactionProperties().constGet(ssce.interactionProperty());
             contact_explicit.interactionProperty = process_interaction_property(interaction_property, log_file);
 
-            contact_explicit.useReverseDatumAxis = ssce.useReverseDatumAxis();
+            contact_explicit.useReverseDatumAxis = (ssce.useReverseDatumAxis()) ? "true" : "false";
             contact_explicit.contactControls = ssce.contactControls().CStr();
   
             odb_Set main = ssce.master();
@@ -771,19 +771,18 @@ void OdbExtractObject::write_interactions(H5::H5File &h5_file, const string &gro
         for (int i=0; i<this->explicit_interactions.size(); i++) {
             string explicit_group_name = group_name + "/interactions/explicit/" + to_string(i);
             H5::Group explicit_group = h5_file.createGroup(explicit_group_name.c_str());
-    string sliding;  // Symbolic Constant [FINITE, SMALL]
-    string mainNoThick;
-    string secondaryNoThick;
-    string mechanicalConstraint;
-    string weightingFactorType;
-    float weightingFactor;
-    string createStepName;
-    string useReverseDatumAxis;  // Boolean
-    string contactControls;
-  
-    tangential_behavior_type interactionProperty;
-    set_type main;
-    set_type secondary;
+            write_string_dataset(explicit_group, "sliding", this->explicit_interactions[i].sliding);
+            write_string_dataset(explicit_group, "mainNoThick", this->explicit_interactions[i].mainNoThick);
+            write_string_dataset(explicit_group, "secondaryNoThick", this->explicit_interactions[i].secondaryNoThick);
+            write_string_dataset(explicit_group, "mechanicalConstraint", this->explicit_interactions[i].mechanicalConstraint);
+            write_string_dataset(explicit_group, "weightingFactorType", this->explicit_interactions[i].weightingFactorType);
+            write_string_dataset(explicit_group, "createStepName", this->explicit_interactions[i].createStepName);
+            write_string_dataset(explicit_group, "useReverseDatumAxis", this->explicit_interactions[i].useReverseDatumAxis);
+            write_string_dataset(explicit_group, "contactControls", this->explicit_interactions[i].contactControls);
+            write_double_dataset(explicit_group, "weightingFactor", this->explicit_interactions[i].weightingFactor);
+            write_tangential_behavior(h5_file, explicit_group_name, this->explicit_interactions[i].interactionProperty);
+            write_set(h5_file, explicit_group_name, this->explicit_interactions[i].main);
+            write_set(h5_file, explicit_group_name, this->explicit_interactions[i].secondary);
         }
     }
 }
