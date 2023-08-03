@@ -263,8 +263,8 @@ tangential_behavior_type OdbExtractObject::process_interaction_property (const o
     return interaction;
 }
 
-odb_node_type OdbExtractObject::process_node (const odb_Node &node, Logging &log_file) {
-    odb_node_type new_node;
+node_type OdbExtractObject::process_node (const odb_Node &node, Logging &log_file) {
+    node_type new_node;
     new_node.label = node.label();
     const float * const coords = node.coordinates();
     new_node.coordinates[0] = coords[0];
@@ -273,8 +273,8 @@ odb_node_type OdbExtractObject::process_node (const odb_Node &node, Logging &log
     return new_node;
 }
 
-odb_element_type OdbExtractObject::process_element (const odb_Element &element, Logging &log_file) {
-    odb_element_type new_element;
+element_type OdbExtractObject::process_element (const odb_Element &element, Logging &log_file) {
+    element_type new_element;
     new_element.label = element.label();
     new_element.type = element.type().CStr();
     int element_connectivity_size;
@@ -290,8 +290,8 @@ odb_element_type OdbExtractObject::process_element (const odb_Element &element, 
     return new_element;
 }
 
-odb_set_type OdbExtractObject::process_set (const odb_Set &set, Logging &log_file) {
-    odb_set_type new_set;
+set_type OdbExtractObject::process_set (const odb_Set &set, Logging &log_file) {
+    set_type new_set;
     if (set.name().empty()) {
         log_file.logVerbose("Empty set.");
         return new_set;
@@ -591,7 +591,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     write_attribute(job_data_group, "modificationTime", this->job_data.modificationTime);
     write_attribute(job_data_group, "name", this->job_data.name);
     write_attribute(job_data_group, "precision", this->job_data.precision);
-    write_vector_string_dataset(job_data_group, "productAddOns", this->job_data.productAddOns);
+    write_string_vector_dataset(job_data_group, "productAddOns", this->job_data.productAddOns);
     write_attribute(job_data_group, "version", this->job_data.version);
 
     log_file.logVerbose("Writing odb sector definition.");
@@ -622,10 +622,11 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
         write_string_dataset(user_xy_data_group, "yAxisLabel", this->user_xy_data[i].yAxisLabel);
         write_string_dataset(user_xy_data_group, "legendLabel", this->user_xy_data[i].legendLabel);
         write_string_dataset(user_xy_data_group, "description", this->user_xy_data[i].description);
-        write_2D_float(user_xy_data_group, "data", this->user_xy_data[i].max_column_size, this->user_xy_data[i].data);
+        write_float_2D_vector(user_xy_data_group, "data", this->user_xy_data[i].max_column_size, this->user_xy_data[i].data);
     }
 
     this->contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
+    write_constraints(h5_file, "odb/constraints");
     this->interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
     this->parts_group = h5_file.createGroup(string("/odb/parts").c_str());
     this->root_assembly_group = h5_file.createGroup(string("/odb/rootAssembly").c_str());
@@ -640,6 +641,77 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     // TODO: potentially add materials group
 
     h5_file.close();  // Close the hdf5 file
+}
+
+void OdbExtractObject::write_constraints(H5::H5File &h5_file, const string &group_name) {
+    if (!this->constraints.ties.empty()) {
+
+    }
+    if (!this->constraints.display_bodies.empty()) {
+
+    }
+    if (!this->constraints.couplings.empty()) {
+
+    }
+    if (!this->constraints.mpc.empty()) {
+
+    }
+    if (!this->constraints.shell_solid_couplings.empty()) {
+
+    }
+}
+
+void OdbExtractObject::write_element(H5::H5File &h5_file, const string &group_name, const element_type &element) {
+    H5::Group element_group = h5_file.createGroup((group_name + "/" + element.label).c_str());
+    write_string_dataset(element_group, "type", element.type);
+    vector<int> connectivity;
+    write_section_category(h5_file, element_group, group_name + "/" + elment.label + "/sectionCategory", element.sectionCategory);
+    write_string_vector_dataset(elment_group, "instanceNames", element.instanceNames);
+}
+
+void OdbExtractObject::write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type> &elements) {
+    H5::Group elements_group = h5_file.createGroup((group_name + "/elements").c_str());
+    for (auto element : elements) { write_node(h5_file, group_name + "/elements", element); }
+}
+
+void OdbExtractObject::write_node(H5::H5File &h5_file, const string &group_name, const node_type &node) {
+    H5::Group node_group = h5_file.createGroup((group_name + "/" + node.label).c_str());
+    hsize_t dimensions[] = {3};
+    H5::DataSpace dataspace(1, dimensions);
+    H5::DataSet dataset = node_group.createDataSet("coordinates", H5::PredType::NATIVE_FLOAT, dataspace);
+    dataset.write(node.coordinates, H5::PredType::NATIVE_FLOAT);
+    dataset.close();
+    dataspace.close();
+}
+
+void OdbExtractObject::write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type> &nodes) {
+    H5::Group nodes_group = h5_file.createGroup((group_name + "/nodes").c_str());
+    for (auto node : nodes) { write_node(h5_file, group_name + "/nodes", node); }
+}
+
+void OdbExtractObject::write_set(H5::H5File &h5_file, const string &group_name, const set_type &set) {
+    // TODO
+    if (!set.name.empty()) {
+        string set_group_name = group_name + "/" + set.name;
+        H5::Group set_group = h5_file.createGroup(set_group_name.c_str());
+        write_attribute(set_group, "type", set.type);
+        write_string_vector_dataset(set_group, "instanceNames", set.instanceNames);
+        if (set.type == "Node Set") {
+            write_nodes(h5_file, set_group_name, set.nodes);
+        } else if (set.type == "Element Set") {
+            write_elements(h5_file, set_group_name, set.elements);
+        } else if (set.type == "Surface Set") {
+            if(!set.elements.empty() && !set.faces.empty())
+            {
+                write_elements(h5_file, set_group_name, set.elements);
+                write_string_vector_dataset(set_group, "faces", set.faces);
+            } else if(!set.elements.empty()) {
+                write_elements(h5_file, set_group_name, set.elements);
+            } else {
+                write_nodes(h5_file, set_group_name, set.nodes);
+            }
+        }
+    }
 }
 
 void OdbExtractObject::write_section_category(H5::H5File &h5_file, const H5::Group &group, const string &group_name, section_category_type &section_category) {
@@ -673,7 +745,7 @@ void OdbExtractObject::write_string_dataset(const H5::Group& group, const string
     dataspace.close();
 }
 
-void OdbExtractObject::write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<const char*> & string_values) {
+void OdbExtractObject::write_string_vector_dataset(const H5::Group& group, const string & dataset_name, const vector<const char*> & string_values) {
 //    hsize_t dimensions[] = {1};
     hsize_t dimensions[1] = {hsize_t(string_values.size())};
     H5::DataSpace dataspace(1, dimensions);  // Create a space for as many strings as are in the vector
@@ -697,19 +769,62 @@ void OdbExtractObject::write_integer_dataset(const H5::Group& group, const strin
     dataspace.close();
 }
 
-void OdbExtractObject::write_2D_float(const H5::Group& group, const string & dataset_name, int & max_column_size, vector<vector<float>> & data_array) {
-    float float_array[data_array.size()][max_column_size]; // Need to convert vector to array with contiguous memory for H5 to process
-    for( int i = 0; i<data_array.size(); ++i) {
-        for( int j = 0; j<data_array[i].size(); ++j) {
-            float_array[i][j] = data_array[i][j];
-        }
-    }
-    hsize_t dimensions[] = {data_array.size(), max_column_size};
+void OdbExtractObject::write_integer_array_dataset(const H5::Group& group, const string & dataset_name, int array_size, int* int_array) {
+    hsize_t dimensions[] = {array_size};
+    H5::DataSpace dataspace(1, dimensions);
+    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
+    dataset.write(int_array, H5::PredType::NATIVE_INT);
+    dataset.close();
+    dataspace.close();
+}
+
+void OdbExtractObject::write_integer_vector_dataset(const H5::Group& group, const string & dataset_name, vector<int> & int_data) {
+    int int_array[int_data.size()]; // Need to convert vector to array with contiguous memory for H5 to process
+    for (int i=0; i<int_data.size(); i++) { int_array[i] = int_data[i]; }
+    write_integer_array(group, dataset_name, int_data.size(), *int_array);
+}
+
+void OdbExtractObject::write_float_dataset(const H5::Group &group, const string &dataset_name, const float &float_value) {
+    hsize_t dimensions[] = {1};
+    H5::DataSpace dataspace(1, dimensions);  // Just one integer
+    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
+    dataset.write(&float_value, H5::PredType::NATIVE_FLOAT);
+    dataset.close();
+    dataspace.close();
+}
+
+void OdbExtractObject::write_float_array_dataset(const H5::Group &group, const string &dataset_name, int array_size, float* float_array) {
+    hsize_t dimensions[] = {array_size};
+    H5::DataSpace dataspace(1, dimensions);
+    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
+    dataset.write(float_array, H5::PredType::NATIVE_FLOAT);
+    dataset.close();
+    dataspace.close();
+}
+
+void OdbExtractObject::write_float_vector_dataset(const H5::Group &group, const string &dataset_name, vector<float> &float_data) {
+    float float_array[float_data.size()]; // Need to convert vector to array with contiguous memory for H5 to process
+    for (int i=0; i<int_data.size(); i++) { float_array[i] = float_data[i]; }
+    write_float_array(group, dataset_name, float_data.size(), *float_array);
+}
+
+void OdbExtractObject::write_float_2D_array(const H5::Group& group, const string & dataset_name, int &row_size, int &column_size, float** &float_array) {
+    hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
     dataset.write(float_array, H5::PredType::NATIVE_FLOAT);
     dataset.close();
     dataspace.close();
+}
+
+void OdbExtractObject::write_float_2D_vector(const H5::Group& group, const string & dataset_name, int & max_column_size, vector<vector<float>> & float_data) {
+    float float_array[float_data.size()][max_column_size]; // Need to convert vector to array with contiguous memory for H5 to process
+    for( int i = 0; i<float_data.size(); ++i) {
+        for( int j = 0; j<float_data[i].size(); ++j) {
+            float_array[i][j] = float_data[i][j];
+        }
+    }
+    write_float_2D_array(group, dataset_name, float_data.size(), max_column_size, **float_array);
 }
 
 

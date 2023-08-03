@@ -75,7 +75,7 @@ struct tangential_behavior_type {
     string useProperties;
 };
 
-struct odb_element_type {
+struct element_type {
     int label;
     string type;
     vector<int> connectivity;
@@ -83,18 +83,18 @@ struct odb_element_type {
     vector<string> instanceNames;
 };
 
-struct odb_node_type {
+struct node_type {
     int label;
     float coordinates[3];
 };
 
-struct odb_set_type {
+struct set_type {
     string name;
     string type;  // Enum [NODE_SET, ELEMENT_SET, SURFACE_SET]
     int size;
     vector<string> instanceNames;
-    vector<odb_node_type> nodes;
-    vector<odb_element_type> elements;
+    vector<node_type> nodes;
+    vector<element_type> elements;
     vector<string> faces;
 };
 
@@ -114,9 +114,9 @@ struct contact_standard_type {
     string createStepName;
 
     tangential_behavior_type interactionProperty;
-    odb_set_type main;
-    odb_set_type secondary;
-    odb_set_type adjust;
+    set_type main;
+    set_type secondary;
+    set_type adjust;
 };
 
 struct contact_explicit_type {
@@ -131,14 +131,14 @@ struct contact_explicit_type {
     string contactControls;
   
     tangential_behavior_type interactionProperty;
-    odb_set_type main;
-    odb_set_type secondary;
+    set_type main;
+    set_type secondary;
  
 };
 
 struct tie_type {
-    odb_set_type main;
-    odb_set_type secondary;
+    set_type main;
+    set_type secondary;
     bool adjust;
     string positionToleranceMethod;
     string positionTolerance;
@@ -169,9 +169,9 @@ struct datum_csys_type {
 };
 
 struct coupling_type {
-    odb_set_type surface;
-    odb_set_type refPoint;
-    odb_set_type nodes;
+    set_type surface;
+    set_type refPoint;
+    set_type nodes;
     string couplingType;
     string weightingMethod;
     string influenceRadius;
@@ -185,16 +185,16 @@ struct coupling_type {
 };
 
 struct mpc_type {
-    odb_set_type surface;
-    odb_set_type refPoint;
+    set_type surface;
+    set_type refPoint;
     string mpcType;
     string userMode;
     string userType;
 };
 
 struct shell_solid_coupling_type {
-    odb_set_type shellEdge;
-    odb_set_type solidFace;
+    set_type shellEdge;
+    set_type solidFace;
     string positionToleranceMethod;
     string positionTolerance;
     string influenceDistanceMethod;
@@ -243,7 +243,7 @@ class OdbExtractObject {
           Process odb_SectionCategory object and return the values in a section_category_type
           \param section_category An odb_SectionCategory object in the odb
           \param log_file Logging object for writing log messages
-          \return odb_node_type with data stored from the odb
+          \return section_category_type with data stored from the odb
           \sa process_odb()
         */
         section_category_type process_section_category (const odb_SectionCategory &section_category, Logging &log_file);
@@ -260,31 +260,31 @@ class OdbExtractObject {
         tangential_behavior_type process_interaction_property (const odb_InteractionProperty &interaction_property, Logging &log_file);
         //! Process odb_Node object from the odb file
         /*!
-          Process odb_Node object and return the values in an odb_node_type
+          Process odb_Node object and return the values in an node_type
           \param node An odb_Node object in the odb
           \param log_file Logging object for writing log messages
-          \return odb_node_type with data stored from the odb
+          \return node_type with data stored from the odb
           \sa process_odb()
         */
-        odb_node_type process_node (const odb_Node &node, Logging &log_file);
+        node_type process_node (const odb_Node &node, Logging &log_file);
         //! Process odb_Element object from the odb file
         /*!
-          Process odb_Element property object and return the values in an odb_element_type
+          Process odb_Element property object and return the values in an element_type
           \param element An odb_Element object in the odb
           \param log_file Logging object for writing log messages
           \return odb_elment_type with data stored from the odb
           \sa process_odb()
         */
-        odb_element_type process_element (const odb_Element &element, Logging &log_file);
+        element_type process_element (const odb_Element &element, Logging &log_file);
         //! Process odb set object from the odb file
         /*!
-          Process odb set object and return the values in an odb_set_type
+          Process odb set object and return the values in an set_type
           \param set An odb_Set object in the odb
           \param log_file Logging object for writing log messages
-          \return odb_set_type with data stored from the odb
+          \return set_type with data stored from the odb
           \sa process_odb()
         */
-        odb_set_type process_set (const odb_Set &set, Logging &log_file);
+        set_type process_set (const odb_Set &set, Logging &log_file);
         //! Process interactions from the odb file
         /*!
           Process interactions and store the results
@@ -410,6 +410,14 @@ class OdbExtractObject {
           \sa OdbExtractObject()
         */
         void write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file);
+        //! Write a section category type to an HDF5 file
+        /*!
+          Write data from section category type into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group Name of HDF5 group in which to write the new data
+          \param group_name Name of the new data where a string is to be written
+          \param section_category The section category data to be written
+        */
         void write_section_category(H5::H5File &h5_file, const H5::Group &group, const string &group_name, section_category_type &section_category);
         //! Write a string as an attribute
         /*!
@@ -418,7 +426,7 @@ class OdbExtractObject {
           \param attribute_name Name of the new attribute where a string is to be written
           \param string_value The string that should be written in the new attribute
         */
-        void write_attribute(const H5::Group& group, const string & attribute_name, const string & string_value);
+        void write_attribute(const H5::Group &group, const string &attribute_name, const string &string_value);
         //! Write a string as a dataset
         /*!
           Create a dataset with a single string using the passed-in values
@@ -426,7 +434,7 @@ class OdbExtractObject {
           \param dataset_name Name of the new dataset where a string is to be written
           \param string_value The string that should be written in the new dataset
         */
-        void write_string_dataset(const H5::Group& group, const string & dataset_name, const string & string_value);
+        void write_string_dataset(const H5::Group &group, const string &dataset_name, const string &string_value);
         //! Write a vector of strings as a dataset
         /*!
           Create a dataset with an array of strings using the passed-in values
@@ -434,7 +442,7 @@ class OdbExtractObject {
           \param dataset_name Name of the new dataset where an array of strings is to be written
           \param string_values The vector of strings that should be written in the new dataset
         */
-        void write_vector_string_dataset(const H5::Group& group, const string & dataset_name, const vector<const char*> & string_values);
+        void write_string_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<const char*> &string_values);
         //! Write an integer as a dataset
         /*!
           Create a dataset with an integer using the passed-in value
@@ -442,7 +450,59 @@ class OdbExtractObject {
           \param dataset_name Name of the new dataset where an integer is to be written
           \param int_value The integer that should be written in the new dataset
         */
-        void write_integer_dataset(const H5::Group& group, const string & dataset_name, const int & int_value);
+        void write_integer_dataset(const H5::Group &group, const string &dataset_name, const int &int_value);
+        //! Write an integer array as a dataset
+        /*!
+          Create a dataset with an array of integers using the passed-in value
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where the data is to be written
+          \param int_array The integer array that should be written in the new dataset
+        */
+        void write_integer_array_dataset(const H5::Group &group, const string &dataset_name, int array_size, int* int_array);
+        //! Write an integer vector as a dataset
+        /*!
+          Create an integer array from an integer vector and call write_integer_array_dataset
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where the data is to be written
+          \param int_data The integer data that should be written in the new dataset
+          \sa write_integer_array_dataset()
+        */
+        void write_integer_vector_dataset(const H5::Group &group, const string &dataset_name, vector<int> &int_data);
+        //! Write an float as a dataset
+        /*!
+          Create a dataset with a float using the passed-in value
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where a float is to be written
+          \param float_value The float that should be written in the new dataset
+        */
+        void write_float_dataset(const H5::Group &group, const string &dataset_name, const float &float_value);
+        //! Write a float array as a dataset
+        /*!
+          Create a dataset with an array of floats using the passed-in value
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where the data is to be written
+          \param float_array The float array that should be written in the new dataset
+        */
+        void write_float_array_dataset(const H5::Group &group, const string &dataset_name, int array_size, float* float_array);
+        //! Write an float vector as a dataset
+        /*!
+          Create a float array from a float vector and call write_float_array_dataset
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where the data is to be written
+          \param float_data The float data that should be written in the new dataset
+          \sa write_float_array_dataset()
+        */
+        void write_float_vector_dataset(const H5::Group &group, const string &dataset_name, vector<float> &float_data);
+        //! Write an array of arrays of floats as a dataset
+        /*!
+          Create a dataset with a two-dimensional array of floats using the passed-in values
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where a two-dimensional array is to be written
+          \param max_column_size Integer indicating the row dimension
+          \param max_column_size Integer indicating the column dimension
+          \param float_array A pointer to the array of arrays of floats that should be written in the new dataset
+        */
+        void write_float_2D_array(const H5::Group &group, const string &dataset_name, int &row_size, int &column_size, float** &float_array);
         //! Write a vector of vectors of floats as a dataset
         /*!
           Create a dataset with a two-dimensional array of floats using the passed-in values
@@ -450,8 +510,9 @@ class OdbExtractObject {
           \param dataset_name Name of the new dataset where a two-dimensional array is to be written
           \param max_column_size Integer indicating the column dimension, row dimension is determined by size of data_array
           \param data_array The vector of vectors of floats that should be written in the new dataset
+          \sa write_float_2D_array()
         */
-        void write_2D_float(const H5::Group& group, const string & dataset_name, int & max_column_size, vector<vector<float>> & data_array);
+        void write_float_2D_vector(const H5::Group &group, const string &dataset_name, int &max_column_size, vector<vector<float>> &data_array);
 
 
     private:
