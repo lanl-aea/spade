@@ -272,7 +272,7 @@ class OdbExtractObject {
           Process odb_Element property object and return the values in an element_type
           \param element An odb_Element object in the odb
           \param log_file Logging object for writing log messages
-          \return odb_elment_type with data stored from the odb
+          \return odb_element_type with data stored from the odb
           \sa process_odb()
         */
         element_type process_element (const odb_Element &element, Logging &log_file);
@@ -410,18 +410,66 @@ class OdbExtractObject {
           \sa OdbExtractObject()
         */
         void write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file);
+        //! Write constraints data to an HDF5 file
+        /*!
+          Write different types of constraint data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+        */
         void write_constraints(H5::H5File &h5_file, const string &group_name);
+        //! Write interactions data to an HDF5 file
+        /*!
+          Write standard and or explicit interaction data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+        */
+        void write_interactions(H5::H5File &h5_file, const string &group_name);
+        //! Write element data to an HDF5 file
+        /*!
+          Write data from element type into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param element Element data to be written
+        */
         void write_element(H5::H5File &h5_file, const string &group_name, const element_type &element);
+        //! Write elements data to an HDF5 file
+        /*!
+          Write vector of element data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param elements Vector of element data to be written
+        */
         void write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type> &elements);
+        //! Write node data to an HDF5 file
+        /*!
+          Write data from node type into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param node Node data to be written
+        */
         void write_node(H5::H5File &h5_file, const string &group_name, const node_type &node);
+        //! Write nodes data to an HDF5 file
+        /*!
+          Write vector of node data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param nodes Vector of node data to be written
+        */
         void write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type> &nodes);
+        //! Write set data to an HDF5 file
+        /*!
+          Write data from a set type into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param set Set data to be written
+        */
         void write_set(H5::H5File &h5_file, const string &group_name, const set_type &set);
         //! Write a section category type to an HDF5 file
         /*!
           Write data from section category type into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group Name of HDF5 group in which to write the new data
-          \param group_name Name of the new data where a string is to be written
+          \param group_name Name of the group where data is to be written
           \param section_category The section category data to be written
         */
         void write_section_category(H5::H5File &h5_file, const H5::Group &group, const string &group_name, const section_category_type &section_category);
@@ -542,9 +590,7 @@ class OdbExtractObject {
         */
 
         // TODO: potentially add amplitudes group
-        H5::Group contraints_group;
         // TODO: potentially add filters group
-        H5::Group interactions_group;
         // TODO: potentially add materials group
         H5::Group parts_group;
         H5::Group root_assembly_group;

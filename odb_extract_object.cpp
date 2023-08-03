@@ -625,9 +625,10 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
         write_float_2D_vector(user_xy_data_group, "data", this->user_xy_data[i].max_column_size, this->user_xy_data[i].data);
     }
 
-    this->contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
+    H5::Group contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
     write_constraints(h5_file, "odb/constraints");
-    this->interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
+    H5::Group interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
+    write_interactions(h5_file, "odb/interactions");
     this->parts_group = h5_file.createGroup(string("/odb/parts").c_str());
     this->root_assembly_group = h5_file.createGroup(string("/odb/rootAssembly").c_str());
     this->steps_group = h5_file.createGroup(string("/odb/steps").c_str());
@@ -719,6 +720,9 @@ void OdbExtractObject::write_constraints(H5::H5File &h5_file, const string &grou
             write_string_dataset(shell_solid_coupling_group, "influenceDistance", this->constraints.shell_solid_couplings[i].influenceDistance);
         }
     }
+}
+
+void OdbExtractObject::write_interactions(H5::H5File &h5_file, const string &group_name) {
 }
 
 void OdbExtractObject::write_element(H5::H5File &h5_file, const string &group_name, const element_type &element) {
