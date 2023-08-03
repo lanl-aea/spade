@@ -417,6 +417,14 @@ class OdbExtractObject {
           \param group_name Name of the group where data is to be written
         */
         void write_constraints(H5::H5File &h5_file, const string &group_name);
+        //! Write tangential behavior data to an HDF5 file
+        /*!
+          Write tangential behavior data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param tangential_behavior Data to be written
+        */
+        void write_tangential_behavior(H5::H5File &h5_file, const string &group_name, const tangential_behavior_type& tangential_behavior);
         //! Write interactions data to an HDF5 file
         /*!
           Write standard and or explicit interaction data into an HDF5 file
@@ -567,6 +575,51 @@ class OdbExtractObject {
           \sa write_float_2D_array()
         */
         void write_float_2D_vector(const H5::Group &group, const string &dataset_name, const int &max_column_size, vector<vector<float>> &data_array);
+        //! Write an double as a dataset
+        /*!
+          Create a dataset with a double using the passed-in value
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where a double is to be written
+          \param double_value The double that should be written in the new dataset
+        */
+        void write_double_dataset(const H5::Group &group, const string &dataset_name, const double &double_value);
+        //! Write a double array as a dataset
+        /*!
+          Create a dataset with an array of doubles using the passed-in value
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where the data is to be written
+          \param double_array The double array that should be written in the new dataset
+        */
+        void write_double_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const double* double_array);
+        //! Write an double vector as a dataset
+        /*!
+          Create a double array from a double vector and call write_double_array_dataset
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where the data is to be written
+          \param double_data The double data that should be written in the new dataset
+          \sa write_double_array_dataset()
+        */
+        void write_double_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<double> &double_data);
+        //! Write an array of arrays of doubles as a dataset
+        /*!
+          Create a dataset with a two-dimensional array of doubles using the passed-in values
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where a two-dimensional array is to be written
+          \param max_column_size Integer indicating the row dimension
+          \param max_column_size Integer indicating the column dimension
+          \param double_array A pointer to the array of arrays of doubles that should be written in the new dataset
+        */
+        void write_double_2D_array(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, double *double_array);
+        //! Write a vector of vectors of doubles as a dataset
+        /*!
+          Create a dataset with a two-dimensional array of doubles using the passed-in values
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where a two-dimensional array is to be written
+          \param max_column_size Integer indicating the column dimension, row dimension is determined by size of data_array
+          \param data_array The vector of vectors of doubles that should be written in the new dataset
+          \sa write_double_2D_array()
+        */
+        void write_double_2D_vector(const H5::Group &group, const string &dataset_name, const int &max_column_size, vector<vector<double>> &data_array);
 
 
     private:

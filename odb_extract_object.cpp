@@ -722,7 +722,56 @@ void OdbExtractObject::write_constraints(H5::H5File &h5_file, const string &grou
     }
 }
 
+void OdbExtractObject::write_tangential_behavior(H5::H5File &h5_file, const string &group_name, const tangential_behavior_type& tangential_behavior) {
+}
+
 void OdbExtractObject::write_interactions(H5::H5File &h5_file, const string &group_name) {
+    H5::Group interactions_group = h5_file.createGroup((group_name + "/interactions").c_str());
+    if (!this->standard_interactions.empty()) {
+        H5::Group interactions_group = h5_file.createGroup((group_name + "/interactions/standard").c_str());
+        for (int i=0; i<this->standard_interactions.size(); i++) {
+            string standard_group_name = group_name + "/interactions/standard/" + to_string(i);
+            H5::Group standards_group = h5_file.createGroup(standard_group_name.c_str());
+    string sliding;  // Symbolic Constant [FINITE, SMALL]
+    float smooth;
+    float hcrit;
+    string limitSlideDistance;
+    string slideDistance;
+    float extensionZone;
+    string adjustMethod;  // Symbolic Constant [NONE, OVERCLOSED, TOLERANCE, SET]
+    float adjustTolerance;
+    string enforcement;  // Symbolic Constant [NODE_TO_SURFACE, SURFACE_TO_SURFACE]
+    string thickness;  // Boolean
+    string tied;  // Boolean
+    string contactTracking;  // Symbolic Constant [ONE_CONFIG, TWO_CONFIG]
+    string createStepName;
+
+    tangential_behavior_type interactionProperty;
+    set_type main;
+    set_type secondary;
+    set_type adjust;
+        }
+    }
+    if (!this->explicit_interactions.empty()) {
+        H5::Group interactions_group = h5_file.createGroup((group_name + "/interactions/explicit").c_str());
+        for (int i=0; i<this->explicit_interactions.size(); i++) {
+            string explicit_group_name = group_name + "/interactions/explicit/" + to_string(i);
+            H5::Group explicit_group = h5_file.createGroup(explicit_group_name.c_str());
+    string sliding;  // Symbolic Constant [FINITE, SMALL]
+    string mainNoThick;
+    string secondaryNoThick;
+    string mechanicalConstraint;
+    string weightingFactorType;
+    float weightingFactor;
+    string createStepName;
+    string useReverseDatumAxis;  // Boolean
+    string contactControls;
+  
+    tangential_behavior_type interactionProperty;
+    set_type main;
+    set_type secondary;
+        }
+    }
 }
 
 void OdbExtractObject::write_element(H5::H5File &h5_file, const string &group_name, const element_type &element) {
@@ -883,6 +932,49 @@ void OdbExtractObject::write_float_2D_vector(const H5::Group& group, const strin
         }
     }
     write_float_2D_array(group, dataset_name, float_data.size(), max_column_size, (float *)float_array);
+}
+
+void OdbExtractObject::write_double_dataset(const H5::Group &group, const string &dataset_name, const double &double_value) {
+    hsize_t dimensions[] = {1};
+    H5::DataSpace dataspace(1, dimensions);  // Just one integer
+    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
+    dataset.write(&double_value, H5::PredType::NATIVE_DOUBLE);
+    dataset.close();
+    dataspace.close();
+}
+
+void OdbExtractObject::write_double_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const double* double_array) {
+    hsize_t dimensions[] = {array_size};
+    H5::DataSpace dataspace(1, dimensions);
+    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
+    dataset.write(double_array, H5::PredType::NATIVE_DOUBLE);
+    dataset.close();
+    dataspace.close();
+}
+
+void OdbExtractObject::write_double_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<double> &double_data) {
+    double double_array[double_data.size()]; // Need to convert vector to array with contiguous memory for H5 to process
+    for (int i=0; i<double_data.size(); i++) { double_array[i] = double_data[i]; }
+    write_double_array_dataset(group, dataset_name, double_data.size(), double_array);
+}
+
+void OdbExtractObject::write_double_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, double *double_array) {
+    hsize_t dimensions[] = {row_size, column_size};
+    H5::DataSpace dataspace(2, dimensions);  // two dimensional data
+    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
+    dataset.write(double_array, H5::PredType::NATIVE_DOUBLE);
+    dataset.close();
+    dataspace.close();
+}
+
+void OdbExtractObject::write_double_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<double>> & double_data) {
+    double double_array[double_data.size()][max_column_size]; // Need to convert vector to array with contiguous memory for H5 to process
+    for( int i = 0; i<double_data.size(); ++i) {
+        for( int j = 0; j<double_data[i].size(); ++j) {
+            double_array[i][j] = double_data[i][j];
+        }
+    }
+    write_double_2D_array(group, dataset_name, double_data.size(), max_column_size, (double *)double_array);
 }
 
 
