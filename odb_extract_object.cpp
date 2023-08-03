@@ -803,7 +803,7 @@ void OdbExtractObject::write_float_vector_dataset(const H5::Group &group, const 
     write_float_array_dataset(group, dataset_name, float_data.size(), float_array);
 }
 
-void OdbExtractObject::write_float_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, float** &float_array) {
+void OdbExtractObject::write_float_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, float *float_array) {
     hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
@@ -819,7 +819,7 @@ void OdbExtractObject::write_float_2D_vector(const H5::Group& group, const strin
             float_array[i][j] = float_data[i][j];
         }
     }
-    write_float_2D_array(group, dataset_name, float_data.size(), max_column_size, *float_array);
+    write_float_2D_array(group, dataset_name, float_data.size(), max_column_size, (float *)float_array);
 }
 
 
