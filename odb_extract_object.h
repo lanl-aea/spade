@@ -140,10 +140,10 @@ struct contact_explicit_type {
 struct tie_type {
     set_type main;
     set_type secondary;
-    bool adjust;
+    string adjust;
     string positionToleranceMethod;
     string positionTolerance;
-    bool tieRotations;
+    string tieRotations;
     string constraintRatioMethod;
     string constraintRatio;
     string constraintEnforcement;
@@ -177,12 +177,12 @@ struct coupling_type {
     string weightingMethod;
     string influenceRadius;
 
-    bool u1;
-    bool u2;
-    bool u3;
-    bool ur1;
-    bool ur2;
-    bool ur3;
+    string u1;
+    string u2;
+    string u3;
+    string ur1;
+    string ur2;
+    string ur3;
 };
 
 struct mpc_type {
@@ -628,7 +628,7 @@ class OdbExtractObject {
         string analysisTitle;
         string description;
         string path;
-        bool isReadOnly;
+        string isReadOnly;
         job_data_type job_data;
         vector<part_type> parts;
         sector_definition_type sector_definition;

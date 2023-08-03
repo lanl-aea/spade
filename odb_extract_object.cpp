@@ -90,7 +90,7 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
     this->analysisTitle = odb.analysisTitle().CStr();
     this->description = odb.description().CStr();
     this->path = odb.path().CStr();
-    this->isReadOnly = odb.isReadOnly();
+    this->isReadOnly = (odb.isReadOnly()) ? "true" : "false";
 
     // TODO: potentially figure out way to get amplitudes, filters, or materials
 
@@ -469,14 +469,14 @@ tie_type OdbExtractObject::process_tie (const odb_Tie &tie, Logging &log_file) {
     {
         new_tie.main = process_set(tie.master(), log_file);
         new_tie.secondary = process_set(tie.slave(), log_file);
-        new_tie.adjust = tie.adjust();
+        new_tie.adjust = (tie.adjust()) ? "true" : "false";
         if (tie.adjust()) {
             new_tie.positionToleranceMethod = tie.positionToleranceMethod().CStr();
             if (new_tie.positionToleranceMethod == "SPECIFIED") {
                 new_tie.positionTolerance = tie.positionTolerance();
             }
         }
-        new_tie.tieRotations = tie.tieRotations();
+        new_tie.tieRotations = (tie.tieRotations()) ? "true" : "false";
 
         new_tie.constraintRatioMethod = tie.constraintRatioMethod().CStr();
         new_tie.constraintRatio = tie.constraintRatio();
@@ -509,12 +509,12 @@ coupling_type OdbExtractObject::process_coupling (const odb_Coupling &coupling, 
         new_coupling.couplingType = coupling.couplingType().cStr();
         new_coupling.weightingMethod = coupling.weightingMethod().cStr();
         new_coupling.influenceRadius = coupling.influenceRadius();
-        new_coupling.u1 = coupling.u1();
-        new_coupling.u2 = coupling.u2();
-        new_coupling.u3 = coupling.u3();
-        new_coupling.ur1 = coupling.ur1();
-        new_coupling.ur2 = coupling.ur2();
-        new_coupling.ur3 = coupling.ur3();
+        new_coupling.u1 = (coupling.u1()) ? "true" : "false";
+        new_coupling.u2 = (coupling.u2()) ? "true" : "false";
+        new_coupling.u3 = (coupling.u3()) ? "true" : "false";
+        new_coupling.ur1 = (coupling.ur1()) ? "true" : "false";
+        new_coupling.ur2 = (coupling.ur2()) ? "true" : "false";
+        new_coupling.ur3 = (coupling.ur3()) ? "true" : "false";
         new_coupling.nodes = process_set(coupling.couplingNodes(), log_file);
     }
     return new_coupling;
@@ -582,8 +582,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     write_attribute(odb_group, "analysisTitle", this->analysisTitle);
     write_attribute(odb_group, "description", this->description);
     write_attribute(odb_group, "path", this->path);
-    std::string bool_string = (this->isReadOnly) ? "true" : "false"; 
-    write_attribute(odb_group, "isReadOnly", bool_string);
+    write_attribute(odb_group, "isReadOnly", this->isReadOnly);
 
     log_file.logVerbose("Writing odb jobData.");
     H5::Group job_data_group = h5_file.createGroup(string("/odb/jobData").c_str());
@@ -654,8 +653,8 @@ void OdbExtractObject::write_constraints(H5::H5File &h5_file, const string &grou
             H5::Group tie_group = h5_file.createGroup(tie_group_name.c_str());
             write_set(h5_file, tie_group_name, this->constraints.ties[i].main);
             write_set(h5_file, tie_group_name, this->constraints.ties[i].secondary);
-            write_string_dataset(tie_group, "adjust", (this->constraints.ties[i].adjust) ? "true" : "false");
-            write_string_dataset(tie_group, "tieRotations", (this->constraints.ties[i].tieRotations) ? "true" : "false");
+            write_string_dataset(tie_group, "adjust", this->constraints.ties[i].adjust);
+            write_string_dataset(tie_group, "tieRotations", this->constraints.ties[i].tieRotations);
             write_string_dataset(tie_group, "positionToleranceMethod", this->constraints.ties[i].positionToleranceMethod);
             write_string_dataset(tie_group, "positionTolerance", this->constraints.ties[i].positionTolerance);
             write_string_dataset(tie_group, "constraintRatioMethod", this->constraints.ties[i].constraintRatioMethod);
@@ -689,12 +688,12 @@ void OdbExtractObject::write_constraints(H5::H5File &h5_file, const string &grou
             write_string_dataset(coupling_group, "couplingType", this->constraints.couplings[i].couplingType);
             write_string_dataset(coupling_group, "weightingMethod", this->constraints.couplings[i].weightingMethod);
             write_string_dataset(coupling_group, "influenceRadius", this->constraints.couplings[i].influenceRadius);
-            write_string_dataset(coupling_group, "u1", (this->constraints.couplings[i].u1) ? "true" : "false");
-            write_string_dataset(coupling_group, "u2", (this->constraints.couplings[i].u2) ? "true" : "false");
-            write_string_dataset(coupling_group, "u3", (this->constraints.couplings[i].u3) ? "true" : "false");
-            write_string_dataset(coupling_group, "ur1", (this->constraints.couplings[i].ur1) ? "true" : "false");
-            write_string_dataset(coupling_group, "ur2", (this->constraints.couplings[i].ur2) ? "true" : "false");
-            write_string_dataset(coupling_group, "ur3", (this->constraints.couplings[i].ur3) ? "true" : "false");
+            write_string_dataset(coupling_group, "u1", this->constraints.couplings[i].u1);
+            write_string_dataset(coupling_group, "u2", this->constraints.couplings[i].u2);
+            write_string_dataset(coupling_group, "u3", this->constraints.couplings[i].u3);
+            write_string_dataset(coupling_group, "ur1", this->constraints.couplings[i].ur1);
+            write_string_dataset(coupling_group, "ur2", this->constraints.couplings[i].ur2);
+            write_string_dataset(coupling_group, "ur3", this->constraints.couplings[i].ur3);
         }
     }
     if (!this->constraints.mpc.empty()) {
