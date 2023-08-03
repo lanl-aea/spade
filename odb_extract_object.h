@@ -65,13 +65,14 @@ struct tangential_behavior_type {
     string temperatureDependency;  // Boolean
     int dependencies;
     string exponentialDecayDefinition;
-    vector<vector <double>> table;
-    string shearStressLimit;  // String NONE or a double
+    vector<vector<double>> table;
+    int max_column_size;
+    double shearStressLimit;  // String NONE or a double
     string maximumElasticSlip;
     double fraction;
-    string absoluteDistance;  // String NONE or a double
-    string elasticSlipStiffness;
-    string nStateDependentVars;
+    double absoluteDistance;  // String NONE or a double
+    double elasticSlipStiffness;
+    int nStateDependentVars;
     string useProperties;
 };
 
@@ -100,13 +101,13 @@ struct set_type {
 
 struct contact_standard_type {
     string sliding;  // Symbolic Constant [FINITE, SMALL]
-    float smooth;
-    float hcrit;
+    double smooth;
+    double hcrit;
     string limitSlideDistance;
-    string slideDistance;
-    float extensionZone;
+    double slideDistance;
+    double extensionZone;
     string adjustMethod;  // Symbolic Constant [NONE, OVERCLOSED, TOLERANCE, SET]
-    float adjustTolerance;
+    double adjustTolerance;
     string enforcement;  // Symbolic Constant [NODE_TO_SURFACE, SURFACE_TO_SURFACE]
     string thickness;  // Boolean
     string tied;  // Boolean
@@ -619,7 +620,7 @@ class OdbExtractObject {
           \param data_array The vector of vectors of doubles that should be written in the new dataset
           \sa write_double_2D_array()
         */
-        void write_double_2D_vector(const H5::Group &group, const string &dataset_name, const int &max_column_size, vector<vector<double>> &data_array);
+        void write_double_2D_vector(const H5::Group &group, const string &dataset_name, const int &max_column_size, const vector<vector<double>> &data_array);
 
 
     private:

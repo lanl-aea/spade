@@ -232,16 +232,18 @@ tangential_behavior_type OdbExtractObject::process_interaction_property (const o
             if (tangential_behavior.hasValue()) {
                 interaction.formulation = tangential_behavior.formulation().CStr();
                 interaction.directionality = tangential_behavior.directionality().CStr();
-                interaction.slipRateDependency = tangential_behavior.slipRateDependency();
-                interaction.pressureDependency = tangential_behavior.pressureDependency();
-                interaction.temperatureDependency = tangential_behavior.temperatureDependency();
+                interaction.slipRateDependency = (tangential_behavior.slipRateDependency()) ? "true" : "false";
+                interaction.pressureDependency = (tangential_behavior.pressureDependency()) ? "true" : "false";
+                interaction.temperatureDependency = (tangential_behavior.temperatureDependency()) ? "true" : "false";
                 interaction.dependencies = tangential_behavior.dependencies();
                 interaction.exponentialDecayDefinition = tangential_behavior.exponentialDecayDefinition().CStr();
 
                 odb_SequenceSequenceDouble table_data = tangential_behavior.table();
+                interaction.max_column_size = 0;
                 int r = table_data.size();
                 for (int row = 0; row < r; row++) {
                     int column_size = table_data[row].size();
+                    if (column_size > interaction.max_column_size) { interaction.max_column_size = column_size; }
                     vector<double> columns;
                     for (int column = 0; column < column_size; column++) {
                         columns.push_back(table_data[row].constGet(column));
@@ -254,7 +256,7 @@ tangential_behavior_type OdbExtractObject::process_interaction_property (const o
                 interaction.absoluteDistance = tangential_behavior.absoluteDistance();
                 interaction.elasticSlipStiffness = tangential_behavior.elasticSlipStiffness();
                 interaction.nStateDependentVars = tangential_behavior.nStateDependentVars();
-                interaction.useProperties = tangential_behavior.useProperties();
+                interaction.useProperties = (tangential_behavior.useProperties()) ? "true" : "false";
             }
         }
     } else {
@@ -369,14 +371,14 @@ void OdbExtractObject::process_interactions (const odb_InteractionRepository &in
             contact_standard.sliding = sscs.sliding().CStr();
             contact_standard.smooth = sscs.smooth();
             contact_standard.hcrit = sscs.hcrit();
-            contact_standard.limitSlideDistance = sscs.limitSlideDistance();
+            contact_standard.limitSlideDistance = (sscs.limitSlideDistance()) ? "true" : "false";
             contact_standard.slideDistance = sscs.slideDistance();
             contact_standard.extensionZone = sscs.extensionZone();
             contact_standard.adjustMethod = sscs.adjustMethod().CStr();
             contact_standard.adjustTolerance = sscs.adjustTolerance();
             contact_standard.enforcement = sscs.enforcement().CStr();
-            contact_standard.thickness = sscs.thickness();
-            contact_standard.tied = sscs.tied();
+            contact_standard.thickness = (sscs.thickness()) ? "true" : "false";
+            contact_standard.tied = (sscs.tied()) ? "true" : "false";
             contact_standard.contactTracking = sscs.contactTracking().CStr();
             contact_standard.createStepName = sscs.createStepName().CStr();
 
@@ -723,6 +725,22 @@ void OdbExtractObject::write_constraints(H5::H5File &h5_file, const string &grou
 }
 
 void OdbExtractObject::write_tangential_behavior(H5::H5File &h5_file, const string &group_name, const tangential_behavior_type& tangential_behavior) {
+    H5::Group tangential_behavior_group = h5_file.createGroup((group_name + "/tangentialBehavior").c_str());
+    write_string_dataset(tangential_behavior_group, "formulation", tangential_behavior.formulation);
+    write_string_dataset(tangential_behavior_group, "directionality", tangential_behavior.directionality);
+    write_string_dataset(tangential_behavior_group, "slipRateDependency", tangential_behavior.slipRateDependency);
+    write_string_dataset(tangential_behavior_group, "pressureDependency", tangential_behavior.pressureDependency);
+    write_string_dataset(tangential_behavior_group, "temperatureDependency", tangential_behavior.temperatureDependency);
+    write_string_dataset(tangential_behavior_group, "exponentialDecayDefinition", tangential_behavior.exponentialDecayDefinition);
+    write_string_dataset(tangential_behavior_group, "maximumElasticSlip", tangential_behavior.maximumElasticSlip);
+    write_string_dataset(tangential_behavior_group, "useProperties", tangential_behavior.useProperties);
+    write_integer_dataset(tangential_behavior_group, "dependencies", tangential_behavior.dependencies);
+    write_integer_dataset(tangential_behavior_group, "nStateDependentVars", tangential_behavior.nStateDependentVars);
+    write_double_dataset(tangential_behavior_group, "fraction", tangential_behavior.fraction);
+    write_double_dataset(tangential_behavior_group, "shearStressLimit", tangential_behavior.shearStressLimit);
+    write_double_dataset(tangential_behavior_group, "absoluteDistance", tangential_behavior.absoluteDistance);
+    write_double_dataset(tangential_behavior_group, "elasticSlipStiffness", tangential_behavior.elasticSlipStiffness);
+    write_double_2D_vector(tangential_behavior_group, "table", tangential_behavior.max_column_size, tangential_behavior.table);
 }
 
 void OdbExtractObject::write_interactions(H5::H5File &h5_file, const string &group_name) {
@@ -732,24 +750,20 @@ void OdbExtractObject::write_interactions(H5::H5File &h5_file, const string &gro
         for (int i=0; i<this->standard_interactions.size(); i++) {
             string standard_group_name = group_name + "/interactions/standard/" + to_string(i);
             H5::Group standards_group = h5_file.createGroup(standard_group_name.c_str());
-    string sliding;  // Symbolic Constant [FINITE, SMALL]
-    float smooth;
-    float hcrit;
-    string limitSlideDistance;
-    string slideDistance;
-    float extensionZone;
-    string adjustMethod;  // Symbolic Constant [NONE, OVERCLOSED, TOLERANCE, SET]
-    float adjustTolerance;
-    string enforcement;  // Symbolic Constant [NODE_TO_SURFACE, SURFACE_TO_SURFACE]
-    string thickness;  // Boolean
-    string tied;  // Boolean
-    string contactTracking;  // Symbolic Constant [ONE_CONFIG, TWO_CONFIG]
-    string createStepName;
-
-    tangential_behavior_type interactionProperty;
-    set_type main;
-    set_type secondary;
-    set_type adjust;
+            write_string_dataset(standards_group, "sliding", this->standard_interactions[i].sliding);
+            write_string_dataset(standards_group, "limitSlideDistance", this->standard_interactions[i].limitSlideDistance);
+            write_string_dataset(standards_group, "adjustMethod", this->standard_interactions[i].adjustMethod);
+            write_string_dataset(standards_group, "enforcement", this->standard_interactions[i].enforcement);
+            write_string_dataset(standards_group, "thickness", this->standard_interactions[i].thickness);
+            write_string_dataset(standards_group, "tied", this->standard_interactions[i].tied);
+            write_string_dataset(standards_group, "contactTracking", this->standard_interactions[i].contactTracking);
+            write_string_dataset(standards_group, "createStepName", this->standard_interactions[i].createStepName);
+            write_double_dataset(standards_group, "smooth", this->standard_interactions[i].smooth);
+            write_double_dataset(standards_group, "hcrit", this->standard_interactions[i].hcrit);
+            write_double_dataset(standards_group, "slideDistance", this->standard_interactions[i].slideDistance);
+            write_double_dataset(standards_group, "extensionZone", this->standard_interactions[i].extensionZone);
+            write_double_dataset(standards_group, "adjustTolerance", this->standard_interactions[i].adjustTolerance);
+            write_tangential_behavior(h5_file, standard_group_name, this->standard_interactions[i].interactionProperty);
         }
     }
     if (!this->explicit_interactions.empty()) {
@@ -967,7 +981,7 @@ void OdbExtractObject::write_double_2D_array(const H5::Group& group, const strin
     dataspace.close();
 }
 
-void OdbExtractObject::write_double_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<double>> & double_data) {
+void OdbExtractObject::write_double_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<double>> & double_data) {
     double double_array[double_data.size()][max_column_size]; // Need to convert vector to array with contiguous memory for H5 to process
     for( int i = 0; i<double_data.size(); ++i) {
         for( int j = 0; j<double_data[i].size(); ++j) {
