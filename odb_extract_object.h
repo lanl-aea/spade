@@ -211,9 +211,14 @@ struct constraint_type {
 };
 
 
-
 struct part_type {
     string name;
+    string embeddedSpace;
+    vector<node_type> nodes;
+    vector<element_type> elements;
+    vector<set_type> nodeSets;
+    vector<set_type> elementSets;
+    vector<set_type> surfaces;
 };
 
 struct root_assembly_type {
@@ -310,9 +315,10 @@ class OdbExtractObject {
           \param part An odb part object
           \param odb An open odb object
           \param log_file Logging object for writing log messages
+          \return part_type with data stored from the odb
           \sa process_odb()
         */
-        void process_part (const odb_Part &part, odb_Odb &odb, Logging &log_file);
+        part_type process_part (const odb_Part &part, odb_Odb &odb, Logging &log_file);
         //! Process an instance from the odb file
         /*!
           Process an instance and store the results
@@ -639,7 +645,6 @@ class OdbExtractObject {
         constraint_type constraints;
         /*
         odb_Assembly& rootAssembly;
-        odb_PartRepository& parts;
         odb_StepRepository& steps;
         */
 

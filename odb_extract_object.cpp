@@ -184,6 +184,8 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
     for (parts_iter.first(); !parts_iter.isDone(); parts_iter.next()) {
         log_file.logVerbose("Starting to parse part: " + string(parts_iter.currentKey().CStr()));
         odb_Part part = parts[parts_iter.currentKey()];
+        part_type new_part = process_part(part, odb, log_file);
+        this->parts.push_back(new_part);
 // TODO: Write code to get parts
     }
 
@@ -223,7 +225,6 @@ section_category_type OdbExtractObject::process_section_category (const odb_Sect
 }
 
 tangential_behavior_type OdbExtractObject::process_interaction_property (const odb_InteractionProperty &interaction_property, Logging &log_file) {
-//TODO: Some of the data types need to be adjusted (i.e. some are either the string 'NONE' or a float)
     tangential_behavior_type interaction;
     if (odb_isA(odb_ContactProperty, interaction_property)) {
         odb_ContactProperty contact_property = odb_dynamicCast(odb_ContactProperty, interaction_property);
@@ -546,8 +547,31 @@ shell_solid_coupling_type OdbExtractObject::process_shell_solid_coupling (const 
     return new_shell_solid_coupling;
 }
 
-void OdbExtractObject::process_part (const odb_Part &part, odb_Odb &odb, Logging &log_file) {
+part_type OdbExtractObject::process_part (const odb_Part &part, odb_Odb &odb, Logging &log_file) {
+    part_type new_part;
+    new_part.name = part.name().CStr();
+    static const char * dimension_enum_strings[] = { "Three Dimensional", "Two Dimensional Planar", "AxiSymmetric", "Unknown Dimension" };
+    new_part.embeddedSpace = dimension_enum_strings[part.embeddedSpace()];
 
+    const odb_SequenceNode& nodes = part.nodes();
+    for (int i=0; i<nodes.size(); i++)  { new_part.nodes.push_back(process_node(nodes.node(i), log_file)); }
+    odb_SequenceElement elements = part.elements();
+    for (int i=0; i<elements.size(); i++)  { new_part.elements.push_back(process_element(elements.element(i), log_file)); }
+
+    odb_SetRepositoryIT node_iter(part.nodeSets());
+    for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
+        new_part.nodeSets.push_back(process_set(node_iter.currentValue(), log_file));
+    }
+    odb_SetRepositoryIT element_iter(part.elementSets());
+    for (element_iter.first(); !element_iter.isDone(); element_iter.next()) {
+        new_part.elementSets.push_back(process_set(element_iter.currentValue(), log_file));
+    }
+    odb_SetRepositoryIT surface_iter(part.surfaces());
+    for (surface_iter.first(); !surface_iter.isDone(); surface_iter.next()) {
+        new_part.surfaces.push_back(process_set(surface_iter.currentValue(), log_file));
+    }
+
+    return new_part;
 }
 void OdbExtractObject::process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
 
