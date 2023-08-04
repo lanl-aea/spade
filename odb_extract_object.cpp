@@ -548,6 +548,7 @@ shell_solid_coupling_type OdbExtractObject::process_shell_solid_coupling (const 
 }
 
 part_type OdbExtractObject::process_part (const odb_Part &part, odb_Odb &odb, Logging &log_file) {
+    //TODO: write log messages
     part_type new_part;
     new_part.name = part.name().CStr();
     static const char * dimension_enum_strings[] = { "Three Dimensional", "Two Dimensional Planar", "AxiSymmetric", "Unknown Dimension" };
