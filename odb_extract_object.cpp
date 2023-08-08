@@ -182,8 +182,11 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
     odb_PartRepository& parts = odb.parts();
     odb_PartRepositoryIT parts_iter(parts);    
     for (parts_iter.first(); !parts_iter.isDone(); parts_iter.next()) {
-        log_file.logVerbose("Starting to parse part: " + string(parts_iter.currentKey().CStr()));
-        odb_Part part = parts[parts_iter.currentKey()];
+        log_file.logVerbose("Starting to read part: " + string(parts_iter.currentKey().CStr()));
+        odb_Part& part = parts[parts_iter.currentKey()];
+        log_file.logDebug("Part: " + string(part.name().CStr()));
+        log_file.logDebug("\tnodes size: " + to_string(part.nodes().size()));
+        log_file.logDebug("\telements size: " + to_string(part.elements().size()));
         part_type new_part = process_part(part, odb, log_file);
         this->parts.push_back(new_part);
     }
@@ -246,7 +249,7 @@ tangential_behavior_type OdbExtractObject::process_interaction_property (const o
                     if (column_size > interaction.max_column_size) { interaction.max_column_size = column_size; }
                     vector<double> columns;
                     for (int column = 0; column < column_size; column++) {
-                        columns.push_back(table_data[row].constGet(column));
+                        columns.push_back(table_data[row].constGet(table_data[row].constGet(column)));
                     }
                     interaction.table.push_back(columns);
                 }
@@ -547,16 +550,17 @@ shell_solid_coupling_type OdbExtractObject::process_shell_solid_coupling (const 
 }
 
 part_type OdbExtractObject::process_part (const odb_Part &part, odb_Odb &odb, Logging &log_file) {
-    //TODO: write log messages
     log_file.logVerbose("Reading part data.");
     part_type new_part;
     new_part.name = part.name().CStr();
-    static const char * dimension_enum_strings[] = { "Three Dimensional", "Two Dimensional Planar", "AxiSymmetric", "Unknown Dimension" };
+    static const char * dimension_enum_strings[] = { "Unknown Dimension", "Three Dimensional", "Two Dimensional Planar", "AxiSymmetric" };
     new_part.embeddedSpace = dimension_enum_strings[part.embeddedSpace()];
 
     const odb_SequenceNode& nodes = part.nodes();
-    for (int i=0; i<nodes.size(); i++)  { new_part.nodes.push_back(process_node(nodes.node(i), log_file)); }
+    log_file.logDebug(new_part.name + " nodes size: " + to_string(nodes.size()));
+    for (int i=0; i<nodes.size(); i++)  { new_part.nodes.push_back(process_node(nodes.node(i), log_file)); log_file.logDebug(to_string(nodes.node(i).label())); }
     odb_SequenceElement elements = part.elements();
+    log_file.logDebug(new_part.name + " elements size: " + to_string(elements.size()));
     for (int i=0; i<elements.size(); i++)  { new_part.elements.push_back(process_element(elements.element(i), log_file)); }
 
     odb_SetRepositoryIT node_iter(part.nodeSets());
@@ -677,10 +681,12 @@ void OdbExtractObject::write_parts(H5::H5File &h5_file, const string &group_name
         H5::Group part_group = h5_file.createGroup(part_group_name.c_str());
         write_string_dataset(part_group, "embeddedSpace", part.embeddedSpace);
         write_nodes(h5_file, part_group_name, part.nodes);
+//        for (auto node : part.nodes) { cout << node.label; }
         write_elements(h5_file, part_group_name, part.elements);
         write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets);
         write_sets(h5_file, part_group_name + "/elementSets", part.elementSets);
         write_sets(h5_file, part_group_name + "/surfaces", part.surfaces);
+//        for (auto surface : part.surfaces) { cout << surface.name; }
     }
 }
 
@@ -909,13 +915,15 @@ void OdbExtractObject::write_string_dataset(const H5::Group& group, const string
 }
 
 void OdbExtractObject::write_string_vector_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values) {
-    hsize_t dimensions[1] = {hsize_t(string_values.size())};
-    H5::DataSpace dataspace(1, dimensions);  // Create a space for as many strings as are in the vector
-    H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE);
-    H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
-    dataset.write(string_values.data(), string_type);
-    dataset.close();
-    dataspace.close();
+    if (!string_values.empty()) {
+        hsize_t dimensions[1] = {hsize_t(string_values.size())};
+        H5::DataSpace dataspace(1, dimensions);  // Create a space for as many strings as are in the vector
+        H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE);
+        H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
+        dataset.write(string_values.data(), string_type);
+        dataset.close();
+        dataspace.close();
+    }
 }
 
 void OdbExtractObject::write_integer_dataset(const H5::Group& group, const string & dataset_name, const int & int_value) {
@@ -937,9 +945,11 @@ void OdbExtractObject::write_integer_array_dataset(const H5::Group& group, const
 }
 
 void OdbExtractObject::write_integer_vector_dataset(const H5::Group& group, const string & dataset_name, const vector<int> & int_data) {
-    int int_array[int_data.size()]; // Need to convert vector to array with contiguous memory for H5 to process
-    for (int i=0; i<int_data.size(); i++) { int_array[i] = int_data[i]; }
-    write_integer_array_dataset(group, dataset_name, int_data.size(), int_array);
+    if (!int_data.empty()) {
+        int int_array[int_data.size()]; // Need to convert vector to array with contiguous memory for H5 to process
+        for (int i=0; i<int_data.size(); i++) { int_array[i] = int_data[i]; }
+        write_integer_array_dataset(group, dataset_name, int_data.size(), int_array);
+    }
 }
 
 void OdbExtractObject::write_float_dataset(const H5::Group &group, const string &dataset_name, const float &float_value) {
@@ -961,9 +971,11 @@ void OdbExtractObject::write_float_array_dataset(const H5::Group &group, const s
 }
 
 void OdbExtractObject::write_float_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<float> &float_data) {
-    float float_array[float_data.size()]; // Need to convert vector to array with contiguous memory for H5 to process
-    for (int i=0; i<float_data.size(); i++) { float_array[i] = float_data[i]; }
-    write_float_array_dataset(group, dataset_name, float_data.size(), float_array);
+    if (!float_data.empty()) {
+        float float_array[float_data.size()]; // Need to convert vector to array with contiguous memory for H5 to process
+        for (int i=0; i<float_data.size(); i++) { float_array[i] = float_data[i]; }
+        write_float_array_dataset(group, dataset_name, float_data.size(), float_array);
+    }
 }
 
 void OdbExtractObject::write_float_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, float *float_array) {
@@ -976,13 +988,15 @@ void OdbExtractObject::write_float_2D_array(const H5::Group& group, const string
 }
 
 void OdbExtractObject::write_float_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<float>> & float_data) {
-    float float_array[float_data.size()][max_column_size]; // Need to convert vector to array with contiguous memory for H5 to process
-    for( int i = 0; i<float_data.size(); ++i) {
-        for( int j = 0; j<float_data[i].size(); ++j) {
-            float_array[i][j] = float_data[i][j];
+    if (!float_data.empty()) {
+        float float_array[float_data.size()][max_column_size]; // Need to convert vector to array with contiguous memory for H5 to process
+        for( int i = 0; i<float_data.size(); ++i) {
+            for( int j = 0; j<float_data[i].size(); ++j) {
+                float_array[i][j] = float_data[i][j];
+            }
         }
+        write_float_2D_array(group, dataset_name, float_data.size(), max_column_size, (float *)float_array);
     }
-    write_float_2D_array(group, dataset_name, float_data.size(), max_column_size, (float *)float_array);
 }
 
 void OdbExtractObject::write_double_dataset(const H5::Group &group, const string &dataset_name, const double &double_value) {
@@ -1004,9 +1018,11 @@ void OdbExtractObject::write_double_array_dataset(const H5::Group &group, const 
 }
 
 void OdbExtractObject::write_double_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<double> &double_data) {
-    double double_array[double_data.size()]; // Need to convert vector to array with contiguous memory for H5 to process
-    for (int i=0; i<double_data.size(); i++) { double_array[i] = double_data[i]; }
-    write_double_array_dataset(group, dataset_name, double_data.size(), double_array);
+    if (!double_data.empty()) {
+        double double_array[double_data.size()]; // Need to convert vector to array with contiguous memory for H5 to process
+        for (int i=0; i<double_data.size(); i++) { double_array[i] = double_data[i]; }
+        write_double_array_dataset(group, dataset_name, double_data.size(), double_array);
+    }
 }
 
 void OdbExtractObject::write_double_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, double *double_array) {
@@ -1019,13 +1035,15 @@ void OdbExtractObject::write_double_2D_array(const H5::Group& group, const strin
 }
 
 void OdbExtractObject::write_double_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<double>> & double_data) {
-    double double_array[double_data.size()][max_column_size]; // Need to convert vector to array with contiguous memory for H5 to process
-    for( int i = 0; i<double_data.size(); ++i) {
-        for( int j = 0; j<double_data[i].size(); ++j) {
-            double_array[i][j] = double_data[i][j];
+    if (!double_data.empty()) {
+        double double_array[double_data.size()][max_column_size]; // Need to convert vector to array with contiguous memory for H5 to process
+        for( int i = 0; i<double_data.size(); ++i) {
+            for( int j = 0; j<double_data[i].size(); ++j) {
+                double_array[i][j] = double_data[i][j];
+            }
         }
+        write_double_2D_array(group, dataset_name, double_data.size(), max_column_size, (double *)double_array);
     }
-    write_double_2D_array(group, dataset_name, double_data.size(), max_column_size, (double *)double_array);
 }
 
 
