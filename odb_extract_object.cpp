@@ -60,7 +60,7 @@ OdbExtractObject::OdbExtractObject (CmdLineArguments &command_line_arguments, Lo
 
     try {  // Since the odb object isn't recognized outside the scope of the try/except, block the processing has to be done within the try block
         odb_Odb& odb = openOdb(file_name, true);  // Open as read only
-        process_odb(odb, log_file);
+        process_odb(odb, log_file, command_line_arguments);
         odb.close();
         log_file.logDebug("Odb Extract object successfully created.");
     }
@@ -83,7 +83,12 @@ OdbExtractObject::OdbExtractObject (CmdLineArguments &command_line_arguments, Lo
 
 }
 
-void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
+void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
+
+    this->dimension_enum_strings[0] = "Unknown Dimension";
+    this->dimension_enum_strings[1] = "Three Dimensional";
+    this->dimension_enum_strings[2] = "Two Dimensional Planar";
+    this->dimension_enum_strings[3] = "AxiSymmetric";
 
     log_file.logVerbose("Reading top level attributes of odb.");
     this->name = odb.name().CStr();
@@ -192,13 +197,15 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
     }
 
 // TODO: Write code to get assembly
+    this->root_assembly = process_assembly(odb.rootAssembly(), odb, log_file);
 
     odb_InstanceRepository instances = odb.rootAssembly().instances();
     odb_InstanceRepositoryIT instance_iter(instances);
     for (instance_iter.first(); !instance_iter.isDone(); instance_iter.next()) 
     {
-        odb_Instance inst = instances[instance_iter.currentKey()];
+        odb_Instance instance = instances[instance_iter.currentKey()];
 // TODO: Write code to get instance
+        this->root_assembly.instances.push_back(process_instance(instance, odb, log_file));
     }
 
     odb_StepRepository step_repository = odb.steps();
@@ -553,8 +560,8 @@ part_type OdbExtractObject::process_part (const odb_Part &part, odb_Odb &odb, Lo
     log_file.logVerbose("Reading part data.");
     part_type new_part;
     new_part.name = part.name().CStr();
-    static const char * dimension_enum_strings[] = { "Unknown Dimension", "Three Dimensional", "Two Dimensional Planar", "AxiSymmetric" };
-    new_part.embeddedSpace = dimension_enum_strings[part.embeddedSpace()];
+//    static const char * dimension_enum_strings[] = { "Unknown Dimension", "Three Dimensional", "Two Dimensional Planar", "AxiSymmetric" };
+    new_part.embeddedSpace = this->dimension_enum_strings[part.embeddedSpace()];
 
     const odb_SequenceNode& nodes = part.nodes();
     for (int i=0; i<nodes.size(); i++)  { new_part.nodes.push_back(process_node(nodes.node(i), log_file)); log_file.logDebug(to_string(nodes.node(i).label())); }
@@ -576,12 +583,58 @@ part_type OdbExtractObject::process_part (const odb_Part &part, odb_Odb &odb, Lo
 
     return new_part;
 }
-void OdbExtractObject::process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
+
+instance_type OdbExtractObject::process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file) {
+    instance_type new_instance;
+    new_instance.name = instance.name().CStr();
+    log_file.logVerbose("Reading instance data for " + new_instance.name);
+    new_instance.embeddedSpace = this->dimension_enum_strings[instance.embeddedSpace()];
+
+    const odb_SequenceNode& nodes = instance.nodes();
+    for (int i=0; i<nodes.size(); i++)  { new_instance.nodes.push_back(process_node(nodes.node(i), log_file)); log_file.logDebug(to_string(nodes.node(i).label())); }
+    odb_SequenceElement elements = instance.elements();
+    for (int i=0; i<elements.size(); i++)  { new_instance.elements.push_back(process_element(elements.element(i), log_file)); }
+
+    odb_SetRepositoryIT node_iter(instance.nodeSets());
+    for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
+        new_instance.nodeSets.push_back(process_set(node_iter.currentValue(), log_file));
+    }
+    odb_SetRepositoryIT element_iter(instance.elementSets());
+    for (element_iter.first(); !element_iter.isDone(); element_iter.next()) {
+        new_instance.elementSets.push_back(process_set(element_iter.currentValue(), log_file));
+    }
+    odb_SetRepositoryIT surface_iter(instance.surfaces());
+    for (surface_iter.first(); !surface_iter.isDone(); surface_iter.next()) {
+        new_instance.surfaces.push_back(process_set(surface_iter.currentValue(), log_file));
+    }
 
 }
-void OdbExtractObject::process_root_assembly (const odb_Assembly &root_assembly, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
 
+assembly_type OdbExtractObject::process_assembly (const odb_Assembly &assembly, odb_Odb &odb, Logging &log_file) {
+    assembly_type new_assembly;
+    new_assembly.name = assembly.name().CStr();
+    log_file.logVerbose("Reading assembly data for " + new_assembly.name);
+    new_assembly.embeddedSpace = this->dimension_enum_strings[assembly.embeddedSpace()];
+
+    const odb_SequenceNode& nodes = assembly.nodes();
+    for (int i=0; i<nodes.size(); i++)  { new_assembly.nodes.push_back(process_node(nodes.node(i), log_file)); log_file.logDebug(to_string(nodes.node(i).label())); }
+    odb_SequenceElement elements = assembly.elements();
+    for (int i=0; i<elements.size(); i++)  { new_assembly.elements.push_back(process_element(elements.element(i), log_file)); }
+
+    odb_SetRepositoryIT node_iter(assembly.nodeSets());
+    for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
+        new_assembly.nodeSets.push_back(process_set(node_iter.currentValue(), log_file));
+    }
+    odb_SetRepositoryIT element_iter(assembly.elementSets());
+    for (element_iter.first(); !element_iter.isDone(); element_iter.next()) {
+        new_assembly.elementSets.push_back(process_set(element_iter.currentValue(), log_file));
+    }
+    odb_SetRepositoryIT surface_iter(assembly.surfaces());
+    for (surface_iter.first(); !surface_iter.isDone(); surface_iter.next()) {
+        new_assembly.surfaces.push_back(process_set(surface_iter.currentValue(), log_file));
+    }
 }
+
 void OdbExtractObject::process_step (const odb_Step &step, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
 
 }
@@ -683,6 +736,28 @@ void OdbExtractObject::write_parts(H5::H5File &h5_file, const string &group_name
         write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets);
         write_sets(h5_file, part_group_name + "/elementSets", part.elementSets);
         write_sets(h5_file, part_group_name + "/surfaces", part.surfaces);
+    }
+}
+
+void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_name) {
+    write_string_dataset(this->root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
+    write_nodes(h5_file, "/odb/rootAssembly", this->root_assembly.nodes);
+    write_elements(h5_file, "/odb/rootAssembly", this->root_assembly.elements);
+    write_sets(h5_file, "/odb/rootAssembly/nodeSets", this->root_assembly.nodeSets);
+    write_sets(h5_file, "/odb/rootAssembly/elementSets", this->root_assembly.elementSets);
+    write_sets(h5_file, "/odb/rootAssembly/surfaces", this->root_assembly.surfaces);
+}
+
+void OdbExtractObject::write_instances(H5::H5File &h5_file, const string &group_name) {
+    for (auto instance : this->root_assembly.instances) {
+        string instance_group_name = group_name + "/" + instance.name;
+        H5::Group instance_group = h5_file.createGroup(instance_group_name.c_str());
+        write_string_dataset(instance_group, "embeddedSpace", instance.embeddedSpace);
+        write_nodes(h5_file, instance_group_name, instance.nodes);
+        write_elements(h5_file, instance_group_name, instance.elements);
+        write_sets(h5_file, instance_group_name + "/nodeSets", instance.nodeSets);
+        write_sets(h5_file, instance_group_name + "/elementSets", instance.elementSets);
+        write_sets(h5_file, instance_group_name + "/surfaces", instance.surfaces);
     }
 }
 

@@ -221,7 +221,25 @@ struct part_type {
     vector<set_type> surfaces;
 };
 
-struct root_assembly_type {
+struct instance_type {
+    string name;
+    string embeddedSpace;
+    vector<node_type> nodes;
+    vector<element_type> elements;
+    vector<set_type> nodeSets;
+    vector<set_type> elementSets;
+    vector<set_type> surfaces;
+};
+
+struct assembly_type {
+    string name;
+    string embeddedSpace;
+    vector<node_type> nodes;
+    vector<element_type> elements;
+    vector<set_type> nodeSets;
+    vector<set_type> elementSets;
+    vector<set_type> surfaces;
+    vector<instance_type> instances;
 };
 
 /*!
@@ -242,8 +260,9 @@ class OdbExtractObject {
           After the odb has been opened this function will do the parsing, including calling of other functions needed for parsing
           \param odb An open odb object
           \param log_file Logging object for writing log messages
+          \param command_line_arguments CmdLineArguments object storing command line arguments
         */
-        void process_odb (odb_Odb &odb, Logging &log_file);
+        void process_odb (odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments);
         //! Process odb_SectionCategory object from the odb file
         /*!
           Process odb_SectionCategory object and return the values in a section_category_type
@@ -278,7 +297,7 @@ class OdbExtractObject {
           Process odb_Element property object and return the values in an element_type
           \param element An odb_Element object in the odb
           \param log_file Logging object for writing log messages
-          \return odb_element_type with data stored from the odb
+          \return element_type with data stored from the odb
           \sa process_odb()
         */
         element_type process_element (const odb_Element &element, Logging &log_file);
@@ -326,19 +345,20 @@ class OdbExtractObject {
           \param odb An open odb object
           \param log_file Logging object for writing log messages
           \param command_line_arguments CmdLineArguments object storing command line arguments
+          \return instance_type with data stored from the odb
           \sa process_odb()
         */
-        void process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments);
-        //! Process the root assembly from the odb file
+        instance_type process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file);
+        //! Process an assembly from the odb file
         /*!
-          Process the root assembly and store the results
-          \param root_assembly An odb root assembly object
+          Process  an assembly and store the results
+          \param assembly An odb assembly object
           \param odb An open odb object
           \param log_file Logging object for writing log messages
-          \param command_line_arguments CmdLineArguments object storing command line arguments
+          \return assembly_type with data stored from the odb
           \sa process_odb()
         */
-        void process_root_assembly (const odb_Assembly &root_assembly, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments);
+        assembly_type process_assembly (const odb_Assembly &assembly, odb_Odb &odb, Logging &log_file);
         //! Process a step from the odb file
         /*!
           Process a step object and store the results
@@ -424,6 +444,20 @@ class OdbExtractObject {
           \param group_name Name of the group where data is to be written
         */
         void write_parts(H5::H5File &h5_file, const string &group_name);
+        //! Write assembly data to an HDF5 file
+        /*!
+          Write assembly data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+        */
+        void write_assembly(H5::H5File &h5_file, const string &group_name);
+        //! Write instances data to an HDF5 file
+        /*!
+          Write instances data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+        */
+        void write_instances(H5::H5File &h5_file, const string &group_name);
         //! Write constraints data to an HDF5 file
         /*!
           Write different types of constraint data into an HDF5 file
@@ -658,6 +692,9 @@ class OdbExtractObject {
         vector<contact_standard_type> standard_interactions;
         vector<contact_explicit_type> explicit_interactions;
         constraint_type constraints;
+        assembly_type root_assembly;
+        string dimension_enum_strings[4];
+        vector<instance_type> root_assembly_instances;
         /*
         odb_Assembly& rootAssembly;
         odb_StepRepository& steps;
