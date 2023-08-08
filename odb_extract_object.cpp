@@ -715,7 +715,9 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     H5::Group interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
     write_interactions(h5_file, "odb/interactions");
     this->parts_group = h5_file.createGroup(string("/odb/parts").c_str());
+    log_file.logVerbose("Writing parts data.");
     write_parts(h5_file, "odb/parts");
+    log_file.logVerbose("Writing assembly data.");
     write_assembly(h5_file, "odb/rootAssembly");
     this->steps_group = h5_file.createGroup(string("/odb/steps").c_str());
 
