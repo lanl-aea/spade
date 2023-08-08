@@ -672,6 +672,16 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
 }
 
 void OdbExtractObject::write_parts(H5::H5File &h5_file, const string &group_name) {
+    for (auto part : this->parts) {
+        string part_group_name = group_name + "/" + part.name;
+        H5::Group part_group = h5_file.createGroup(part_group_name.c_str());
+        write_string_dataset(part_group, "embeddedSpace", part.embeddedSpace);
+        write_nodes(h5_file, part_group_name, part.nodes);
+        write_elements(h5_file, part_group_name, part.elements);
+        write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets);
+        write_sets(h5_file, part_group_name + "/elementSets", part.elementSets);
+        write_sets(h5_file, part_group_name + "/surfaces", part.surfaces);
+    }
 }
 
 void OdbExtractObject::write_constraints(H5::H5File &h5_file, const string &group_name) {
@@ -836,6 +846,11 @@ void OdbExtractObject::write_node(H5::H5File &h5_file, const string &group_name,
 void OdbExtractObject::write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type> &nodes) {
     H5::Group nodes_group = h5_file.createGroup((group_name + "/nodes").c_str());
     for (auto node : nodes) { write_node(h5_file, group_name + "/nodes", node); }
+}
+
+void OdbExtractObject::write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets) {
+    H5::Group sets_group = h5_file.createGroup(group_name.c_str());
+    for (auto set : sets) { write_set(h5_file, group_name, set); }
 }
 
 void OdbExtractObject::write_set(H5::H5File &h5_file, const string &group_name, const set_type &set) {

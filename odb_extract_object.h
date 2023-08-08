@@ -478,6 +478,14 @@ class OdbExtractObject {
           \param nodes Vector of node data to be written
         */
         void write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type> &nodes);
+        //! Write sets data to an HDF5 file
+        /*!
+          Write vector of set data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param nodes Vector of set data to be written
+        */
+        void write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets);
         //! Write set data to an HDF5 file
         /*!
           Write data from a set type into an HDF5 file
