@@ -57,6 +57,11 @@ OdbExtractObject::OdbExtractObject (CmdLineArguments &command_line_arguments, Lo
         upgradeOdb(file_name, upgraded_file_name);
         file_name = upgraded_file_name;
     }
+    // Set up enum strings to be used with multiple functions later
+    this->dimension_enum_strings[0] = "Unknown Dimension";
+    this->dimension_enum_strings[1] = "Three Dimensional";
+    this->dimension_enum_strings[2] = "Two Dimensional Planar";
+    this->dimension_enum_strings[3] = "AxiSymmetric";
 
     try {  // Since the odb object isn't recognized outside the scope of the try/except, block the processing has to be done within the try block
         odb_Odb& odb = openOdb(file_name, true);  // Open as read only
@@ -84,11 +89,6 @@ OdbExtractObject::OdbExtractObject (CmdLineArguments &command_line_arguments, Lo
 }
 
 void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
-
-    this->dimension_enum_strings[0] = "Unknown Dimension";
-    this->dimension_enum_strings[1] = "Three Dimensional";
-    this->dimension_enum_strings[2] = "Two Dimensional Planar";
-    this->dimension_enum_strings[3] = "AxiSymmetric";
 
     log_file.logVerbose("Reading top level attributes of odb.");
     this->name = odb.name().CStr();
@@ -198,19 +198,6 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArgum
 // TODO: Write code to get assembly
     this->root_assembly = process_assembly(odb.rootAssembly(), odb, log_file);
 
-    odb_InstanceRepository instances = odb.rootAssembly().instances();
-    odb_InstanceRepositoryIT instance_iter(instances);
-    for (instance_iter.first(); !instance_iter.isDone(); instance_iter.next()) 
-    {
-        log_file.logVerbose("Starting to read instance: " + string(instance_iter.currentKey().CStr()));
-        odb_Instance instance = instances[instance_iter.currentKey()];
-// TODO: Write code to get instance
-        log_file.logDebug("Instance: " + string(instance.name().CStr()));
-        log_file.logDebug("\tnodes size: " + to_string(instance.nodes().size()));
-        log_file.logDebug("\telements size: " + to_string(instance.elements().size()));
-        this->root_assembly.instances.push_back(process_instance(instance, odb, log_file));
-    }
-
     odb_StepRepository step_repository = odb.steps();
     odb_StepRepositoryIT step_iter (step_repository);
     for (step_iter.first(); !step_iter.isDone(); step_iter.next()) 
@@ -285,6 +272,7 @@ node_type OdbExtractObject::process_node (const odb_Node &node, Logging &log_fil
     new_node.coordinates[0] = coords[0];
     new_node.coordinates[1] = coords[1];
     new_node.coordinates[2] = coords[2];
+//    log_file.logDebug("\t\tnode " + to_string(new_node.label) + ": " + to_string(coords[0]) + " " + to_string(coords[1]) + " " + to_string(coords[2]));
     return new_node;
 }
 
@@ -301,6 +289,7 @@ element_type OdbExtractObject::process_element (const odb_Element &element, Logg
     for (int i=0; i < instance_names.size(); i++) {
         new_element.instanceNames.push_back(instance_names[i].CStr());
     }
+//    log_file.logDebug("\t\telement " + to_string(new_element.label) + ": connectivity size: " + to_string(new_element.connectivity.size()) + " instances size:" + to_string(new_element.instanceNames.size()));
     new_element.sectionCategory = process_section_category(element.sectionCategory(), log_file);
     return new_element;
 }
@@ -324,6 +313,7 @@ set_type OdbExtractObject::process_set (const odb_Set &set, Logging &log_file) {
         new_set.type = "Surface Set";
         break;
     }
+    log_file.logDebug("\t\tset " + new_set.name + ": " + new_set.type);
 
     odb_SequenceString names = set.instanceNames();
     int numInstances = names.size();
@@ -332,6 +322,7 @@ set_type OdbExtractObject::process_set (const odb_Set &set, Logging &log_file) {
     
     for (int i=0; i<names.size(); i++) {
         odb_String name = names.constGet(i);        
+        log_file.logDebug("\t\t\tinstance: " + string(name.CStr()));
         new_set.instanceNames.push_back(name.CStr());
         if (new_set.type == "Node Set") {
             const odb_SequenceNode& set_nodes = set.nodes(name);
@@ -560,10 +551,8 @@ shell_solid_coupling_type OdbExtractObject::process_shell_solid_coupling (const 
 }
 
 part_type OdbExtractObject::process_part (const odb_Part &part, odb_Odb &odb, Logging &log_file) {
-    log_file.logVerbose("Reading part data.");
     part_type new_part;
     new_part.name = part.name().CStr();
-//    static const char * dimension_enum_strings[] = { "Unknown Dimension", "Three Dimensional", "Two Dimensional Planar", "AxiSymmetric" };
     new_part.embeddedSpace = this->dimension_enum_strings[part.embeddedSpace()];
 
     const odb_SequenceNode& nodes = part.nodes();
@@ -590,7 +579,6 @@ part_type OdbExtractObject::process_part (const odb_Part &part, odb_Odb &odb, Lo
 instance_type OdbExtractObject::process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file) {
     instance_type new_instance;
     new_instance.name = instance.name().CStr();
-    log_file.logVerbose("Reading instance data for " + new_instance.name);
     new_instance.embeddedSpace = this->dimension_enum_strings[instance.embeddedSpace()];
 
     const odb_SequenceNode& nodes = instance.nodes();
@@ -613,7 +601,7 @@ instance_type OdbExtractObject::process_instance (const odb_Instance &instance, 
         new_instance.surfaces.push_back(process_set(surface_iter.currentValue(), log_file));
     }
     log_file.logDebug("\tsurfaces size: " + to_string(new_instance.surfaces.size()));
-
+    return new_instance;
 }
 
 assembly_type OdbExtractObject::process_assembly (const odb_Assembly &assembly, odb_Odb &odb, Logging &log_file) {
@@ -622,23 +610,49 @@ assembly_type OdbExtractObject::process_assembly (const odb_Assembly &assembly, 
     log_file.logVerbose("Reading assembly data for " + new_assembly.name);
     new_assembly.embeddedSpace = this->dimension_enum_strings[assembly.embeddedSpace()];
 
+    log_file.logDebug("Assembly: " + new_assembly.name);
+    log_file.logDebug("\tnodes size: " + to_string(assembly.nodes().size()));
+    log_file.logDebug("\telements size: " + to_string(assembly.elements().size()));
+
     const odb_SequenceNode& nodes = assembly.nodes();
     for (int i=0; i<nodes.size(); i++)  { new_assembly.nodes.push_back(process_node(nodes.node(i), log_file)); }
     odb_SequenceElement elements = assembly.elements();
     for (int i=0; i<elements.size(); i++)  { new_assembly.elements.push_back(process_element(elements.element(i), log_file)); }
 
+    log_file.logDebug("\tnodeSets:");
     odb_SetRepositoryIT node_iter(assembly.nodeSets());
     for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
         new_assembly.nodeSets.push_back(process_set(node_iter.currentValue(), log_file));
     }
+    log_file.logDebug("\tnodeSets size " + to_string(new_assembly.nodeSets.size()));
+    log_file.logDebug("\telementSets:");
     odb_SetRepositoryIT element_iter(assembly.elementSets());
     for (element_iter.first(); !element_iter.isDone(); element_iter.next()) {
         new_assembly.elementSets.push_back(process_set(element_iter.currentValue(), log_file));
     }
+    log_file.logDebug("\telementSets size " + to_string(new_assembly.elementSets.size()));
+    log_file.logDebug("\tsurfaces:");
     odb_SetRepositoryIT surface_iter(assembly.surfaces());
     for (surface_iter.first(); !surface_iter.isDone(); surface_iter.next()) {
         new_assembly.surfaces.push_back(process_set(surface_iter.currentValue(), log_file));
     }
+    log_file.logDebug("\tsurfaces size " + to_string(new_assembly.surfaces.size()));
+
+    odb_InstanceRepository instances = assembly.instances();
+    odb_InstanceRepositoryIT instance_iter(instances);
+    for (instance_iter.first(); !instance_iter.isDone(); instance_iter.next()) 
+    {
+        log_file.logVerbose("Starting to read instance: " + string(instance_iter.currentKey().CStr()));
+        odb_Instance instance = instances[instance_iter.currentKey()];
+// TODO: Write code to get instance
+        log_file.logDebug("Instance: " + string(instance.name().CStr()));
+        log_file.logDebug("\tnodes size: " + to_string(instance.nodes().size()));
+        log_file.logDebug("\telements size: " + to_string(instance.elements().size()));
+        this->root_assembly.instances.push_back(process_instance(instance, odb, log_file));
+    }
+/*
+*/
+    return new_assembly;
 }
 
 void OdbExtractObject::process_step (const odb_Step &step, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
@@ -726,6 +740,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     // TODO: potentially add materials group
 
     h5_file.close();  // Close the hdf5 file
+    log_file.logVerbose("Closing hdf5 file.");
 }
 
 void OdbExtractObject::write_parts(H5::H5File &h5_file, const string &group_name) {
@@ -747,9 +762,12 @@ void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_n
     write_string_dataset(this->root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
     write_nodes(h5_file, root_assembly_group_name, this->root_assembly.nodes);
     write_elements(h5_file, root_assembly_group_name, this->root_assembly.elements);
+    // TODO: Figure out why the code below is causing a core dump
+    /*
     write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets);
     write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets);
     write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
+    */
 }
 
 void OdbExtractObject::write_instances(H5::H5File &h5_file, const string &group_name) {
