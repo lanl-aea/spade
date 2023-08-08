@@ -186,7 +186,6 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
         odb_Part part = parts[parts_iter.currentKey()];
         part_type new_part = process_part(part, odb, log_file);
         this->parts.push_back(new_part);
-// TODO: Write code to get parts
     }
 
 // TODO: Write code to get assembly
@@ -549,6 +548,7 @@ shell_solid_coupling_type OdbExtractObject::process_shell_solid_coupling (const 
 
 part_type OdbExtractObject::process_part (const odb_Part &part, odb_Odb &odb, Logging &log_file) {
     //TODO: write log messages
+    log_file.logVerbose("Reading part data.");
     part_type new_part;
     new_part.name = part.name().CStr();
     static const char * dimension_enum_strings[] = { "Three Dimensional", "Two Dimensional Planar", "AxiSymmetric", "Unknown Dimension" };
@@ -656,6 +656,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     H5::Group interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
     write_interactions(h5_file, "odb/interactions");
     this->parts_group = h5_file.createGroup(string("/odb/parts").c_str());
+    write_parts(h5_file, "odb/parts");
     this->root_assembly_group = h5_file.createGroup(string("/odb/rootAssembly").c_str());
     this->steps_group = h5_file.createGroup(string("/odb/steps").c_str());
 
@@ -668,6 +669,9 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     // TODO: potentially add materials group
 
     h5_file.close();  // Close the hdf5 file
+}
+
+void OdbExtractObject::write_parts(H5::H5File &h5_file, const string &group_name) {
 }
 
 void OdbExtractObject::write_constraints(H5::H5File &h5_file, const string &group_name) {
@@ -890,10 +894,8 @@ void OdbExtractObject::write_string_dataset(const H5::Group& group, const string
 }
 
 void OdbExtractObject::write_string_vector_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values) {
-//    hsize_t dimensions[] = {1};
     hsize_t dimensions[1] = {hsize_t(string_values.size())};
     H5::DataSpace dataspace(1, dimensions);  // Create a space for as many strings as are in the vector
-//    H5::StrType string_type(0, H5T_VARIABLE);
     H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE);
     H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
     dataset.write(string_values.data(), string_type);
@@ -904,9 +906,6 @@ void OdbExtractObject::write_string_vector_dataset(const H5::Group& group, const
 void OdbExtractObject::write_integer_dataset(const H5::Group& group, const string & dataset_name, const int & int_value) {
     hsize_t dimensions[] = {1};
     H5::DataSpace dataspace(1, dimensions);  // Just one integer
-//    int integer_size = integer_value.size();
-//    if (integer_size == 0) { integer_size++; }  // If the integer is empty, make the integer size equal to one, as StrType must have a positive size
-//    H5::IntType integer_type (0, integer_size);
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::STD_I32BE, dataspace);
     dataset.write(&int_value, H5::PredType::NATIVE_INT);
     dataset.close();

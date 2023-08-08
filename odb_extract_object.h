@@ -417,6 +417,13 @@ class OdbExtractObject {
           \sa OdbExtractObject()
         */
         void write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file);
+        //! Write parts data to an HDF5 file
+        /*!
+          Write parts data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+        */
+        void write_parts(H5::H5File &h5_file, const string &group_name);
         //! Write constraints data to an HDF5 file
         /*!
           Write different types of constraint data into an HDF5 file
