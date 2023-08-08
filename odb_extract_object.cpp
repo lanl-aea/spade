@@ -46,7 +46,7 @@ using namespace H5;
 #include <odb_extract_object.h>
 
 OdbExtractObject::OdbExtractObject (CmdLineArguments &command_line_arguments, Logging &log_file) {
-    log_file.logVerbose("Starting to parse odb file: " + command_line_arguments.getTimeStamp(false));
+    log_file.logVerbose("Starting to read odb file: " + command_line_arguments.getTimeStamp(false));
     odb_String file_name = command_line_arguments["odb-file"].c_str();
     log_file.logDebug("Operating on file:" + command_line_arguments["odb-file"]);
 
@@ -62,7 +62,7 @@ OdbExtractObject::OdbExtractObject (CmdLineArguments &command_line_arguments, Lo
         odb_Odb& odb = openOdb(file_name, true);  // Open as read only
         process_odb(odb, log_file);
         odb.close();
-        log_file.logDebug("Odb Parser object successfully created.");
+        log_file.logDebug("Odb Extract object successfully created.");
     }
     catch(odb_BaseException& exc) {
         string error_message = exc.UserReport().CStr();
@@ -183,7 +183,7 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file) {
     odb_PartRepositoryIT parts_iter(parts);    
     for (parts_iter.first(); !parts_iter.isDone(); parts_iter.next()) {
         log_file.logVerbose("Starting to read part: " + string(parts_iter.currentKey().CStr()));
-        odb_Part& part = parts[parts_iter.currentKey()];
+        odb_Part part = parts[parts_iter.currentKey()];
         log_file.logDebug("Part: " + string(part.name().CStr()));
         log_file.logDebug("\tnodes size: " + to_string(part.nodes().size()));
         log_file.logDebug("\telements size: " + to_string(part.elements().size()));
@@ -557,10 +557,8 @@ part_type OdbExtractObject::process_part (const odb_Part &part, odb_Odb &odb, Lo
     new_part.embeddedSpace = dimension_enum_strings[part.embeddedSpace()];
 
     const odb_SequenceNode& nodes = part.nodes();
-    log_file.logDebug(new_part.name + " nodes size: " + to_string(nodes.size()));
     for (int i=0; i<nodes.size(); i++)  { new_part.nodes.push_back(process_node(nodes.node(i), log_file)); log_file.logDebug(to_string(nodes.node(i).label())); }
     odb_SequenceElement elements = part.elements();
-    log_file.logDebug(new_part.name + " elements size: " + to_string(elements.size()));
     for (int i=0; i<elements.size(); i++)  { new_part.elements.push_back(process_element(elements.element(i), log_file)); }
 
     odb_SetRepositoryIT node_iter(part.nodeSets());
@@ -681,12 +679,10 @@ void OdbExtractObject::write_parts(H5::H5File &h5_file, const string &group_name
         H5::Group part_group = h5_file.createGroup(part_group_name.c_str());
         write_string_dataset(part_group, "embeddedSpace", part.embeddedSpace);
         write_nodes(h5_file, part_group_name, part.nodes);
-//        for (auto node : part.nodes) { cout << node.label; }
         write_elements(h5_file, part_group_name, part.elements);
         write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets);
         write_sets(h5_file, part_group_name + "/elementSets", part.elementSets);
         write_sets(h5_file, part_group_name + "/surfaces", part.surfaces);
-//        for (auto surface : part.surfaces) { cout << surface.name; }
     }
 }
 
@@ -840,8 +836,10 @@ void OdbExtractObject::write_element(H5::H5File &h5_file, const string &group_na
 }
 
 void OdbExtractObject::write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type> &elements) {
-    H5::Group elements_group = h5_file.createGroup((group_name + "/elements").c_str());
-    for (auto element : elements) { write_element(h5_file, group_name + "/elements", element); }
+    if (!elements.empty()) {
+        H5::Group elements_group = h5_file.createGroup((group_name + "/elements").c_str());
+        for (auto element : elements) { write_element(h5_file, group_name + "/elements", element); }
+    }
 }
 
 void OdbExtractObject::write_node(H5::H5File &h5_file, const string &group_name, const node_type &node) {
@@ -850,13 +848,17 @@ void OdbExtractObject::write_node(H5::H5File &h5_file, const string &group_name,
 }
 
 void OdbExtractObject::write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type> &nodes) {
-    H5::Group nodes_group = h5_file.createGroup((group_name + "/nodes").c_str());
-    for (auto node : nodes) { write_node(h5_file, group_name + "/nodes", node); }
+    if (!nodes.empty()) {
+        H5::Group nodes_group = h5_file.createGroup((group_name + "/nodes").c_str());
+        for (auto node : nodes) { write_node(h5_file, group_name + "/nodes", node); }
+    }
 }
 
 void OdbExtractObject::write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets) {
-    H5::Group sets_group = h5_file.createGroup(group_name.c_str());
-    for (auto set : sets) { write_set(h5_file, group_name, set); }
+    if (!sets.empty()) {
+        H5::Group sets_group = h5_file.createGroup(group_name.c_str());
+        for (auto set : sets) { write_set(h5_file, group_name, set); }
+    }
 }
 
 void OdbExtractObject::write_set(H5::H5File &h5_file, const string &group_name, const set_type &set) {
