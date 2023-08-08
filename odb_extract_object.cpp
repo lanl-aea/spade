@@ -602,14 +602,17 @@ instance_type OdbExtractObject::process_instance (const odb_Instance &instance, 
     for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
         new_instance.nodeSets.push_back(process_set(node_iter.currentValue(), log_file));
     }
+    log_file.logDebug("\tnodeSets size: " + to_string(new_instance.nodeSets.size()));
     odb_SetRepositoryIT element_iter(instance.elementSets());
     for (element_iter.first(); !element_iter.isDone(); element_iter.next()) {
         new_instance.elementSets.push_back(process_set(element_iter.currentValue(), log_file));
     }
+    log_file.logDebug("\telementSets size: " + to_string(new_instance.elementSets.size()));
     odb_SetRepositoryIT surface_iter(instance.surfaces());
     for (surface_iter.first(); !surface_iter.isDone(); surface_iter.next()) {
         new_instance.surfaces.push_back(process_set(surface_iter.currentValue(), log_file));
     }
+    log_file.logDebug("\tsurfaces size: " + to_string(new_instance.surfaces.size()));
 
 }
 
@@ -655,10 +658,6 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     const H5std_string FILE_NAME(command_line_arguments["output-file"]);
     H5File h5_file(FILE_NAME, H5F_ACC_TRUNC);
 
-//    H5::Group odb_group = file.createGroup(string("/odb").c_str());
-    log_file.logDebug("Creating odb group for meta-data " + command_line_arguments["output-file"]);
-
-//    write_string_dataset(this->odb_group, "name", this->name);
     log_file.logVerbose("Writing top level attributes to odb group.");
     H5::Group odb_group = h5_file.createGroup(string("/odb").c_str());
     write_attribute(odb_group, "name", this->name);
@@ -667,7 +666,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     write_attribute(odb_group, "path", this->path);
     write_attribute(odb_group, "isReadOnly", this->isReadOnly);
 
-    log_file.logVerbose("Writing odb jobData.");
+    log_file.logVerbose("Writing jobData.");
     H5::Group job_data_group = h5_file.createGroup(string("/odb/jobData").c_str());
     write_attribute(job_data_group, "analysisCode", this->job_data.analysisCode);
     write_attribute(job_data_group, "creationTime", this->job_data.creationTime);
@@ -678,14 +677,14 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     write_string_vector_dataset(job_data_group, "productAddOns", this->job_data.productAddOns);
     write_attribute(job_data_group, "version", this->job_data.version);
 
-    log_file.logVerbose("Writing odb sector definition.");
+    log_file.logVerbose("Writing sector definition.");
     H5::Group sector_definition_group = h5_file.createGroup(string("/odb/sectorDefinition").c_str());
     write_integer_dataset(sector_definition_group, "numSectors", this->sector_definition.numSectors);
     H5::Group symmetry_axis_group = h5_file.createGroup(string("/odb/sectorDefinition/symmetryAxis").c_str());
     write_string_dataset(symmetry_axis_group, "StartPoint", this->sector_definition.start_point);
     write_string_dataset(symmetry_axis_group, "EndPoint", this->sector_definition.end_point);
 
-    log_file.logVerbose("Writing odb section categories.");
+    log_file.logVerbose("Writing section categories.");
     H5::Group section_categories_group = h5_file.createGroup(string("/odb/sectionCategories").c_str());
     for (int i=0; i<this->section_categories.size(); i++) {
         string category_group_name = "/odb/sectionCategories/" + this->section_categories[i].name;
@@ -693,7 +692,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
         write_section_category(h5_file, section_category_group, category_group_name, this->section_categories[i]);
     }
 
-    log_file.logVerbose("Writing odb user data.");
+    log_file.logVerbose("Writing user data.");
     H5::Group user_data_group = h5_file.createGroup(string("/odb/userData").c_str());
     for (int i=0; i<this->user_xy_data.size(); i++) {
         string user_xy_data_name = "/odb/userData/" + this->user_xy_data[i].name;
@@ -709,18 +708,16 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
         write_float_2D_vector(user_xy_data_group, "data", this->user_xy_data[i].max_column_size, this->user_xy_data[i].data);
     }
 
+    log_file.logVerbose("Writing constraints data.");
     H5::Group contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
     write_constraints(h5_file, "odb/constraints");
+    log_file.logVerbose("Writing interactions data.");
     H5::Group interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
     write_interactions(h5_file, "odb/interactions");
     this->parts_group = h5_file.createGroup(string("/odb/parts").c_str());
     write_parts(h5_file, "odb/parts");
     write_assembly(h5_file, "odb/rootAssembly");
     this->steps_group = h5_file.createGroup(string("/odb/steps").c_str());
-
-//    vector<string> temp_string = { "testing", "this", "vector" };
-//    std::vector<const char*> array_of_c_string = { "testing", "this", "vector" };
-//    for(const string &group : groups)
 
     // TODO: potentially add amplitudes group
     // TODO: potentially add filters group
