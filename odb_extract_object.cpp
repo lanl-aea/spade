@@ -581,6 +581,10 @@ instance_type OdbExtractObject::process_instance (const odb_Instance &instance, 
     new_instance.name = instance.name().CStr();
     new_instance.embeddedSpace = this->dimension_enum_strings[instance.embeddedSpace()];
 
+    log_file.logDebug("Instance: " + new_instance.name);
+    log_file.logDebug("\tnodes size: " + to_string(instance.nodes().size()));
+    log_file.logDebug("\telements size: " + to_string(instance.elements().size()));
+
     const odb_SequenceNode& nodes = instance.nodes();
     for (int i=0; i<nodes.size(); i++)  { new_instance.nodes.push_back(process_node(nodes.node(i), log_file)); }
     odb_SequenceElement elements = instance.elements();
@@ -645,13 +649,8 @@ assembly_type OdbExtractObject::process_assembly (const odb_Assembly &assembly, 
         log_file.logVerbose("Starting to read instance: " + string(instance_iter.currentKey().CStr()));
         odb_Instance instance = instances[instance_iter.currentKey()];
 // TODO: Write code to get instance
-        log_file.logDebug("Instance: " + string(instance.name().CStr()));
-        log_file.logDebug("\tnodes size: " + to_string(instance.nodes().size()));
-        log_file.logDebug("\telements size: " + to_string(instance.elements().size()));
         this->root_assembly.instances.push_back(process_instance(instance, odb, log_file));
     }
-/*
-*/
     return new_assembly;
 }
 
@@ -768,6 +767,7 @@ void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_n
     write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets);
     write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
     */
+    write_instances(h5_file, root_assembly_group_name + "/instances");
 }
 
 void OdbExtractObject::write_instances(H5::H5File &h5_file, const string &group_name) {
@@ -1015,11 +1015,15 @@ void OdbExtractObject::write_string_dataset(const H5::Group& group, const string
 
 void OdbExtractObject::write_string_vector_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values) {
     if (!string_values.empty()) {
-        hsize_t dimensions[1] = {hsize_t(string_values.size())};
-        H5::DataSpace dataspace(1, dimensions);  // Create a space for as many strings as are in the vector
-        H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE);
+        std::vector<const char*> c_string_array;
+        for (int i = 0; i < string_values.size(); ++i) {
+            c_string_array.push_back(string_values[i].c_str());
+        }
+        hsize_t dimensions[1] {c_string_array.size()};
+        H5::DataSpace  dataspace(1, dimensions);
+        H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
         H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
-        dataset.write(string_values.data(), string_type);
+        dataset.write(c_string_array.data(), string_type);
         dataset.close();
         dataspace.close();
     }

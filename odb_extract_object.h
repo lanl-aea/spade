@@ -693,8 +693,6 @@ class OdbExtractObject {
         vector<contact_explicit_type> explicit_interactions;
         constraint_type constraints;
         assembly_type root_assembly;
-        string dimension_enum_strings[4];
-        vector<instance_type> root_assembly_instances;
         /*
         odb_Assembly& rootAssembly;
         odb_StepRepository& steps;
@@ -707,5 +705,7 @@ class OdbExtractObject {
         H5::Group root_assembly_group;
         // TODO: add conditional to check that odb_parser has sector definition before adding the group
         H5::Group steps_group;
+
+        string dimension_enum_strings[4];
 };
 #endif  // __ODB_EXTRACT_OBJECT_H_INCLUDED__
