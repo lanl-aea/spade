@@ -761,9 +761,12 @@ void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_n
     write_string_dataset(this->root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
     write_nodes(h5_file, root_assembly_group_name, this->root_assembly.nodes);
     write_elements(h5_file, root_assembly_group_name, this->root_assembly.elements);
+    /*
+    // TODO: Figure out way to make short cuts from instance sets to these sets or vice versa
     write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets);
     write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets);
     write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
+    */
     this->root_assembly_group = h5_file.createGroup((root_assembly_group_name + "/instances").c_str());
     write_instances(h5_file, root_assembly_group_name + "/instances");
 }
