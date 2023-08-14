@@ -648,8 +648,8 @@ assembly_type OdbExtractObject::process_assembly (const odb_Assembly &assembly, 
     {
         log_file.logVerbose("Starting to read instance: " + string(instance_iter.currentKey().CStr()));
         odb_Instance instance = instances[instance_iter.currentKey()];
-// TODO: Write code to get instance
-        this->root_assembly.instances.push_back(process_instance(instance, odb, log_file));
+// TODO: Finish writing code to get instance
+        new_assembly.instances.push_back(process_instance(instance, odb, log_file));
     }
     return new_assembly;
 }
@@ -761,12 +761,10 @@ void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_n
     write_string_dataset(this->root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
     write_nodes(h5_file, root_assembly_group_name, this->root_assembly.nodes);
     write_elements(h5_file, root_assembly_group_name, this->root_assembly.elements);
-    // TODO: Figure out why the code below is causing a core dump
-    /*
     write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets);
     write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets);
     write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
-    */
+    this->root_assembly_group = h5_file.createGroup((root_assembly_group_name + "/instances").c_str());
     write_instances(h5_file, root_assembly_group_name + "/instances");
 }
 
@@ -939,15 +937,14 @@ void OdbExtractObject::write_elements(H5::H5File &h5_file, const string &group_n
     }
 }
 
-void OdbExtractObject::write_node(H5::H5File &h5_file, const string &group_name, const node_type &node) {
-    H5::Group node_group = h5_file.createGroup((group_name + "/" + to_string(node.label)).c_str());
-    write_float_array_dataset(node_group, group_name + "/" + to_string(node.label), 3, node.coordinates);
+void OdbExtractObject::write_node(H5::Group &group, const string &group_name, const node_type &node) {
+    write_float_array_dataset(group, group_name + "/" + to_string(node.label), 3, node.coordinates);
 }
 
 void OdbExtractObject::write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type> &nodes) {
     if (!nodes.empty()) {
         H5::Group nodes_group = h5_file.createGroup((group_name + "/nodes").c_str());
-        for (auto node : nodes) { write_node(h5_file, group_name + "/nodes", node); }
+        for (auto node : nodes) { write_node(nodes_group, group_name + "/nodes", node); }
     }
 }
 

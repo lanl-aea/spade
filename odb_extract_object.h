@@ -503,11 +503,11 @@ class OdbExtractObject {
           \param group_name Name of the group where data is to be written
           \param node Node data to be written
         */
-        void write_node(H5::H5File &h5_file, const string &group_name, const node_type &node);
+        void write_node(H5::Group &group, const string &group_name, const node_type &node);
         //! Write nodes data to an HDF5 file
         /*!
           Write vector of node data into an HDF5 file
-          \param h5_file Open h5_file object for writing
+          \param group Name of HDF5 group in which to write the new dataset
           \param group_name Name of the group where data is to be written
           \param nodes Vector of node data to be written
         */
