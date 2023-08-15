@@ -326,14 +326,10 @@ set_type OdbExtractObject::process_set (const odb_Set &set, Logging &log_file) {
         new_set.instanceNames.push_back(name.CStr());
         if (new_set.type == "Node Set") {
             const odb_SequenceNode& set_nodes = set.nodes(name);
-            for (int n=0; n < set_nodes.size(); n++) {
-                new_set.nodes.push_back(process_node(set_nodes.node(n), log_file));
-            }	    
+            for (int n=0; n < set_nodes.size(); n++) { new_set.nodes.push_back(set_nodes.node(n).label()); }	    
         } else if (new_set.type == "Element Set") {
             const odb_SequenceElement& set_elements = set.elements(name);
-            for (int n=0; n < set_elements.size(); n++) {
-                new_set.elements.push_back(process_element(set_elements.element(n), log_file));
-            }	    
+            for (int n=0; n < set_elements.size(); n++) { new_set.elements.push_back(set_elements.element(n).label()); }	    
         } else if (new_set.type == "Surface Set") {
             const odb_SequenceElement& set_elements = set.elements(name);
             const odb_SequenceElementFace& set_faces = set.faces(name);
@@ -342,16 +338,16 @@ set_type OdbExtractObject::process_set (const odb_Set &set, Logging &log_file) {
             if(set_elements.size() && set_faces.size())
             {
                 for (int n=0; n<set_elements.size(); n++) {
-                    new_set.elements.push_back(process_element(set_elements.element(n), log_file));
+                    new_set.elements.push_back(set_elements.element(n).label());
                     new_set.faces.push_back(face_enum_strings[set_faces.constGet(n)]);
                 }
             } else if(set_elements.size()) {
                 for (int n=0; n < set_elements.size(); n++) {
-                    new_set.elements.push_back(process_element(set_elements.element(n), log_file));
+                    new_set.elements.push_back(set_elements.element(n).label());
                 }
             } else {
                 for (int n=0; n < set_nodes.size(); n++)  {
-                    new_set.nodes.push_back(process_node(set_nodes.node(n), log_file));
+                    new_set.nodes.push_back(set_nodes.node(n).label());
                 }
             }
 	    
@@ -556,9 +552,9 @@ part_type OdbExtractObject::process_part (const odb_Part &part, odb_Odb &odb, Lo
     new_part.embeddedSpace = this->dimension_enum_strings[part.embeddedSpace()];
 
     const odb_SequenceNode& nodes = part.nodes();
-    for (int i=0; i<nodes.size(); i++)  { new_part.nodes.push_back(process_node(nodes.node(i), log_file)); }
+    for (int i=0; i<nodes.size(); i++)  { new_part.nodes.push_back(nodes.node(i).label()); }
     odb_SequenceElement elements = part.elements();
-    for (int i=0; i<elements.size(); i++)  { new_part.elements.push_back(process_element(elements.element(i), log_file)); }
+    for (int i=0; i<elements.size(); i++)  { new_part.elements.push_back(elements.element(i).label()); }
 
     odb_SetRepositoryIT node_iter(part.nodeSets());
     for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
@@ -586,9 +582,21 @@ instance_type OdbExtractObject::process_instance (const odb_Instance &instance, 
     log_file.logDebug("\telements size: " + to_string(instance.elements().size()));
 
     const odb_SequenceNode& nodes = instance.nodes();
-    for (int i=0; i<nodes.size(); i++)  { new_instance.nodes.push_back(process_node(nodes.node(i), log_file)); }
+    for (int i=0; i<nodes.size(); i++)  { 
+        int node_number = nodes.node(i).label();
+        node_type instance_node = process_node(nodes.node(i), log_file);
+        new_instance.nodes.push_back(instance_node); 
+        this->instance_nodes[node_number] = new_instance.nodes[new_instance.nodes.size() - 1];
+        this->node_instances[node_number] = new_instance.name;
+    }
     odb_SequenceElement elements = instance.elements();
-    for (int i=0; i<elements.size(); i++)  { new_instance.elements.push_back(process_element(elements.element(i), log_file)); }
+    for (int i=0; i<elements.size(); i++)  { 
+        int element_number = elements.element(i).label();
+        element_type instance_element = process_element(elements.element(i), log_file);
+        new_instance.elements.push_back(instance_element);
+        this->instance_elements[element_number] = new_instance.elements[new_instance.elements.size() - 1];
+        this->element_instances[element_number] = new_instance.name;
+    }
 
     odb_SetRepositoryIT node_iter(instance.nodeSets());
     for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
@@ -619,9 +627,9 @@ assembly_type OdbExtractObject::process_assembly (const odb_Assembly &assembly, 
     log_file.logDebug("\telements size: " + to_string(assembly.elements().size()));
 
     const odb_SequenceNode& nodes = assembly.nodes();
-    for (int i=0; i<nodes.size(); i++)  { new_assembly.nodes.push_back(process_node(nodes.node(i), log_file)); }
+    for (int i=0; i<nodes.size(); i++)  { new_assembly.nodes.push_back(nodes.node(i).label()); }
     odb_SequenceElement elements = assembly.elements();
-    for (int i=0; i<elements.size(); i++)  { new_assembly.elements.push_back(process_element(elements.element(i), log_file)); }
+    for (int i=0; i<elements.size(); i++)  { new_assembly.elements.push_back(elements.element(i).label()); }
 
     log_file.logDebug("\tnodeSets:");
     odb_SetRepositoryIT node_iter(assembly.nodeSets());
@@ -747,8 +755,9 @@ void OdbExtractObject::write_parts(H5::H5File &h5_file, const string &group_name
         string part_group_name = group_name + "/" + part.name;
         H5::Group part_group = h5_file.createGroup(part_group_name.c_str());
         write_string_dataset(part_group, "embeddedSpace", part.embeddedSpace);
-        write_nodes(h5_file, part_group_name, part.nodes);
-        write_elements(h5_file, part_group_name, part.elements);
+//TODO: Adjust all write_nodes and write_elements function calls to instead create references to the nodes and elements in various instances
+//        write_nodes(h5_file, part_group_name, part.nodes);
+//        write_elements(h5_file, part_group_name, part.elements);
         write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets);
         write_sets(h5_file, part_group_name + "/elementSets", part.elementSets);
         write_sets(h5_file, part_group_name + "/surfaces", part.surfaces);
@@ -759,13 +768,14 @@ void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_n
     string root_assembly_group_name = "/odb/rootAssembly " + this->root_assembly.name;
     this->root_assembly_group = h5_file.createGroup(root_assembly_group_name.c_str());
     write_string_dataset(this->root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
-    write_nodes(h5_file, root_assembly_group_name, this->root_assembly.nodes);
-    write_elements(h5_file, root_assembly_group_name, this->root_assembly.elements);
-    /*
+//TODO: Adjust all write_nodes and write_elements function calls to instead create references to the nodes and elements in various instances
+//    write_nodes(h5_file, root_assembly_group_name, this->root_assembly.nodes);
+//    write_elements(h5_file, root_assembly_group_name, this->root_assembly.elements);
     // TODO: Figure out way to make short cuts from instance sets to these sets or vice versa
     write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets);
     write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets);
     write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
+    /*
     */
     this->root_assembly_group = h5_file.createGroup((root_assembly_group_name + "/instances").c_str());
     write_instances(h5_file, root_assembly_group_name + "/instances");
@@ -964,19 +974,20 @@ void OdbExtractObject::write_set(H5::H5File &h5_file, const string &group_name, 
         H5::Group set_group = h5_file.createGroup(set_group_name.c_str());
         write_attribute(set_group, "type", set.type);
         write_string_vector_dataset(set_group, "instanceNames", set.instanceNames);
+//TODO: Adjust all write_nodes and write_elements function calls to instead create references to the nodes and elements in various instances
         if (set.type == "Node Set") {
-            write_nodes(h5_file, set_group_name, set.nodes);
+//            write_nodes(h5_file, set_group_name, set.nodes);
         } else if (set.type == "Element Set") {
-            write_elements(h5_file, set_group_name, set.elements);
+//            write_elements(h5_file, set_group_name, set.elements);
         } else if (set.type == "Surface Set") {
             if(!set.elements.empty() && !set.faces.empty())
             {
-                write_elements(h5_file, set_group_name, set.elements);
+//                write_elements(h5_file, set_group_name, set.elements);
                 write_string_vector_dataset(set_group, "faces", set.faces);
             } else if(!set.elements.empty()) {
-                write_elements(h5_file, set_group_name, set.elements);
+//                write_elements(h5_file, set_group_name, set.elements);
             } else {
-                write_nodes(h5_file, set_group_name, set.nodes);
+//                write_nodes(h5_file, set_group_name, set.nodes);
             }
         }
     }

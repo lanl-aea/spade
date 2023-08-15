@@ -94,8 +94,8 @@ struct set_type {
     string type;  // Enum [NODE_SET, ELEMENT_SET, SURFACE_SET]
     int size;
     vector<string> instanceNames;
-    vector<node_type> nodes;
-    vector<element_type> elements;
+    vector<int> nodes;
+    vector<int> elements;
     vector<string> faces;
 };
 
@@ -214,8 +214,8 @@ struct constraint_type {
 struct part_type {
     string name;
     string embeddedSpace;
-    vector<node_type> nodes;
-    vector<element_type> elements;
+    vector<int> nodes;
+    vector<int> elements;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -234,8 +234,8 @@ struct instance_type {
 struct assembly_type {
     string name;
     string embeddedSpace;
-    vector<node_type> nodes;
-    vector<element_type> elements;
+    vector<int> nodes;
+    vector<int> elements;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -693,6 +693,10 @@ class OdbExtractObject {
         vector<contact_explicit_type> explicit_interactions;
         constraint_type constraints;
         assembly_type root_assembly;
+        map<int, node_type> instance_nodes;
+        map<int, string> node_instances;
+        map<int, element_type> instance_elements;
+        map<int, string> element_instances;
         /*
         odb_Assembly& rootAssembly;
         odb_StepRepository& steps;
