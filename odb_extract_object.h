@@ -94,8 +94,8 @@ struct set_type {
     string type;  // Enum [NODE_SET, ELEMENT_SET, SURFACE_SET]
     int size;
     vector<string> instanceNames;
-    vector<int> nodes;
-    vector<int> elements;
+    vector<node_type*> nodes;
+    vector<element_type*> elements;
     vector<string> faces;
 };
 
@@ -214,8 +214,8 @@ struct constraint_type {
 struct part_type {
     string name;
     string embeddedSpace;
-    vector<int> nodes;
-    vector<int> elements;
+    vector<node_type*> nodes;
+    vector<element_type*> elements;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -224,8 +224,8 @@ struct part_type {
 struct instance_type {
     string name;
     string embeddedSpace;
-    vector<node_type> nodes;
-    vector<element_type> elements;
+    vector<node_type*> nodes;
+    vector<element_type*> elements;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -234,8 +234,8 @@ struct instance_type {
 struct assembly_type {
     string name;
     string embeddedSpace;
-    vector<int> nodes;
-    vector<int> elements;
+    vector<node_type*> nodes;
+    vector<element_type*> elements;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -285,22 +285,22 @@ class OdbExtractObject {
         tangential_behavior_type process_interaction_property (const odb_InteractionProperty &interaction_property, Logging &log_file);
         //! Process odb_Node object from the odb file
         /*!
-          Process odb_Node object and return the values in an node_type
+          Process odb_Node object, potentially save node data in data map, return pointer to location in map
           \param node An odb_Node object in the odb
           \param log_file Logging object for writing log messages
-          \return node_type with data stored from the odb
+          \return node_type pointer to map that stores node data
           \sa process_odb()
         */
-        node_type process_node (const odb_Node &node, Logging &log_file);
+        node_type* process_node (const odb_Node &node, Logging &log_file);
         //! Process odb_Element object from the odb file
         /*!
-          Process odb_Element property object and return the values in an element_type
+          Process odb_Element object, potentially save element data in data map, return pointer to location in map
           \param element An odb_Element object in the odb
           \param log_file Logging object for writing log messages
-          \return element_type with data stored from the odb
+          \return element_type pointer to map that stores element data
           \sa process_odb()
         */
-        element_type process_element (const odb_Element &element, Logging &log_file);
+        element_type* process_element (const odb_Element &element, Logging &log_file);
         //! Process odb set object from the odb file
         /*!
           Process odb set object and return the values in an set_type
@@ -495,7 +495,7 @@ class OdbExtractObject {
           \param group_name Name of the group where data is to be written
           \param elements Vector of element data to be written
         */
-        void write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type> &elements);
+        void write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type*> &elements);
         //! Write node data to an HDF5 file
         /*!
           Write data from node type into an HDF5 file
@@ -508,11 +508,10 @@ class OdbExtractObject {
         /*!
           Write vector of node data into an HDF5 file
           \param h5_file Open h5_file object for writing
-          \param group Name of HDF5 group in which to write the new dataset
           \param group_name Name of the group where data is to be written
           \param nodes Vector of node data to be written
         */
-        void write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type> &nodes);
+        void write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type*> &nodes);
         //! Write sets data to an HDF5 file
         /*!
           Write vector of set data into an HDF5 file
@@ -694,10 +693,10 @@ class OdbExtractObject {
         vector<contact_explicit_type> explicit_interactions;
         constraint_type constraints;
         assembly_type root_assembly;
-        map<int, node_type> instance_nodes;
-        map<int, hdset_reg_ref_t> node_references;
-        map<int, element_type> instance_elements;
-        map<int, hdset_reg_ref_t> element_references;
+        map<int, node_type> nodes;
+        map<int, hdset_reg_ref_t*> node_references;
+        map<int, element_type> elements;
+        map<int, hdset_reg_ref_t*> element_references;
         /*
         odb_Assembly& rootAssembly;
         odb_StepRepository& steps;

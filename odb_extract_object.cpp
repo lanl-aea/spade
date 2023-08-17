@@ -265,33 +265,45 @@ tangential_behavior_type OdbExtractObject::process_interaction_property (const o
     return interaction;
 }
 
-node_type OdbExtractObject::process_node (const odb_Node &node, Logging &log_file) {
-    node_type new_node;
-    new_node.label = node.label();
-    const float * const coords = node.coordinates();
-    new_node.coordinates[0] = coords[0];
-    new_node.coordinates[1] = coords[1];
-    new_node.coordinates[2] = coords[2];
-//    log_file.logDebug("\t\tnode " + to_string(new_node.label) + ": " + to_string(coords[0]) + " " + to_string(coords[1]) + " " + to_string(coords[2]));
-    return new_node;
+node_type* OdbExtractObject::process_node (const odb_Node &node, Logging &log_file) {
+    try {  // If the node has been stored in nodes, just return the address to it
+        return &this->nodes.at(node.label());  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+    } catch (const std::out_of_range& oor) {
+//    if (this->nodes.find(node.label()) == this->nodes.end()) {
+        node_type new_node;
+        new_node.label = node.label();
+        const float * const coords = node.coordinates();
+        new_node.coordinates[0] = coords[0];
+        new_node.coordinates[1] = coords[1];
+        new_node.coordinates[2] = coords[2];
+        log_file.logDebug("\t\tnode " + to_string(new_node.label) + ": " + to_string(coords[0]) + " " + to_string(coords[1]) + " " + to_string(coords[2]));
+        this->nodes[node.label()] = new_node;
+        return &this->nodes[node.label()];
+    }
 }
 
-element_type OdbExtractObject::process_element (const odb_Element &element, Logging &log_file) {
-    element_type new_element;
-    new_element.label = element.label();
-    new_element.type = element.type().CStr();
-    int element_connectivity_size;
-    const int* const connectivity = element.connectivity(element_connectivity_size); 
-    for (int i=0; i < element_connectivity_size; i++) {
-        new_element.connectivity.push_back(connectivity[i]);
+element_type* OdbExtractObject::process_element (const odb_Element &element, Logging &log_file) {
+    try {
+        return &this->elements.at(element.label());  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+    } catch (const std::out_of_range& oor) {
+//    if (this->elements.find(element.label()) == this->elements.end()) {
+        element_type new_element;
+        new_element.label = element.label();
+        new_element.type = element.type().CStr();
+        int element_connectivity_size;
+        const int* const connectivity = element.connectivity(element_connectivity_size); 
+        for (int i=0; i < element_connectivity_size; i++) {
+            new_element.connectivity.push_back(connectivity[i]);
+        }
+        odb_SequenceString instance_names = element.instanceNames();
+        for (int i=0; i < instance_names.size(); i++) {
+            new_element.instanceNames.push_back(instance_names[i].CStr());
+        }
+        log_file.logDebug("\t\telement " + to_string(new_element.label) + ": connectivity size: " + to_string(new_element.connectivity.size()) + " instances size:" + to_string(new_element.instanceNames.size()));
+        new_element.sectionCategory = process_section_category(element.sectionCategory(), log_file);
+        this->elements[element.label()] = new_element;
+        return &this->elements[element.label()];
     }
-    odb_SequenceString instance_names = element.instanceNames();
-    for (int i=0; i < instance_names.size(); i++) {
-        new_element.instanceNames.push_back(instance_names[i].CStr());
-    }
-//    log_file.logDebug("\t\telement " + to_string(new_element.label) + ": connectivity size: " + to_string(new_element.connectivity.size()) + " instances size:" + to_string(new_element.instanceNames.size()));
-    new_element.sectionCategory = process_section_category(element.sectionCategory(), log_file);
-    return new_element;
 }
 
 set_type OdbExtractObject::process_set (const odb_Set &set, Logging &log_file) {
@@ -326,10 +338,10 @@ set_type OdbExtractObject::process_set (const odb_Set &set, Logging &log_file) {
         new_set.instanceNames.push_back(name.CStr());
         if (new_set.type == "Node Set") {
             const odb_SequenceNode& set_nodes = set.nodes(name);
-            for (int n=0; n < set_nodes.size(); n++) { new_set.nodes.push_back(set_nodes.node(n).label()); }	    
+            for (int n=0; n < set_nodes.size(); n++) { new_set.nodes.push_back(process_node(set_nodes.node(n), log_file)); }
         } else if (new_set.type == "Element Set") {
             const odb_SequenceElement& set_elements = set.elements(name);
-            for (int n=0; n < set_elements.size(); n++) { new_set.elements.push_back(set_elements.element(n).label()); }	    
+            for (int n=0; n < set_elements.size(); n++) { new_set.elements.push_back(process_element(set_elements.element(n), log_file)); }
         } else if (new_set.type == "Surface Set") {
             const odb_SequenceElement& set_elements = set.elements(name);
             const odb_SequenceElementFace& set_faces = set.faces(name);
@@ -338,16 +350,16 @@ set_type OdbExtractObject::process_set (const odb_Set &set, Logging &log_file) {
             if(set_elements.size() && set_faces.size())
             {
                 for (int n=0; n<set_elements.size(); n++) {
-                    new_set.elements.push_back(set_elements.element(n).label());
+                    new_set.elements.push_back(process_element(set_elements.element(n), log_file));
                     new_set.faces.push_back(face_enum_strings[set_faces.constGet(n)]);
                 }
             } else if(set_elements.size()) {
                 for (int n=0; n < set_elements.size(); n++) {
-                    new_set.elements.push_back(set_elements.element(n).label());
+                    new_set.elements.push_back(process_element(set_elements.element(n), log_file));
                 }
             } else {
                 for (int n=0; n < set_nodes.size(); n++)  {
-                    new_set.nodes.push_back(set_nodes.node(n).label());
+                    new_set.nodes.push_back(process_node(set_nodes.node(n), log_file));
                 }
             }
 	    
@@ -552,9 +564,9 @@ part_type OdbExtractObject::process_part (const odb_Part &part, odb_Odb &odb, Lo
     new_part.embeddedSpace = this->dimension_enum_strings[part.embeddedSpace()];
 
     const odb_SequenceNode& nodes = part.nodes();
-    for (int i=0; i<nodes.size(); i++)  { new_part.nodes.push_back(nodes.node(i).label()); }
+    for (int i=0; i<nodes.size(); i++)  { new_part.nodes.push_back(process_node(nodes.node(i), log_file)); }
     odb_SequenceElement elements = part.elements();
-    for (int i=0; i<elements.size(); i++)  { new_part.elements.push_back(elements.element(i).label()); }
+    for (int i=0; i<elements.size(); i++)  { new_part.elements.push_back(process_element(elements.element(i), log_file)); }
 
     odb_SetRepositoryIT node_iter(part.nodeSets());
     for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
@@ -582,19 +594,9 @@ instance_type OdbExtractObject::process_instance (const odb_Instance &instance, 
     log_file.logDebug("\telements size: " + to_string(instance.elements().size()));
 
     const odb_SequenceNode& nodes = instance.nodes();
-    for (int i=0; i<nodes.size(); i++)  { 
-        int node_number = nodes.node(i).label();
-        node_type instance_node = process_node(nodes.node(i), log_file);
-        new_instance.nodes.push_back(instance_node); 
-        this->instance_nodes[node_number] = new_instance.nodes[new_instance.nodes.size() - 1];
-    }
+    for (int i=0; i<nodes.size(); i++)  { new_instance.nodes.push_back(process_node(nodes.node(i), log_file)); }
     odb_SequenceElement elements = instance.elements();
-    for (int i=0; i<elements.size(); i++)  { 
-        int element_number = elements.element(i).label();
-        element_type instance_element = process_element(elements.element(i), log_file);
-        new_instance.elements.push_back(instance_element);
-        this->instance_elements[element_number] = new_instance.elements[new_instance.elements.size() - 1];
-    }
+    for (int i=0; i<elements.size(); i++)  { new_instance.elements.push_back(process_element(elements.element(i), log_file)); }
 
     odb_SetRepositoryIT node_iter(instance.nodeSets());
     for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
@@ -625,9 +627,9 @@ assembly_type OdbExtractObject::process_assembly (const odb_Assembly &assembly, 
     log_file.logDebug("\telements size: " + to_string(assembly.elements().size()));
 
     const odb_SequenceNode& nodes = assembly.nodes();
-    for (int i=0; i<nodes.size(); i++)  { new_assembly.nodes.push_back(nodes.node(i).label()); }
+    for (int i=0; i<nodes.size(); i++)  { new_assembly.nodes.push_back(process_node(nodes.node(i), log_file)); }
     odb_SequenceElement elements = assembly.elements();
-    for (int i=0; i<elements.size(); i++)  { new_assembly.elements.push_back(elements.element(i).label()); }
+    for (int i=0; i<elements.size(); i++)  { new_assembly.elements.push_back(process_element(elements.element(i), log_file)); }
 
     log_file.logDebug("\tnodeSets:");
     odb_SetRepositoryIT node_iter(assembly.nodeSets());
@@ -733,12 +735,13 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     log_file.logVerbose("Writing interactions data.");
     H5::Group interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
     write_interactions(h5_file, "odb/interactions");
-    this->parts_group = h5_file.createGroup(string("/odb/parts").c_str());
-    log_file.logVerbose("Writing parts data.");
-    write_parts(h5_file, "odb/parts");
     log_file.logVerbose("Writing assembly data.");
     write_assembly(h5_file, "odb/rootAssembly");
     this->steps_group = h5_file.createGroup(string("/odb/steps").c_str());
+
+    this->parts_group = h5_file.createGroup(string("/odb/parts").c_str());
+    log_file.logVerbose("Writing parts data.");
+    write_parts(h5_file, "odb/parts");
 
     // TODO: potentially add amplitudes group
     // TODO: potentially add filters group
@@ -765,6 +768,7 @@ void OdbExtractObject::write_parts(H5::H5File &h5_file, const string &group_name
 void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_name) {
     string root_assembly_group_name = "/odb/rootAssembly " + this->root_assembly.name;
     this->root_assembly_group = h5_file.createGroup(root_assembly_group_name.c_str());
+    write_instances(h5_file, root_assembly_group_name + "/instances");
     write_string_dataset(this->root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
 //TODO: Adjust all write_nodes and write_elements function calls to instead create references to the nodes and elements in various instances
 //    write_nodes(h5_file, root_assembly_group_name, this->root_assembly.nodes);
@@ -773,10 +777,7 @@ void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_n
     write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets);
     write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets);
     write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
-    /*
-    */
     this->root_assembly_group = h5_file.createGroup((root_assembly_group_name + "/instances").c_str());
-    write_instances(h5_file, root_assembly_group_name + "/instances");
 }
 
 void OdbExtractObject::write_instances(H5::H5File &h5_file, const string &group_name) {
@@ -935,43 +936,59 @@ void OdbExtractObject::write_interactions(H5::H5File &h5_file, const string &gro
 
 void OdbExtractObject::write_element(H5::H5File &h5_file, const string &group_name, const element_type &element) {
     H5::Group element_group = h5_file.createGroup((group_name + "/" + to_string(element.label)).c_str());
-    write_string_dataset(element_group, "type", element.type);
-    write_integer_vector_dataset(element_group, "connectivity", element.connectivity);
-    write_section_category(h5_file, element_group, group_name + "/" + to_string(element.label) + "/sectionCategory", element.sectionCategory);
-    write_string_vector_dataset(element_group, "instanceNames", element.instanceNames);
-
     hdset_reg_ref_t *element_reference;
-    element_group.reference(element_reference, (group_name + "/" + to_string(element.label)).c_str(), H5R_DATASET_REGION);
-    this->element_references[element.label] = *element_reference;
+    try {
+        element_reference = this->element_references.at(element.label);
+
+        element_group.reference(element_reference, (group_name + "/" + to_string(element.label)).c_str(), H5R_OBJECT);
+    } catch (const std::out_of_range& oor) {
+        write_string_dataset(element_group, "type", element.type);
+        write_integer_vector_dataset(element_group, "connectivity", element.connectivity);
+        write_section_category(h5_file, element_group, group_name + "/" + to_string(element.label) + "/sectionCategory", element.sectionCategory);
+        write_string_vector_dataset(element_group, "instanceNames", element.instanceNames);
+
+        element_group.reference(element_reference, (group_name + "/" + to_string(element.label)).c_str(), H5R_OBJECT);
+        this->element_references[element.label] = element_reference;  // Store reference for later
+    }
 
 }
 
-void OdbExtractObject::write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type> &elements) {
+void OdbExtractObject::write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type*> &elements) {
     if (!elements.empty()) {
         H5::Group elements_group = h5_file.createGroup((group_name + "/elements").c_str());
-        for (auto element : elements) { write_element(h5_file, group_name + "/elements", element); }
+        for (auto element : elements) { write_element(h5_file, group_name + "/elements", *element); }
     }
 }
 
 void OdbExtractObject::write_node(H5::H5File &h5_file, H5::Group &group, const string &group_name, const node_type &node) {
-    hsize_t dimensions[] = {3};
-    H5::DataSpace dataspace(1, dimensions);
-    H5::DataSet dataset = group.createDataSet(group_name + "/" + to_string(node.label), H5::PredType::NATIVE_FLOAT, dataspace);
-    dataset.write(node.coordinates, H5::PredType::NATIVE_FLOAT);
-
     hdset_reg_ref_t *node_reference;
-    dataset.reference(node_reference, (group_name + "/" + to_string(node.label)).c_str(), H5R_DATASET_REGION);
+    try {
+        node_reference = this->node_references.at(node.label);
+        // If reference is found, then write a reference rather than all the data again
+        hsize_t dimensions[] = {1};
+        H5::DataSpace dataspace(1, dimensions);
+//        H5::DataSet dataset = group.createDataSet(group_name + "/" + to_string(node.label), H5::PredType::NATIVE_FLOAT, dataspace);
+        H5::DataSet dataset = group.createDataSet(group_name + "/" + to_string(node.label), H5::PredType::STD_REF_OBJ, dataspace);
+        dataset.write(&node_reference, PredType::STD_REF_OBJ);
+        dataset.close();
+        dataspace.close();
+    } catch (const std::out_of_range& oor) {
+        hsize_t dimensions[] = {3};
+        H5::DataSpace dataspace(1, dimensions);
+        H5::DataSet dataset = group.createDataSet(group_name + "/" + to_string(node.label), H5::PredType::NATIVE_FLOAT, dataspace);
+        dataset.write(node.coordinates, H5::PredType::NATIVE_FLOAT);
+        dataset.reference(node_reference, (group_name + "/" + to_string(node.label)).c_str(), H5R_DATASET_REGION);
 //    , H5R_OJBECT);
-    this->node_references[node.label] = *node_reference;
-
-    dataset.close();
-    dataspace.close();
+        this->node_references[node.label] = node_reference;  // Store reference for later
+        dataset.close();
+        dataspace.close();
+    }
 }
 
-void OdbExtractObject::write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type> &nodes) {
+void OdbExtractObject::write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type*> &nodes) {
     if (!nodes.empty()) {
         H5::Group nodes_group = h5_file.createGroup((group_name + "/nodes").c_str());
-        for (auto node : nodes) { write_node(h5_file, nodes_group, group_name + "/nodes", node); }
+        for (auto node : nodes) { write_node(h5_file, nodes_group, group_name + "/nodes", *node); }
     }
 }
 
@@ -991,6 +1008,7 @@ void OdbExtractObject::write_set(H5::H5File &h5_file, const string &group_name, 
 //TODO: Adjust all write_nodes and write_elements function calls to instead create references to the nodes and elements in various instances
         if (set.type == "Node Set") {
 //            write_nodes(h5_file, set_group_name, set.nodes);
+            write_nodes(h5_file, set_group_name, set.nodes);
         } else if (set.type == "Element Set") {
 //            write_elements(h5_file, set_group_name, set.elements);
         } else if (set.type == "Surface Set") {
