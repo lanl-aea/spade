@@ -756,9 +756,8 @@ void OdbExtractObject::write_parts(H5::H5File &h5_file, const string &group_name
         string part_group_name = group_name + "/" + part.name;
         H5::Group part_group = h5_file.createGroup(part_group_name.c_str());
         write_string_dataset(part_group, "embeddedSpace", part.embeddedSpace);
-//TODO: Adjust all write_nodes and write_elements function calls to instead create references to the nodes and elements in various instances
-//        write_nodes(h5_file, part_group_name, part.nodes);
-//        write_elements(h5_file, part_group_name, part.elements);
+        write_nodes(h5_file, part_group_name, part.nodes);
+        write_elements(h5_file, part_group_name, part.elements);
         write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets);
         write_sets(h5_file, part_group_name + "/elementSets", part.elementSets);
         write_sets(h5_file, part_group_name + "/surfaces", part.surfaces);
@@ -768,12 +767,10 @@ void OdbExtractObject::write_parts(H5::H5File &h5_file, const string &group_name
 void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_name) {
     string root_assembly_group_name = "/odb/rootAssembly " + this->root_assembly.name;
     this->root_assembly_group = h5_file.createGroup(root_assembly_group_name.c_str());
-    write_instances(h5_file, root_assembly_group_name + "/instances");
+//    write_instances(h5_file, root_assembly_group_name + "/instances");
     write_string_dataset(this->root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
-//TODO: Adjust all write_nodes and write_elements function calls to instead create references to the nodes and elements in various instances
-//    write_nodes(h5_file, root_assembly_group_name, this->root_assembly.nodes);
-//    write_elements(h5_file, root_assembly_group_name, this->root_assembly.elements);
-    // TODO: Figure out way to make short cuts from instance sets to these sets or vice versa
+    write_nodes(h5_file, root_assembly_group_name, this->root_assembly.nodes);
+    write_elements(h5_file, root_assembly_group_name, this->root_assembly.elements);
     write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets);
     write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets);
     write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
@@ -935,20 +932,19 @@ void OdbExtractObject::write_interactions(H5::H5File &h5_file, const string &gro
 }
 
 void OdbExtractObject::write_element(H5::H5File &h5_file, const string &group_name, const element_type &element) {
-    H5::Group element_group = h5_file.createGroup((group_name + "/" + to_string(element.label)).c_str());
-    hdset_reg_ref_t *element_reference;
+    string element_link;
+    string newGroupName = group_name + "/" + to_string(element.label);
     try {
-        element_reference = this->element_references.at(element.label);
-
-        element_group.reference(element_reference, (group_name + "/" + to_string(element.label)).c_str(), H5R_OBJECT);
+        element_link = this->element_links.at(element.label);
+        h5_file.link(H5L_TYPE_SOFT, element_link, newGroupName);
     } catch (const std::out_of_range& oor) {
+    H5::Group element_group = h5_file.createGroup((group_name + "/" + to_string(element.label)).c_str());
         write_string_dataset(element_group, "type", element.type);
         write_integer_vector_dataset(element_group, "connectivity", element.connectivity);
         write_section_category(h5_file, element_group, group_name + "/" + to_string(element.label) + "/sectionCategory", element.sectionCategory);
         write_string_vector_dataset(element_group, "instanceNames", element.instanceNames);
 
-        element_group.reference(element_reference, (group_name + "/" + to_string(element.label)).c_str(), H5R_OBJECT);
-        this->element_references[element.label] = element_reference;  // Store reference for later
+        this->element_links[element.label] = newGroupName;  // Store link for later
     }
 
 }
@@ -961,25 +957,20 @@ void OdbExtractObject::write_elements(H5::H5File &h5_file, const string &group_n
 }
 
 void OdbExtractObject::write_node(H5::H5File &h5_file, H5::Group &group, const string &group_name, const node_type &node) {
-    hdset_reg_ref_t *node_reference;
+    string node_link;
+    string newGroupName = group_name + "/" + to_string(node.label);
     try {
-        node_reference = this->node_references.at(node.label);
-        // If reference is found, then write a reference rather than all the data again
+        node_link = this->node_links.at(node.label);
+        // If link is found, then write a link rather than all the data again
         hsize_t dimensions[] = {1};
         H5::DataSpace dataspace(1, dimensions);
-//        H5::DataSet dataset = group.createDataSet(group_name + "/" + to_string(node.label), H5::PredType::NATIVE_FLOAT, dataspace);
-        H5::DataSet dataset = group.createDataSet(group_name + "/" + to_string(node.label), H5::PredType::STD_REF_OBJ, dataspace);
-        dataset.write(&node_reference, PredType::STD_REF_OBJ);
-        dataset.close();
-        dataspace.close();
-    } catch (const std::out_of_range& oor) {
+        h5_file.link(H5L_TYPE_SOFT, node_link, newGroupName);
+    } catch (const std::out_of_range& oor) {  // If node.label is not found in the node_links map
         hsize_t dimensions[] = {3};
         H5::DataSpace dataspace(1, dimensions);
-        H5::DataSet dataset = group.createDataSet(group_name + "/" + to_string(node.label), H5::PredType::NATIVE_FLOAT, dataspace);
+        H5::DataSet dataset = group.createDataSet(newGroupName, H5::PredType::NATIVE_FLOAT, dataspace);
         dataset.write(node.coordinates, H5::PredType::NATIVE_FLOAT);
-        dataset.reference(node_reference, (group_name + "/" + to_string(node.label)).c_str(), H5R_DATASET_REGION);
-//    , H5R_OJBECT);
-        this->node_references[node.label] = node_reference;  // Store reference for later
+        this->node_links[node.label] = newGroupName;  // Store link for later
         dataset.close();
         dataspace.close();
     }
@@ -1005,21 +996,19 @@ void OdbExtractObject::write_set(H5::H5File &h5_file, const string &group_name, 
         H5::Group set_group = h5_file.createGroup(set_group_name.c_str());
         write_attribute(set_group, "type", set.type);
         write_string_vector_dataset(set_group, "instanceNames", set.instanceNames);
-//TODO: Adjust all write_nodes and write_elements function calls to instead create references to the nodes and elements in various instances
         if (set.type == "Node Set") {
-//            write_nodes(h5_file, set_group_name, set.nodes);
             write_nodes(h5_file, set_group_name, set.nodes);
         } else if (set.type == "Element Set") {
-//            write_elements(h5_file, set_group_name, set.elements);
+            write_elements(h5_file, set_group_name, set.elements);
         } else if (set.type == "Surface Set") {
             if(!set.elements.empty() && !set.faces.empty())
             {
-//                write_elements(h5_file, set_group_name, set.elements);
+                write_elements(h5_file, set_group_name, set.elements);
                 write_string_vector_dataset(set_group, "faces", set.faces);
             } else if(!set.elements.empty()) {
-//                write_elements(h5_file, set_group_name, set.elements);
+                write_elements(h5_file, set_group_name, set.elements);
             } else {
-//                write_nodes(h5_file, set_group_name, set.nodes);
+                write_nodes(h5_file, set_group_name, set.nodes);
             }
         }
     }

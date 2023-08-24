@@ -694,9 +694,9 @@ class OdbExtractObject {
         constraint_type constraints;
         assembly_type root_assembly;
         map<int, node_type> nodes;
-        map<int, hdset_reg_ref_t*> node_references;
+        map<int, string> node_links;
         map<int, element_type> elements;
-        map<int, hdset_reg_ref_t*> element_references;
+        map<int, string> element_links;
         /*
         odb_Assembly& rootAssembly;
         odb_StepRepository& steps;
