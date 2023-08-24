@@ -286,7 +286,6 @@ element_type* OdbExtractObject::process_element (const odb_Element &element, Log
     try {
         return &this->elements.at(element.label());  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
     } catch (const std::out_of_range& oor) {
-//    if (this->elements.find(element.label()) == this->elements.end()) {
         element_type new_element;
         new_element.label = element.label();
         new_element.type = element.type().CStr();
@@ -767,19 +766,20 @@ void OdbExtractObject::write_parts(H5::H5File &h5_file, const string &group_name
 void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_name) {
     string root_assembly_group_name = "/odb/rootAssembly " + this->root_assembly.name;
     this->root_assembly_group = h5_file.createGroup(root_assembly_group_name.c_str());
-//    write_instances(h5_file, root_assembly_group_name + "/instances");
+    write_instances(h5_file, root_assembly_group_name);
     write_string_dataset(this->root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
     write_nodes(h5_file, root_assembly_group_name, this->root_assembly.nodes);
     write_elements(h5_file, root_assembly_group_name, this->root_assembly.elements);
     write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets);
     write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets);
     write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
-    this->root_assembly_group = h5_file.createGroup((root_assembly_group_name + "/instances").c_str());
 }
 
 void OdbExtractObject::write_instances(H5::H5File &h5_file, const string &group_name) {
+    string instances_group_name = group_name + "/instances";
+    this->root_assembly_group = h5_file.createGroup(instances_group_name.c_str());
     for (auto instance : this->root_assembly.instances) {
-        string instance_group_name = group_name + "/" + instance.name;
+        string instance_group_name = instances_group_name + "/" + instance.name;
         H5::Group instance_group = h5_file.createGroup(instance_group_name.c_str());
         write_string_dataset(instance_group, "embeddedSpace", instance.embeddedSpace);
         write_nodes(h5_file, instance_group_name, instance.nodes);
@@ -787,6 +787,7 @@ void OdbExtractObject::write_instances(H5::H5File &h5_file, const string &group_
         write_sets(h5_file, instance_group_name + "/nodeSets", instance.nodeSets);
         write_sets(h5_file, instance_group_name + "/elementSets", instance.elementSets);
         write_sets(h5_file, instance_group_name + "/surfaces", instance.surfaces);
+        this->instance_links[instance.name] = instance_group_name;
     }
 }
 

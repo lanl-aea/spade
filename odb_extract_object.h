@@ -697,6 +697,7 @@ class OdbExtractObject {
         map<int, string> node_links;
         map<int, element_type> elements;
         map<int, string> element_links;
+        map<string, string> instance_links;
         /*
         odb_Assembly& rootAssembly;
         odb_StepRepository& steps;
