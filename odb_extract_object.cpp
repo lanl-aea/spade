@@ -583,6 +583,13 @@ part_type OdbExtractObject::process_part (const odb_Part &part, odb_Odb &odb, Lo
     return new_part;
 }
 
+section_assignment_type OdbExtractObject::process_section_assignment (const odb_SectionAssignment &section_assignment, Logging &log_file) {
+    section_assignment_type new_section_assignment;
+    new_section_assignment.region = process_set(section_assignment.region(), log_file);
+    new_section_assignment.sectionName = section_assignment.sectionName().CStr();
+    return new_section_assignment;
+}
+
 instance_type OdbExtractObject::process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file) {
     instance_type new_instance;
     new_instance.name = instance.name().CStr();
@@ -612,6 +619,8 @@ instance_type OdbExtractObject::process_instance (const odb_Instance &instance, 
         new_instance.surfaces.push_back(process_set(surface_iter.currentValue(), log_file));
     }
     log_file.logDebug("\tsurfaces size: " + to_string(new_instance.surfaces.size()));
+    const odb_SequenceSectionAssignment& section_assignments = instance.sectionAssignments();
+    for (int i=0; i<section_assignments.size(); i++)  { new_instance.sectionAssignments.push_back(process_section_assignment(section_assignments[i], log_file)); }
     return new_instance;
 }
 
@@ -788,6 +797,13 @@ void OdbExtractObject::write_instances(H5::H5File &h5_file, const string &group_
         write_sets(h5_file, instance_group_name + "/elementSets", instance.elementSets);
         write_sets(h5_file, instance_group_name + "/surfaces", instance.surfaces);
         this->instance_links[instance.name] = instance_group_name;
+        H5::Group section_assignments_group = h5_file.createGroup((instance_group_name + "/sectionAssignments").c_str());
+        for (int i=0; i<instance.sectionAssignments.size(); i++) {
+            string section_assignment_group_name = instance_group_name + "/sectionAssignments/" + to_string(i);
+            H5::Group section_assignment_group = h5_file.createGroup(section_assignment_group_name.c_str());
+            write_set(h5_file, section_assignment_group_name, instance.sectionAssignments[i].region);
+            write_string_dataset(section_assignment_group, "sectionName", instance.sectionAssignments[i].sectionName);
+        }
     }
 }
 

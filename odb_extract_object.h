@@ -221,6 +221,11 @@ struct part_type {
     vector<set_type> surfaces;
 };
 
+struct section_assignment_type {
+  set_type region;
+  string sectionName;
+};
+
 struct instance_type {
     string name;
     string embeddedSpace;
@@ -229,6 +234,7 @@ struct instance_type {
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
+    vector<section_assignment_type> sectionAssignments;
 };
 
 struct assembly_type {
@@ -338,6 +344,15 @@ class OdbExtractObject {
           \sa process_odb()
         */
         part_type process_part (const odb_Part &part, odb_Odb &odb, Logging &log_file);
+        //! Process a section assignment from the odb file
+        /*!
+          Process a section assignment and store the results
+          \param section_assingment An odb section assignment object
+          \param log_file Logging object for writing log messages
+          \return section_assignment_type with data stored from the odb
+          \sa process_odb()
+        */
+        section_assignment_type process_section_assignment (const odb_SectionAssignment &section_assignment, Logging &log_file);
         //! Process an instance from the odb file
         /*!
           Process an instance and store the results
@@ -694,8 +709,8 @@ class OdbExtractObject {
         constraint_type constraints;
         assembly_type root_assembly;
         map<int, node_type> nodes;
-        map<int, string> node_links;
         map<int, element_type> elements;
+        map<int, string> node_links;
         map<int, string> element_links;
         map<string, string> instance_links;
         /*
