@@ -243,6 +243,15 @@ struct analytic_surface_segment_type {
     int max_column_size;
 };
 
+struct analytic_surface_type {
+    string name;
+    string type;
+    double filletRadius;
+    vector<analytic_surface_segment_type> segments;
+    vector<vector<float>> localCoordData;
+    int max_column_size;
+};
+
 struct instance_type {
     string name;
     string embeddedSpace;
@@ -408,6 +417,15 @@ class OdbExtractObject {
           \sa process_odb()
         */
         analytic_surface_segment_type process_segment (const odb_AnalyticSurfaceSegment &segment, Logging &log_file);
+        //! Process an analytic surface from the odb file
+        /*!
+          Process an analytic surface and store the results
+          \param segment An odb analytic surface object
+          \param log_file Logging object for writing log messages
+          \return analytic_surface_type with data stored from the odb
+          \sa process_odb()
+        */
+        analytic_surface_type process_analytic_surface (const odb_AnalyticSurface &analytic_surface, Logging &log_file);
         //! Process an instance from the odb file
         /*!
           Process an instance and store the results

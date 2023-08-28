@@ -638,7 +638,7 @@ analytic_surface_segment_type OdbExtractObject::process_segment (const odb_Analy
     int column_number = 0;
     for (int i=0; i<segment_data.size(); i++) {
         odb_SequenceFloat segment_data_dimension1 = segment_data[i];
-        if (segment_data_dimension1.size() > column_number) { column_number = segment_data_dimension1.size(); } // use the maximum for the number of columns
+        if (segment_data_dimension1.size() > column_number) { column_number = segment_data_dimension1.size(); }
         vector<float> dimension1;
         for (int j=0; j<segment_data_dimension1.size(); j++) {
             dimension1.push_back(segment_data_dimension1[j]);
@@ -647,6 +647,28 @@ analytic_surface_segment_type OdbExtractObject::process_segment (const odb_Analy
     }
     new_segment.max_column_size = column_number;
     return new_segment;
+}
+
+analytic_surface_type OdbExtractObject::process_analytic_surface (const odb_AnalyticSurface &analytic_surface, Logging &log_file) {
+    analytic_surface_type new_analytic_surface;
+    new_analytic_surface.name = analytic_surface.name().CStr();
+    new_analytic_surface.type = analytic_surface.type().CStr();
+    new_analytic_surface.filletRadius = analytic_surface.filletRadius();
+    const odb_SequenceAnalyticSurfaceSegment& segments = analytic_surface.segments();
+    for (int i=0; i<segments.size(); i++)  { new_analytic_surface.segments.push_back(process_segment(segments[i], log_file)); }
+    odb_SequenceSequenceFloat coord_data = analytic_surface.localCoordData();
+    int column_number = 0;
+    for (int i=0; i<coord_data.size(); i++) {
+        odb_SequenceFloat coord_data_dimension1 = coord_data[i];
+        if (coord_data_dimension1.size() > column_number) { column_number = coord_data_dimension1.size(); }
+        vector<float> dimension1;
+        for (int j=0; j<coord_data_dimension1.size(); j++) {
+            dimension1.push_back(coord_data_dimension1[j]);
+        }
+        new_analytic_surface.localCoordData.push_back(dimension1);
+    }
+    new_analytic_surface.max_column_size = column_number;
+    return new_analytic_surface;
 }
 
 instance_type OdbExtractObject::process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file) {
