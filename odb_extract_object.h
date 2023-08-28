@@ -248,6 +248,7 @@ struct instance_type {
     vector<set_type> surfaces;
     vector<section_assignment_type> sectionAssignments;
     vector<beam_orientation_type> beamOrientations;
+    vector<rebar_orientation_type> rebarOrientations;
 };
 
 struct assembly_type {
@@ -513,6 +514,14 @@ class OdbExtractObject {
           \param group_name Name of the group where data is to be written
         */
         void write_instances(H5::H5File &h5_file, const string &group_name);
+        //! Write Datum Csys data to an HDF5 file
+        /*!
+          Write Datum Csys data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param datum_csys Data to be written
+        */
+        void write_datum_csys(H5::H5File &h5_file, const string &group_nam, const datum_csys_type &datum_csys);
         //! Write constraints data to an HDF5 file
         /*!
           Write different types of constraint data into an HDF5 file

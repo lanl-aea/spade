@@ -665,6 +665,8 @@ instance_type OdbExtractObject::process_instance (const odb_Instance &instance, 
     for (int i=0; i<section_assignments.size(); i++)  { new_instance.sectionAssignments.push_back(process_section_assignment(section_assignments[i], log_file)); }
     const odb_SequenceBeamOrientation& beam_orientations = instance.beamOrientations();
     for (int i=0; i<beam_orientations.size(); i++)  { new_instance.beamOrientations.push_back(process_beam_orientation(beam_orientations[i], log_file)); }
+    const odb_SequenceRebarOrientation& rebar_orientations = instance.rebarOrientations();
+    for (int i=0; i<rebar_orientations.size(); i++)  { new_instance.rebarOrientations.push_back(process_rebar_orientation(rebar_orientations[i], log_file)); }
     return new_instance;
 }
 
@@ -856,7 +858,27 @@ void OdbExtractObject::write_instances(H5::H5File &h5_file, const string &group_
             write_string_dataset(beam_orientation_group, "method", instance.beamOrientations[i].method);
             write_float_vector_dataset(beam_orientation_group, "vector", instance.beamOrientations[i].beam_vector);
         }
+        H5::Group rebar_orientations_group = h5_file.createGroup((instance_group_name + "/rebarOrientations").c_str());
+        for (int i=0; i<instance.rebarOrientations.size(); i++) {
+            string rebar_orientation_group_name = instance_group_name + "/rebarOrientations/" + to_string(i);
+            H5::Group rebar_orientation_group = h5_file.createGroup(rebar_orientation_group_name.c_str());
+            write_string_dataset(rebar_orientation_group, "axis", instance.rebarOrientations[i].axis);
+            write_float_dataset(rebar_orientation_group, "angle", instance.rebarOrientations[i].angle);
+            write_set(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].region);
+            write_datum_csys(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].csys);
+        }
     }
+}
+
+void OdbExtractObject::write_datum_csys(H5::H5File &h5_file, const string &group_name, const datum_csys_type &datum_csys) {
+    string datum_group_name = group_name + "/csys";
+    H5::Group datum_group = h5_file.createGroup(datum_group_name.c_str());
+    write_string_dataset(datum_group, "name", datum_csys.name);
+    write_string_dataset(datum_group, "type", datum_csys.type);
+    write_float_array_dataset(datum_group, "xAxis", 3, datum_csys.x_axis);
+    write_float_array_dataset(datum_group, "yAxis", 3, datum_csys.y_axis);
+    write_float_array_dataset(datum_group, "zAxis", 3, datum_csys.z_axis);
+    write_float_array_dataset(datum_group, "origin", 3, datum_csys.origin);
 }
 
 void OdbExtractObject::write_constraints(H5::H5File &h5_file, const string &group_name) {
