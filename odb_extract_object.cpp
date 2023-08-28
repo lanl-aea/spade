@@ -314,15 +314,9 @@ set_type OdbExtractObject::process_set (const odb_Set &set, Logging &log_file) {
 
     new_set.name = set.name().CStr();
     switch(set.type()) {
-    case odb_Enum::NODE_SET:
-        new_set.type = "Node Set";
-        break;
-    case odb_Enum::ELEMENT_SET:
-        new_set.type = "Element Set";
-        break;
-    case odb_Enum::SURFACE_SET:
-        new_set.type = "Surface Set";
-        break;
+        case odb_Enum::NODE_SET: new_set.type = "Node Set"; break;
+        case odb_Enum::ELEMENT_SET: new_set.type = "Element Set"; break;
+        case odb_Enum::SURFACE_SET: new_set.type = "Surface Set"; break;
     }
     log_file.logDebug("\t\tset " + new_set.name + ": " + new_set.type);
 
@@ -603,6 +597,39 @@ beam_orientation_type OdbExtractObject::process_beam_orientation (const odb_Beam
         new_beam_orientation.beam_vector.push_back(beam_vector[i]);
     }
     return new_beam_orientation;
+}
+
+rebar_orientation_type OdbExtractObject::process_rebar_orientation (const odb_RebarOrientation &rebar_orientation, Logging &log_file) {
+    rebar_orientation_type new_rebar_orientation;
+    switch(rebar_orientation.axis()) {
+        case odb_Enum::AXIS_1: new_rebar_orientation.axis = "Axis 1"; break;
+        case odb_Enum::AXIS_2: new_rebar_orientation.axis = "Axis 2"; break;
+        case odb_Enum::AXIS_3: new_rebar_orientation.axis = "Axis 3"; break;
+    }
+    new_rebar_orientation.angle = rebar_orientation.angle();
+    new_rebar_orientation.region = process_set(rebar_orientation.region(), log_file);
+    new_rebar_orientation.csys = process_csys(rebar_orientation.csys(), log_file);
+
+    return new_rebar_orientation;
+}
+
+datum_csys_type OdbExtractObject::process_csys(const odb_DatumCsys &datum_csys, Logging &log_file) {
+    datum_csys_type new_datum_csys;
+    new_datum_csys.name = datum_csys.name().CStr();
+    switch(datum_csys.type()) {
+        case odb_Enum::CARTESIAN: new_datum_csys.type = "Cartesian"; break;
+        case odb_Enum::CYLINDRICAL: new_datum_csys.type = "Cylindrical"; break;
+        case odb_Enum::SPHERICAL: new_datum_csys.type = "Spherical"; break;
+    }
+    const float* x_axis = datum_csys.xAxis();
+    const float* y_axis = datum_csys.yAxis();
+    const float* z_axis = datum_csys.zAxis();
+    const float* origin = datum_csys.origin();
+    new_datum_csys.x_axis[0] = x_axis[0]; new_datum_csys.x_axis[1] = x_axis[1]; new_datum_csys.x_axis[2] = x_axis[2];
+    new_datum_csys.y_axis[0] = y_axis[0]; new_datum_csys.y_axis[1] = y_axis[1]; new_datum_csys.y_axis[2] = y_axis[2];
+    new_datum_csys.z_axis[0] = z_axis[0]; new_datum_csys.z_axis[1] = z_axis[1]; new_datum_csys.z_axis[2] = z_axis[2];
+    new_datum_csys.origin[0] = origin[0]; new_datum_csys.origin[1] = origin[1]; new_datum_csys.origin[2] = origin[2];
+    return new_datum_csys;
 }
 
 instance_type OdbExtractObject::process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file) {

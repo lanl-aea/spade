@@ -210,7 +210,6 @@ struct constraint_type {
     vector<shell_solid_coupling_type> shell_solid_couplings;
 };
 
-
 struct part_type {
     string name;
     string embeddedSpace;
@@ -230,6 +229,13 @@ struct beam_orientation_type {
   string method;
   set_type region;
   vector<float> beam_vector;  // vector is a reserved word, so had to name it something else
+};
+
+struct rebar_orientation_type {
+  string axis;
+  float angle;
+  set_type region;
+  datum_csys_type csys;
 };
 
 struct instance_type {
@@ -369,6 +375,24 @@ class OdbExtractObject {
           \sa process_odb()
         */
         beam_orientation_type process_beam_orientation (const odb_BeamOrientation &beam_orientation, Logging &log_file);
+        //! Process a rebar orientation from the odb file
+        /*!
+          Process a rebar orientation and store the results
+          \param rebar_orientation An odb rebar orientation object
+          \param log_file Logging object for writing log messages
+          \return rebar_orientation_type with data stored from the odb
+          \sa process_odb()
+        */
+        rebar_orientation_type process_rebar_orientation (const odb_RebarOrientation &rebar_orientation, Logging &log_file);
+        //! Process a datum csys from the odb file
+        /*!
+          Process a datum csys and store the results
+          \param datum_csys An odb datum csys object
+          \param log_file Logging object for writing log messages
+          \return datum_csys_type with data stored from the odb
+          \sa process_odb()
+        */
+        datum_csys_type process_csys (const odb_DatumCsys &datum_csys, Logging &log_file);
         //! Process an instance from the odb file
         /*!
           Process an instance and store the results
