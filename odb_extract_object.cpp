@@ -631,6 +631,23 @@ datum_csys_type OdbExtractObject::process_csys(const odb_DatumCsys &datum_csys, 
     new_datum_csys.origin[0] = origin[0]; new_datum_csys.origin[1] = origin[1]; new_datum_csys.origin[2] = origin[2];
     return new_datum_csys;
 }
+analytic_surface_segment_type OdbExtractObject::process_segment (const odb_AnalyticSurfaceSegment &segment, Logging &log_file) {
+    analytic_surface_segment_type new_segment;
+    new_segment.type = segment.type().CStr();
+    odb_SequenceSequenceFloat segment_data = segment.data();
+    int column_number = 0;
+    for (int i=0; i<segment_data.size(); i++) {
+        odb_SequenceFloat segment_data_dimension1 = segment_data[i];
+        if (segment_data_dimension1.size() > column_number) { column_number = segment_data_dimension1.size(); } // use the maximum for the number of columns
+        vector<float> dimension1;
+        for (int j=0; j<segment_data_dimension1.size(); j++) {
+            dimension1.push_back(segment_data_dimension1[j]);
+        }
+        new_segment.data.push_back(dimension1);
+    }
+    new_segment.max_column_size = column_number;
+    return new_segment;
+}
 
 instance_type OdbExtractObject::process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file) {
     instance_type new_instance;

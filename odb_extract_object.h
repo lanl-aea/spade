@@ -56,7 +56,6 @@ struct user_xy_data_type {
     int max_column_size;
 };
 
-
 struct tangential_behavior_type {
     string formulation;
     string directionality;
@@ -238,6 +237,12 @@ struct rebar_orientation_type {
   datum_csys_type csys;
 };
 
+struct analytic_surface_segment_type {
+    string type;
+    vector<vector<float>> data;
+    int max_column_size;
+};
+
 struct instance_type {
     string name;
     string embeddedSpace;
@@ -394,6 +399,15 @@ class OdbExtractObject {
           \sa process_odb()
         */
         datum_csys_type process_csys (const odb_DatumCsys &datum_csys, Logging &log_file);
+        //! Process an analytic surface segment from the odb file
+        /*!
+          Process an analytic surface segment and store the results
+          \param segment An odb analytic surface segment object
+          \param log_file Logging object for writing log messages
+          \return analytic_surface_segment_type with data stored from the odb
+          \sa process_odb()
+        */
+        analytic_surface_segment_type process_segment (const odb_AnalyticSurfaceSegment &segment, Logging &log_file);
         //! Process an instance from the odb file
         /*!
           Process an instance and store the results
