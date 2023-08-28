@@ -226,6 +226,12 @@ struct section_assignment_type {
   string sectionName;
 };
 
+struct beam_orientation_type {
+  string method;
+  set_type region;
+  vector<float> beam_vector;  // vector is a reserved word, so had to name it something else
+};
+
 struct instance_type {
     string name;
     string embeddedSpace;
@@ -235,6 +241,7 @@ struct instance_type {
     vector<set_type> elementSets;
     vector<set_type> surfaces;
     vector<section_assignment_type> sectionAssignments;
+    vector<beam_orientation_type> beamOrientations;
 };
 
 struct assembly_type {
@@ -353,6 +360,15 @@ class OdbExtractObject {
           \sa process_odb()
         */
         section_assignment_type process_section_assignment (const odb_SectionAssignment &section_assignment, Logging &log_file);
+        //! Process a beam orientation from the odb file
+        /*!
+          Process a beam orientation and store the results
+          \param beam_orientation An odb beam orientation object
+          \param log_file Logging object for writing log messages
+          \return beam_orientation_type with data stored from the odb
+          \sa process_odb()
+        */
+        beam_orientation_type process_beam_orientation (const odb_BeamOrientation &beam_orientation, Logging &log_file);
         //! Process an instance from the odb file
         /*!
           Process an instance and store the results

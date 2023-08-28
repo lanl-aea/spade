@@ -590,6 +590,21 @@ section_assignment_type OdbExtractObject::process_section_assignment (const odb_
     return new_section_assignment;
 }
 
+beam_orientation_type OdbExtractObject::process_beam_orientation (const odb_BeamOrientation &beam_orientation, Logging &log_file) {
+    beam_orientation_type new_beam_orientation;
+    switch(beam_orientation.method()) {
+        case odb_Enum::N1_COSINES: new_beam_orientation.method = "N1 Cosines"; break;
+        case odb_Enum::CSYS: new_beam_orientation.method = "Csys"; break;
+        case odb_Enum::VECT: new_beam_orientation.method = "Vector"; break;
+    }
+    new_beam_orientation.region = process_set(beam_orientation.region(), log_file);
+    odb_SequenceFloat beam_vector = beam_orientation.vector();
+    for (int i=0; i<beam_vector.size(); i++) {
+        new_beam_orientation.beam_vector.push_back(beam_vector[i]);
+    }
+    return new_beam_orientation;
+}
+
 instance_type OdbExtractObject::process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file) {
     instance_type new_instance;
     new_instance.name = instance.name().CStr();
@@ -621,6 +636,8 @@ instance_type OdbExtractObject::process_instance (const odb_Instance &instance, 
     log_file.logDebug("\tsurfaces size: " + to_string(new_instance.surfaces.size()));
     const odb_SequenceSectionAssignment& section_assignments = instance.sectionAssignments();
     for (int i=0; i<section_assignments.size(); i++)  { new_instance.sectionAssignments.push_back(process_section_assignment(section_assignments[i], log_file)); }
+    const odb_SequenceBeamOrientation& beam_orientations = instance.beamOrientations();
+    for (int i=0; i<beam_orientations.size(); i++)  { new_instance.beamOrientations.push_back(process_beam_orientation(beam_orientations[i], log_file)); }
     return new_instance;
 }
 
@@ -803,6 +820,14 @@ void OdbExtractObject::write_instances(H5::H5File &h5_file, const string &group_
             H5::Group section_assignment_group = h5_file.createGroup(section_assignment_group_name.c_str());
             write_set(h5_file, section_assignment_group_name, instance.sectionAssignments[i].region);
             write_string_dataset(section_assignment_group, "sectionName", instance.sectionAssignments[i].sectionName);
+        }
+        H5::Group beam_orientations_group = h5_file.createGroup((instance_group_name + "/beamOrientations").c_str());
+        for (int i=0; i<instance.beamOrientations.size(); i++) {
+            string beam_orientation_group_name = instance_group_name + "/beamOrientations/" + to_string(i);
+            H5::Group beam_orientation_group = h5_file.createGroup(beam_orientation_group_name.c_str());
+            write_set(h5_file, beam_orientation_group_name, instance.beamOrientations[i].region);
+            write_string_dataset(beam_orientation_group, "method", instance.beamOrientations[i].method);
+            write_float_vector_dataset(beam_orientation_group, "vector", instance.beamOrientations[i].beam_vector);
         }
     }
 }
