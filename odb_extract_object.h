@@ -252,6 +252,16 @@ struct analytic_surface_type {
     int max_column_size;
 };
 
+struct rigid_body_type {
+    string position;
+    string isothermal;  // Boolean
+    set_type referenceNode;
+    set_type elements;
+    set_type tieNodes;
+    set_type pinNodes;
+    analytic_surface_type analyticSurface;
+};
+
 struct instance_type {
     string name;
     string embeddedSpace;
@@ -427,6 +437,15 @@ class OdbExtractObject {
           \sa process_odb()
         */
         analytic_surface_type process_analytic_surface (const odb_AnalyticSurface &analytic_surface, Logging &log_file);
+        //! Process a rigid body from the odb file
+        /*!
+          Process a rigid body and store the results
+          \param segment An odb rigid body object
+          \param log_file Logging object for writing log messages
+          \return rigid_body_type with data stored from the odb
+          \sa process_odb()
+        */
+        rigid_body_type process_rigid_body (const odb_RigidBody &rigid_body, Logging &log_file);
         //! Process an instance from the odb file
         /*!
           Process an instance and store the results

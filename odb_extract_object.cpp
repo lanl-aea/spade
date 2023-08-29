@@ -671,6 +671,22 @@ analytic_surface_type OdbExtractObject::process_analytic_surface (const odb_Anal
     return new_analytic_surface;
 }
 
+rigid_body_type OdbExtractObject::process_rigid_body (const odb_RigidBody &rigid_body, Logging &log_file) {
+    rigid_body_type new_rigid_body;
+    new_rigid_body.position = rigid_body.position().CStr();
+    new_rigid_body.isothermal = (rigid_body.isothermal()) ? "true" : "false";
+    new_rigid_body.referenceNode = process_set(rigid_body.referenceNodeSet(), log_file);
+    new_rigid_body.elements = process_set(rigid_body.elements(), log_file);
+    new_rigid_body.tieNodes = process_set(rigid_body.tieNodes(), log_file);
+    new_rigid_body.pinNodes = process_set(rigid_body.pinNodes(), log_file);
+    try {
+        new_rigid_body.analyticSurface = process_analytic_surface(rigid_body.analyticSurface(), log_file);
+    } catch(odb_BaseException& e) {
+        log_file.logWarning(e.UserReport().CStr());
+    }
+    return new_rigid_body;
+}
+
 instance_type OdbExtractObject::process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file) {
     instance_type new_instance;
     new_instance.name = instance.name().CStr();
