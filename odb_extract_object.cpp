@@ -675,15 +675,16 @@ rigid_body_type OdbExtractObject::process_rigid_body (const odb_RigidBody &rigid
     rigid_body_type new_rigid_body;
     new_rigid_body.position = rigid_body.position().CStr();
     new_rigid_body.isothermal = (rigid_body.isothermal()) ? "true" : "false";
-    new_rigid_body.referenceNode = process_set(rigid_body.referenceNodeSet(), log_file);
-    new_rigid_body.elements = process_set(rigid_body.elements(), log_file);
-    new_rigid_body.tieNodes = process_set(rigid_body.tieNodes(), log_file);
-    new_rigid_body.pinNodes = process_set(rigid_body.pinNodes(), log_file);
-    try {
-        new_rigid_body.analyticSurface = process_analytic_surface(rigid_body.analyticSurface(), log_file);
-    } catch(odb_BaseException& e) {
-        log_file.logWarning(e.UserReport().CStr());
-    }
+    try { new_rigid_body.referenceNode = process_set(rigid_body.referenceNodeSet(), log_file);
+    } catch(odb_BaseException& e) { log_file.logWarning(e.UserReport().CStr()); }
+    try { new_rigid_body.elements = process_set(rigid_body.elements(), log_file);
+    } catch(odb_BaseException& e) { log_file.logWarning(e.UserReport().CStr()); }
+    try { new_rigid_body.tieNodes = process_set(rigid_body.tieNodes(), log_file);
+    } catch(odb_BaseException& e) { log_file.logWarning(e.UserReport().CStr()); }
+    try { new_rigid_body.pinNodes = process_set(rigid_body.pinNodes(), log_file);
+    } catch(odb_BaseException& e) { log_file.logWarning(e.UserReport().CStr()); }
+    try { new_rigid_body.analyticSurface = process_analytic_surface(rigid_body.analyticSurface(), log_file);
+    } catch(odb_BaseException& e) { log_file.logWarning(e.UserReport().CStr()); }
     return new_rigid_body;
 }
 
@@ -716,6 +717,8 @@ instance_type OdbExtractObject::process_instance (const odb_Instance &instance, 
         new_instance.surfaces.push_back(process_set(surface_iter.currentValue(), log_file));
     }
     log_file.logDebug("\tsurfaces size: " + to_string(new_instance.surfaces.size()));
+    const odb_SequenceRigidBody& rigid_bodies = instance.rigidBodies();
+    for (int i=0; i<rigid_bodies.size(); i++)  { new_instance.rigidBodies.push_back(process_rigid_body(rigid_bodies[i], log_file)); }
     const odb_SequenceSectionAssignment& section_assignments = instance.sectionAssignments();
     for (int i=0; i<section_assignments.size(); i++)  { new_instance.sectionAssignments.push_back(process_section_assignment(section_assignments[i], log_file)); }
     const odb_SequenceBeamOrientation& beam_orientations = instance.beamOrientations();

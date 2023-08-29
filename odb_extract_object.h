@@ -270,6 +270,7 @@ struct instance_type {
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
+    vector<rigid_body_type> rigidBodies;
     vector<section_assignment_type> sectionAssignments;
     vector<beam_orientation_type> beamOrientations;
     vector<rebar_orientation_type> rebarOrientations;
