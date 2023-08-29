@@ -913,6 +913,18 @@ void OdbExtractObject::write_instances(H5::H5File &h5_file, const string &group_
             write_set(h5_file, section_assignment_group_name, instance.sectionAssignments[i].region);
             write_string_dataset(section_assignment_group, "sectionName", instance.sectionAssignments[i].sectionName);
         }
+        H5::Group rigid_bodies_group = h5_file.createGroup((instance_group_name + "/rigidBodies").c_str());
+        for (int i=0; i<instance.rigidBodies.size(); i++) {
+            string rigid_body_group_name = instance_group_name + "/rigidBodies/" + to_string(i);
+            H5::Group rigid_body_group = h5_file.createGroup(rigid_body_group_name.c_str());
+            write_string_dataset(rigid_body_group, "position", instance.rigidBodies[i].position);
+            write_string_dataset(rigid_body_group, "isothermal", instance.rigidBodies[i].isothermal);
+            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].referenceNode);
+            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].elements);
+            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].tieNodes);
+            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].pinNodes);
+            write_analytic_surface(h5_file, rigid_body_group_name, instance.rigidBodies[i].analyticSurface);
+        }
         H5::Group beam_orientations_group = h5_file.createGroup((instance_group_name + "/beamOrientations").c_str());
         for (int i=0; i<instance.beamOrientations.size(); i++) {
             string beam_orientation_group_name = instance_group_name + "/beamOrientations/" + to_string(i);
