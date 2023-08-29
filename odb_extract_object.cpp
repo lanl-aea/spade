@@ -706,6 +706,11 @@ instance_type OdbExtractObject::process_instance (const odb_Instance &instance, 
     for (int i=0; i<beam_orientations.size(); i++)  { new_instance.beamOrientations.push_back(process_beam_orientation(beam_orientations[i], log_file)); }
     const odb_SequenceRebarOrientation& rebar_orientations = instance.rebarOrientations();
     for (int i=0; i<rebar_orientations.size(); i++)  { new_instance.rebarOrientations.push_back(process_rebar_orientation(rebar_orientations[i], log_file)); }
+    try {
+        new_instance.analyticSurface = process_analytic_surface(instance.analyticSurface(), log_file);
+    } catch(odb_BaseException& e) {
+        log_file.logWarning(e.UserReport().CStr());
+    }
     return new_instance;
 }
 
@@ -906,7 +911,24 @@ void OdbExtractObject::write_instances(H5::H5File &h5_file, const string &group_
             write_set(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].region);
             write_datum_csys(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].csys);
         }
+        write_analytic_surface(h5_file, instance_group_name, instance.analyticSurface);
     }
+}
+
+void OdbExtractObject::write_analytic_surface(H5::H5File &h5_file, const string &group_name, const analytic_surface_type &analytic_surface) {
+    string analytic_surface_group_name = group_name + "/analyticSurface";
+    H5::Group surface_group = h5_file.createGroup(analytic_surface_group_name.c_str());
+    write_string_dataset(surface_group, "name", analytic_surface.name);
+    write_string_dataset(surface_group, "type", analytic_surface.type);
+    write_double_dataset(surface_group, "filletRadius", analytic_surface.filletRadius);
+    H5::Group segments_group = h5_file.createGroup((analytic_surface_group_name + "/segments").c_str());
+    for (int i=0; i<analytic_surface.segments.size(); i++) {
+        string segment_group_name = analytic_surface_group_name + "/segments/" + to_string(i);
+        H5::Group segment_group = h5_file.createGroup(segment_group_name.c_str());
+        write_string_dataset(segment_group, "type", analytic_surface.segments[i].type);
+        write_float_2D_vector(segment_group, "data", analytic_surface.segments[i].max_column_size, analytic_surface.segments[i].data);
+    }
+    write_float_2D_vector(surface_group, "localCoordData", analytic_surface.max_column_size, analytic_surface.localCoordData);
 }
 
 void OdbExtractObject::write_datum_csys(H5::H5File &h5_file, const string &group_name, const datum_csys_type &datum_csys) {
@@ -1252,7 +1274,7 @@ void OdbExtractObject::write_float_2D_array(const H5::Group& group, const string
     dataspace.close();
 }
 
-void OdbExtractObject::write_float_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<float>> & float_data) {
+void OdbExtractObject::write_float_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<float>> & float_data) {
     if (!float_data.empty()) {
         float float_array[float_data.size()][max_column_size]; // Need to convert vector to array with contiguous memory for H5 to process
         for( int i = 0; i<float_data.size(); ++i) {

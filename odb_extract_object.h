@@ -263,6 +263,7 @@ struct instance_type {
     vector<section_assignment_type> sectionAssignments;
     vector<beam_orientation_type> beamOrientations;
     vector<rebar_orientation_type> rebarOrientations;
+    analytic_surface_type analyticSurface;
 };
 
 struct assembly_type {
@@ -546,6 +547,14 @@ class OdbExtractObject {
           \param group_name Name of the group where data is to be written
         */
         void write_instances(H5::H5File &h5_file, const string &group_name);
+        //! Write Analytic Surface data to an HDF5 file
+        /*!
+          Write Analytic Surface data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param analytic_surface Data to be written
+        */
+        void write_analytic_surface(H5::H5File &h5_file, const string &group_name, const analytic_surface_type &analytic_surface);
         //! Write Datum Csys data to an HDF5 file
         /*!
           Write Datum Csys data into an HDF5 file
@@ -553,7 +562,7 @@ class OdbExtractObject {
           \param group_name Name of the group where data is to be written
           \param datum_csys Data to be written
         */
-        void write_datum_csys(H5::H5File &h5_file, const string &group_nam, const datum_csys_type &datum_csys);
+        void write_datum_csys(H5::H5File &h5_file, const string &group_name, const datum_csys_type &datum_csys);
         //! Write constraints data to an HDF5 file
         /*!
           Write different types of constraint data into an HDF5 file
@@ -726,7 +735,7 @@ class OdbExtractObject {
           \param data_array The vector of vectors of floats that should be written in the new dataset
           \sa write_float_2D_array()
         */
-        void write_float_2D_vector(const H5::Group &group, const string &dataset_name, const int &max_column_size, vector<vector<float>> &data_array);
+        void write_float_2D_vector(const H5::Group &group, const string &dataset_name, const int &max_column_size, const vector<vector<float>> &data_array);
         //! Write an double as a dataset
         /*!
           Create a dataset with a double using the passed-in value
