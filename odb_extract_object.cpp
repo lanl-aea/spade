@@ -195,7 +195,6 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArgum
         this->parts.push_back(process_part(part, odb, log_file));
     }
 
-// TODO: Write code to get assembly
     this->root_assembly = process_assembly(odb.rootAssembly(), odb, log_file);
 
     odb_StepRepository step_repository = odb.steps();
@@ -203,7 +202,7 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArgum
     for (step_iter.first(); !step_iter.isDone(); step_iter.next()) 
     {
         odb_Step current_step = step_repository[step_iter.currentKey()];
-// TODO: Write code to get steps
+        process_step (current_step, odb, log_file, command_line_arguments);
     }
 
 
@@ -809,6 +808,27 @@ assembly_type OdbExtractObject::process_assembly (odb_Assembly &assembly, odb_Od
 }
 
 void OdbExtractObject::process_step (const odb_Step &step, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
+// TODO: Write code to get steps
+/*
+    string name;
+    string description;
+    string domain;
+    string previousStepName;
+    string procedure;
+    string nlgeom; // Boolean
+    int number;
+    double timePeriod;
+    double totalTime;
+    double mass;
+    double acousticMass;
+    vector<frame_type> frames;
+    vector<history_region_type> historyRegions;
+    vector<string> loadCases;
+    vector<double> massCenter;
+    vector<double> acousticMassCenter;
+    double intertiaAboutCenter[6];
+    double intertiaAboutOrigin[6];
+*/
 
 }
 
@@ -883,9 +903,9 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     write_interactions(h5_file, "odb/interactions");
     log_file.logVerbose("Writing assembly data.");
     write_assembly(h5_file, "odb/rootAssembly");
-    this->steps_group = h5_file.createGroup(string("/odb/steps").c_str());
+    H5::Group steps_group = h5_file.createGroup(string("odb/steps").c_str());
 
-    this->parts_group = h5_file.createGroup(string("/odb/parts").c_str());
+    H5::Group parts_group = h5_file.createGroup(string("odb/parts").c_str());
     log_file.logVerbose("Writing parts data.");
     write_parts(h5_file, "odb/parts");
 
@@ -910,9 +930,9 @@ void OdbExtractObject::write_parts(H5::H5File &h5_file, const string &group_name
 
 void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_name) {
     string root_assembly_group_name = "/odb/rootAssembly " + this->root_assembly.name;
-    this->root_assembly_group = h5_file.createGroup(root_assembly_group_name.c_str());
+    H5::Group root_assembly_group = h5_file.createGroup(root_assembly_group_name.c_str());
     write_instances(h5_file, root_assembly_group_name);
-    write_string_dataset(this->root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
+    write_string_dataset(root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
     write_nodes(h5_file, root_assembly_group_name, this->root_assembly.nodes);
     write_elements(h5_file, root_assembly_group_name, this->root_assembly.elements);
     write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets);
@@ -935,7 +955,7 @@ void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_n
 
 void OdbExtractObject::write_instances(H5::H5File &h5_file, const string &group_name) {
     string instances_group_name = group_name + "/instances";
-    this->root_assembly_group = h5_file.createGroup(instances_group_name.c_str());
+    H5::Group instances_group = h5_file.createGroup(instances_group_name.c_str());
     for (auto instance : this->root_assembly.instances) {
         string instance_group_name = instances_group_name + "/" + instance.name;
         H5::Group instance_group = h5_file.createGroup(instance_group_name.c_str());

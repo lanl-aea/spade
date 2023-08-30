@@ -301,6 +301,33 @@ struct assembly_type {
     vector<connector_orientation_type> connectorOrientations;
 };
 
+struct frame_type {
+};
+
+struct history_region_type {
+};
+
+struct step_type {
+    string name;
+    string description;
+    string domain;
+    string previousStepName;
+    string procedure;
+    string nlgeom; // Boolean
+    int number;
+    double timePeriod;
+    double totalTime;
+    double mass;
+    double acousticMass;
+    vector<frame_type> frames;
+    vector<history_region_type> historyRegions;
+    vector<string> loadCases;
+    vector<double> massCenter;
+    vector<double> acousticMassCenter;
+    double intertiaAboutCenter[6];
+    double intertiaAboutOrigin[6];
+};
+
 /*!
    This class holds all the data from the odb
 */
@@ -845,18 +872,7 @@ class OdbExtractObject {
         map<int, string> node_links;
         map<int, string> element_links;
         map<string, string> instance_links;
-        /*
-        odb_Assembly& rootAssembly;
-        odb_StepRepository& steps;
-        */
-
-        // TODO: potentially add amplitudes group
-        // TODO: potentially add filters group
-        // TODO: potentially add materials group
-        H5::Group parts_group;
-        H5::Group root_assembly_group;
-        // TODO: add conditional to check that odb_parser has sector definition before adding the group
-        H5::Group steps_group;
+        vector<step_type> steps;
 
         string dimension_enum_strings[4];
 };
