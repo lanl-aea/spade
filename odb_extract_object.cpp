@@ -1022,6 +1022,19 @@ void OdbExtractObject::write_frames(H5::H5File &h5_file, const string &group_nam
     for (auto frame : frames) {
         string frame_group_name = frames_group_name + "/" + to_string(frame.incrementNumber);
         H5::Group frame_group = h5_file.createGroup(frame_group_name.c_str());
+        write_integer_dataset(frame_group, "cyclicModeNumber", frame.cyclicModeNumber);
+        write_integer_dataset(frame_group, "mode", frame.mode);
+        write_string_dataset(frame_group, "description", frame.description);
+        write_string_dataset(frame_group, "domain", frame.domain);
+        write_string_dataset(frame_group, "loadCase", frame.loadCase);
+        write_float_dataset(frame_group, "frameValue", frame.frameValue);
+        write_float_dataset(frame_group, "frequency", frame.frequency);
+        H5::Group field_outputs_group = h5_file.createGroup((frame_group_name + "/fieldOutputs").c_str());
+        for (int i=0; i<frame.fieldOutputs.size(); i++) {
+            string field_output_group_name = frame_group_name + "/fieldOutputs/" + to_string(i);
+            H5::Group field_output_group = h5_file.createGroup(field_output_group_name.c_str());
+//            write_field_output(h5_file, field_output_group_name, frame.fieldOutputs[i]);
+        }
     }
 }
 
