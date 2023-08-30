@@ -277,6 +277,17 @@ struct instance_type {
     analytic_surface_type analyticSurface;
 };
 
+struct connector_orientation_type {
+    set_type region;
+    string axis1;  // SymbolicConstant
+    string axis2;  // SymbolicConstant
+    datum_csys_type localCsys1;
+    datum_csys_type localCsys2;
+    string orient2sameAs1; // Boolean
+    float angle1;
+    float angle2;
+};
+
 struct assembly_type {
     string name;
     string embeddedSpace;
@@ -286,6 +297,8 @@ struct assembly_type {
     vector<set_type> elementSets;
     vector<set_type> surfaces;
     vector<instance_type> instances;
+    vector<datum_csys_type> datumCsyses;
+    vector<connector_orientation_type> connectorOrientations;
 };
 
 /*!
@@ -432,7 +445,7 @@ class OdbExtractObject {
         //! Process an analytic surface from the odb file
         /*!
           Process an analytic surface and store the results
-          \param segment An odb analytic surface object
+          \param analytic_surface An odb analytic surface object
           \param log_file Logging object for writing log messages
           \return analytic_surface_type with data stored from the odb
           \sa process_odb()
@@ -441,7 +454,7 @@ class OdbExtractObject {
         //! Process a rigid body from the odb file
         /*!
           Process a rigid body and store the results
-          \param segment An odb rigid body object
+          \param rigid_body An odb rigid body object
           \param log_file Logging object for writing log messages
           \return rigid_body_type with data stored from the odb
           \sa process_odb()
@@ -458,6 +471,15 @@ class OdbExtractObject {
           \sa process_odb()
         */
         instance_type process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file);
+        //! Process a connector orientation object from the odb file
+        /*!
+          Process a connector orientation and store the results
+          \param connector_orientation An odb connector orientation object
+          \param log_file Logging object for writing log messages
+          \return connector_orientation_type with data stored from the odb
+          \sa process_odb()
+        */
+        connector_orientation_type process_connector_orientation (const odb_ConnectorOrientation &connector_orientation, Logging &log_file);
         //! Process an assembly from the odb file
         /*!
           Process  an assembly and store the results
@@ -467,7 +489,7 @@ class OdbExtractObject {
           \return assembly_type with data stored from the odb
           \sa process_odb()
         */
-        assembly_type process_assembly (const odb_Assembly &assembly, odb_Odb &odb, Logging &log_file);
+        assembly_type process_assembly (odb_Assembly &assembly, odb_Odb &odb, Logging &log_file);
         //! Process a step from the odb file
         /*!
           Process a step object and store the results

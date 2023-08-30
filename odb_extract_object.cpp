@@ -733,7 +733,28 @@ instance_type OdbExtractObject::process_instance (const odb_Instance &instance, 
     return new_instance;
 }
 
-assembly_type OdbExtractObject::process_assembly (const odb_Assembly &assembly, odb_Odb &odb, Logging &log_file) {
+connector_orientation_type OdbExtractObject::process_connector_orientation (const odb_ConnectorOrientation &connector_orientation, Logging &log_file) {
+    connector_orientation_type new_connector_orientation;
+    new_connector_orientation.region = process_set(connector_orientation.region(), log_file);
+    switch(connector_orientation.axis1()) {
+        case odb_Enum::AXIS_1: new_connector_orientation.axis1 = "Axis 1"; break;
+        case odb_Enum::AXIS_2: new_connector_orientation.axis1 = "Axis 2"; break;
+        case odb_Enum::AXIS_3: new_connector_orientation.axis1 = "Axis 3"; break;
+    }
+    switch(connector_orientation.axis2()) {
+        case odb_Enum::AXIS_1: new_connector_orientation.axis2 = "Axis 1"; break;
+        case odb_Enum::AXIS_2: new_connector_orientation.axis2 = "Axis 2"; break;
+        case odb_Enum::AXIS_3: new_connector_orientation.axis2 = "Axis 3"; break;
+    }
+    new_connector_orientation.orient2sameAs1 = (connector_orientation.orient2sameAs1()) ? "true" : "false";
+    new_connector_orientation.angle1 = connector_orientation.angle1();
+    new_connector_orientation.angle2 = connector_orientation.angle2();
+    new_connector_orientation.localCsys1 = process_csys(connector_orientation.csys1(), log_file);
+    new_connector_orientation.localCsys2 = process_csys(connector_orientation.csys2(), log_file);
+    return new_connector_orientation;
+}
+
+assembly_type OdbExtractObject::process_assembly (odb_Assembly &assembly, odb_Odb &odb, Logging &log_file) {
     assembly_type new_assembly;
     new_assembly.name = assembly.name().CStr();
     log_file.logVerbose("Reading assembly data for " + new_assembly.name);
@@ -769,13 +790,21 @@ assembly_type OdbExtractObject::process_assembly (const odb_Assembly &assembly, 
 
     odb_InstanceRepository instances = assembly.instances();
     odb_InstanceRepositoryIT instance_iter(instances);
-    for (instance_iter.first(); !instance_iter.isDone(); instance_iter.next()) 
-    {
+    for (instance_iter.first(); !instance_iter.isDone(); instance_iter.next()) {
         log_file.logVerbose("Starting to read instance: " + string(instance_iter.currentKey().CStr()));
         odb_Instance instance = instances[instance_iter.currentKey()];
-// TODO: Finish writing code to get instance
         new_assembly.instances.push_back(process_instance(instance, odb, log_file));
     }
+    odb_DatumCsysRepository datum_csyses = assembly.datumCsyses();
+    odb_DatumCsysRepositoryIT datum_csyses_iter(datum_csyses);
+    for (datum_csyses_iter.first(); !datum_csyses_iter.isDone(); datum_csyses_iter.next()) {
+        odb_DatumCsys datum_csys = datum_csyses[datum_csyses_iter.currentKey()];
+        new_assembly.datumCsyses.push_back(process_csys(datum_csys, log_file));
+    }
+    // TODO: Maybe reach out to 3DS to determine if they plan to implement 'odb_SequencePretensionSection' as it is declared, but not defined
+//    const odb_SequencePretensionSection& pretension_sections = assembly.pretensionSections();
+    const odb_SequenceConnectorOrientation& connector_orientations = assembly.connectorOrientations();
+    for (int i=0; i<connector_orientations.size(); i++)  { new_assembly.connectorOrientations.push_back(process_connector_orientation(connector_orientations[i], log_file)); }
     return new_assembly;
 }
 
@@ -860,9 +889,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     log_file.logVerbose("Writing parts data.");
     write_parts(h5_file, "odb/parts");
 
-    // TODO: potentially add amplitudes group
-    // TODO: potentially add filters group
-    // TODO: potentially add materials group
+    // TODO: potentially add amplitudes, filters, or materials group
 
     h5_file.close();  // Close the hdf5 file
     log_file.logVerbose("Closing hdf5 file.");
