@@ -828,7 +828,7 @@ void OdbExtractObject::process_step(const odb_Step &step, odb_Odb &odb, Logging 
     }
     new_step.previousStepName = step.previousStepName().CStr();
     new_step.procedure = step.procedure().CStr();
-    new_step.nlgeom = (step.nlgeom()) ? "true" : "false";
+    new_step.nlgeom = (step.nlgeom()) ? "yes" : "no";
     new_step.number = step.number();
     new_step.timePeriod = step.timePeriod();
     new_step.totalTime = step.totalTime();
@@ -839,9 +839,9 @@ void OdbExtractObject::process_step(const odb_Step &step, odb_Odb &odb, Logging 
     odb_SequenceDouble acoustic_mass_center = step.acousticMassCenter();
     for (int i=0; i<acoustic_mass_center.size(); i++) { new_step.acousticMassCenter.push_back(acoustic_mass_center[i]); }
     odb_SequenceDouble inertia_about_center = step.inertiaAboutCenter();
-    for (int i=0; i<inertia_about_center.size(); i++) { new_step.intertiaAboutCenter[i] = inertia_about_center[i]; }
+    for (int i=0; i<inertia_about_center.size(); i++) { new_step.inertiaAboutCenter[i] = inertia_about_center[i]; }
     odb_SequenceDouble inertia_about_origin = step.inertiaAboutOrigin();
-    for (int i=0; i<inertia_about_origin.size(); i++) { new_step.intertiaAboutOrigin[i] = inertia_about_origin[i]; }
+    for (int i=0; i<inertia_about_origin.size(); i++) { new_step.inertiaAboutOrigin[i] = inertia_about_origin[i]; }
     odb_LoadCaseRepository load_cases = step.loadCases();
     for (int i=0; i<load_cases.size(); i++) { new_step.loadCases.push_back(load_cases[i].name().CStr()); }
     odb_SequenceFrame frames = step.frames();
@@ -859,10 +859,6 @@ void OdbExtractObject::process_step(const odb_Step &step, odb_Odb &odb, Logging 
     }
     this->steps.push_back(new_step);
 }
-
-
-
-
 
 void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file) {
 // Write out data to hdf5 file
@@ -929,16 +925,15 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     log_file.logVerbose("Writing interactions data.");
     H5::Group interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
     write_interactions(h5_file, "odb/interactions");
-    log_file.logVerbose("Writing assembly data.");
-    write_assembly(h5_file, "odb/rootAssembly");
-    H5::Group steps_group = h5_file.createGroup(string("odb/steps").c_str());
-
     H5::Group parts_group = h5_file.createGroup(string("odb/parts").c_str());
     log_file.logVerbose("Writing parts data.");
     write_parts(h5_file, "odb/parts");
+    log_file.logVerbose("Writing assembly data.");
+    write_assembly(h5_file, "odb/rootAssembly");
+    log_file.logVerbose("Writing steps data.");
+    write_steps(h5_file, "odb");
 
     // TODO: potentially add amplitudes, filters, or materials group
-
     h5_file.close();  // Close the hdf5 file
     log_file.logVerbose("Closing hdf5 file.");
 }
@@ -978,6 +973,50 @@ void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_n
         write_datum_csys(h5_file, connector_orientation_group_name, this->root_assembly.connectorOrientations[i].localCsys2);
         write_string_dataset(connector_orientation_group, "axis1", this->root_assembly.connectorOrientations[i].axis1);
         write_string_dataset(connector_orientation_group, "axis2", this->root_assembly.connectorOrientations[i].axis2);
+    }
+}
+
+void OdbExtractObject::write_frames(H5::H5File &h5_file, const string &group_name, vector<frame_type> &frames) {
+    string frames_group_name = group_name + "/frames";
+    H5::Group frames_group = h5_file.createGroup(frames_group_name.c_str());
+    for (auto frame : frames) {
+        string frame_group_name = frames_group_name + "/" + to_string(frame.incrementNumber);
+        H5::Group frame_group = h5_file.createGroup(frame_group_name.c_str());
+    }
+}
+
+void OdbExtractObject::write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions) {
+    string history_regions_group_name = group_name + "/historyRegions";
+    H5::Group history_regions_group = h5_file.createGroup(history_regions_group_name.c_str());
+    for (auto history_region : history_regions) {
+        string history_region_group_name = history_regions_group_name + "/" + history_region.name;
+        H5::Group history_region_group = h5_file.createGroup(history_region_group_name.c_str());
+    }
+}
+
+void OdbExtractObject::write_steps(H5::H5File &h5_file, const string &group_name) {
+    string steps_group_name = group_name + "/steps";
+    H5::Group steps_group = h5_file.createGroup(steps_group_name.c_str());
+    for (auto step : this->steps) {
+        string step_group_name = steps_group_name + "/" + step.name;
+        H5::Group step_group = h5_file.createGroup(step_group_name.c_str());
+        write_string_dataset(step_group, "description", step.description);
+        write_string_dataset(step_group, "domain", step.domain);
+        write_string_dataset(step_group, "previousStepName", step.previousStepName);
+        write_string_dataset(step_group, "procedure", step.procedure);
+        write_string_dataset(step_group, "nlgeom", step.nlgeom);
+        write_integer_dataset(step_group, "number", step.number);
+        write_double_dataset(step_group, "timePeriod", step.timePeriod);
+        write_double_dataset(step_group, "totalTime", step.totalTime);
+        write_double_dataset(step_group, "mass", step.mass);
+        write_double_dataset(step_group, "acousticMass", step.acousticMass);
+        write_string_vector_dataset(step_group, "loadCases", step.loadCases);
+        write_double_vector_dataset(step_group, "massCenter", step.massCenter);
+        write_double_vector_dataset(step_group, "acousticMassCenter", step.acousticMassCenter);
+        write_double_array_dataset(step_group, "inertiaAboutCenter", 6, step.inertiaAboutCenter);
+        write_double_array_dataset(step_group, "inertiaAboutOrigin", 6, step.inertiaAboutOrigin);
+        write_frames(h5_file, step_group_name, step.frames);
+        write_history_regions(h5_file, step_group_name, step.historyRegions);
     }
 }
 

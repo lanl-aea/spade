@@ -301,10 +301,23 @@ struct assembly_type {
     vector<connector_orientation_type> connectorOrientations;
 };
 
+struct field_output_type {
+};
+
 struct frame_type {
+    int incrementNumber;
+    int cyclicModeNumber;
+    int mode;
+    string description;
+    string domain;
+    float frameValue;
+    float frequency;
+    vector<string> loadCases;
+    vector<field_output_type> fieldOutputs;
 };
 
 struct history_region_type {
+    string name;
 };
 
 struct step_type {
@@ -324,8 +337,8 @@ struct step_type {
     vector<string> loadCases;
     vector<double> massCenter;
     vector<double> acousticMassCenter;
-    double intertiaAboutCenter[6];
-    double intertiaAboutOrigin[6];
+    double inertiaAboutCenter[6];
+    double inertiaAboutOrigin[6];
 };
 
 /*!
@@ -629,6 +642,29 @@ class OdbExtractObject {
           \param group_name Name of the group where data is to be written
         */
         void write_assembly(H5::H5File &h5_file, const string &group_name);
+        //! Write frames data to an HDF5 file
+        /*!
+          Write frames data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param frames Data to be written
+        */
+        void write_frames(H5::H5File &h5_file, const string &group_name, vector<frame_type> &frames);
+        //! Write history regions data to an HDF5 file
+        /*!
+          Write history regions data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param history_regions Data to be written
+        */
+        void write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions);
+        //! Write steps data to an HDF5 file
+        /*!
+          Write steps data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+        */
+        void write_steps(H5::H5File &h5_file, const string &group_name);
         //! Write instances data to an HDF5 file
         /*!
           Write instances data into an HDF5 file
