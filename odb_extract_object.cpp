@@ -809,7 +809,27 @@ assembly_type OdbExtractObject::process_assembly (odb_Assembly &assembly, odb_Od
 
 frame_type OdbExtractObject::process_frame (odb_Frame &frame, Logging &log_file, CmdLineArguments &command_line_arguments) {
 // TODO: Write code to get frames
+    frame_type new_frame;
+    new_frame.description = frame.description().CStr();
+    new_frame.loadCase = frame.loadCase().name().CStr();
+    switch(frame.domain()) {
+        case odb_Enum::TIME: new_frame.domain = "Time"; break;
+        case odb_Enum::FREQUENCY: new_frame.domain = "Frequency"; break;
+        case odb_Enum::MODAL: new_frame.domain = "Modal"; break;
+    }
+    new_frame.incrementNumber = frame.incrementNumber();
+    new_frame.cyclicModeNumber = frame.cyclicModeNumber();
+    new_frame.mode = frame.mode();
+    new_frame.frameValue = frame.frameValue();
+    new_frame.frequency = frame.frequency();
 
+    odb_FieldOutputRepository& field_outputs = frame.fieldOutputs();
+    odb_FieldOutputRepositoryIT field_outputs_iterator(field_outputs);
+    for (field_outputs_iterator.first(); !field_outputs_iterator.isDone(); field_outputs_iterator.next()) {
+        odb_FieldOutput& field = field_outputs[field_outputs_iterator.currentKey()]; 
+//        new_frame.fieldOutputs.push_back(process_field_output(field));
+    }
+    return new_frame;
 }
 history_region_type OdbExtractObject::process_history_region (odb_HistoryRegion &history_region, Logging &log_file, CmdLineArguments &command_line_arguments) {
 // TODO: Write code to get history regions

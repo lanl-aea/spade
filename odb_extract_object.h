@@ -312,12 +312,23 @@ struct frame_type {
     string domain;
     float frameValue;
     float frequency;
-    vector<string> loadCases;
+    string loadCase;
     vector<field_output_type> fieldOutputs;
+};
+
+struct history_point_type {
+};
+
+struct history_output_type {
 };
 
 struct history_region_type {
     string name;
+    string description;
+    string position;
+    history_point_type point;
+    string loadCase;
+    vector<history_output_type> historyOutputs;
 };
 
 struct step_type {
