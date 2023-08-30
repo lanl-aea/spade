@@ -833,7 +833,27 @@ frame_type OdbExtractObject::process_frame (odb_Frame &frame, Logging &log_file,
 }
 history_region_type OdbExtractObject::process_history_region (odb_HistoryRegion &history_region, Logging &log_file, CmdLineArguments &command_line_arguments) {
 // TODO: Write code to get history regions
+    history_region_type new_history_region;
+    new_history_region.name = history_region.name().CStr();
+    new_history_region.description = history_region.description().CStr();
+    switch(history_region.position()) {
+        case odb_Enum::NODAL: new_history_region.position = "Nodal"; break;
+        case odb_Enum::INTEGRATION_POINT: new_history_region.position = "Integration Point"; break;
+        case odb_Enum::WHOLE_ELEMENT: new_history_region.position = "Whole Element"; break;
+        case odb_Enum::WHOLE_REGION: new_history_region.position = "Whole Region"; break;
+        case odb_Enum::WHOLE_MODEL: new_history_region.position = "Whole Model"; break;
+    }
+    new_history_region.loadCase = history_region.loadCase().name().CStr();
+//    new_history_region.point = process_history_point(history_region.historyPoint(), log_file);
+    odb_HistoryOutputRepository history_outputs = history_region.historyOutputs();
+    odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
+    for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
+//        new_history_region.historyOutputs.push_back( process_history_output(history_outputs_iterator.currentValue(), log_file));
+    }
 
+    vector<history_output_type> historyOutputs;
+
+    return new_history_region;
 }
 
 void OdbExtractObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
