@@ -918,6 +918,19 @@ void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_n
     write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets);
     write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets);
     write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
+    H5::Group connector_orientations_group = h5_file.createGroup((root_assembly_group_name + "/connectorOrientations").c_str());
+    for (int i=0; i<this->root_assembly.connectorOrientations.size(); i++) {
+        string connector_orientation_group_name = root_assembly_group_name + "/connectorOrientations/" + to_string(i);
+        H5::Group connector_orientation_group = h5_file.createGroup(connector_orientation_group_name.c_str());
+        write_set(h5_file, connector_orientation_group_name, this->root_assembly.connectorOrientations[i].region);
+        write_string_dataset(connector_orientation_group, "orient2sameAs1", this->root_assembly.connectorOrientations[i].orient2sameAs1);
+        write_float_dataset(connector_orientation_group, "angle1", this->root_assembly.connectorOrientations[i].angle1);
+        write_float_dataset(connector_orientation_group, "angle2", this->root_assembly.connectorOrientations[i].angle2);
+        write_datum_csys(h5_file, connector_orientation_group_name, this->root_assembly.connectorOrientations[i].localCsys1);
+        write_datum_csys(h5_file, connector_orientation_group_name, this->root_assembly.connectorOrientations[i].localCsys2);
+        write_string_dataset(connector_orientation_group, "axis1", this->root_assembly.connectorOrientations[i].axis1);
+        write_string_dataset(connector_orientation_group, "axis2", this->root_assembly.connectorOrientations[i].axis2);
+    }
 }
 
 void OdbExtractObject::write_instances(H5::H5File &h5_file, const string &group_name) {
