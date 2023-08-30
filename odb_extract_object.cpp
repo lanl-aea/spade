@@ -1044,6 +1044,17 @@ void OdbExtractObject::write_history_regions(H5::H5File &h5_file, const string &
     for (auto history_region : history_regions) {
         string history_region_group_name = history_regions_group_name + "/" + history_region.name;
         H5::Group history_region_group = h5_file.createGroup(history_region_group_name.c_str());
+        write_string_dataset(history_region_group, "name", history_region.name);
+        write_string_dataset(history_region_group, "description", history_region.description);
+        write_string_dataset(history_region_group, "position", history_region.position);
+        write_string_dataset(history_region_group, "loadCase", history_region.loadCase);
+//        write_history_point(h5_file, history_region_group_name, history_region.point);
+        H5::Group history_outputs_group = h5_file.createGroup((history_region_group_name + "/historyOutputs").c_str());
+        for (int i=0; i<history_region.historyOutputs.size(); i++) {
+            string history_output_group_name = history_region_group_name + "/historyOutputs/" + to_string(i);
+            H5::Group history_output_group = h5_file.createGroup(history_output_group_name.c_str());
+//            write_history_output(h5_file, history_region_group_name, history_region.historyOutputs[i]);
+        }
     }
 }
 
