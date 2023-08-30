@@ -517,6 +517,26 @@ class OdbExtractObject {
           \sa process_odb()
         */
         assembly_type process_assembly (odb_Assembly &assembly, odb_Odb &odb, Logging &log_file);
+        //! Process a frame from the odb file
+        /*!
+          Process a frame object and store the results
+          \param step An odb frame object
+          \param log_file Logging object for writing log messages
+          \param command_line_arguments CmdLineArguments object storing command line arguments
+          \return frame_type with data stored from the odb
+          \sa process_odb()
+        */
+        frame_type process_frame (odb_Frame &frame, Logging &log_file, CmdLineArguments &command_line_arguments);
+        //! Process a history region from the odb file
+        /*!
+          Process a history region object and store the results
+          \param step An odb history region object
+          \param log_file Logging object for writing log messages
+          \param command_line_arguments CmdLineArguments object storing command line arguments
+          \return history_region_type with data stored from the odb
+          \sa process_odb()
+        */
+        history_region_type process_history_region (odb_HistoryRegion &history_region, Logging &log_file, CmdLineArguments &command_line_arguments);
         //! Process a step from the odb file
         /*!
           Process a step object and store the results

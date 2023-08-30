@@ -202,7 +202,7 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArgum
     for (step_iter.first(); !step_iter.isDone(); step_iter.next()) 
     {
         odb_Step current_step = step_repository[step_iter.currentKey()];
-        process_step (current_step, odb, log_file, command_line_arguments);
+        process_step(current_step, odb, log_file, command_line_arguments);
     }
 
 
@@ -807,29 +807,57 @@ assembly_type OdbExtractObject::process_assembly (odb_Assembly &assembly, odb_Od
     return new_assembly;
 }
 
-void OdbExtractObject::process_step (const odb_Step &step, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
-// TODO: Write code to get steps
-/*
-    string name;
-    string description;
-    string domain;
-    string previousStepName;
-    string procedure;
-    string nlgeom; // Boolean
-    int number;
-    double timePeriod;
-    double totalTime;
-    double mass;
-    double acousticMass;
-    vector<frame_type> frames;
-    vector<history_region_type> historyRegions;
-    vector<string> loadCases;
-    vector<double> massCenter;
-    vector<double> acousticMassCenter;
-    double intertiaAboutCenter[6];
-    double intertiaAboutOrigin[6];
-*/
+frame_type OdbExtractObject::process_frame (odb_Frame &frame, Logging &log_file, CmdLineArguments &command_line_arguments) {
+// TODO: Write code to get frames
 
+}
+history_region_type OdbExtractObject::process_history_region (odb_HistoryRegion &history_region, Logging &log_file, CmdLineArguments &command_line_arguments) {
+// TODO: Write code to get history regions
+
+}
+
+void OdbExtractObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
+    step_type new_step;
+    new_step.name = step.name().CStr();
+    new_step.description = step.description().CStr();
+    switch(step.domain()) {
+        case odb_Enum::TIME: new_step.domain = "Time"; break;
+        case odb_Enum::FREQUENCY: new_step.domain = "Frequency"; break;
+        case odb_Enum::MODAL: new_step.domain = "Modal"; break;
+        case odb_Enum::ARC_LENGTH: new_step.domain = "Arc length"; break;
+    }
+    new_step.previousStepName = step.previousStepName().CStr();
+    new_step.procedure = step.procedure().CStr();
+    new_step.nlgeom = (step.nlgeom()) ? "true" : "false";
+    new_step.number = step.number();
+    new_step.timePeriod = step.timePeriod();
+    new_step.totalTime = step.totalTime();
+    new_step.mass = step.mass();
+    new_step.acousticMass = step.acousticMass();
+    odb_SequenceDouble mass_center = step.massCenter();
+    for (int i=0; i<mass_center.size(); i++) { new_step.massCenter.push_back(mass_center[i]); }
+    odb_SequenceDouble acoustic_mass_center = step.acousticMassCenter();
+    for (int i=0; i<acoustic_mass_center.size(); i++) { new_step.acousticMassCenter.push_back(acoustic_mass_center[i]); }
+    odb_SequenceDouble inertia_about_center = step.inertiaAboutCenter();
+    for (int i=0; i<inertia_about_center.size(); i++) { new_step.intertiaAboutCenter[i] = inertia_about_center[i]; }
+    odb_SequenceDouble inertia_about_origin = step.inertiaAboutOrigin();
+    for (int i=0; i<inertia_about_origin.size(); i++) { new_step.intertiaAboutOrigin[i] = inertia_about_origin[i]; }
+    odb_LoadCaseRepository load_cases = step.loadCases();
+    for (int i=0; i<load_cases.size(); i++) { new_step.loadCases.push_back(load_cases[i].name().CStr()); }
+    odb_SequenceFrame frames = step.frames();
+    int numFrames = frames.size();
+    for (int f=0; f<numFrames; f++) {
+        odb_Frame frame = frames.constGet(f);
+        new_step.frames.push_back(process_frame(frame, log_file, command_line_arguments));
+    }
+    odb_HistoryRegionRepository history_regions = step.historyRegions();
+    odb_HistoryRegionRepositoryIT history_region_iterator (history_regions);
+    for (history_region_iterator.first(); !history_region_iterator.isDone(); history_region_iterator.next()) 
+    {
+        odb_HistoryRegion history_region = history_region_iterator.currentValue();
+        new_step.historyRegions.push_back(process_history_region(history_region, log_file, command_line_arguments));
+    }
+    this->steps.push_back(new_step);
 }
 
 
