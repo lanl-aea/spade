@@ -317,6 +317,15 @@ struct frame_type {
 };
 
 struct history_point_type {
+    element_type* element;
+    int ipNumber;
+    section_point_type sectionPoint;
+    string face;
+    string position;
+    node_type* node;
+    set_type region;
+    string assemblyName;  // Just going to store the name not the entire assembly
+    string instanceName;  // Just going to store the name not the entire instance
 };
 
 struct history_output_type {
@@ -544,17 +553,26 @@ class OdbExtractObject {
         //! Process a frame from the odb file
         /*!
           Process a frame object and store the results
-          \param step An odb frame object
+          \param frame An odb frame object
           \param log_file Logging object for writing log messages
           \param command_line_arguments CmdLineArguments object storing command line arguments
           \return frame_type with data stored from the odb
           \sa process_odb()
         */
         frame_type process_frame (odb_Frame &frame, Logging &log_file, CmdLineArguments &command_line_arguments);
+        //! Process a history point from the odb file
+        /*!
+          Process a history region point and store the results
+          \param history_point An odb history point object
+          \param log_file Logging object for writing log messages
+          \return history_point_type with data stored from the odb
+          \sa process_odb()
+        */
+        history_point_type process_history_point (odb_HistoryPoint history_point, Logging &log_file);
         //! Process a history region from the odb file
         /*!
           Process a history region object and store the results
-          \param step An odb history region object
+          \param history_region An odb history region object
           \param log_file Logging object for writing log messages
           \param command_line_arguments CmdLineArguments object storing command line arguments
           \return history_region_type with data stored from the odb

@@ -831,6 +831,48 @@ frame_type OdbExtractObject::process_frame (odb_Frame &frame, Logging &log_file,
     }
     return new_frame;
 }
+
+history_point_type OdbExtractObject::process_history_point (odb_HistoryPoint history_point, Logging &log_file) {
+    history_point_type new_history_point;
+    new_history_point.element = process_element(history_point.element(), log_file);
+    new_history_point.node = process_node(history_point.node(), log_file);
+    new_history_point.ipNumber = history_point.ipNumber();
+    new_history_point.sectionPoint.number = to_string(history_point.sectionPoint().number());
+    new_history_point.sectionPoint.description = history_point.sectionPoint().description().CStr();
+    new_history_point.region = process_set(history_point.region(), log_file);
+    new_history_point.instanceName = history_point.instance().name().CStr();
+    new_history_point.assemblyName = history_point.assembly().name().CStr();
+    switch(history_point.face()) {
+        case odb_Enum::FACE_UNKNOWN: new_history_point.face = "Face Unknown"; break;
+        case odb_Enum::FACE1: new_history_point.face = "Face 1"; break;
+        case odb_Enum::FACE2: new_history_point.face = "Face 2"; break;
+        case odb_Enum::FACE3: new_history_point.face = "Face 3"; break;
+        case odb_Enum::FACE4: new_history_point.face = "Face 4"; break;
+        case odb_Enum::FACE5: new_history_point.face = "Face 5"; break;
+        case odb_Enum::FACE6: new_history_point.face = "Face 6"; break;
+        case odb_Enum::SIDE1: new_history_point.face = "Side 1"; break;
+        case odb_Enum::SIDE2: new_history_point.face = "Side 2"; break;
+        case odb_Enum::END1: new_history_point.face = "End 1"; break;
+        case odb_Enum::END2: new_history_point.face = "End 2"; break;
+        case odb_Enum::END3: new_history_point.face = "End 3"; break;
+    }
+    switch(history_point.position()) {
+        case odb_Enum::NODAL: new_history_point.position = "Nodal"; break;
+        case odb_Enum::ELEMENT_NODAL: new_history_point.position = "Element Nodal"; break;
+        case odb_Enum::INTEGRATION_POINT: new_history_point.position = "Integration Point"; break;
+        case odb_Enum::ELEMENT_FACE: new_history_point.position = "Element Face"; break;
+        case odb_Enum::ELEMENT_FACE_INTEGRATION_POINT: new_history_point.position = "Element Face Integration Point"; break;
+        case odb_Enum::WHOLE_ELEMENT: new_history_point.position = "Whole Element"; break;
+        case odb_Enum::WHOLE_REGION: new_history_point.position = "Whole Region"; break;
+        case odb_Enum::WHOLE_PART_INSTANCE: new_history_point.position = "Whole Part Instance"; break;
+        case odb_Enum::WHOLE_MODEL: new_history_point.position = "Whole Model"; break;
+    }
+
+    string face;
+    string position;
+    return new_history_point;
+}
+
 history_region_type OdbExtractObject::process_history_region (odb_HistoryRegion &history_region, Logging &log_file, CmdLineArguments &command_line_arguments) {
 // TODO: Write code to get history regions
     history_region_type new_history_region;
@@ -844,7 +886,7 @@ history_region_type OdbExtractObject::process_history_region (odb_HistoryRegion 
         case odb_Enum::WHOLE_MODEL: new_history_region.position = "Whole Model"; break;
     }
     new_history_region.loadCase = history_region.loadCase().name().CStr();
-//    new_history_region.point = process_history_point(history_region.historyPoint(), log_file);
+    new_history_region.point = process_history_point(history_region.historyPoint(), log_file);
     odb_HistoryOutputRepository history_outputs = history_region.historyOutputs();
     odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
     for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
