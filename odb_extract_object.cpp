@@ -1079,6 +1079,26 @@ void OdbExtractObject::write_frames(H5::H5File &h5_file, const string &group_nam
         }
     }
 }
+void OdbExtractObject::write_history_point(H5::H5File &h5_file, const string &group_name, history_point_type &history_point) {
+    string history_point_group_name = group_name + "/point";
+    H5::Group history_point_group = h5_file.createGroup(history_point_group_name.c_str());
+    write_string_dataset(history_point_group, "face", history_point.face);
+    write_string_dataset(history_point_group, "position", history_point.position);
+    string element_group_name = history_point_group_name + "/element";
+    H5::Group element_group = h5_file.createGroup(element_group_name.c_str());
+    write_element(h5_file, element_group_name, *history_point.element);
+    string node_group_name = history_point_group_name + "/node";
+    H5::Group node_group = h5_file.createGroup(node_group_name.c_str());
+    write_node(h5_file, node_group, node_group_name, *history_point.node);
+    write_set(h5_file, history_point_group_name, history_point.region);
+    write_string_dataset(history_point_group, "assembly", history_point.assemblyName);
+    write_string_dataset(history_point_group, "instance", history_point.instanceName);
+    write_integer_dataset(history_point_group, "ipNumber", history_point.ipNumber);
+    H5::Group section_point_group = h5_file.createGroup((history_point_group_name + "/sectionPoint").c_str());
+    write_string_dataset(section_point_group, "number", history_point.sectionPoint.number);
+    write_string_dataset(section_point_group, "description", history_point.sectionPoint.description);
+
+}
 
 void OdbExtractObject::write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions) {
     string history_regions_group_name = group_name + "/historyRegions";
@@ -1089,7 +1109,7 @@ void OdbExtractObject::write_history_regions(H5::H5File &h5_file, const string &
         write_string_dataset(history_region_group, "description", history_region.description);
         write_string_dataset(history_region_group, "position", history_region.position);
         write_string_dataset(history_region_group, "loadCase", history_region.loadCase);
-//        write_history_point(h5_file, history_region_group_name, history_region.point);
+        write_history_point(h5_file, history_region_group_name, history_region.point);
         H5::Group history_outputs_group = h5_file.createGroup((history_region_group_name + "/historyOutputs").c_str());
         for (int i=0; i<history_region.historyOutputs.size(); i++) {
             string history_output_group_name = history_region_group_name + "/historyOutputs/" + to_string(i);

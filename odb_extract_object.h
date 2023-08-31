@@ -679,6 +679,14 @@ class OdbExtractObject {
           \param frames Data to be written
         */
         void write_frames(H5::H5File &h5_file, const string &group_name, vector<frame_type> &frames);
+        //! Write history point data to an HDF5 file
+        /*!
+          Write history point data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param history_point Data to be written
+        */
+        void write_history_point(H5::H5File &h5_file, const string &group_name, history_point_type &history_point);
         //! Write history regions data to an HDF5 file
         /*!
           Write history regions data into an HDF5 file
