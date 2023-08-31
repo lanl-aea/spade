@@ -296,7 +296,7 @@ struct assembly_type {
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
-    vector<instance_type*> instances;
+    vector<instance_type> instances;
     vector<datum_csys_type> datumCsyses;
     vector<connector_orientation_type> connectorOrientations;
 };
@@ -518,10 +518,10 @@ class OdbExtractObject {
           \param odb An open odb object
           \param log_file Logging object for writing log messages
           \param command_line_arguments CmdLineArguments object storing command line arguments
-          \return instance_type pointer with data stored from the odb
+          \return instance_type with data stored from the odb
           \sa process_odb()
         */
-        instance_type* process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file);
+        instance_type process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file);
         //! Process a connector orientation object from the odb file
         /*!
           Process a connector orientation and store the results
@@ -938,7 +938,6 @@ class OdbExtractObject {
         map<int, element_type> elements;
         map<int, string> node_links;
         map<int, string> element_links;
-        map<string, instance_type> instances;
         map<string, string> instance_links;
         vector<step_type> steps;
 
