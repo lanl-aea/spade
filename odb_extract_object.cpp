@@ -687,49 +687,54 @@ rigid_body_type OdbExtractObject::process_rigid_body (const odb_RigidBody &rigid
     return new_rigid_body;
 }
 
-instance_type OdbExtractObject::process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file) {
-    instance_type new_instance;
-    new_instance.name = instance.name().CStr();
-    new_instance.embeddedSpace = this->dimension_enum_strings[instance.embeddedSpace()];
+instance_type* OdbExtractObject::process_instance (const odb_Instance &instance, odb_Odb &odb, Logging &log_file) {
+    try {  // If the node has been stored in nodes, just return the address to it
+        return &this->instances.at(instance.name().CStr());  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+    } catch (const std::out_of_range& oor) {
+        instance_type new_instance;
+        new_instance.name = instance.name().CStr();
+        new_instance.embeddedSpace = this->dimension_enum_strings[instance.embeddedSpace()];
 
-    log_file.logDebug("Instance: " + new_instance.name);
-    log_file.logDebug("\tnodes size: " + to_string(instance.nodes().size()));
-    log_file.logDebug("\telements size: " + to_string(instance.elements().size()));
+        log_file.logDebug("Instance: " + new_instance.name);
+        log_file.logDebug("\tnodes size: " + to_string(instance.nodes().size()));
+        log_file.logDebug("\telements size: " + to_string(instance.elements().size()));
 
-    const odb_SequenceNode& nodes = instance.nodes();
-    for (int i=0; i<nodes.size(); i++)  { new_instance.nodes.push_back(process_node(nodes.node(i), log_file)); }
-    odb_SequenceElement elements = instance.elements();
-    for (int i=0; i<elements.size(); i++)  { new_instance.elements.push_back(process_element(elements.element(i), log_file)); }
+        const odb_SequenceNode& nodes = instance.nodes();
+        for (int i=0; i<nodes.size(); i++)  { new_instance.nodes.push_back(process_node(nodes.node(i), log_file)); }
+        odb_SequenceElement elements = instance.elements();
+        for (int i=0; i<elements.size(); i++)  { new_instance.elements.push_back(process_element(elements.element(i), log_file)); }
 
-    odb_SetRepositoryIT node_iter(instance.nodeSets());
-    for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
-        new_instance.nodeSets.push_back(process_set(node_iter.currentValue(), log_file));
+        odb_SetRepositoryIT node_iter(instance.nodeSets());
+        for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
+            new_instance.nodeSets.push_back(process_set(node_iter.currentValue(), log_file));
+        }
+        log_file.logDebug("\tnodeSets size: " + to_string(new_instance.nodeSets.size()));
+        odb_SetRepositoryIT element_iter(instance.elementSets());
+        for (element_iter.first(); !element_iter.isDone(); element_iter.next()) {
+            new_instance.elementSets.push_back(process_set(element_iter.currentValue(), log_file));
+        }
+        log_file.logDebug("\telementSets size: " + to_string(new_instance.elementSets.size()));
+        odb_SetRepositoryIT surface_iter(instance.surfaces());
+        for (surface_iter.first(); !surface_iter.isDone(); surface_iter.next()) {
+            new_instance.surfaces.push_back(process_set(surface_iter.currentValue(), log_file));
+        }
+        log_file.logDebug("\tsurfaces size: " + to_string(new_instance.surfaces.size()));
+        const odb_SequenceRigidBody& rigid_bodies = instance.rigidBodies();
+        for (int i=0; i<rigid_bodies.size(); i++)  { new_instance.rigidBodies.push_back(process_rigid_body(rigid_bodies[i], log_file)); }
+        const odb_SequenceSectionAssignment& section_assignments = instance.sectionAssignments();
+        for (int i=0; i<section_assignments.size(); i++)  { new_instance.sectionAssignments.push_back(process_section_assignment(section_assignments[i], log_file)); }
+        const odb_SequenceBeamOrientation& beam_orientations = instance.beamOrientations();
+        for (int i=0; i<beam_orientations.size(); i++)  { new_instance.beamOrientations.push_back(process_beam_orientation(beam_orientations[i], log_file)); }
+        const odb_SequenceRebarOrientation& rebar_orientations = instance.rebarOrientations();
+        for (int i=0; i<rebar_orientations.size(); i++)  { new_instance.rebarOrientations.push_back(process_rebar_orientation(rebar_orientations[i], log_file)); }
+        try {
+            new_instance.analyticSurface = process_analytic_surface(instance.analyticSurface(), log_file);
+        } catch(odb_BaseException& e) {
+            log_file.logWarning(e.UserReport().CStr());
+        }
+        this->instances[new_instance.name] = new_instance;
+        return &this->instances[new_instance.name];
     }
-    log_file.logDebug("\tnodeSets size: " + to_string(new_instance.nodeSets.size()));
-    odb_SetRepositoryIT element_iter(instance.elementSets());
-    for (element_iter.first(); !element_iter.isDone(); element_iter.next()) {
-        new_instance.elementSets.push_back(process_set(element_iter.currentValue(), log_file));
-    }
-    log_file.logDebug("\telementSets size: " + to_string(new_instance.elementSets.size()));
-    odb_SetRepositoryIT surface_iter(instance.surfaces());
-    for (surface_iter.first(); !surface_iter.isDone(); surface_iter.next()) {
-        new_instance.surfaces.push_back(process_set(surface_iter.currentValue(), log_file));
-    }
-    log_file.logDebug("\tsurfaces size: " + to_string(new_instance.surfaces.size()));
-    const odb_SequenceRigidBody& rigid_bodies = instance.rigidBodies();
-    for (int i=0; i<rigid_bodies.size(); i++)  { new_instance.rigidBodies.push_back(process_rigid_body(rigid_bodies[i], log_file)); }
-    const odb_SequenceSectionAssignment& section_assignments = instance.sectionAssignments();
-    for (int i=0; i<section_assignments.size(); i++)  { new_instance.sectionAssignments.push_back(process_section_assignment(section_assignments[i], log_file)); }
-    const odb_SequenceBeamOrientation& beam_orientations = instance.beamOrientations();
-    for (int i=0; i<beam_orientations.size(); i++)  { new_instance.beamOrientations.push_back(process_beam_orientation(beam_orientations[i], log_file)); }
-    const odb_SequenceRebarOrientation& rebar_orientations = instance.rebarOrientations();
-    for (int i=0; i<rebar_orientations.size(); i++)  { new_instance.rebarOrientations.push_back(process_rebar_orientation(rebar_orientations[i], log_file)); }
-    try {
-        new_instance.analyticSurface = process_analytic_surface(instance.analyticSurface(), log_file);
-    } catch(odb_BaseException& e) {
-        log_file.logWarning(e.UserReport().CStr());
-    }
-    return new_instance;
 }
 
 connector_orientation_type OdbExtractObject::process_connector_orientation (const odb_ConnectorOrientation &connector_orientation, Logging &log_file) {
@@ -1086,7 +1091,8 @@ void OdbExtractObject::write_steps(H5::H5File &h5_file, const string &group_name
 void OdbExtractObject::write_instances(H5::H5File &h5_file, const string &group_name) {
     string instances_group_name = group_name + "/instances";
     H5::Group instances_group = h5_file.createGroup(instances_group_name.c_str());
-    for (auto instance : this->root_assembly.instances) {
+    for (auto instance_pointer : this->root_assembly.instances) {
+        instance_type instance = *instance_pointer;
         string instance_group_name = instances_group_name + "/" + instance.name;
         H5::Group instance_group = h5_file.createGroup(instance_group_name.c_str());
         write_string_dataset(instance_group, "embeddedSpace", instance.embeddedSpace);
