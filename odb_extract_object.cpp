@@ -868,8 +868,6 @@ history_point_type OdbExtractObject::process_history_point (odb_HistoryPoint his
         case odb_Enum::WHOLE_MODEL: new_history_point.position = "Whole Model"; break;
     }
 
-    string face;
-    string position;
     return new_history_point;
 }
 
@@ -893,7 +891,6 @@ history_region_type OdbExtractObject::process_history_region (odb_HistoryRegion 
 //        new_history_region.historyOutputs.push_back( process_history_output(history_outputs_iterator.currentValue(), log_file));
     }
 
-    vector<history_output_type> historyOutputs;
 
     return new_history_region;
 }
