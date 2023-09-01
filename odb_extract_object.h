@@ -318,6 +318,7 @@ struct frame_type {
 
 struct history_point_type {
     element_type* element;
+    bool hasElement;
     int ipNumber;
     section_point_type sectionPoint;
     string face;
