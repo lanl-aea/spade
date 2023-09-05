@@ -839,6 +839,11 @@ history_point_type OdbExtractObject::process_history_point (odb_HistoryPoint his
         new_history_point.hasElement = true;
     } catch(odb_BaseException& exc) { new_history_point.hasElement = false; }
     new_history_point.node = process_node(history_point.node(), log_file);
+    if (history_point.node().label() < 0) {
+        new_history_point.hasNode = false;
+    } else {
+        new_history_point.hasNode = true;
+    }
     new_history_point.ipNumber = history_point.ipNumber();
     new_history_point.sectionPoint.number = to_string(history_point.sectionPoint().number());
     new_history_point.sectionPoint.description = history_point.sectionPoint().description().CStr();
@@ -1089,9 +1094,11 @@ void OdbExtractObject::write_history_point(H5::H5File &h5_file, const string &gr
         H5::Group element_group = h5_file.createGroup(element_group_name.c_str());
         write_element(h5_file, element_group_name, *history_point.element);
     }
-    string node_group_name = history_point_group_name + "/node";
-    H5::Group node_group = h5_file.createGroup(node_group_name.c_str());
-    write_node(h5_file, node_group, node_group_name, *history_point.node);
+    if (history_point.hasNode) {
+        string node_group_name = history_point_group_name + "/node";
+        H5::Group node_group = h5_file.createGroup(node_group_name.c_str());
+        write_node(h5_file, node_group, node_group_name, *history_point.node);
+    }
     write_set(h5_file, history_point_group_name, history_point.region);
     write_string_dataset(history_point_group, "assembly", history_point.assemblyName);
     write_string_dataset(history_point_group, "instance", history_point.instanceName);
@@ -1396,18 +1403,12 @@ void OdbExtractObject::write_elements(H5::H5File &h5_file, const string &group_n
 void OdbExtractObject::write_node(H5::H5File &h5_file, H5::Group &group, const string &group_name, const node_type &node) {
     string node_link;
     string newGroupName = group_name + "/" + to_string(node.label);
+//    if (node.label < 0) { cout << node.label <<  " " << newGroupName << endl; }
     try {
         node_link = this->node_links.at(node.label);
         // If link is found, then write a link rather than all the data again
         hsize_t dimensions[] = {1};
         H5::DataSpace dataspace(1, dimensions);
-        // TODO: Investigate error:
-        // unable to create and link to dataset
-        // unable to create new link to object
-        // can't insert link
-        // internal path traversal failed
-        // component not found
-//        cout << node_link << " " << newGroupName << endl;
         h5_file.link(H5L_TYPE_SOFT, node_link, newGroupName);
     } catch (const std::out_of_range& oor) {  // If node.label is not found in the node_links map
         hsize_t dimensions[] = {3};
