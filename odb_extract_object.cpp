@@ -1409,7 +1409,13 @@ void OdbExtractObject::write_node(H5::H5File &h5_file, H5::Group &group, const s
         // If link is found, then write a link rather than all the data again
         hsize_t dimensions[] = {1};
         H5::DataSpace dataspace(1, dimensions);
-        h5_file.link(H5L_TYPE_SOFT, node_link, newGroupName);
+        try {
+            Exception::dontPrint();
+            h5_file.link(H5L_TYPE_SOFT, node_link, newGroupName);
+        } catch (FileIException error) {
+//            cout << error.getDetailMsg() << endl; // "creating link failed"
+//            log_file.warning(error.getDetailMsg());
+        }
     } catch (const std::out_of_range& oor) {  // If node.label is not found in the node_links map
         hsize_t dimensions[] = {3};
         H5::DataSpace dataspace(1, dimensions);
