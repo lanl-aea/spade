@@ -265,23 +265,25 @@ tangential_behavior_type OdbExtractObject::process_interaction_property (const o
 }
 
 node_type* OdbExtractObject::process_node (const odb_Node &node, Logging &log_file) {
+    std::stringstream floatS;
+    floatS << std::noshowpos << std::setprecision(7) << node.label() << "_" << node.coordinates()[0] << "_" << node.coordinates()[0] << "_" << node.coordinates()[0];
+    string node_key(floatS.str());  // Needed to set the maximum precision of a float (7) to make sure the string is unique
     try {  // If the node has been stored in nodes, just return the address to it
-        return &this->nodes.at(node.label());  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+        return &this->nodes.at(node_key);  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
     } catch (const std::out_of_range& oor) {
-//    if (this->nodes.find(node.label()) == this->nodes.end()) {
         node_type new_node;
         new_node.label = node.label();
-        const float * const coords = node.coordinates();
-        new_node.coordinates[0] = coords[0];
-        new_node.coordinates[1] = coords[1];
-        new_node.coordinates[2] = coords[2];
-        log_file.logDebug("\t\tnode " + to_string(new_node.label) + ": " + to_string(coords[0]) + " " + to_string(coords[1]) + " " + to_string(coords[2]));
-        this->nodes[node.label()] = new_node;
-        return &this->nodes[node.label()];
+        new_node.coordinates[0] = node.coordinates()[0];
+        new_node.coordinates[1] = node.coordinates()[1];
+        new_node.coordinates[2] = node.coordinates()[2];
+        log_file.logDebug("\t\tnode " + node_key);
+        this->nodes[node_key] = new_node;
+        return &this->nodes[node_key];
     }
 }
 
 element_type* OdbExtractObject::process_element (const odb_Element &element, Logging &log_file) {
+    // TODO: build out string using instancenames for unique key
     try {
         return &this->elements.at(element.label());  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
     } catch (const std::out_of_range& oor) {
@@ -1403,9 +1405,12 @@ void OdbExtractObject::write_elements(H5::H5File &h5_file, const string &group_n
 void OdbExtractObject::write_node(H5::H5File &h5_file, H5::Group &group, const string &group_name, const node_type &node) {
     string node_link;
     string newGroupName = group_name + "/" + to_string(node.label);
-//    if (node.label < 0) { cout << node.label <<  " " << newGroupName << endl; }
+    std::stringstream floatS;
+    floatS << std::noshowpos << std::setprecision(7) << node.label << "_" << node.coordinates[0] << "_" << node.coordinates[0] << "_" << node.coordinates[0];
+    string node_key(floatS.str());  // Needed to set the maximum precision of a float (7) to make sure the string is unique
+
     try {
-        node_link = this->node_links.at(node.label);
+        node_link = this->node_links.at(node_key);
         // If link is found, then write a link rather than all the data again
         hsize_t dimensions[] = {1};
         H5::DataSpace dataspace(1, dimensions);
@@ -1421,7 +1426,7 @@ void OdbExtractObject::write_node(H5::H5File &h5_file, H5::Group &group, const s
         H5::DataSpace dataspace(1, dimensions);
         H5::DataSet dataset = group.createDataSet(newGroupName, H5::PredType::NATIVE_FLOAT, dataspace);
         dataset.write(node.coordinates, H5::PredType::NATIVE_FLOAT);
-        this->node_links[node.label] = newGroupName;  // Store link for later
+        this->node_links[node_key] = newGroupName;  // Store link for later
         dataset.close();
         dataspace.close();
     }

@@ -962,9 +962,9 @@ class OdbExtractObject {
         vector<contact_explicit_type> explicit_interactions;
         constraint_type constraints;
         assembly_type root_assembly;
-        map<int, node_type> nodes;
+        map<string, node_type> nodes;
         map<int, element_type> elements;
-        map<int, string> node_links;
+        map<string, string> node_links;
         map<int, string> element_links;
         map<string, string> instance_links;
         vector<step_type> steps;
