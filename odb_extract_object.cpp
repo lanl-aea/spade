@@ -264,7 +264,7 @@ tangential_behavior_type OdbExtractObject::process_interaction_property (const o
     return interaction;
 }
 
-node_type* OdbExtractObject::process_node (const odb_Node &node, Logging &log_file) {
+node_type* OdbExtractObject::process_node(const odb_Node &node, Logging &log_file) {
     std::stringstream floatS;
     floatS << std::noshowpos << std::setprecision(7) << node.label() << "_" << node.coordinates()[0] << "_" << node.coordinates()[0] << "_" << node.coordinates()[0];
     string node_key(floatS.str());  // Needed to set the maximum precision of a float (7) to make sure the string is unique
@@ -282,27 +282,30 @@ node_type* OdbExtractObject::process_node (const odb_Node &node, Logging &log_fi
     }
 }
 
-element_type* OdbExtractObject::process_element (const odb_Element &element, Logging &log_file) {
-    // TODO: build out string using instancenames for unique key
+element_type* OdbExtractObject::process_element(const odb_Element &element, Logging &log_file) {
+    // TODO: consider another way of uniquely identifying an element, since the string with all the instance names can be quite long
+    element_type new_element;
+    string element_key;
+    new_element.label = element.label();
+    odb_SequenceString instance_names = element.instanceNames();
+    for (int i=0; i < instance_names.size(); i++) {
+        new_element.instanceNames.push_back(instance_names[i].CStr());
+        element_key += new_element.instanceNames[i];
+    }
+    element_key = to_string(new_element.label) + element_key;
     try {
-        return &this->elements.at(element.label());  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+        return &this->elements.at(element_key);  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
     } catch (const std::out_of_range& oor) {
-        element_type new_element;
-        new_element.label = element.label();
         new_element.type = element.type().CStr();
         int element_connectivity_size;
         const int* const connectivity = element.connectivity(element_connectivity_size); 
         for (int i=0; i < element_connectivity_size; i++) {
             new_element.connectivity.push_back(connectivity[i]);
         }
-        odb_SequenceString instance_names = element.instanceNames();
-        for (int i=0; i < instance_names.size(); i++) {
-            new_element.instanceNames.push_back(instance_names[i].CStr());
-        }
         log_file.logDebug("\t\telement " + to_string(new_element.label) + ": connectivity size: " + to_string(new_element.connectivity.size()) + " instances size:" + to_string(new_element.instanceNames.size()));
         new_element.sectionCategory = process_section_category(element.sectionCategory(), log_file);
-        this->elements[element.label()] = new_element;
-        return &this->elements[element.label()];
+        this->elements[element_key] = new_element;
+        return &this->elements[element_key];
     }
 }
 
@@ -1380,17 +1383,23 @@ void OdbExtractObject::write_interactions(H5::H5File &h5_file, const string &gro
 void OdbExtractObject::write_element(H5::H5File &h5_file, const string &group_name, const element_type &element) {
     string element_link;
     string newGroupName = group_name + "/" + to_string(element.label);
+    string element_key;
+    for (int i=0; i < element.instanceNames.size(); i++) {
+        element_key += element.instanceNames[i];
+    }
+    element_key = to_string(element.label) + element_key;
     try {
-        element_link = this->element_links.at(element.label);
+        element_link = this->element_links.at(element_key);
         h5_file.link(H5L_TYPE_SOFT, element_link, newGroupName);
     } catch (const std::out_of_range& oor) {
-    H5::Group element_group = h5_file.createGroup((group_name + "/" + to_string(element.label)).c_str());
+        H5::Group element_group = h5_file.createGroup((group_name + "/" + to_string(element.label)).c_str());
         write_string_dataset(element_group, "type", element.type);
         write_integer_vector_dataset(element_group, "connectivity", element.connectivity);
-        write_section_category(h5_file, element_group, group_name + "/" + to_string(element.label) + "/sectionCategory", element.sectionCategory);
+        H5::Group section_category_group = h5_file.createGroup((group_name + "/" + to_string(element.label) + "/sectionCategory").c_str());
+        write_section_category(h5_file, section_category_group, group_name + "/" + to_string(element.label) + "/sectionCategory", element.sectionCategory);
         write_string_vector_dataset(element_group, "instanceNames", element.instanceNames);
 
-        this->element_links[element.label] = newGroupName;  // Store link for later
+        this->element_links[element_key] = newGroupName;  // Store link for later
     }
 
 }

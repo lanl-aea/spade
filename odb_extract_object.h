@@ -963,9 +963,9 @@ class OdbExtractObject {
         constraint_type constraints;
         assembly_type root_assembly;
         map<string, node_type> nodes;
-        map<int, element_type> elements;
+        map<string, element_type> elements;
         map<string, string> node_links;
-        map<int, string> element_links;
+        map<string, string> element_links;
         map<string, string> instance_links;
         vector<step_type> steps;
 
