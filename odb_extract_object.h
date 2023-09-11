@@ -301,7 +301,13 @@ struct assembly_type {
     vector<connector_orientation_type> connectorOrientations;
 };
 
+struct field_location_type {
+    string position;
+    vector<section_point_type> sectionPoint;
+};
+
 struct field_output_type {
+    vector<field_location_type> locations;
 };
 
 struct frame_type {
@@ -559,6 +565,16 @@ class OdbExtractObject {
           \sa process_odb()
         */
         assembly_type process_assembly (odb_Assembly &assembly, odb_Odb &odb, Logging &log_file);
+        //! Process field output from the odb file
+        /*!
+          Process a field output object and store the results
+          \param field_output An odb field output object
+          \param log_file Logging object for writing log messages
+          \param command_line_arguments CmdLineArguments object storing command line arguments
+          \return field_output_type with data stored from the odb
+          \sa process_odb()
+        */
+        field_output_type process_field_output (odb_FieldOutput &field_output, Logging &log_file, CmdLineArguments &command_line_arguments);
         //! Process a frame from the odb file
         /*!
           Process a frame object and store the results

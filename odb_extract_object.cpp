@@ -811,9 +811,32 @@ assembly_type OdbExtractObject::process_assembly (odb_Assembly &assembly, odb_Od
     for (int i=0; i<connector_orientations.size(); i++)  { new_assembly.connectorOrientations.push_back(process_connector_orientation(connector_orientations[i], log_file)); }
     return new_assembly;
 }
+field_output_type OdbExtractObject::process_field_output (odb_FieldOutput &field_output, Logging &log_file, CmdLineArguments &command_line_arguments) {
+    field_output_type new_field_output;
+    odb_SequenceFieldLocation field_locations = field_output.locations();
+    for (int i=0; i<field_locations.size(); i++) {
+        odb_FieldLocation field_location = field_locations.constGet(i);
+        field_location_type new_field_location;
+        switch(field_location.position()) {
+            case odb_Enum::NODAL: new_field_location.position = "Nodal"; break;
+            case odb_Enum::INTEGRATION_POINT: new_field_location.position = "Integration Point"; break;
+            case odb_Enum::ELEMENT_NODAL: new_field_location.position = "Element Nodal"; break;
+            case odb_Enum::ELEMENT_FACE: new_field_location.position = "Element Face"; break;
+            case odb_Enum::CENTROID: new_field_location.position = "Centroid"; break;
+        }
+        for (int i=0; i<field_location.sectionPoint().size(); i++) {
+            section_point_type point;
+            point.number = to_string(field_location.sectionPoint(i).number());
+            point.description = field_location.sectionPoint(i).description().CStr();
+            new_field_location.sectionPoint.push_back(point);
+        }
+        new_field_output.locations.push_back(new_field_location);
+    }
+
+    return new_field_output;
+}
 
 frame_type OdbExtractObject::process_frame (odb_Frame &frame, Logging &log_file, CmdLineArguments &command_line_arguments) {
-// TODO: Write code to get frames
     frame_type new_frame;
     new_frame.description = frame.description().CStr();
     new_frame.loadCase = frame.loadCase().name().CStr();
@@ -832,7 +855,7 @@ frame_type OdbExtractObject::process_frame (odb_Frame &frame, Logging &log_file,
     odb_FieldOutputRepositoryIT field_outputs_iterator(field_outputs);
     for (field_outputs_iterator.first(); !field_outputs_iterator.isDone(); field_outputs_iterator.next()) {
         odb_FieldOutput& field = field_outputs[field_outputs_iterator.currentKey()]; 
-//        new_frame.fieldOutputs.push_back(process_field_output(field));
+        new_frame.fieldOutputs.push_back(process_field_output(field, log_file, command_line_arguments));
     }
     return new_frame;
 }
@@ -985,6 +1008,7 @@ void OdbExtractObject::process_step(const odb_Step &step, odb_Odb &odb, Logging 
         odb_HistoryRegion history_region = history_region_iterator.currentValue();
         new_step.historyRegions.push_back(process_history_region(history_region, log_file, command_line_arguments));
     }
+    // TODO: Write code to handle command line arguments that limit how much history or field output data is written
     this->steps.push_back(new_step);
 }
 
