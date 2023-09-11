@@ -813,6 +813,12 @@ assembly_type OdbExtractObject::process_assembly (odb_Assembly &assembly, odb_Od
 }
 field_output_type OdbExtractObject::process_field_output (odb_FieldOutput &field_output, Logging &log_file, CmdLineArguments &command_line_arguments) {
     field_output_type new_field_output;
+    new_field_output.name = field_output.name().CStr();
+    new_field_output.description = field_output.description().CStr();
+    new_field_output.dim = field_output.dim();
+    new_field_output.dim2 = field_output.dim2();
+    //TODO: ask if 3DS will implement this function
+//    new_field_output.isEngineeringTensor = (field_output.isEngineeringTensor()) ? "true" : "false";
     odb_SequenceFieldLocation field_locations = field_output.locations();
     for (int i=0; i<field_locations.size(); i++) {
         odb_FieldLocation field_location = field_locations.constGet(i);
@@ -832,6 +838,11 @@ field_output_type OdbExtractObject::process_field_output (odb_FieldOutput &field
         }
         new_field_output.locations.push_back(new_field_location);
     }
+
+//    vector<string> componentLabels;
+//    vector<string> validInvariants;
+    //values;
+    //bulkDataBlocks;
 
     return new_field_output;
 }
@@ -1128,6 +1139,34 @@ void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_n
     }
 }
 
+void OdbExtractObject::write_field_output(H5::H5File &h5_file, const string &group_name, field_output_type &field_output) {
+    H5::Group field_output_group = h5_file.createGroup(group_name.c_str());
+    write_string_dataset(field_output_group, "name", field_output.name);
+    write_string_dataset(field_output_group, "description", field_output.description);
+    write_string_dataset(field_output_group, "type", field_output.type);
+    write_integer_dataset(field_output_group, "dim", field_output.dim);
+    write_integer_dataset(field_output_group, "dim2", field_output.dim2);
+//    write_string_dataset(field_output_group, "isEngineeringTensor", field_output.isEngineeringTensor);
+
+    H5::Group locations_group = h5_file.createGroup((group_name + "/locations").c_str());
+    for (int i=0; i<field_output.locations.size(); i++) {
+        string location_group_name = group_name + "/locations/" + to_string(i);
+        H5::Group location_group = h5_file.createGroup(location_group_name.c_str());
+        write_string_dataset(location_group, "position", field_output.locations[i].position);
+        H5::Group section_points_group = h5_file.createGroup((location_group_name + "/sectionPoint").c_str());
+        for (int j=0; j<field_output.locations[i].sectionPoint.size(); j++) {
+            H5::Group section_point_group = h5_file.createGroup((location_group_name + "/sectionPoint/" + field_output.locations[i].sectionPoint[j].number).c_str());
+            write_string_dataset(section_point_group, "description", field_output.locations[i].sectionPoint[j].description);
+        }
+    }
+//    vector<string> componentLabels;
+//    vector<string> validInvariants;
+//    vector<field_location_type> locations;
+    //values;
+    //bulkDataBlocks;
+
+}
+
 void OdbExtractObject::write_frames(H5::H5File &h5_file, const string &group_name, vector<frame_type> &frames) {
     string frames_group_name = group_name + "/frames";
     H5::Group frames_group = h5_file.createGroup(frames_group_name.c_str());
@@ -1144,8 +1183,7 @@ void OdbExtractObject::write_frames(H5::H5File &h5_file, const string &group_nam
         H5::Group field_outputs_group = h5_file.createGroup((frame_group_name + "/fieldOutputs").c_str());
         for (int i=0; i<frame.fieldOutputs.size(); i++) {
             string field_output_group_name = frame_group_name + "/fieldOutputs/" + to_string(i);
-            H5::Group field_output_group = h5_file.createGroup(field_output_group_name.c_str());
-//            write_field_output(h5_file, field_output_group_name, frame.fieldOutputs[i]);
+            write_field_output(h5_file, field_output_group_name, frame.fieldOutputs[i]);
         }
     }
 }

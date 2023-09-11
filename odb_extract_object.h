@@ -307,7 +307,17 @@ struct field_location_type {
 };
 
 struct field_output_type {
+    string name;
+    string description;
+    string type;
+    vector<string> componentLabels;
+    vector<string> validInvariants;
+    int dim;
+    int dim2;
+//    string isEngineeringTensor;  // Boolean
     vector<field_location_type> locations;
+    //values;
+    //bulkDataBlocks;
 };
 
 struct frame_type {
@@ -706,6 +716,14 @@ class OdbExtractObject {
           \param group_name Name of the group where data is to be written
         */
         void write_assembly(H5::H5File &h5_file, const string &group_name);
+        //! Write field output data to an HDF5 file
+        /*!
+          Write field output data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param field_output Data to be written
+        */
+        void write_field_output(H5::H5File &h5_file, const string &group_name, field_output_type &field_output);
         //! Write frames data to an HDF5 file
         /*!
           Write frames data into an HDF5 file
