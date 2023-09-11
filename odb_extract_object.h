@@ -331,6 +331,13 @@ struct history_point_type {
 };
 
 struct history_output_type {
+    string name;
+    string description;
+    string type;
+    vector<vector<float>> data;
+    int max_column_size;
+    vector<vector<float>> conjugateData;
+    int max_column_size_conjugate;
 };
 
 struct history_region_type {
@@ -571,6 +578,16 @@ class OdbExtractObject {
           \sa process_odb()
         */
         history_point_type process_history_point (odb_HistoryPoint history_point, Logging &log_file);
+        //! Process a history output from the odb file
+        /*!
+          Process a history output object and store the results
+          \param history_output An odb history output object
+          \param log_file Logging object for writing log messages
+          \param command_line_arguments CmdLineArguments object storing command line arguments
+          \return history_output_type with data stored from the odb
+          \sa process_odb()
+        */
+        history_output_type process_history_output (odb_HistoryOutput &history_region, Logging &log_file, CmdLineArguments &command_line_arguments);
         //! Process a history region from the odb file
         /*!
           Process a history region object and store the results
@@ -689,6 +706,14 @@ class OdbExtractObject {
           \param history_point Data to be written
         */
         void write_history_point(H5::H5File &h5_file, const string &group_name, history_point_type &history_point);
+        //! Write history output data to an HDF5 file
+        /*!
+          Write history output data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param history_output Data to be written
+        */
+        void write_history_output(H5::H5File &h5_file, const string &group_name, history_output_type &history_output);
         //! Write history regions data to an HDF5 file
         /*!
           Write history regions data into an HDF5 file

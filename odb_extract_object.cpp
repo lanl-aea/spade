@@ -884,8 +884,43 @@ history_point_type OdbExtractObject::process_history_point (odb_HistoryPoint his
     return new_history_point;
 }
 
+history_output_type OdbExtractObject::process_history_output (odb_HistoryOutput &history_output, Logging &log_file, CmdLineArguments &command_line_arguments) {
+    history_output_type new_history_output;
+    new_history_output.name = history_output.name().CStr();
+    new_history_output.description = history_output.description().CStr();
+    switch(history_output.type()) {
+        case odb_Enum::SCALAR: new_history_output.type = "Scalar"; break;
+    }
+
+    odb_SequenceSequenceFloat data = history_output.data();
+    new_history_output.max_column_size = 0;
+    for (int i=0; i<data.size(); i++) {
+        odb_SequenceFloat data_dimension1 = data.constGet(i);
+        if (data_dimension1.size() > new_history_output.max_column_size) { new_history_output.max_column_size = data_dimension1.size(); }
+        vector<float> dimension1;
+        for (int j=0; j<data_dimension1.size(); j++) {
+            dimension1.push_back(data_dimension1.constGet(j));
+        }
+        new_history_output.data.push_back(dimension1);
+    }
+
+    odb_SequenceSequenceFloat conjugate_data = history_output.conjugateData();
+    new_history_output.max_column_size_conjugate = 0;
+    for (int i=0; i<conjugate_data.size(); i++) {
+        odb_SequenceFloat conjugate_data_dimension1 = conjugate_data.constGet(i);
+        if (conjugate_data_dimension1.size() > new_history_output.max_column_size_conjugate) { new_history_output.max_column_size_conjugate = conjugate_data_dimension1.size(); }
+        vector<float> dimension1;
+        for (int j=0; j<conjugate_data_dimension1.size(); j++) {
+            dimension1.push_back(conjugate_data_dimension1.constGet(j));
+        }
+        new_history_output.conjugateData.push_back(dimension1);
+    }
+
+    return new_history_output;
+
+}
+
 history_region_type OdbExtractObject::process_history_region (odb_HistoryRegion &history_region, Logging &log_file, CmdLineArguments &command_line_arguments) {
-// TODO: Write code to get history regions
     history_region_type new_history_region;
     new_history_region.name = history_region.name().CStr();
     new_history_region.description = history_region.description().CStr();
@@ -901,7 +936,8 @@ history_region_type OdbExtractObject::process_history_region (odb_HistoryRegion 
     odb_HistoryOutputRepository history_outputs = history_region.historyOutputs();
     odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
     for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
-//        new_history_region.historyOutputs.push_back( process_history_output(history_outputs_iterator.currentValue(), log_file));
+        odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
+        new_history_region.historyOutputs.push_back( process_history_output(history_output, log_file, command_line_arguments));
     }
 
 
@@ -1114,6 +1150,15 @@ void OdbExtractObject::write_history_point(H5::H5File &h5_file, const string &gr
 
 }
 
+void OdbExtractObject::write_history_output(H5::H5File &h5_file, const string &group_name, history_output_type &history_output) {
+    H5::Group history_output_group = h5_file.createGroup(group_name.c_str());
+    write_string_dataset(history_output_group, "name", history_output.name);
+    write_string_dataset(history_output_group, "description", history_output.description);
+    write_string_dataset(history_output_group, "type", history_output.type);
+    write_float_2D_vector(history_output_group, "data", history_output.max_column_size, history_output.data);
+    write_float_2D_vector(history_output_group, "conjugateData", history_output.max_column_size_conjugate, history_output.conjugateData);
+}
+
 void OdbExtractObject::write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions) {
     string history_regions_group_name = group_name + "/historyRegions";
     H5::Group history_regions_group = h5_file.createGroup(history_regions_group_name.c_str());
@@ -1127,9 +1172,9 @@ void OdbExtractObject::write_history_regions(H5::H5File &h5_file, const string &
         H5::Group history_outputs_group = h5_file.createGroup((history_region_group_name + "/historyOutputs").c_str());
         for (int i=0; i<history_region.historyOutputs.size(); i++) {
             string history_output_group_name = history_region_group_name + "/historyOutputs/" + to_string(i);
-            H5::Group history_output_group = h5_file.createGroup(history_output_group_name.c_str());
-//            write_history_output(h5_file, history_region_group_name, history_region.historyOutputs[i]);
+            write_history_output(h5_file, history_output_group_name, history_region.historyOutputs[i]);
         }
+        history_region.historyOutputs = vector<history_output_type>();  // set the vector to an empty vector - i.e. clear the memory
     }
 }
 
