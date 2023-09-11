@@ -838,9 +838,27 @@ field_output_type OdbExtractObject::process_field_output (odb_FieldOutput &field
         }
         new_field_output.locations.push_back(new_field_location);
     }
-
-//    vector<string> componentLabels;
-//    vector<string> validInvariants;
+    odb_SequenceString available_components = field_output.componentLabels();
+    for (int i=0; i<available_components.size(); i++) {
+        new_field_output.componentLabels.push_back(available_components[i].CStr());
+    }
+    for (int i=0; i<field_output.validInvariants().size(); i++) {
+        string invariant;
+        switch(field_output.validInvariants().constGet(i)) {
+            case odb_Enum::MAGNITUDE: invariant = "Magnitude"; break;
+            case odb_Enum::MISES: invariant = "Mises"; break;
+            case odb_Enum::TRESCA: invariant = "Tresca"; break;
+            case odb_Enum::PRESS: invariant = "Press"; break;
+            case odb_Enum::INV3: invariant = "Inv3"; break;
+            case odb_Enum::MAX_PRINCIPAL: invariant = "Max Principal"; break;
+            case odb_Enum::MID_PRINCIPAL: invariant = "Mid Principal"; break;
+            case odb_Enum::MIN_PRINCIPAL: invariant = "Min Principal"; break;
+            case odb_Enum::MAX_INPLANE_PRINCIPAL: invariant = "Max Inplane Principal"; break;
+            case odb_Enum::MIN_INPLANE_PRINCIPAL: invariant = "Min Inplane Principal"; break;
+            case odb_Enum::OUTOFPLANE_PRINCIPAL: invariant = "Out of Plane Principal"; break;
+        }
+        new_field_output.validInvariants.push_back(invariant);
+    }
     //values;
     //bulkDataBlocks;
 
@@ -1147,6 +1165,8 @@ void OdbExtractObject::write_field_output(H5::H5File &h5_file, const string &gro
     write_integer_dataset(field_output_group, "dim", field_output.dim);
     write_integer_dataset(field_output_group, "dim2", field_output.dim2);
 //    write_string_dataset(field_output_group, "isEngineeringTensor", field_output.isEngineeringTensor);
+    write_string_vector_dataset(field_output_group, "componentLabels", field_output.componentLabels);
+    write_string_vector_dataset(field_output_group, "validInvariants", field_output.validInvariants);
 
     H5::Group locations_group = h5_file.createGroup((group_name + "/locations").c_str());
     for (int i=0; i<field_output.locations.size(); i++) {
@@ -1159,9 +1179,6 @@ void OdbExtractObject::write_field_output(H5::H5File &h5_file, const string &gro
             write_string_dataset(section_point_group, "description", field_output.locations[i].sectionPoint[j].description);
         }
     }
-//    vector<string> componentLabels;
-//    vector<string> validInvariants;
-//    vector<field_location_type> locations;
     //values;
     //bulkDataBlocks;
 
