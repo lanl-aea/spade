@@ -817,7 +817,7 @@ field_output_type OdbExtractObject::process_field_output (odb_FieldOutput &field
     new_field_output.description = field_output.description().CStr();
     new_field_output.dim = field_output.dim();
     new_field_output.dim2 = field_output.dim2();
-    //TODO: ask if 3DS will implement this function
+    // TODO: Maybe reach out to 3DS to determine if they plan to implement isEngineeringTensor() function
 //    new_field_output.isEngineeringTensor = (field_output.isEngineeringTensor()) ? "true" : "false";
     odb_SequenceFieldLocation field_locations = field_output.locations();
     for (int i=0; i<field_locations.size(); i++) {

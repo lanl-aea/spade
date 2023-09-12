@@ -306,6 +306,61 @@ struct field_location_type {
     vector<section_point_type> sectionPoint;
 };
 
+struct field_value_type {
+    string position                                                                        ;
+    string precision;
+    int elementLabel;
+    int nodeLabel;
+    int integrationPoint;
+    string face;
+    string type;
+    float magnitude;
+    float mises;
+    float tresca;
+    float press;
+    float inv3;
+    float maxPrincipal;
+    float midPrincipal;
+    float minPrincipal;
+    float maxInPlanePrincipal;
+    float minInPlanePrincipal;
+    float outOfPlanePrincipal;
+    string instance;  // Will store just the instance name
+    section_point_type sectionPoint;
+    float localCoordSystem[3][3];
+    float localCoordSystemDouble[3][3];
+    vector<float> data;
+    vector<double> dataDouble;
+    vector<float> conjugateData;
+    vector<double> conjugateDataDouble;
+};
+
+struct field_bulk_type {
+    string position                                                                        ;
+    string precision;
+    string type;
+    int orientationWidth;
+    int numberOfElements;
+    int length;
+    int valuesPerElement;
+    int width;
+    string baseElementType;
+    string instance; // Will store just the instance name
+    section_point_type sectionPoint;
+    vector<int> elementLabels;
+    vector<int> nodeLabels;
+    vector<int> integrationPoints;
+    vector<string> faces;
+    vector<float> data;
+    vector<double> dataDouble;
+    vector<float> conjugateData;
+    vector<double> conjugateDataDouble;
+    vector<float> mises;
+    vector<float> localCoordSystem;
+    vector<double> localCoordSystemDouble;
+    vector<string> componentLabels;
+};
+
 struct field_output_type {
     string name;
     string description;
@@ -316,8 +371,8 @@ struct field_output_type {
     int dim2;
 //    string isEngineeringTensor;  // Boolean
     vector<field_location_type> locations;
-    //values;
-    //bulkDataBlocks;
+    vector<field_value_type> values;
+    vector<field_bulk_type> bulkDataBlocks;
 };
 
 struct frame_type {
