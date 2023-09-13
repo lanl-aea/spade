@@ -811,6 +811,55 @@ assembly_type OdbExtractObject::process_assembly (odb_Assembly &assembly, odb_Od
     for (int i=0; i<connector_orientations.size(); i++)  { new_assembly.connectorOrientations.push_back(process_connector_orientation(connector_orientations[i], log_file)); }
     return new_assembly;
 }
+
+field_value_type OdbExtractObject::process_field_values(odb_FieldValue &field_value, Logging &log_file, CmdLineArguments &command_line_arguments) {
+    field_value_type new_field_value;
+    switch(field_value.position()) {
+        case odb_Enum::NODAL: new_field_value.position = "Nodal"; break;
+        case odb_Enum::INTEGRATION_POINT: new_field_value.position = "Integration Point"; break;
+        case odb_Enum::ELEMENT_NODAL: new_field_value.position = "Element Nodal"; break;
+        case odb_Enum::ELEMENT_FACE: new_field_value.position = "Element Face"; break;
+        case odb_Enum::CENTROID: new_field_value.position = "Centroid"; break;
+    }
+    switch(field_value.precision()) {
+        case odb_Enum::SINGLE_PRECISION: new_field_value.precision = "Single Precision"; break;
+        case odb_Enum::DOUBLE_PRECISION: new_field_value.precision = "Double Precision"; break;
+    }
+    new_field_value.elementLabel = field_value.elementLabel();
+    new_field_value.nodeLabel = field_value.nodeLabel();
+    new_field_value.integrationPoint = field_value.integrationPoint();
+    switch(field_value.type()) {
+        case odb_Enum::SCALAR: new_field_value.type = "Scalar"; break;
+        case odb_Enum::VECTOR: new_field_value.type = "Vector"; break;
+        case odb_Enum::TENSOR_3D_FULL: new_field_value.type = "Tensor 3D Full"; break;
+        case odb_Enum::TENSOR_3D_PLANAR: new_field_value.type = "Tensor 3D Planar"; break;
+        case odb_Enum::TENSOR_3D_SURFACE: new_field_value.type = "Tensor 3D Surface"; break;
+        case odb_Enum::TENSOR_2D_PLANAR: new_field_value.type = "Tensor 2D Planar"; break;
+        case odb_Enum::TENSOR_2D_SURFACE: new_field_value.type = "Tensor 2D Surface"; break;
+    }
+    new_field_value.magnitude = field_value.magnitude();
+    new_field_value.mises = field_value.mises();
+    new_field_value.tresca = field_value.tresca();
+    new_field_value.press = field_value.press();
+    new_field_value.inv3 = field_value.inv3();
+    new_field_value.maxPrincipal = field_value.maxPrincipal();
+    new_field_value.midPrincipal = field_value.midPrincipal();
+    new_field_value.minPrincipal = field_value.minPrincipal();
+    new_field_value.maxInPlanePrincipal = field_value.maxInPlanePrincipal();
+    new_field_value.minInPlanePrincipal = field_value.minInPlanePrincipal();
+    new_field_value.outOfPlanePrincipal = field_value.outOfPlanePrincipal();
+    new_field_value.instance = field_value.instance().name().CStr();
+    new_field_value.sectionPoint.number =  to_string(field_value.sectionPoint().number());
+    new_field_value.sectionPoint.description =  field_value.sectionPoint().description().CStr();
+    return new_field_value;
+}
+
+field_bulk_type OdbExtractObject::process_field_bulk_data(odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data, Logging &log_file, CmdLineArguments &command_line_arguments) {
+    field_bulk_type new_field_bulk_data;
+
+    return new_field_bulk_data;
+}
+
 field_output_type OdbExtractObject::process_field_output (odb_FieldOutput &field_output, Logging &log_file, CmdLineArguments &command_line_arguments) {
     field_output_type new_field_output;
     new_field_output.name = field_output.name().CStr();
@@ -859,9 +908,16 @@ field_output_type OdbExtractObject::process_field_output (odb_FieldOutput &field
         }
         new_field_output.validInvariants.push_back(invariant);
     }
-    //values;
-    //bulkDataBlocks;
-
+    odb_SequenceFieldValue field_values = field_output.values();
+    for (int i=0; i<field_values.size(); i++) {
+        odb_FieldValue field_value = field_values.constGet(i);
+        new_field_output.values.push_back(process_field_values(field_value, log_file, command_line_arguments));
+    }
+    odb_SequenceFieldBulkData field_bulk_values = field_output.bulkDataBlocks();	
+    for (int i=0; i<field_bulk_values.size(); i++) {
+        odb_FieldBulkData field_bulk_value = field_bulk_values[i];
+        new_field_output.bulkDataBlocks.push_back(process_field_bulk_data(field_bulk_value, field_output.validInvariants(), field_output.isComplex(), log_file, command_line_arguments));
+    }
     return new_field_output;
 }
 

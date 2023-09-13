@@ -307,15 +307,13 @@ struct field_location_type {
 };
 
 struct field_value_type {
-    string position                                                                        ;
+    string position;
     string precision;
     int elementLabel;
     int nodeLabel;
     int integrationPoint;
-    string face;
     string type;
     float magnitude;
-    float mises;
     float tresca;
     float press;
     float inv3;
@@ -327,18 +325,9 @@ struct field_value_type {
     float outOfPlanePrincipal;
     string instance;  // Will store just the instance name
     section_point_type sectionPoint;
-    float localCoordSystem[3][3];
-    float localCoordSystemDouble[3][3];
-    vector<float> data;
-    vector<double> dataDouble;
-    vector<float> conjugateData;
-    vector<double> conjugateDataDouble;
 };
 
 struct field_bulk_type {
-    string position                                                                        ;
-    string precision;
-    string type;
     int orientationWidth;
     int numberOfElements;
     int length;
@@ -630,6 +619,28 @@ class OdbExtractObject {
           \sa process_odb()
         */
         assembly_type process_assembly (odb_Assembly &assembly, odb_Odb &odb, Logging &log_file);
+        //! Process field value from the odb file
+        /*!
+          Process a field value object and store the results
+          \param field_value An odb field value object
+          \param log_file Logging object for writing log messages
+          \param command_line_arguments CmdLineArguments object storing command line arguments
+          \return field_value_type with data stored from the odb
+          \sa process_odb()
+        */
+        field_value_type process_field_values(odb_FieldValue &field_value, Logging &log_file, CmdLineArguments &command_line_arguments);
+        //! Process field bulk data from the odb file
+        /*!
+          Process a field bulk data object and store the results
+          \param field_bulk_data An odb field bulk data object
+          \param invariants An odb sequence invariant object
+          \param complex_data Boolean indicating if the data is complex
+          \param log_file Logging object for writing log messages
+          \param command_line_arguments CmdLineArguments object storing command line arguments
+          \return field_bulk_type with data stored from the odb
+          \sa process_odb()
+        */
+        field_bulk_type process_field_bulk_data(odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data, Logging &log_file, CmdLineArguments &command_line_arguments);
         //! Process field output from the odb file
         /*!
           Process a field output object and store the results
