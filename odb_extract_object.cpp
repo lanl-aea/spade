@@ -1378,7 +1378,6 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     log_file.logVerbose("Writing steps data.");
     write_steps(h5_file, "odb");
 
-    // TODO: potentially add amplitudes, filters, or materials group
     h5_file.close();  // Close the hdf5 file
     log_file.logVerbose("Closing hdf5 file.");
 }
@@ -1421,6 +1420,14 @@ void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_n
     }
 }
 
+void OdbExtractObject::write_field_bulk_data(H5::H5File &h5_file, const string &group_name, field_bulk_type &field_bulk_data){
+
+}
+
+void OdbExtractObject::write_field_value(H5::H5File &h5_file, const string &group_name, field_value_type &field_value) {
+
+}
+
 void OdbExtractObject::write_field_output(H5::H5File &h5_file, const string &group_name, field_output_type &field_output) {
     H5::Group field_output_group = h5_file.createGroup(group_name.c_str());
     write_string_dataset(field_output_group, "name", field_output.name);
@@ -1443,9 +1450,18 @@ void OdbExtractObject::write_field_output(H5::H5File &h5_file, const string &gro
             write_string_dataset(section_point_group, "description", field_output.locations[i].sectionPoint[j].description);
         }
     }
-    //values;
-    //bulkDataBlocks;
-
+    H5::Group values_group = h5_file.createGroup((group_name + "/values").c_str());
+    for (int i=0; i<field_output.values.size(); i++) {
+        string value_group_name = group_name + "/values/" + to_string(i);
+        H5::Group value_group = h5_file.createGroup(value_group_name.c_str());
+        write_field_value(h5_file, value_group_name, field_output.values[i]);
+    }
+    for (int i=0; i<field_output.bulkDataBlocks.size(); i++) {
+        string value_group_name = group_name + "/values/" + to_string(i);
+        //TODO: wrap with try/catch in case group is already created
+        H5::Group value_group = h5_file.createGroup(value_group_name.c_str());
+        write_field_bulk_data(h5_file, value_group_name, field_output.bulkDataBlocks[i]);
+    }
 }
 
 void OdbExtractObject::write_frames(H5::H5File &h5_file, const string &group_name, vector<frame_type> &frames) {

@@ -781,6 +781,22 @@ class OdbExtractObject {
           \param group_name Name of the group where data is to be written
         */
         void write_assembly(H5::H5File &h5_file, const string &group_name);
+        //! Write field bulk data to an HDF5 file
+        /*!
+          Write field bulk data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param field_bulk_data Data to be written
+        */
+        void write_field_bulk_data(H5::H5File &h5_file, const string &group_name, field_bulk_type &field_bulk_data);
+        //! Write field value data to an HDF5 file
+        /*!
+          Write field value data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param field_value Data to be written
+        */
+        void write_field_value(H5::H5File &h5_file, const string &group_name, field_value_type &field_value);
         //! Write field output data to an HDF5 file
         /*!
           Write field output data into an HDF5 file
