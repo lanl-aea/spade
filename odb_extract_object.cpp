@@ -996,7 +996,7 @@ field_bulk_type OdbExtractObject::process_field_bulk_data(odb_FieldBulkData &fie
                 }
             } else {
                 for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
-                    vector<float> current_conjugate_data_double;
+                    vector<double> current_conjugate_data_double;
                     for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, ++current_position) {
                         int total_points = current_position*new_field_bulk_data.width;
                         for (int component=0; component<new_field_bulk_data.width; ++component) {
@@ -1007,7 +1007,7 @@ field_bulk_type OdbExtractObject::process_field_bulk_data(odb_FieldBulkData &fie
                 }
             }
         }
-        if ( invars.isMember(odb_Enum::MISES) ) {
+        if (invariants.isMember(odb_Enum::MISES)) {
             current_position = 0;
             float* bulk_mises = field_bulk_data.mises();
             for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
@@ -1019,64 +1019,51 @@ field_bulk_type OdbExtractObject::process_field_bulk_data(odb_FieldBulkData &fie
             }
         }
     } else {
-/*
         int* node_labels = field_bulk_data.nodeLabels();	
-        if(new_field_bulk_data.precision == "Single Precision") {
-            for (int fv = 0;fv<new_field_bulk_data.length;++fv)
-            {			    
-            cout << space.CStr() << "     node             : " << 
-                        bulkInstanceName.CStr() //
-                << "." << node_labels[fv]  << endl;	   		
-            int total_points = fv*new_field_bulk_data.width;
-            cout << space.CStr() <<     "     data             : " ;
-            for (int component = 0;component<new_field_bulk_data.width;++component)
-                cout << data[total_points++] << blank;            
-            cout << endl;	   
-            }             
-            if (complex_data)
-            {
-            cout << space.CStr() << " Bulk Conjugate Data " << endl;
-            for (int fv = 0;fv<new_field_bulk_data.length;++fv)
-            {			    
-                cout << space.CStr() << "     node             : " << 
-                            bulkInstanceName.CStr() //
-                << "." << node_labels[fv]  << endl;	   		
-                int total_points = fv*new_field_bulk_data.width;
-                cout << space.CStr() <<     "     conjugate data   : " ;
-                for (int component = 0;component<new_field_bulk_data.width;++component)
-                cout << conjugate_data[total_points++] << blank;
-                cout << endl;	   
+        if (new_field_bulk_data.precision == "Single Precision") {
+            for (int node_count=0; node_count<new_field_bulk_data.length; ++node_count) {
+                vector<float> current_data;
+                vector<int> current_node_labels;
+                current_node_labels.push_back(node_labels[node_count]);
+                int total_points = node_count*new_field_bulk_data.width;
+                for (int component=0; component<new_field_bulk_data.width; ++component) {
+                    current_data.push_back(data[total_points++]);
+                }
+                new_field_bulk_data.nodeLabels.push_back(current_node_labels);
+                new_field_bulk_data.data.push_back(current_data);
             }
+            if (complex_data) {
+                for (int node_count=0; node_count<new_field_bulk_data.length; ++node_count) {
+                    vector<float> current_conjugate_data;
+                    int total_points = node_count*new_field_bulk_data.width;
+                    for (int component=0; component<new_field_bulk_data.width; ++component) {
+                        current_conjugate_data.push_back(conjugate_data[total_points++]);
+                    }
+                    new_field_bulk_data.conjugateData.push_back(current_conjugate_data);
+                }
             }      
         } else {
-            for (int fv = 0;fv<new_field_bulk_data.length;++fv)
-            {			    
-            cout << space.CStr() << "     node             : " << 
-                        bulkInstanceName.CStr() //
-                << "." << node_labels[fv]  << endl;	   		
-            int total_points = fv*new_field_bulk_data.width;
-            cout << space.CStr() <<     "     data             : " ;
-            for (int component = 0;component<new_field_bulk_data.width;++component)
-                cout << data_double[total_points++] << blank;            
-            cout << endl;	   
+            for (int node_count=0; node_count<new_field_bulk_data.length; ++node_count) {
+                vector<double> current_data_double;
+                vector<int> current_node_labels;
+                current_node_labels.push_back(node_labels[node_count]);
+                int total_points = node_count*new_field_bulk_data.width;
+                for (int component=0; component<new_field_bulk_data.width; ++component) {
+                    current_data_double.push_back(data_double[total_points++]);
+                }
+                new_field_bulk_data.dataDouble.push_back(current_data_double);
             }             
-            if (complex_data)
-            {
-            cout << space.CStr() << " Bulk Conjugate Data " << endl;
-            for (int fv = 0;fv<new_field_bulk_data.length;++fv)
-            {			    
-                cout << space.CStr() << "     node             : " << 
-                            bulkInstanceName.CStr() //
-                << "." << node_labels[fv]  << endl;	   		
-                int total_points = fv*new_field_bulk_data.width;
-                cout << space.CStr() <<     "     conjugate data   : " ;
-                for (int component = 0;component<new_field_bulk_data.width;++component)
-                cout << conjugate_data_double[total_points++] << blank;
-                cout << endl;	   
-            }
+            if (complex_data) {
+                for (int node_count=0; node_count<new_field_bulk_data.length; ++node_count) {
+                    vector<double> current_conjugate_data_double;
+                    int total_points = node_count*new_field_bulk_data.width;
+                    for (int component=0; component<new_field_bulk_data.width; ++component) {
+                        current_conjugate_data_double.push_back(conjugate_data_double[total_points++]);
+                    }
+                    new_field_bulk_data.conjugateDataDouble.push_back(current_conjugate_data_double);
+                }
             }
         }
-*/
     }
     return new_field_bulk_data;
 }
