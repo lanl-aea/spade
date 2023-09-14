@@ -307,8 +307,6 @@ struct field_location_type {
 };
 
 struct field_value_type {
-    string position;
-    string precision;
     int elementLabel;
     int nodeLabel;
     int integrationPoint;
@@ -328,6 +326,8 @@ struct field_value_type {
 };
 
 struct field_bulk_type {
+    string position;
+    string precision;
     int orientationWidth;
     int numberOfElements;
     int length;
@@ -335,18 +335,17 @@ struct field_bulk_type {
     int width;
     string baseElementType;
     string instance; // Will store just the instance name
-    section_point_type sectionPoint;
-    vector<int> elementLabels;
-    vector<int> nodeLabels;
-    vector<int> integrationPoints;
-    vector<string> faces;
-    vector<float> data;
-    vector<double> dataDouble;
-    vector<float> conjugateData;
-    vector<double> conjugateDataDouble;
-    vector<float> mises;
-    vector<float> localCoordSystem;
-    vector<double> localCoordSystemDouble;
+    vector<vector<int>> elementLabels;
+    vector<vector<int>> nodeLabels;
+    vector<vector<int>> integrationPoints;
+    vector<vector<string>> faces;
+    vector<vector<float>> data;
+    vector<vector<double>> dataDouble;
+    vector<vector<float>> conjugateData;
+    vector<vector<double>> conjugateDataDouble;
+    vector<vector<float>> mises;
+    vector<vector<float>> localCoordSystem;
+    vector<vector<double>> localCoordSystemDouble;
     vector<string> componentLabels;
 };
 
@@ -1095,5 +1094,6 @@ class OdbExtractObject {
         vector<step_type> steps;
 
         string dimension_enum_strings[4];
+        string faces_enum_strings[35];
 };
 #endif  // __ODB_EXTRACT_OBJECT_H_INCLUDED__

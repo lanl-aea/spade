@@ -62,6 +62,41 @@ OdbExtractObject::OdbExtractObject (CmdLineArguments &command_line_arguments, Lo
     this->dimension_enum_strings[1] = "Three Dimensional";
     this->dimension_enum_strings[2] = "Two Dimensional Planar";
     this->dimension_enum_strings[3] = "AxiSymmetric";
+    this->faces_enum_strings[0] = "FACE_UNKNOWN=0";
+    this->faces_enum_strings[1] = "END1=1";
+    this->faces_enum_strings[2] = "END2";
+    this->faces_enum_strings[3] = "END3";
+    this->faces_enum_strings[4] = "FACE1=11";
+    this->faces_enum_strings[5] = "FACE2";
+    this->faces_enum_strings[6] = "FACE3";
+    this->faces_enum_strings[7] = "FACE4";
+    this->faces_enum_strings[8] = "FACE5";
+    this->faces_enum_strings[9] = "FACE6";
+    this->faces_enum_strings[10] = "EDGE1=101";
+    this->faces_enum_strings[11] = "EDGE2";
+    this->faces_enum_strings[12] = "EDGE3";
+    this->faces_enum_strings[13] = "EDGE4";
+    this->faces_enum_strings[14] = "EDGE5";
+    this->faces_enum_strings[15] = "EDGE6";
+    this->faces_enum_strings[16] = "EDGE7";
+    this->faces_enum_strings[17] = "EDGE8";
+    this->faces_enum_strings[18] = "EDGE9";
+    this->faces_enum_strings[19] = "EDGE10";
+    this->faces_enum_strings[20] = "EDGE11";
+    this->faces_enum_strings[21] = "EDGE12";
+    this->faces_enum_strings[22] = "EDGE13";
+    this->faces_enum_strings[23] = "EDGE14";
+    this->faces_enum_strings[24] = "EDGE15";
+    this->faces_enum_strings[25] = "EDGE16";
+    this->faces_enum_strings[26] = "EDGE17";
+    this->faces_enum_strings[27] = "EDGE18";
+    this->faces_enum_strings[28] = "EDGE19";
+    this->faces_enum_strings[29] = "EDGE20";
+    this->faces_enum_strings[30] = "SPOS=1001";
+    this->faces_enum_strings[31] = "SNEG=1002";
+    this->faces_enum_strings[32] = "SIDE1=1001"; // = SPOS
+    this->faces_enum_strings[33] = "SIDE2=1002"; // = SNEG
+    this->faces_enum_strings[34] = "DOUBLE_SIDED=1003"; // = DOUBLE SIDED SHELLS
 
     try {  // Since the odb object isn't recognized outside the scope of the try/except, block the processing has to be done within the try block
         odb_Odb& odb = openOdb(file_name, true);  // Open as read only
@@ -327,8 +362,6 @@ set_type OdbExtractObject::process_set (const odb_Set &set, Logging &log_file) {
     odb_SequenceString names = set.instanceNames();
     int numInstances = names.size();
 
-    static const char * face_enum_strings[] = { "FACE_UNKNOWN=0", "END1=1", "END2", "END3", "FACE1=11", "FACE2", "FACE3", "FACE4", "FACE5", "FACE6", "EDGE1=101", "EDGE2", "EDGE3", "EDGE4", "EDGE5", "EDGE6", "EDGE7", "EDGE8", "EDGE9", "EDGE10", "EDGE11", "EDGE12", "EDGE13", "EDGE14", "EDGE15", "EDGE16", "EDGE17", "EDGE18", "EDGE19", "EDGE20", "SPOS=1001", "SNEG=1002", "SIDE1=1001", "SIDE2=1002", "DOUBLE_SIDED=1003" };
-    
     for (int i=0; i<names.size(); i++) {
         odb_String name = names.constGet(i);        
         log_file.logDebug("\t\t\tinstance: " + string(name.CStr()));
@@ -348,7 +381,7 @@ set_type OdbExtractObject::process_set (const odb_Set &set, Logging &log_file) {
             {
                 for (int n=0; n<set_elements.size(); n++) {
                     new_set.elements.push_back(process_element(set_elements.element(n), log_file));
-                    new_set.faces.push_back(face_enum_strings[set_faces.constGet(n)]);
+                    new_set.faces.push_back(this->faces_enum_strings[set_faces.constGet(n)]);
                 }
             } else if(set_elements.size()) {
                 for (int n=0; n < set_elements.size(); n++) {
@@ -814,17 +847,6 @@ assembly_type OdbExtractObject::process_assembly (odb_Assembly &assembly, odb_Od
 
 field_value_type OdbExtractObject::process_field_values(odb_FieldValue &field_value, Logging &log_file, CmdLineArguments &command_line_arguments) {
     field_value_type new_field_value;
-    switch(field_value.position()) {
-        case odb_Enum::NODAL: new_field_value.position = "Nodal"; break;
-        case odb_Enum::INTEGRATION_POINT: new_field_value.position = "Integration Point"; break;
-        case odb_Enum::ELEMENT_NODAL: new_field_value.position = "Element Nodal"; break;
-        case odb_Enum::ELEMENT_FACE: new_field_value.position = "Element Face"; break;
-        case odb_Enum::CENTROID: new_field_value.position = "Centroid"; break;
-    }
-    switch(field_value.precision()) {
-        case odb_Enum::SINGLE_PRECISION: new_field_value.precision = "Single Precision"; break;
-        case odb_Enum::DOUBLE_PRECISION: new_field_value.precision = "Double Precision"; break;
-    }
     new_field_value.elementLabel = field_value.elementLabel();
     new_field_value.nodeLabel = field_value.nodeLabel();
     new_field_value.integrationPoint = field_value.integrationPoint();
@@ -838,7 +860,6 @@ field_value_type OdbExtractObject::process_field_values(odb_FieldValue &field_va
         case odb_Enum::TENSOR_2D_SURFACE: new_field_value.type = "Tensor 2D Surface"; break;
     }
     new_field_value.magnitude = field_value.magnitude();
-    new_field_value.mises = field_value.mises();
     new_field_value.tresca = field_value.tresca();
     new_field_value.press = field_value.press();
     new_field_value.inv3 = field_value.inv3();
@@ -856,7 +877,241 @@ field_value_type OdbExtractObject::process_field_values(odb_FieldValue &field_va
 
 field_bulk_type OdbExtractObject::process_field_bulk_data(odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data, Logging &log_file, CmdLineArguments &command_line_arguments) {
     field_bulk_type new_field_bulk_data;
+    switch(field_bulk_data.position()) {
+        case odb_Enum::NODAL: new_field_bulk_data.position = "Nodal"; break;
+        case odb_Enum::INTEGRATION_POINT: new_field_bulk_data.position = "Integration Point"; break;
+        case odb_Enum::ELEMENT_NODAL: new_field_bulk_data.position = "Element Nodal"; break;
+        case odb_Enum::ELEMENT_FACE: new_field_bulk_data.position = "Element Face"; break;
+        case odb_Enum::CENTROID: new_field_bulk_data.position = "Centroid"; break;
+    }
+    new_field_bulk_data.instance = field_bulk_data.instance().name().CStr();
+    new_field_bulk_data.length = field_bulk_data.length();
+    new_field_bulk_data.width = field_bulk_data.width();
 
+    float* data = 0;
+    double* data_double = 0;
+    float* conjugate_data = 0;
+    double* conjugate_data_double = 0;
+    float* local_coordinate_system = 0;
+    double* local_coordinate_system_double = 0;
+
+
+    if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
+        new_field_bulk_data.precision = "Single Precision";
+        data = field_bulk_data.data();
+        conjugate_data = field_bulk_data.conjugateData();
+        local_coordinate_system = field_bulk_data.localCoordSystem();
+    } else {
+        new_field_bulk_data.precision = "Double Precision";
+        data_double = field_bulk_data.dataDouble();
+        conjugate_data_double = field_bulk_data.conjugateDataDouble();
+        local_coordinate_system_double = field_bulk_data.localCoordSystemDouble();
+    }
+
+    new_field_bulk_data.numberOfElements = field_bulk_data.numberOfElements();                
+    int* element_labels = field_bulk_data.elementLabels();
+//    for (int i=0; i<field_build_data.elementLabels().size(); i++) {
+//        new_field_bulk_data.elementLabels.push_back(field_bulk_data.elementLabels[i]);
+//    }
+
+    if(new_field_bulk_data.numberOfElements && element_labels) {
+        int number_of_integration_points = new_field_bulk_data.length/new_field_bulk_data.numberOfElements;
+        int* integration_points = field_bulk_data.integrationPoints();
+        odb_Enum::odb_ElementFaceEnum* faces = field_bulk_data.faces();
+        new_field_bulk_data.orientationWidth = field_bulk_data.orientationWidth();
+        new_field_bulk_data.baseElementType = field_bulk_data.baseElementType().CStr();
+
+        odb_SequenceString component_labels = field_bulk_data.componentLabels();
+        for (int i=0; i<field_bulk_data.componentLabels().size(); i++) {
+            new_field_bulk_data.componentLabels.push_back(component_labels[i].CStr());
+        }
+
+        int current_position = 0;
+        if(new_field_bulk_data.precision == "Single Precision") {
+            for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
+                vector<int> current_element_labels;
+                vector<int> current_integration_points;
+                vector<string> current_faces;
+                vector<float> current_local_coordinate_system;
+                vector<float> current_data;
+                for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
+                    current_element_labels.push_back(element_labels[current_position]);
+                    if (integration_points) { current_integration_points.push_back(integration_points[current_position]); }
+                    if (faces) { current_faces.push_back(this->faces_enum_strings[faces[current_position]]); }
+                    if (local_coordinate_system) {
+                        int current_pointer = current_position*new_field_bulk_data.orientationWidth;
+                        for (int coordinate_point=0; coordinate_point<new_field_bulk_data.orientationWidth; ++coordinate_point) {
+                            current_local_coordinate_system.push_back(local_coordinate_system[current_pointer++]);
+                        }
+                    }
+                    int total_points = current_position*new_field_bulk_data.width;
+                    for (int component=0; component<new_field_bulk_data.width; ++component) {
+                        current_data.push_back(data[total_points++]);
+                    }
+                }
+                new_field_bulk_data.elementLabels.push_back(current_element_labels);
+                new_field_bulk_data.integrationPoints.push_back(current_integration_points);
+                new_field_bulk_data.faces.push_back(current_faces);
+                new_field_bulk_data.localCoordSystem.push_back(current_local_coordinate_system);
+                new_field_bulk_data.data.push_back(current_data);
+            }
+        } else {
+            for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
+                vector<int> current_element_labels;
+                vector<int> current_integration_points;
+                vector<string> current_faces;
+                vector<double> current_local_coordinate_system_double;
+                vector<double> current_data_double;
+                for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
+                    current_element_labels.push_back(element_labels[current_position]);
+                    if (integration_points) { current_integration_points.push_back(integration_points[current_position]); }
+                    if (faces) { current_faces.push_back(this->faces_enum_strings[faces[current_position]]); }
+                    if (local_coordinate_system_double) {
+                        int current_pointer = current_position*new_field_bulk_data.orientationWidth;
+                        for (int coordinate_point=0; coordinate_point<new_field_bulk_data.orientationWidth; ++coordinate_point) {
+                            current_local_coordinate_system_double.push_back(local_coordinate_system_double[current_pointer++]);
+                        }
+                    }
+                    int total_points = current_position*new_field_bulk_data.width;
+                    for (int component=0; component<new_field_bulk_data.width; ++component) {
+                        current_data_double.push_back(data_double[total_points++]);
+                    }
+                }
+                new_field_bulk_data.elementLabels.push_back(current_element_labels);
+                new_field_bulk_data.integrationPoints.push_back(current_integration_points);
+                new_field_bulk_data.faces.push_back(current_faces);
+                new_field_bulk_data.localCoordSystemDouble.push_back(current_local_coordinate_system_double);
+                new_field_bulk_data.dataDouble.push_back(current_data_double);
+            }
+        }
+/*
+        if(complex_data) {
+            cout << space.CStr() << "Conjugate Data " << endl;
+                current_position = 0;
+            if(new_field_bulk_data.precision == "Single Precision")
+            {
+            for (int element = 0;element<new_field_bulk_data.numberOfElements;++element)
+            {			    		
+                for (int integration_point = 0;integration_point<number_of_integration_points;integration_point++,++current_position)
+                {
+                cout << space.CStr() << "     element          : "<< 
+                                bulkInstanceName.CStr() << "."
+                    << element_labels[current_position] << endl;
+                        if(integration_points){
+                        cout << space.CStr() << "     integrationPoint : " 
+                                << integration_points[current_position] << endl;
+                        }
+                int total_points = current_position*new_field_bulk_data.width;
+                cout << space.CStr() << "     conjugate data   : " ;
+                for (int component = 0;component<new_field_bulk_data.width;++component)
+                    cout << conjugate_data[total_points++] << blank ;
+                cout << endl;
+                }
+            }
+            }
+            else
+            {
+            for (int element = 0;element<new_field_bulk_data.numberOfElements;++element)
+            {			    		
+                for (int integration_point = 0;integration_point<number_of_integration_points;integration_point++,++current_position)
+                {
+                cout << space.CStr() << "     element          : "<< 
+                                bulkInstanceName.CStr() << "."
+                    << element_labels[current_position] << endl;
+                        if(integration_points){
+                        cout << space.CStr() << "     integrationPoint : " 
+                                << integration_points[current_position] << endl;
+                        }
+                int total_points = current_position*new_field_bulk_data.width;
+                cout << space.CStr() << "     conjugate data   : " ;
+                for (int component = 0;component<new_field_bulk_data.width;++component)
+                    cout << conjugate_data_double[total_points++] << blank ;
+                cout << endl;
+                }
+            }
+            }      
+        }
+        if ( invars.isMember(odb_Enum::MISES) ) 
+            {
+                current_position = 0;
+            float* bulkMises = field_bulk_data.mises();
+            for (int element = 0;element<new_field_bulk_data.numberOfElements;++element)
+                {	
+                    for (int integration_point = 0;integration_point<number_of_integration_points;++integration_point,++current_position)
+                    { 		    
+                        cout << space.CStr() << "     element          : "<< 
+                            bulkInstanceName.CStr() << "."
+                            << element_labels[current_position] << endl;
+                        if(integration_points){
+                        cout << space.CStr() << "     integrationPoint : " 
+                            << integration_points[current_position] << endl;
+                        }
+                        cout << space.CStr() <<     "     mises            : " 
+                            << bulkMises[current_position] << endl;
+                    }
+                }
+            }
+*/
+    } else {
+/*
+        int* node_labels = field_bulk_data.nodeLabels();	
+        if(new_field_bulk_data.precision == "Single Precision") {
+            for (int fv = 0;fv<new_field_bulk_data.length;++fv)
+            {			    
+            cout << space.CStr() << "     node             : " << 
+                        bulkInstanceName.CStr() //
+                << "." << node_labels[fv]  << endl;	   		
+            int total_points = fv*new_field_bulk_data.width;
+            cout << space.CStr() <<     "     data             : " ;
+            for (int component = 0;component<new_field_bulk_data.width;++component)
+                cout << data[total_points++] << blank;            
+            cout << endl;	   
+            }             
+            if (complex_data)
+            {
+            cout << space.CStr() << " Bulk Conjugate Data " << endl;
+            for (int fv = 0;fv<new_field_bulk_data.length;++fv)
+            {			    
+                cout << space.CStr() << "     node             : " << 
+                            bulkInstanceName.CStr() //
+                << "." << node_labels[fv]  << endl;	   		
+                int total_points = fv*new_field_bulk_data.width;
+                cout << space.CStr() <<     "     conjugate data   : " ;
+                for (int component = 0;component<new_field_bulk_data.width;++component)
+                cout << conjugate_data[total_points++] << blank;
+                cout << endl;	   
+            }
+            }      
+        } else {
+            for (int fv = 0;fv<new_field_bulk_data.length;++fv)
+            {			    
+            cout << space.CStr() << "     node             : " << 
+                        bulkInstanceName.CStr() //
+                << "." << node_labels[fv]  << endl;	   		
+            int total_points = fv*new_field_bulk_data.width;
+            cout << space.CStr() <<     "     data             : " ;
+            for (int component = 0;component<new_field_bulk_data.width;++component)
+                cout << data_double[total_points++] << blank;            
+            cout << endl;	   
+            }             
+            if (complex_data)
+            {
+            cout << space.CStr() << " Bulk Conjugate Data " << endl;
+            for (int fv = 0;fv<new_field_bulk_data.length;++fv)
+            {			    
+                cout << space.CStr() << "     node             : " << 
+                            bulkInstanceName.CStr() //
+                << "." << node_labels[fv]  << endl;	   		
+                int total_points = fv*new_field_bulk_data.width;
+                cout << space.CStr() <<     "     conjugate data   : " ;
+                for (int component = 0;component<new_field_bulk_data.width;++component)
+                cout << conjugate_data_double[total_points++] << blank;
+                cout << endl;	   
+            }
+            }
+        }
+*/
+    }
     return new_field_bulk_data;
 }
 
