@@ -910,9 +910,6 @@ field_bulk_type OdbExtractObject::process_field_bulk_data(odb_FieldBulkData &fie
 
     new_field_bulk_data.numberOfElements = field_bulk_data.numberOfElements();                
     int* element_labels = field_bulk_data.elementLabels();
-//    for (int i=0; i<field_build_data.elementLabels().size(); i++) {
-//        new_field_bulk_data.elementLabels.push_back(field_bulk_data.elementLabels[i]);
-//    }
 
     if(new_field_bulk_data.numberOfElements && element_labels) {
         int number_of_integration_points = new_field_bulk_data.length/new_field_bulk_data.numberOfElements;
@@ -984,74 +981,43 @@ field_bulk_type OdbExtractObject::process_field_bulk_data(odb_FieldBulkData &fie
                 new_field_bulk_data.dataDouble.push_back(current_data_double);
             }
         }
-/*
         if(complex_data) {
-            cout << space.CStr() << "Conjugate Data " << endl;
-                current_position = 0;
-            if(new_field_bulk_data.precision == "Single Precision")
-            {
-            for (int element = 0;element<new_field_bulk_data.numberOfElements;++element)
-            {			    		
-                for (int integration_point = 0;integration_point<number_of_integration_points;integration_point++,++current_position)
-                {
-                cout << space.CStr() << "     element          : "<< 
-                                bulkInstanceName.CStr() << "."
-                    << element_labels[current_position] << endl;
-                        if(integration_points){
-                        cout << space.CStr() << "     integrationPoint : " 
-                                << integration_points[current_position] << endl;
+            current_position = 0;
+            if(new_field_bulk_data.precision == "Single Precision") {
+                for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
+                    vector<float> current_conjugate_data;
+                    for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, ++current_position) {
+                        int total_points = current_position*new_field_bulk_data.width;
+                        for (int component=0; component<new_field_bulk_data.width; ++component) {
+                            current_conjugate_data.push_back(conjugate_data[total_points++]);
                         }
-                int total_points = current_position*new_field_bulk_data.width;
-                cout << space.CStr() << "     conjugate data   : " ;
-                for (int component = 0;component<new_field_bulk_data.width;++component)
-                    cout << conjugate_data[total_points++] << blank ;
-                cout << endl;
-                }
-            }
-            }
-            else
-            {
-            for (int element = 0;element<new_field_bulk_data.numberOfElements;++element)
-            {			    		
-                for (int integration_point = 0;integration_point<number_of_integration_points;integration_point++,++current_position)
-                {
-                cout << space.CStr() << "     element          : "<< 
-                                bulkInstanceName.CStr() << "."
-                    << element_labels[current_position] << endl;
-                        if(integration_points){
-                        cout << space.CStr() << "     integrationPoint : " 
-                                << integration_points[current_position] << endl;
-                        }
-                int total_points = current_position*new_field_bulk_data.width;
-                cout << space.CStr() << "     conjugate data   : " ;
-                for (int component = 0;component<new_field_bulk_data.width;++component)
-                    cout << conjugate_data_double[total_points++] << blank ;
-                cout << endl;
-                }
-            }
-            }      
-        }
-        if ( invars.isMember(odb_Enum::MISES) ) 
-            {
-                current_position = 0;
-            float* bulkMises = field_bulk_data.mises();
-            for (int element = 0;element<new_field_bulk_data.numberOfElements;++element)
-                {	
-                    for (int integration_point = 0;integration_point<number_of_integration_points;++integration_point,++current_position)
-                    { 		    
-                        cout << space.CStr() << "     element          : "<< 
-                            bulkInstanceName.CStr() << "."
-                            << element_labels[current_position] << endl;
-                        if(integration_points){
-                        cout << space.CStr() << "     integrationPoint : " 
-                            << integration_points[current_position] << endl;
-                        }
-                        cout << space.CStr() <<     "     mises            : " 
-                            << bulkMises[current_position] << endl;
                     }
+                    new_field_bulk_data.conjugateData.push_back(current_conjugate_data);
+                }
+            } else {
+                for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
+                    vector<float> current_conjugate_data_double;
+                    for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, ++current_position) {
+                        int total_points = current_position*new_field_bulk_data.width;
+                        for (int component=0; component<new_field_bulk_data.width; ++component) {
+                            current_conjugate_data_double.push_back(conjugate_data_double[total_points++]);
+                        }
+                    }
+                    new_field_bulk_data.conjugateDataDouble.push_back(current_conjugate_data_double);
                 }
             }
-*/
+        }
+        if ( invars.isMember(odb_Enum::MISES) ) {
+            current_position = 0;
+            float* bulk_mises = field_bulk_data.mises();
+            for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
+                vector<float> current_mises;
+                for (int integration_point=0; integration_point<number_of_integration_points; ++integration_point, ++current_position) { 		    
+                    current_mises.push_back(bulk_mises[current_position]);
+                }
+                new_field_bulk_data.mises.push_back(current_mises);
+            }
+        }
     } else {
 /*
         int* node_labels = field_bulk_data.nodeLabels();	
