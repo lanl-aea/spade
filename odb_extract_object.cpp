@@ -1458,8 +1458,12 @@ void OdbExtractObject::write_field_output(H5::H5File &h5_file, const string &gro
     }
     for (int i=0; i<field_output.bulkDataBlocks.size(); i++) {
         string value_group_name = group_name + "/values/" + to_string(i);
-        //TODO: wrap with try/catch in case group is already created
-        H5::Group value_group = h5_file.createGroup(value_group_name.c_str());
+        H5::Exception::dontPrint();
+        try {
+            H5::Group value_group = h5_file.openGroup(value_group_name.c_str());
+        } catch (...) {
+            H5::Group value_group = h5_file.createGroup(value_group_name.c_str());
+        }
         write_field_bulk_data(h5_file, value_group_name, field_output.bulkDataBlocks[i]);
     }
 }
