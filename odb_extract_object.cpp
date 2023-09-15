@@ -230,8 +230,10 @@ void OdbExtractObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArgum
         this->parts.push_back(process_part(part, odb, log_file));
     }
 
+    log_file.logVerbose("Reading root assembly.");
     this->root_assembly = process_assembly(odb.rootAssembly(), odb, log_file);
 
+    log_file.logVerbose("Reading steps.");
     odb_StepRepository step_repository = odb.steps();
     odb_StepRepositoryIT step_iter (step_repository);
     for (step_iter.first(); !step_iter.isDone(); step_iter.next()) 
@@ -845,7 +847,7 @@ assembly_type OdbExtractObject::process_assembly (odb_Assembly &assembly, odb_Od
     return new_assembly;
 }
 
-field_value_type OdbExtractObject::process_field_values(odb_FieldValue &field_value, Logging &log_file, CmdLineArguments &command_line_arguments) {
+field_value_type OdbExtractObject::process_field_values(odb_FieldValue &field_value, const odb_SequenceInvariant& invariants, Logging &log_file, CmdLineArguments &command_line_arguments) {
     field_value_type new_field_value;
     new_field_value.elementLabel = field_value.elementLabel();
     new_field_value.nodeLabel = field_value.nodeLabel();
@@ -859,16 +861,36 @@ field_value_type OdbExtractObject::process_field_values(odb_FieldValue &field_va
         case odb_Enum::TENSOR_2D_PLANAR: new_field_value.type = "Tensor 2D Planar"; break;
         case odb_Enum::TENSOR_2D_SURFACE: new_field_value.type = "Tensor 2D Surface"; break;
     }
-    new_field_value.magnitude = field_value.magnitude();
-    new_field_value.tresca = field_value.tresca();
-    new_field_value.press = field_value.press();
-    new_field_value.inv3 = field_value.inv3();
-    new_field_value.maxPrincipal = field_value.maxPrincipal();
-    new_field_value.midPrincipal = field_value.midPrincipal();
-    new_field_value.minPrincipal = field_value.minPrincipal();
-    new_field_value.maxInPlanePrincipal = field_value.maxInPlanePrincipal();
-    new_field_value.minInPlanePrincipal = field_value.minInPlanePrincipal();
-    new_field_value.outOfPlanePrincipal = field_value.outOfPlanePrincipal();
+    if (invariants.isMember(odb_Enum::MAGNITUDE)) {
+        new_field_value.magnitude = field_value.magnitude();
+    }
+    if (invariants.isMember(odb_Enum::TRESCA)) {
+        new_field_value.tresca = field_value.tresca();
+    }
+    if (invariants.isMember(odb_Enum::PRESS)) {
+        new_field_value.press = field_value.press();
+    }
+    if (invariants.isMember(odb_Enum::INV3)) {
+        new_field_value.inv3 = field_value.inv3();
+    }
+    if (invariants.isMember(odb_Enum::MAX_PRINCIPAL)) {
+        new_field_value.maxPrincipal = field_value.maxPrincipal();
+    }
+    if (invariants.isMember(odb_Enum::MID_PRINCIPAL)) {
+        new_field_value.midPrincipal = field_value.midPrincipal();
+    }
+    if (invariants.isMember(odb_Enum::MIN_PRINCIPAL)) {
+        new_field_value.minPrincipal = field_value.minPrincipal();
+    }
+    if (invariants.isMember(odb_Enum::MAX_INPLANE_PRINCIPAL)) {
+        new_field_value.maxInPlanePrincipal = field_value.maxInPlanePrincipal();
+    }
+    if (invariants.isMember(odb_Enum::MIN_INPLANE_PRINCIPAL)) {
+        new_field_value.minInPlanePrincipal = field_value.minInPlanePrincipal();
+    }
+    if (invariants.isMember(odb_Enum::OUTOFPLANE_PRINCIPAL)) {
+        new_field_value.outOfPlanePrincipal = field_value.outOfPlanePrincipal();
+    }
     new_field_value.sectionPoint.number =  to_string(field_value.sectionPoint().number());
     new_field_value.sectionPoint.description =  field_value.sectionPoint().description().CStr();
     return new_field_value;
@@ -1116,11 +1138,13 @@ field_output_type OdbExtractObject::process_field_output (odb_FieldOutput &field
         new_field_output.validInvariants.push_back(invariant);
     }
     odb_SequenceFieldValue field_values = field_output.values();
+    log_file.logVerbose("Reading field values.");
     for (int i=0; i<field_values.size(); i++) {
         odb_FieldValue field_value = field_values.constGet(i);
-        new_field_output.values.push_back(process_field_values(field_value, log_file, command_line_arguments));
+        new_field_output.values.push_back(process_field_values(field_value, field_output.validInvariants(), log_file, command_line_arguments));
     }
     odb_SequenceFieldBulkData field_bulk_values = field_output.bulkDataBlocks();	
+    log_file.logVerbose("Reading field bulk data.");
     for (int i=0; i<field_bulk_values.size(); i++) {
         odb_FieldBulkData field_bulk_value = field_bulk_values[i];
         new_field_output.bulkDataBlocks.push_back(process_field_bulk_data(field_bulk_value, field_output.validInvariants(), field_output.isComplex(), log_file, command_line_arguments));
@@ -1145,6 +1169,7 @@ frame_type OdbExtractObject::process_frame (odb_Frame &frame, Logging &log_file,
 
     odb_FieldOutputRepository& field_outputs = frame.fieldOutputs();
     odb_FieldOutputRepositoryIT field_outputs_iterator(field_outputs);
+    log_file.logVerbose("Reading field output.");
     for (field_outputs_iterator.first(); !field_outputs_iterator.isDone(); field_outputs_iterator.next()) {
         odb_FieldOutput& field = field_outputs[field_outputs_iterator.currentKey()]; 
         new_frame.fieldOutputs.push_back(process_field_output(field, log_file, command_line_arguments));
@@ -1250,6 +1275,7 @@ history_region_type OdbExtractObject::process_history_region (odb_HistoryRegion 
     new_history_region.point = process_history_point(history_region.historyPoint(), log_file);
     odb_HistoryOutputRepository history_outputs = history_region.historyOutputs();
     odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
+    log_file.logVerbose("Reading history output.");
     for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
         odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
         new_history_region.historyOutputs.push_back( process_history_output(history_output, log_file, command_line_arguments));
@@ -1289,12 +1315,14 @@ void OdbExtractObject::process_step(const odb_Step &step, odb_Odb &odb, Logging 
     for (int i=0; i<load_cases.size(); i++) { new_step.loadCases.push_back(load_cases[i].name().CStr()); }
     odb_SequenceFrame frames = step.frames();
     int numFrames = frames.size();
+    log_file.logVerbose("Reading frames.");
     for (int f=0; f<numFrames; f++) {
         odb_Frame frame = frames.constGet(f);
         new_step.frames.push_back(process_frame(frame, log_file, command_line_arguments));
     }
     odb_HistoryRegionRepository history_regions = step.historyRegions();
     odb_HistoryRegionRepositoryIT history_region_iterator (history_regions);
+    log_file.logVerbose("Reading history regions.");
     for (history_region_iterator.first(); !history_region_iterator.isDone(); history_region_iterator.next()) 
     {
         odb_HistoryRegion history_region = history_region_iterator.currentValue();
@@ -1375,7 +1403,7 @@ void OdbExtractObject::write_h5 (CmdLineArguments &command_line_arguments, Loggi
     log_file.logVerbose("Writing assembly data.");
     write_assembly(h5_file, "odb/rootAssembly");
     log_file.logVerbose("Writing steps data.");
-    write_steps(h5_file, "odb");
+    write_steps(h5_file, log_file, "odb");
 
     h5_file.close();  // Close the hdf5 file
     log_file.logVerbose("Closing hdf5 file.");
@@ -1471,7 +1499,7 @@ void OdbExtractObject::write_field_bulk_data(H5::H5File &h5_file, const string &
     write_string_vector_dataset(bulk_group, "componentLabels", field_bulk_data.componentLabels);
 }
 
-void OdbExtractObject::write_field_output(H5::H5File &h5_file, const string &group_name, field_output_type &field_output) {
+void OdbExtractObject::write_field_output(H5::H5File &h5_file, Logging &log_file, const string &group_name, field_output_type &field_output) {
     H5::Group field_output_group = h5_file.createGroup(group_name.c_str());
     write_string_dataset(field_output_group, "name", field_output.name);
     write_string_dataset(field_output_group, "description", field_output.description);
@@ -1493,6 +1521,8 @@ void OdbExtractObject::write_field_output(H5::H5File &h5_file, const string &gro
             write_string_dataset(section_point_group, "description", field_output.locations[i].sectionPoint[j].description);
         }
     }
+    // TODO: find out a way to speed up this process
+    log_file.logVerbose("Writing field output values.");
     H5::Group values_group = h5_file.createGroup((group_name + "/values").c_str());
     for (int i=0; i<field_output.values.size(); i++) {
         string value_group_name = group_name + "/values/" + to_string(i);
@@ -1504,7 +1534,7 @@ void OdbExtractObject::write_field_output(H5::H5File &h5_file, const string &gro
     }
 }
 
-void OdbExtractObject::write_frames(H5::H5File &h5_file, const string &group_name, vector<frame_type> &frames) {
+void OdbExtractObject::write_frames(H5::H5File &h5_file, Logging &log_file, const string &group_name, vector<frame_type> &frames) {
     string frames_group_name = group_name + "/frames";
     H5::Group frames_group = h5_file.createGroup(frames_group_name.c_str());
     for (auto frame : frames) {
@@ -1518,9 +1548,10 @@ void OdbExtractObject::write_frames(H5::H5File &h5_file, const string &group_nam
         write_float_dataset(frame_group, "frameValue", frame.frameValue);
         write_float_dataset(frame_group, "frequency", frame.frequency);
         H5::Group field_outputs_group = h5_file.createGroup((frame_group_name + "/fieldOutputs").c_str());
+        log_file.logVerbose("Writing field output.");
         for (int i=0; i<frame.fieldOutputs.size(); i++) {
             string field_output_group_name = frame_group_name + "/fieldOutputs/" + to_string(i);
-            write_field_output(h5_file, field_output_group_name, frame.fieldOutputs[i]);
+            write_field_output(h5_file, log_file, field_output_group_name, frame.fieldOutputs[i]);
         }
     }
 }
@@ -1577,7 +1608,7 @@ void OdbExtractObject::write_history_regions(H5::H5File &h5_file, const string &
     }
 }
 
-void OdbExtractObject::write_steps(H5::H5File &h5_file, const string &group_name) {
+void OdbExtractObject::write_steps(H5::H5File &h5_file, Logging &log_file, const string &group_name) {
     string steps_group_name = group_name + "/steps";
     H5::Group steps_group = h5_file.createGroup(steps_group_name.c_str());
     for (auto step : this->steps) {
@@ -1598,7 +1629,9 @@ void OdbExtractObject::write_steps(H5::H5File &h5_file, const string &group_name
         write_double_vector_dataset(step_group, "acousticMassCenter", step.acousticMassCenter);
         write_double_array_dataset(step_group, "inertiaAboutCenter", 6, step.inertiaAboutCenter);
         write_double_array_dataset(step_group, "inertiaAboutOrigin", 6, step.inertiaAboutOrigin);
-        write_frames(h5_file, step_group_name, step.frames);
+        log_file.logVerbose("Writing frames data.");
+        write_frames(h5_file, log_file, step_group_name, step.frames);
+        log_file.logVerbose("Writing history data.");
         write_history_regions(h5_file, step_group_name, step.historyRegions);
     }
 }

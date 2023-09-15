@@ -622,12 +622,13 @@ class OdbExtractObject {
         /*!
           Process a field value object and store the results
           \param field_value An odb field value object
+          \param invariants An odb sequence invariant object
           \param log_file Logging object for writing log messages
           \param command_line_arguments CmdLineArguments object storing command line arguments
           \return field_value_type with data stored from the odb
           \sa process_odb()
         */
-        field_value_type process_field_values(odb_FieldValue &field_value, Logging &log_file, CmdLineArguments &command_line_arguments);
+        field_value_type process_field_values(odb_FieldValue &field_value, const odb_SequenceInvariant& invariants, Logging &log_file, CmdLineArguments &command_line_arguments);
         //! Process field bulk data from the odb file
         /*!
           Process a field bulk data object and store the results
@@ -801,18 +802,20 @@ class OdbExtractObject {
         /*!
           Write field output data into an HDF5 file
           \param h5_file Open h5_file object for writing
+          \param log_file Logging object for writing log messages
           \param group_name Name of the group where data is to be written
           \param field_output Data to be written
         */
-        void write_field_output(H5::H5File &h5_file, const string &group_name, field_output_type &field_output);
+        void write_field_output(H5::H5File &h5_file, Logging &log_file, const string &group_name, field_output_type &field_output);
         //! Write frames data to an HDF5 file
         /*!
           Write frames data into an HDF5 file
           \param h5_file Open h5_file object for writing
+          \param log_file Logging object for writing log messages
           \param group_name Name of the group where data is to be written
           \param frames Data to be written
         */
-        void write_frames(H5::H5File &h5_file, const string &group_name, vector<frame_type> &frames);
+        void write_frames(H5::H5File &h5_file, Logging &log_file, const string &group_name, vector<frame_type> &frames);
         //! Write history point data to an HDF5 file
         /*!
           Write history point data into an HDF5 file
@@ -841,9 +844,10 @@ class OdbExtractObject {
         /*!
           Write steps data into an HDF5 file
           \param h5_file Open h5_file object for writing
+          \param log_file Logging object for writing log messages
           \param group_name Name of the group where data is to be written
         */
-        void write_steps(H5::H5File &h5_file, const string &group_name);
+        void write_steps(H5::H5File &h5_file, Logging &log_file, const string &group_name);
         //! Write instances data to an HDF5 file
         /*!
           Write instances data into an HDF5 file
