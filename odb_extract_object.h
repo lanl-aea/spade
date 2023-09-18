@@ -335,6 +335,7 @@ struct field_bulk_type {
     int width;
     string baseElementType;
     string instance; // Will store just the instance name
+    // TODO: turn all of these into pointers and then declare 2D arrays with the length and width given rather than vectors that have to then be converted to arrays
     vector<vector<int>> elementLabels;
     vector<vector<int>> nodeLabels;
     vector<vector<int>> integrationPoints;

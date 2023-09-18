@@ -1449,23 +1449,51 @@ void OdbExtractObject::write_assembly(H5::H5File &h5_file, const string &group_n
 
 void OdbExtractObject::write_field_value(H5::H5File &h5_file, const string &group_name, field_value_type &field_value) {
     H5::Group value_group = h5_file.createGroup(group_name.c_str());
-    write_integer_dataset(value_group, "elementLabel", field_value.elementLabel);
-    write_integer_dataset(value_group, "nodeLabel", field_value.nodeLabel);
-    write_integer_dataset(value_group, "integrationPoint", field_value.integrationPoint);
+    if (field_value.elementLabel != -1) {
+        write_integer_dataset(value_group, "elementLabel", field_value.elementLabel);
+    }
+    if (field_value.nodeLabel != -1) {
+        write_integer_dataset(value_group, "nodeLabel", field_value.nodeLabel);
+    }
+    if (field_value.integrationPoint != -1) {
+        write_integer_dataset(value_group, "integrationPoint", field_value.integrationPoint);
+    }
     write_string_dataset(value_group, "type", field_value.type);
-    write_float_dataset(value_group, "magnitude", field_value.magnitude);
-    write_float_dataset(value_group, "tresca", field_value.tresca);
-    write_float_dataset(value_group, "press", field_value.press);
-    write_float_dataset(value_group, "inv3", field_value.inv3);
-    write_float_dataset(value_group, "maxPrincipal", field_value.maxPrincipal);
-    write_float_dataset(value_group, "midPrincipal", field_value.midPrincipal);
-    write_float_dataset(value_group, "minPrincipal", field_value.minPrincipal);
-    write_float_dataset(value_group, "maxInPlanePrincipal", field_value.maxInPlanePrincipal);
-    write_float_dataset(value_group, "minInPlanePrincipal", field_value.minInPlanePrincipal);
-    write_float_dataset(value_group, "outOfPlanePrincipal", field_value.outOfPlanePrincipal);
-    H5::Group section_point_group = h5_file.createGroup((group_name + "/sectionPoint").c_str());
-    write_string_dataset(section_point_group, "number", field_value.sectionPoint.number);
-    write_string_dataset(section_point_group, "description", field_value.sectionPoint.description);
+    if (field_value.magnitude != 0) {
+        write_float_dataset(value_group, "magnitude", field_value.magnitude);
+    }
+    if (field_value.tresca != 0) {
+        write_float_dataset(value_group, "tresca", field_value.tresca);
+    }
+    if (field_value.press != 0) {
+        write_float_dataset(value_group, "press", field_value.press);
+    }
+    if (field_value.inv3 != 0) {
+        write_float_dataset(value_group, "inv3", field_value.inv3);
+    }
+    if (field_value.maxPrincipal != 8.9586065e-38) {  // Default value
+        write_float_dataset(value_group, "maxPrincipal", field_value.maxPrincipal);
+    }
+    if (field_value.midPrincipal != 0) {
+        write_float_dataset(value_group, "midPrincipal", field_value.midPrincipal);
+    }
+    if (field_value.minPrincipal != 1.5e-44) {  // Default value
+        write_float_dataset(value_group, "minPrincipal", field_value.minPrincipal);
+    }
+    if (field_value.maxInPlanePrincipal != 0) {
+        write_float_dataset(value_group, "maxInPlanePrincipal", field_value.maxInPlanePrincipal);
+    }
+    if (field_value.minInPlanePrincipal != 0) {
+        write_float_dataset(value_group, "minInPlanePrincipal", field_value.minInPlanePrincipal);
+    }
+    if (field_value.outOfPlanePrincipal != 0) {
+        write_float_dataset(value_group, "outOfPlanePrincipal", field_value.outOfPlanePrincipal);
+    }
+    if (field_value.sectionPoint.number != "-1") {
+        H5::Group section_point_group = h5_file.createGroup((group_name + "/sectionPoint").c_str());
+        write_string_dataset(section_point_group, "number", field_value.sectionPoint.number);
+        write_string_dataset(section_point_group, "description", field_value.sectionPoint.description);
+    }
 }
 
 void OdbExtractObject::write_field_bulk_data(H5::H5File &h5_file, const string &group_name, field_bulk_type &field_bulk_data){
@@ -1482,9 +1510,9 @@ void OdbExtractObject::write_field_bulk_data(H5::H5File &h5_file, const string &
     write_string_dataset(bulk_group, "instance", field_bulk_data.instance);
     write_integer_dataset(bulk_group, "orientationWidth", field_bulk_data.orientationWidth);
     write_integer_dataset(bulk_group, "numberOfElements", field_bulk_data.numberOfElements);
-    write_integer_dataset(bulk_group, "length", field_bulk_data.length);
+//    write_integer_dataset(bulk_group, "length", field_bulk_data.length);
     write_integer_dataset(bulk_group, "valuesPerElement", field_bulk_data.valuesPerElement);
-    write_integer_dataset(bulk_group, "width", field_bulk_data.width);
+//    write_integer_dataset(bulk_group, "width", field_bulk_data.width);
     write_integer_2D_vector(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.elementLabels);
     write_integer_2D_vector(bulk_group, "nodeLabels", field_bulk_data.width, field_bulk_data.nodeLabels);
     write_integer_2D_vector(bulk_group, "integrationPoints", field_bulk_data.width, field_bulk_data.integrationPoints);
@@ -1522,7 +1550,7 @@ void OdbExtractObject::write_field_output(H5::H5File &h5_file, Logging &log_file
         }
     }
     // TODO: find out a way to speed up this process
-    log_file.logVerbose("Writing field output values.");
+    log_file.logDebug("Writing field output values for " + group_name + ".");
     H5::Group values_group = h5_file.createGroup((group_name + "/values").c_str());
     for (int i=0; i<field_output.values.size(); i++) {
         string value_group_name = group_name + "/values/" + to_string(i);
