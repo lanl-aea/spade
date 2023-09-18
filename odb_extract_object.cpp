@@ -906,8 +906,8 @@ field_bulk_type OdbExtractObject::process_field_bulk_data(odb_FieldBulkData &fie
         case odb_Enum::CENTROID: new_field_bulk_data.position = "Centroid"; break;
     }
     new_field_bulk_data.instance = field_bulk_data.instance().name().CStr();
-    new_field_bulk_data.length = field_bulk_data.length();
-    new_field_bulk_data.width = field_bulk_data.width();
+//    new_field_bulk_data.length = field_bulk_data.length();
+//    new_field_bulk_data.width = field_bulk_data.width();
 
     float* data = 0;
     double* data_double = 0;
@@ -918,12 +918,12 @@ field_bulk_type OdbExtractObject::process_field_bulk_data(odb_FieldBulkData &fie
 
 
     if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
-        new_field_bulk_data.precision = "Single Precision";
+//        new_field_bulk_data.precision = "Single Precision";
         data = field_bulk_data.data();
         conjugate_data = field_bulk_data.conjugateData();
         local_coordinate_system = field_bulk_data.localCoordSystem();
     } else {
-        new_field_bulk_data.precision = "Double Precision";
+//        new_field_bulk_data.precision = "Double Precision";
         data_double = field_bulk_data.dataDouble();
         conjugate_data_double = field_bulk_data.conjugateDataDouble();
         local_coordinate_system_double = field_bulk_data.localCoordSystemDouble();
@@ -945,7 +945,7 @@ field_bulk_type OdbExtractObject::process_field_bulk_data(odb_FieldBulkData &fie
         }
 
         int current_position = 0;
-        if(new_field_bulk_data.precision == "Single Precision") {
+        if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
             for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
                 vector<int> current_element_labels;
                 vector<int> current_integration_points;
@@ -1004,7 +1004,7 @@ field_bulk_type OdbExtractObject::process_field_bulk_data(odb_FieldBulkData &fie
         }
         if(complex_data) {
             current_position = 0;
-            if(new_field_bulk_data.precision == "Single Precision") {
+            if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
                 for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
                     vector<float> current_conjugate_data;
                     for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, ++current_position) {
@@ -1041,7 +1041,7 @@ field_bulk_type OdbExtractObject::process_field_bulk_data(odb_FieldBulkData &fie
         }
     } else {
         int* node_labels = field_bulk_data.nodeLabels();	
-        if (new_field_bulk_data.precision == "Single Precision") {
+        if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
             for (int node_count=0; node_count<new_field_bulk_data.length; ++node_count) {
                 vector<float> current_data;
                 vector<int> current_node_labels;
@@ -1510,14 +1510,18 @@ void OdbExtractObject::write_field_bulk_data(H5::H5File &h5_file, const string &
         bulk_group = h5_file.createGroup(group_name.c_str());
     }
     write_string_dataset(bulk_group, "position", field_bulk_data.position);
-    write_string_dataset(bulk_group, "precision", field_bulk_data.precision);
-    write_string_dataset(bulk_group, "baseElementType", field_bulk_data.baseElementType);
+//    write_string_dataset(bulk_group, "precision", field_bulk_data.precision);
+    if (field_bulk_data.baseElementType != "") {
+        write_string_dataset(bulk_group, "baseElementType", field_bulk_data.baseElementType);
+    }
     write_string_dataset(bulk_group, "instance", field_bulk_data.instance);
     write_integer_dataset(bulk_group, "orientationWidth", field_bulk_data.orientationWidth);
-    write_integer_dataset(bulk_group, "numberOfElements", field_bulk_data.numberOfElements);
-//    write_integer_dataset(bulk_group, "length", field_bulk_data.length);
-    write_integer_dataset(bulk_group, "valuesPerElement", field_bulk_data.valuesPerElement);
-//    write_integer_dataset(bulk_group, "width", field_bulk_data.width);
+    if (field_bulk_data.numberOfElements != 0) {
+        write_integer_dataset(bulk_group, "numberOfElements", field_bulk_data.numberOfElements);
+    }
+    if (field_bulk_data.valuesPerElement != 0) {
+        write_integer_dataset(bulk_group, "valuesPerElement", field_bulk_data.valuesPerElement);
+    }
     write_integer_2D_vector(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.elementLabels);
     write_integer_2D_vector(bulk_group, "nodeLabels", field_bulk_data.width, field_bulk_data.nodeLabels);
     write_integer_2D_vector(bulk_group, "integrationPoints", field_bulk_data.width, field_bulk_data.integrationPoints);
