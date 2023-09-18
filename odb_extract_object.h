@@ -361,6 +361,7 @@ struct field_output_type {
 //    string isEngineeringTensor;  // Boolean
     vector<field_location_type> locations;
     vector<field_value_type> values;
+    bool values_empty;
     vector<field_bulk_type> bulkDataBlocks;
 };
 

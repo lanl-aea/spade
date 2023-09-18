@@ -1139,9 +1139,14 @@ field_output_type OdbExtractObject::process_field_output (odb_FieldOutput &field
     }
     odb_SequenceFieldValue field_values = field_output.values();
     log_file.logVerbose("Reading field values.");
-    for (int i=0; i<field_values.size(); i++) {
-        odb_FieldValue field_value = field_values.constGet(i);
-        new_field_output.values.push_back(process_field_values(field_value, field_output.validInvariants(), log_file, command_line_arguments));
+    if (field_output.validInvariants().size()) {
+        new_field_output.values_empty = false;
+        for (int i=0; i<field_values.size(); i++) {
+            odb_FieldValue field_value = field_values.constGet(i);
+            new_field_output.values.push_back(process_field_values(field_value, field_output.validInvariants(), log_file, command_line_arguments));
+        }
+    } else {
+        new_field_output.values_empty = true;
     }
     odb_SequenceFieldBulkData field_bulk_values = field_output.bulkDataBlocks();	
     log_file.logVerbose("Reading field bulk data.");
@@ -1552,9 +1557,11 @@ void OdbExtractObject::write_field_output(H5::H5File &h5_file, Logging &log_file
     // TODO: find out a way to speed up this process
     log_file.logDebug("Writing field output values for " + group_name + ".");
     H5::Group values_group = h5_file.createGroup((group_name + "/values").c_str());
-    for (int i=0; i<field_output.values.size(); i++) {
-        string value_group_name = group_name + "/values/" + to_string(i);
-        write_field_value(h5_file, value_group_name, field_output.values[i]);
+    if (!field_output.values_empty) {
+        for (int i=0; i<field_output.values.size(); i++) {
+            string value_group_name = group_name + "/values/" + to_string(i);
+            write_field_value(h5_file, value_group_name, field_output.values[i]);
+        }
     }
     for (int i=0; i<field_output.bulkDataBlocks.size(); i++) {
         string value_group_name = group_name + "/values/" + to_string(i);
