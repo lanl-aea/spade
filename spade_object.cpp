@@ -98,6 +98,7 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
     this->faces_enum_strings[33] = "SIDE2=1002"; // = SNEG
     this->faces_enum_strings[34] = "DOUBLE_SIDED=1003"; // = DOUBLE SIDED SHELLS
 
+    this->command_line_arguments = &command_line_arguments;
     try {  // Since the odb object isn't recognized outside the scope of the try/except, block the processing has to be done within the try block
         odb_Odb& odb = openOdb(file_name, true);  // Open as read only
         process_odb(odb, log_file, command_line_arguments);
@@ -149,7 +150,7 @@ void SpadeObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArguments 
     // Values gotten from: https://help.3ds.com/2023/English/DSSIMULIA_Established/SIMACAEKERRefMap/simaker-c-jobdatacpp.htm?contextscope=all
     // More values found at: /apps/SIMULIA/EstProducts/2023/SMAOdb/PublicInterfaces/odb_Enum.h
     for (int i=0; i<add_ons.size(); i++) {
-        this->job_data.productAddOns.push_back(add_on_enum_strings[add_ons.constGet(i)]);
+        this->job_data.productAddOns.push_back(string(add_on_enum_strings[add_ons.constGet(i)]));
     }
     this->job_data.version = jobData.version().CStr();
 
@@ -326,8 +327,8 @@ element_type* SpadeObject::process_element(const odb_Element &element, Logging &
     new_element.label = element.label();
     odb_SequenceString instance_names = element.instanceNames();
     for (int i=0; i < instance_names.size(); i++) {
-        new_element.instanceNames.push_back(string(instance_names[i].CStr()).c_str());
-        element_key += string(new_element.instanceNames[i]);
+        new_element.instanceNames.push_back(instance_names[i].CStr());
+        element_key += new_element.instanceNames[i];
     }
     element_key = to_string(new_element.label) + element_key;
     try {
@@ -367,7 +368,7 @@ set_type SpadeObject::process_set (const odb_Set &set, Logging &log_file) {
     for (int i=0; i<names.size(); i++) {
         odb_String name = names.constGet(i);        
         log_file.logDebug("\t\t\tinstance: " + string(name.CStr()));
-        new_set.instanceNames.push_back(string(name.CStr()).c_str());
+        new_set.instanceNames.push_back(name.CStr());
         if (new_set.type == "Node Set") {
             const odb_SequenceNode& set_nodes = set.nodes(name);
             for (int n=0; n < set_nodes.size(); n++) { new_set.nodes.push_back(process_node(set_nodes.node(n), log_file)); }
@@ -945,7 +946,7 @@ field_bulk_type SpadeObject::process_field_bulk_data(odb_FieldBulkData &field_bu
 
         odb_SequenceString component_labels = field_bulk_data.componentLabels();
         for (int i=0; i<field_bulk_data.componentLabels().size(); i++) {
-            new_field_bulk_data.componentLabels.push_back(string(component_labels[i].CStr()).c_str());
+            new_field_bulk_data.componentLabels.push_back(component_labels[i].CStr());
         }
 
         int current_position = 0;
@@ -953,7 +954,7 @@ field_bulk_type SpadeObject::process_field_bulk_data(odb_FieldBulkData &field_bu
             for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
                 vector<int> current_element_labels;
                 vector<int> current_integration_points;
-                vector<const char*> current_faces;
+                vector<string> current_faces;
                 vector<float> current_local_coordinate_system;
                 vector<float> current_data;
                 for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
@@ -981,7 +982,7 @@ field_bulk_type SpadeObject::process_field_bulk_data(odb_FieldBulkData &field_bu
             for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
                 vector<int> current_element_labels;
                 vector<int> current_integration_points;
-                vector<const char*> current_faces;
+                vector<string> current_faces;
                 vector<double> current_local_coordinate_system_double;
                 vector<double> current_data_double;
                 for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
@@ -1122,7 +1123,7 @@ field_output_type SpadeObject::process_field_output (odb_FieldOutput &field_outp
     }
     odb_SequenceString available_components = field_output.componentLabels();
     for (int i=0; i<available_components.size(); i++) {
-        new_field_output.componentLabels.push_back(string(available_components[i].CStr()).c_str());
+        new_field_output.componentLabels.push_back(available_components[i].CStr());
     }
     for (int i=0; i<field_output.validInvariants().size(); i++) {
         string invariant;
@@ -1321,7 +1322,7 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_
     odb_SequenceDouble inertia_about_origin = step.inertiaAboutOrigin();
     for (int i=0; i<inertia_about_origin.size(); i++) { new_step.inertiaAboutOrigin[i] = inertia_about_origin[i]; }
     odb_LoadCaseRepository load_cases = step.loadCases();
-    for (int i=0; i<load_cases.size(); i++) { new_step.loadCases.push_back(string(load_cases[i].name().CStr()).c_str()); }
+    for (int i=0; i<load_cases.size(); i++) { new_step.loadCases.push_back(load_cases[i].name().CStr()); }
     odb_SequenceFrame frames = step.frames();
     int numFrames = frames.size();
     log_file.logVerbose("Reading frames.");
@@ -1366,7 +1367,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
     write_attribute(job_data_group, "modificationTime", this->job_data.modificationTime);
     write_attribute(job_data_group, "name", this->job_data.name);
     write_attribute(job_data_group, "precision", this->job_data.precision);
-    write_c_string_vector_dataset(job_data_group, "productAddOns", this->job_data.productAddOns);
+    write_string_vector_dataset(job_data_group, "productAddOns", this->job_data.productAddOns);
     write_attribute(job_data_group, "version", this->job_data.version);
 
     log_file.logVerbose("Writing sector definition.");
@@ -1529,7 +1530,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
     write_integer_2D_vector(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.elementLabels);
     write_integer_2D_vector(bulk_group, "nodeLabels", field_bulk_data.width, field_bulk_data.nodeLabels);
     write_integer_2D_vector(bulk_group, "integrationPoints", field_bulk_data.width, field_bulk_data.integrationPoints);
-    write_c_string_2D_vector(bulk_group, "faces", field_bulk_data.width, field_bulk_data.faces);
+    write_string_2D_vector(bulk_group, "faces", field_bulk_data.width, field_bulk_data.faces);
     if (field_bulk_data.precision == "Single Precision") {
         write_float_2D_vector(bulk_group, "data", field_bulk_data.width, field_bulk_data.data);
         write_float_2D_vector(bulk_group, "conjugateData", field_bulk_data.width, field_bulk_data.conjugateData);
@@ -1540,7 +1541,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
         write_double_2D_vector(bulk_group, "localCoordSystem", field_bulk_data.width, field_bulk_data.localCoordSystemDouble);
     }
     write_float_2D_vector(bulk_group, "mises", field_bulk_data.width, field_bulk_data.mises);
-    write_c_string_vector_dataset(bulk_group, "componentLabels", field_bulk_data.componentLabels);
+    write_string_vector_dataset(bulk_group, "componentLabels", field_bulk_data.componentLabels);
 }
 
 void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, const string &group_name, field_output_type &field_output) {
@@ -1551,8 +1552,8 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, con
     write_integer_dataset(field_output_group, "dim", field_output.dim);
     write_integer_dataset(field_output_group, "dim2", field_output.dim2);
 //    write_string_dataset(field_output_group, "isEngineeringTensor", field_output.isEngineeringTensor);
-    write_c_string_vector_dataset(field_output_group, "componentLabels", field_output.componentLabels);
-    write_c_string_vector_dataset(field_output_group, "validInvariants", field_output.validInvariants);
+    write_string_vector_dataset(field_output_group, "componentLabels", field_output.componentLabels);
+    write_string_vector_dataset(field_output_group, "validInvariants", field_output.validInvariants);
 
     H5::Group locations_group = h5_file.createGroup((group_name + "/locations").c_str());
     for (int i=0; i<field_output.locations.size(); i++) {
@@ -1670,7 +1671,7 @@ void SpadeObject::write_steps(H5::H5File &h5_file, Logging &log_file, const stri
         write_double_dataset(step_group, "totalTime", step.totalTime);
         write_double_dataset(step_group, "mass", step.mass);
         write_double_dataset(step_group, "acousticMass", step.acousticMass);
-        write_c_string_vector_dataset(step_group, "loadCases", step.loadCases);
+        write_string_vector_dataset(step_group, "loadCases", step.loadCases);
         write_double_vector_dataset(step_group, "massCenter", step.massCenter);
         write_double_vector_dataset(step_group, "acousticMassCenter", step.acousticMassCenter);
         write_double_array_dataset(step_group, "inertiaAboutCenter", 6, step.inertiaAboutCenter);
@@ -1908,7 +1909,7 @@ void SpadeObject::write_element(H5::H5File &h5_file, const string &group_name, c
     string newGroupName = group_name + "/" + to_string(element.label);
     string element_key;
     for (int i=0; i < element.instanceNames.size(); i++) {
-        element_key += string(element.instanceNames[i]);
+        element_key += element.instanceNames[i];
     }
     element_key = to_string(element.label) + element_key;
     try {
@@ -1920,7 +1921,7 @@ void SpadeObject::write_element(H5::H5File &h5_file, const string &group_name, c
         write_integer_vector_dataset(element_group, "connectivity", element.connectivity);
         H5::Group section_category_group = h5_file.createGroup((group_name + "/" + to_string(element.label) + "/sectionCategory").c_str());
         write_section_category(h5_file, section_category_group, group_name + "/" + to_string(element.label) + "/sectionCategory", element.sectionCategory);
-        write_c_string_vector_dataset(element_group, "instanceNames", element.instanceNames);
+        write_string_vector_dataset(element_group, "instanceNames", element.instanceNames);
 
         this->element_links[element_key] = newGroupName;  // Store link for later
     }
@@ -1983,7 +1984,7 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
         string set_group_name = group_name + "/" + set.name;
         H5::Group set_group = h5_file.createGroup(set_group_name.c_str());
         write_attribute(set_group, "type", set.type);
-        write_c_string_vector_dataset(set_group, "instanceNames", set.instanceNames);
+        write_string_vector_dataset(set_group, "instanceNames", set.instanceNames);
         if (set.type == "Node Set") {
             write_nodes(h5_file, set_group_name, set.nodes);
         } else if (set.type == "Element Set") {
@@ -1992,7 +1993,7 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
             if(!set.elements.empty() && !set.faces.empty())
             {
                 write_elements(h5_file, set_group_name, set.elements);
-                write_c_string_vector_dataset(set_group, "faces", set.faces);
+                write_string_vector_dataset(set_group, "faces", set.faces);
             } else if(!set.elements.empty()) {
                 write_elements(h5_file, set_group_name, set.elements);
             } else {
@@ -2033,13 +2034,17 @@ void SpadeObject::write_string_dataset(const H5::Group& group, const string & da
     dataspace.close();
 }
 
-void SpadeObject::write_c_string_vector_dataset(const H5::Group& group, const string & dataset_name, const vector<const char*> & string_values) {
+void SpadeObject::write_string_vector_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values) {
     if (!string_values.empty()) {
-        hsize_t dimensions[1] {string_values.size()};
+        std::vector<const char*> c_string_array;
+        for (int i = 0; i < string_values.size(); ++i) {
+            c_string_array.push_back(string_values[i].c_str());
+        }
+        hsize_t dimensions[1] {c_string_array.size()};
         H5::DataSpace  dataspace(1, dimensions);
         H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
         H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
-        dataset.write(string_values.data(), string_type);
+        dataset.write(c_string_array.data(), string_type);
         dataset.close();
         dataspace.close();
     }
@@ -2054,15 +2059,15 @@ void SpadeObject::write_string_2D_array(const H5::Group& group, const string & d
     dataspace.close();
 }
 
-void SpadeObject::write_c_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<const char*>> & string_data) {
+void SpadeObject::write_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<string>> & string_data) {
     if (!string_data.empty()) {
-        hsize_t dimensions[] {string_data.size(), max_column_size};
-        H5::DataSpace  dataspace(2, dimensions);
-        H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
-        H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
-        dataset.write(string_data.data(), string_type);
-        dataset.close();
-        dataspace.close();
+        const char* string_array[string_data.size()][max_column_size]; // Need to convert vector to array with contiguous memory for H5 to process
+        for( int i = 0; i<string_data.size(); ++i) {
+            for( int j = 0; j<string_data[i].size(); ++j) {
+                string_array[i][j] = string_data[i][j].c_str();
+            }
+        }
+        write_string_2D_array(group, dataset_name, string_data.size(), max_column_size, (string *)string_array);
     }
 }
 

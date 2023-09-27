@@ -22,7 +22,7 @@ struct job_data_type {
     string modificationTime;
     string name;
     string precision;
-    vector<const char*> productAddOns;
+    vector<string> productAddOns;
     string version;
 };
 
@@ -80,7 +80,7 @@ struct element_type {
     string type;
     vector<int> connectivity;
     section_category_type sectionCategory;
-    vector<const char*> instanceNames;
+    vector<string> instanceNames;
 };
 
 struct node_type {
@@ -92,10 +92,10 @@ struct set_type {
     string name;
     string type;  // Enum [NODE_SET, ELEMENT_SET, SURFACE_SET]
     int size;
-    vector<const char*> instanceNames;
+    vector<string> instanceNames;
     vector<node_type*> nodes;
     vector<element_type*> elements;
-    vector<const char*> faces;
+    vector<string> faces;
 };
 
 struct contact_standard_type {
@@ -339,7 +339,7 @@ struct field_bulk_type {
     vector<vector<int>> elementLabels;
     vector<vector<int>> nodeLabels;
     vector<vector<int>> integrationPoints;
-    vector<vector<const char*>> faces;
+    vector<vector<string>> faces;
     vector<vector<float>> data;
     vector<vector<double>> dataDouble;
     vector<vector<float>> conjugateData;
@@ -347,15 +347,15 @@ struct field_bulk_type {
     vector<vector<float>> mises;
     vector<vector<float>> localCoordSystem;
     vector<vector<double>> localCoordSystemDouble;
-    vector<const char*> componentLabels;
+    vector<string> componentLabels;
 };
 
 struct field_output_type {
     string name;
     string description;
     string type;
-    vector<const char*> componentLabels;
-    vector<const char*> validInvariants;
+    vector<string> componentLabels;
+    vector<string> validInvariants;
     int dim;
     int dim2;
 //    string isEngineeringTensor;  // Boolean
@@ -424,7 +424,7 @@ struct step_type {
     double acousticMass;
     vector<frame_type> frames;
     vector<history_region_type> historyRegions;
-    vector<const char*> loadCases;
+    vector<string> loadCases;
     vector<double> massCenter;
     vector<double> acousticMassCenter;
     double inertiaAboutCenter[6];
@@ -968,14 +968,14 @@ class SpadeObject {
           \param string_value The string that should be written in the new dataset
         */
         void write_string_dataset(const H5::Group &group, const string &dataset_name, const string &string_value);
-        //! Write a vector of C-strings as a dataset
+        //! Write a vector of strings as a dataset
         /*!
-          Create a dataset with an array of C-strings using the passed-in values
+          Create a dataset with an array of strings using the passed-in values
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where an array of strings is to be written
           \param string_values The vector of strings that should be written in the new dataset
         */
-        void write_c_string_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<const char*> &string_values);
+        void write_string_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<string> &string_values);
         //! Write an integer as a dataset
         /*!
           Create a dataset with an integer using the passed-in value
@@ -994,16 +994,16 @@ class SpadeObject {
           \param string_array A pointer to the array of arrays of strings that should be written in the new dataset
         */
         void write_string_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, string *string_array);
-        //! Write a vector of vectors of C-strings as a dataset
+        //! Write a vector of vectors of strings as a dataset
         /*!
-          Create a dataset with a two-dimensional array of C-strings using the passed-in values
+          Create a dataset with a two-dimensional array of strings using the passed-in values
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where a two-dimensional array is to be written
           \param max_column_size Integer indicating the column dimension, row dimension is determined by size of data_array
-          \param data_array The vector of vectors of C-strings that should be written in the new dataset
+          \param data_array The vector of vectors of strings that should be written in the new dataset
           \sa write_string_2D_array()
         */
-        void write_c_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<const char*>> & string_data);
+        void write_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<string>> & string_data);
         //! Write an integer array as a dataset
         /*!
           Create a dataset with an array of integers using the passed-in value
@@ -1155,7 +1155,8 @@ class SpadeObject {
         map<string, string> instance_links;
         vector<step_type> steps;
 
-        const char* dimension_enum_strings[4];
-        const char* faces_enum_strings[35];
+        string dimension_enum_strings[4];
+        string faces_enum_strings[35];
+        CmdLineArguments* command_line_arguments;
 };
 #endif  // __SPADE_OBJECT_H_INCLUDED__
