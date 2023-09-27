@@ -166,7 +166,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         }
         // Create log file name if not provided
         if (this->command_line_arguments["log-file"].empty()) {
-            this->command_line_arguments["log-file"] = base_file_name + ".odb_extract.log"; 
+            this->command_line_arguments["log-file"] = base_file_name + ".spade.log"; 
         }
         // Check if log file already exists
         ifstream log_file(this->command_line_arguments["log-file"].c_str());

@@ -1,8 +1,8 @@
-# Odb Extract
-Extract data from an Abaqus ODB File into and HDF5 file
+# Serialized Proprietary Abaqus Data Extractor (SPADE)
+Extract data from an Abaqus ODB File into an HDF5 file
 
 To see available options
-```odb_extract -h```
+```spade -h```
 
 Developer:
 * Prabhu Khalsa <prabhu@lanl.gov>
@@ -17,7 +17,7 @@ Developer:
 ### On Local Machine
 ``module use --append /projects/aea_compute/modulefiles``
 ``module load aea-release``  
-``odb_extract <options>``
+``spade <options>``
 
 ---
 
@@ -61,19 +61,19 @@ To remove all executables after make:
 
 ## Examples
 
-### Odb Extract
+### SPADE
 
-``odb_extract model.odb``
+``spade model.odb``
 
-``odb_extract -v model.odb``
+``spade -v model.odb``
 
-``odb_extract -o hdf5_model.h5 model.odb``
+``spade -o hdf5_model.h5 model.odb``
 
-``odb_extract --step step1 model.odb``
+``spade --step step1 model.odb``
 
-``odb_extract --frame 0 model.odb``
+``spade --frame 0 model.odb``
 
-``odb_extract --instance part1 model.odb``
+``spade --instance part1 model.odb``
 
 ---
 

@@ -44,12 +44,12 @@ objects = []
 env.MergeFlags("-I.")
 objects.extend(env.Object("cmd_line_arguments.cpp"))
 objects.extend(env.Object("logging.cpp"))
-objects.extend(env.Object("odb_extract_object.cpp", CXXFLAGS=h5_flags + odb_flags))
+objects.extend(env.Object("spade_object.cpp", CXXFLAGS=h5_flags + odb_flags))
 
 # Build executable with Abaqus make
 env.Command(
-    target=["odb_extract"],
-    source=["odb_extract.cpp"] + objects,
+    target=["spade"],
+    source=["spade.cpp"] + objects,
     action=["${abaqus_program} make job=${TARGET.name}"],
     abaqus_program=env["abaqus"]
 )

@@ -118,6 +118,6 @@ fast-test:
   script:
     - project_root=${PWD}
     - scons
-    - ./odb_extract -h
+    - ./spade -h
   tags:
     - shell-aea
