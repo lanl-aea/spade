@@ -2056,15 +2056,6 @@ void OdbExtractObject::write_string_2D_array(const H5::Group& group, const strin
 
 void OdbExtractObject::write_c_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<const char*>> & string_data) {
     if (!string_data.empty()) {
-        /*
-        string string_array[string_data.size()][max_column_size]; // Need to convert vector to array with contiguous memory for H5 to process
-        for( int i = 0; i<string_data.size(); ++i) {
-            for( int j = 0; j<string_data[i].size(); ++j) {
-                string_array[i][j] = string_data[i][j];
-            }
-        }
-        write_string_2D_array(group, dataset_name, string_data.size(), max_column_size, (string *)string_array);
-        */
         hsize_t dimensions[] {string_data.size(), max_column_size};
         H5::DataSpace  dataspace(2, dimensions);
         H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
