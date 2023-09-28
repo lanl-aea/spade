@@ -955,6 +955,7 @@ class SpadeObject {
         //! Write a string as an attribute
         /*!
           Create an attribute with a string using the passed-in values
+          \param h5_file Open h5_file object for writing
           \param group Name of HDF5 group in which to write the new attribute
           \param attribute_name Name of the new attribute where a string is to be written
           \param string_value The string that should be written in the new attribute
@@ -1003,10 +1004,11 @@ class SpadeObject {
           \param data_array The vector of vectors of strings that should be written in the new dataset
           \sa write_string_2D_array()
         */
-        void write_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<string>> & string_data);
+        void write_string_2D_vector(H5::H5File &h5_file, const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<string>> & string_data);
         //! Write an integer array as a dataset
         /*!
           Create a dataset with an array of integers using the passed-in value
+          \param h5_file Open h5_file object for writing
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where the data is to be written
           \param int_array The integer array that should be written in the new dataset

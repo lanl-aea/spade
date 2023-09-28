@@ -937,7 +937,7 @@ field_bulk_type SpadeObject::process_field_bulk_data(odb_FieldBulkData &field_bu
     int* element_labels = field_bulk_data.elementLabels();
 
     new_field_bulk_data.baseElementType = ""; // initializing to empty string
-    if(new_field_bulk_data.numberOfElements && element_labels) {
+    if(new_field_bulk_data.numberOfElements && element_labels) { // If elements
         int number_of_integration_points = new_field_bulk_data.length/new_field_bulk_data.numberOfElements;
         int* integration_points = field_bulk_data.integrationPoints();
         odb_Enum::odb_ElementFaceEnum* faces = field_bulk_data.faces();
@@ -1044,7 +1044,7 @@ field_bulk_type SpadeObject::process_field_bulk_data(odb_FieldBulkData &field_bu
                 new_field_bulk_data.mises.push_back(current_mises);
             }
         }
-    } else {
+    } else {  // Nodes
         int* node_labels = field_bulk_data.nodeLabels();	
         if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
             for (int node_count=0; node_count<new_field_bulk_data.length; ++node_count) {
@@ -1405,8 +1405,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
     H5::Group contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
     write_constraints(h5_file, "odb/constraints");
     log_file.logVerbose("Writing interactions data.");
-    H5::Group interactions_group = h5_file.createGroup(string("/odb/interactions").c_str());
-    write_interactions(h5_file, "odb/interactions");
+    write_interactions(h5_file, "odb");
     H5::Group parts_group = h5_file.createGroup(string("odb/parts").c_str());
     log_file.logVerbose("Writing parts data.");
     write_parts(h5_file, "odb/parts");
@@ -1530,7 +1529,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
     write_integer_2D_vector(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.elementLabels);
     write_integer_2D_vector(bulk_group, "nodeLabels", field_bulk_data.width, field_bulk_data.nodeLabels);
     write_integer_2D_vector(bulk_group, "integrationPoints", field_bulk_data.width, field_bulk_data.integrationPoints);
-    write_string_2D_vector(bulk_group, "faces", field_bulk_data.width, field_bulk_data.faces);
+    write_string_2D_vector(h5_file, bulk_group, "faces", field_bulk_data.width, field_bulk_data.faces);
     if (field_bulk_data.precision == "Single Precision") {
         write_float_2D_vector(bulk_group, "data", field_bulk_data.width, field_bulk_data.data);
         write_float_2D_vector(bulk_group, "conjugateData", field_bulk_data.width, field_bulk_data.conjugateData);
@@ -2059,15 +2058,14 @@ void SpadeObject::write_string_2D_array(const H5::Group& group, const string & d
     dataspace.close();
 }
 
-void SpadeObject::write_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<string>> & string_data) {
+void SpadeObject::write_string_2D_vector(H5::H5File &h5_file, const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<string>> & string_data) {
     if (!string_data.empty()) {
-        const char* string_array[string_data.size()][max_column_size]; // Need to convert vector to array with contiguous memory for H5 to process
+        // TODO: This is not an ideal solution, but I tried so many ways to write a 2 dimensional vector of strings to hdf5 file and I couldn't figure it out
+        // This solution writes a separate datset for each row of the data
+        H5::Group dataset_group = h5_file.createGroup(dataset_name.c_str());
         for( int i = 0; i<string_data.size(); ++i) {
-            for( int j = 0; j<string_data[i].size(); ++j) {
-                string_array[i][j] = string_data[i][j].c_str();
-            }
+            write_string_vector_dataset(dataset_group, to_string(i), string_data[i]);
         }
-        write_string_2D_array(group, dataset_name, string_data.size(), max_column_size, (string *)string_array);
     }
 }
 
