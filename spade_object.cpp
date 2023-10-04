@@ -899,6 +899,7 @@ field_value_type SpadeObject::process_field_values(odb_FieldValue &field_value, 
 
 field_bulk_type SpadeObject::process_field_bulk_data(odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data, Logging &log_file, CmdLineArguments &command_line_arguments) {
     field_bulk_type new_field_bulk_data;
+    new_field_bulk_data.emptyFaces = true;
     switch(field_bulk_data.position()) {
         case odb_Enum::NODAL: new_field_bulk_data.position = "Nodal"; break;
         case odb_Enum::INTEGRATION_POINT: new_field_bulk_data.position = "Integration Point"; break;
@@ -960,7 +961,10 @@ field_bulk_type SpadeObject::process_field_bulk_data(odb_FieldBulkData &field_bu
                 for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
                     current_element_labels.push_back(element_labels[current_position]);
                     if (integration_points) { current_integration_points.push_back(integration_points[current_position]); }
-                    if (faces) { current_faces.push_back(this->faces_enum_strings[faces[current_position]]); }
+                    if (faces) { 
+                        current_faces.push_back(this->faces_enum_strings[faces[current_position]]); 
+                        new_field_bulk_data.emptyFaces = false;
+                    }
                     if (local_coordinate_system) {
                         int current_pointer = current_position*new_field_bulk_data.orientationWidth;
                         for (int coordinate_point=0; coordinate_point<new_field_bulk_data.orientationWidth; ++coordinate_point) {
@@ -1529,7 +1533,9 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
     write_integer_2D_vector(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.elementLabels);
     write_integer_2D_vector(bulk_group, "nodeLabels", field_bulk_data.width, field_bulk_data.nodeLabels);
     write_integer_2D_vector(bulk_group, "integrationPoints", field_bulk_data.width, field_bulk_data.integrationPoints);
-    write_string_2D_vector(h5_file, bulk_group, "faces", field_bulk_data.width, field_bulk_data.faces);
+    if (!field_bulk_data.emptyFaces) {
+        write_string_2D_vector(h5_file, bulk_group, "faces", field_bulk_data.width, field_bulk_data.faces);
+    }
     if (field_bulk_data.precision == "Single Precision") {
         write_float_2D_vector(bulk_group, "data", field_bulk_data.width, field_bulk_data.data);
         write_float_2D_vector(bulk_group, "conjugateData", field_bulk_data.width, field_bulk_data.conjugateData);
@@ -1568,12 +1574,12 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, con
     // TODO: find out a way to speed up this process
     log_file.logDebug("Writing field output values for " + group_name + ".");
     H5::Group values_group = h5_file.createGroup((group_name + "/values").c_str());
-//    if (!field_output.values_empty) {
+    if (!field_output.values_empty) {
         for (int i=0; i<field_output.values.size(); i++) {
             string value_group_name = group_name + "/values/" + to_string(i);
             write_field_value(h5_file, value_group_name, field_output.values[i]);
         }
-//    }
+    }
     for (int i=0; i<field_output.bulkDataBlocks.size(); i++) {
         string value_group_name = group_name + "/values/" + to_string(i);
         write_field_bulk_data(h5_file, value_group_name, field_output.bulkDataBlocks[i]);

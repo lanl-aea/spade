@@ -348,6 +348,7 @@ struct field_bulk_type {
     vector<vector<float>> localCoordSystem;
     vector<vector<double>> localCoordSystemDouble;
     vector<string> componentLabels;
+    bool emptyFaces;  // Keep track of whether or not any face data exists
 };
 
 struct field_output_type {
