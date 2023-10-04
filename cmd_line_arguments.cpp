@@ -21,6 +21,7 @@
 #include <getopt.h>
 #include <iomanip>
 #include <ctime>
+#include <filesystem>
 //#include <cctype>
 #include <algorithm>
 
@@ -70,7 +71,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             {0,0,0,0 }
         };
 
-        c = getopt_long(argc, argv, "ho:t:vd", long_options, &option_index);
+        c = getopt_long(argc, argv, "ho:t:vdf", long_options, &option_index);
         if (c == -1) break;
 
         switch (c) {
@@ -109,7 +110,6 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             }
 
             case 'f': {
-                string option_arg = string(optarg);
                 this->force_overwrite = true;
                 break;
             }
@@ -161,8 +161,16 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         // Check if output file already exists
         ifstream output_file(this->command_line_arguments["output-file"].c_str());
         if (output_file) {
-            cerr << this->command_line_arguments["output-file"] << " already exists. Appending time stamp to output file.\n";
-            this->command_line_arguments["output-file"] = this->command_line_arguments["output-file"].substr(0, this->command_line_arguments["output-file"].size()-3) + "_" + this->start_time + "." + this->command_line_arguments["output-file-type"]; 
+            if (!this->force_overwrite) {
+                cerr << this->command_line_arguments["output-file"] << " already exists. Appending time stamp to output file.\n";
+                this->command_line_arguments["output-file"] = this->command_line_arguments["output-file"].substr(0, this->command_line_arguments["output-file"].size()-3) + "_" + this->start_time + "." + this->command_line_arguments["output-file-type"]; 
+            } else {
+                try {
+                    std::filesystem::remove(this->command_line_arguments["output-file"]);
+                } catch(const std::filesystem::filesystem_error& err) {
+                    cerr << "Filesystem error: " << err.what() << '\n';
+                }
+            }
         }
         // Create log file name if not provided
         if (this->command_line_arguments["log-file"].empty()) {
