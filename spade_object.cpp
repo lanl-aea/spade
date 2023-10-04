@@ -1302,6 +1302,9 @@ history_region_type SpadeObject::process_history_region (odb_HistoryRegion &hist
 void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
     step_type new_step;
     new_step.name = step.name().CStr();
+    if ((command_line_arguments["step"] != "all") && (command_line_arguments["step"] != new_step.name)) {
+        return;
+    }
     new_step.description = step.description().CStr();
     switch(step.domain()) {
         case odb_Enum::TIME: new_step.domain = "Time"; break;
