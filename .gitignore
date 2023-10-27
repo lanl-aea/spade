@@ -1,8 +1,13 @@
 *
 !.gitignore
+!.gitlab-ci.yml
+!environment.yml
+!utilities.py
+!SConstruct
+!abaqus_v6.env.in
 !Makefile
 !README.md
-!spade.cpp
+!spade_cpp.cpp
 !cmd_line_arguments.h
 !cmd_line_arguments.cpp
 !logging.h

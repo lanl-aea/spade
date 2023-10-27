@@ -48,8 +48,8 @@ objects.extend(env.Object("spade_object.cpp", CXXFLAGS=h5_flags + odb_flags))
 
 # Build executable with Abaqus make
 env.Command(
-    target=["spade"],
-    source=["spade.cpp"] + objects,
+    target=["spade_cpp"],
+    source=["spade_cpp.cpp"] + objects,
     action=["${abaqus_program} make job=${TARGET.name}"],
     abaqus_program=env["abaqus"]
 )
