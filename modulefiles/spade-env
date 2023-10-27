@@ -8,7 +8,7 @@ conflict waves-env
 # Set AEA standard software version and environment names
 set anaconda_version "2021.11"
 set python_version "3.9"
-set environment "odb-extract-env"
+set environment "spade-env"
 
 # Get current hostname
 set hostname [info hostname]
