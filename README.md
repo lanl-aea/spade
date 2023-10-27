@@ -46,6 +46,9 @@ This section provides a complete list of the command line options available.
 ---
 
 ## Compiling
+### development environment
+``module use /projects/aea_compute/modulefiles``
+``module load odb-extract-env``
 
 ### Compiling
 To compile this code:
