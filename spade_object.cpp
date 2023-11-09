@@ -1157,11 +1157,15 @@ field_output_type SpadeObject::process_field_output (odb_FieldOutput &field_outp
     } else {
         new_field_output.values_empty = true;
     }
+    new_field_output.max_length = 0;
+    new_field_output.max_width = 0;
     odb_SequenceFieldBulkData field_bulk_values = field_output.bulkDataBlocks();	
     log_file.logVerbose("Reading field bulk data.");
     for (int i=0; i<field_bulk_values.size(); i++) {
         odb_FieldBulkData field_bulk_value = field_bulk_values[i];
         new_field_output.bulkDataBlocks.push_back(process_field_bulk_data(field_bulk_value, field_output.validInvariants(), field_output.isComplex(), log_file, command_line_arguments));
+        if (new_field_output.bulkDataBlocks[i].width > new_field_output.max_width) {  new_field_output.max_width = new_field_output.bulkDataBlocks[i].width; }
+        if (new_field_output.bulkDataBlocks[i].length > new_field_output.max_length) {  new_field_output.max_length = new_field_output.bulkDataBlocks[i].length; }
     }
     return new_field_output;
 }
@@ -1184,9 +1188,15 @@ frame_type SpadeObject::process_frame (odb_Frame &frame, Logging &log_file, CmdL
     odb_FieldOutputRepository& field_outputs = frame.fieldOutputs();
     odb_FieldOutputRepositoryIT field_outputs_iterator(field_outputs);
     log_file.logVerbose("Reading field output.");
+    new_frame.max_length = 0;
+    new_frame.max_width = 0;
+    int field_output_count = 0;
     for (field_outputs_iterator.first(); !field_outputs_iterator.isDone(); field_outputs_iterator.next()) {
         odb_FieldOutput& field = field_outputs[field_outputs_iterator.currentKey()]; 
         new_frame.fieldOutputs.push_back(process_field_output(field, log_file, command_line_arguments));
+        if (new_frame.fieldOutputs[field_output_count].max_width > new_frame.max_width) {  new_frame.max_width = new_frame.fieldOutputs[field_output_count].max_width; }
+        if (new_frame.fieldOutputs[field_output_count].max_length > new_frame.max_length) {  new_frame.max_length = new_frame.fieldOutputs[field_output_count].max_length; }
+        field_output_count++;
     }
     return new_frame;
 }
@@ -1358,7 +1368,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
     const H5std_string FILE_NAME(command_line_arguments["output-file"]);
     H5File h5_file(FILE_NAME, H5F_ACC_TRUNC);
 
-    log_file.logVerbose("Writing top level attributes to odb group.");
+    log_file.logVerbose("Writing top level data to odb group.");
     H5::Group odb_group = h5_file.createGroup(string("/odb").c_str());
     write_string_dataset(odb_group, "name", this->name);
     write_string_dataset(odb_group, "analysisTitle", this->analysisTitle);
@@ -1587,6 +1597,8 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, con
         string value_group_name = group_name + "/values/" + to_string(i);
         write_field_bulk_data(h5_file, value_group_name, field_output.bulkDataBlocks[i]);
     }
+    write_attribute(field_output_group, "max_width", to_string(field_output.max_width));
+    write_attribute(field_output_group, "max_length", to_string(field_output.max_length));
 }
 
 void SpadeObject::write_frames(H5::H5File &h5_file, Logging &log_file, const string &group_name, vector<frame_type> &frames) {
@@ -1608,6 +1620,8 @@ void SpadeObject::write_frames(H5::H5File &h5_file, Logging &log_file, const str
             string field_output_group_name = frame_group_name + "/fieldOutputs/" + to_string(i);
             write_field_output(h5_file, log_file, field_output_group_name, frame.fieldOutputs[i]);
         }
+        write_attribute(frame_group, "max_width", to_string(frame.max_width));
+        write_attribute(frame_group, "max_length", to_string(frame.max_length));
     }
 }
 void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_name, history_point_type &history_point) {

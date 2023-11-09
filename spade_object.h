@@ -362,8 +362,10 @@ struct field_output_type {
 //    string isEngineeringTensor;  // Boolean
     vector<field_location_type> locations;
     vector<field_value_type> values;
-    bool values_empty;
     vector<field_bulk_type> bulkDataBlocks;
+    bool values_empty;
+    int max_width;
+    int max_length;
 };
 
 struct frame_type {
@@ -376,6 +378,8 @@ struct frame_type {
     float frequency;
     string loadCase;
     vector<field_output_type> fieldOutputs;
+    int max_width;
+    int max_length;
 };
 
 struct history_point_type {
