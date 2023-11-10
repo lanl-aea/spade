@@ -144,23 +144,22 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
 
-        string base_file_name = this->command_line_arguments["odb-file"].substr(0,this->command_line_arguments["odb-file"].size()-4);  //remove '.odb'
-
         // Handle output file type
         std::transform(this->command_line_arguments["output-file-type"].begin(), this->command_line_arguments["output-file-type"].end(), this->command_line_arguments["output-file-type"].begin(), ::tolower);
         if ((this->command_line_arguments["output-file-type"] != "json") && (this->command_line_arguments["output-file-type"] != "yaml")) this->command_line_arguments["output-file-type"] = "h5";
 
         // Handle output file name
-        if (this->command_line_arguments["output-file"].empty()) {
-            this->command_line_arguments["output-file"] = base_file_name;
+        std::filesystem::path file_path = this->command_line_arguments["output-file"];
+        this->command_line_arguments["output-file"] = file_path.replace_extension(this->command_line_arguments["output-file-type"]).generic_string();
+        string base_file_name = file_path.replace_extension("").generic_string();
+        std::filesystem::perms directory_permissions = std::filesystem::status(file_path.parent_path()).permissions();
+        if (std::filesystem::perms::none == (std::filesystem::perms::owner_write & directory_permissions)) {  // If parent path is not writable, exit with error
+            cerr << "Do not have write permission for: " << file_path.parent_path() << '\n';
+            exit(1);
         }
-        string output_file_base = this->command_line_arguments["output-file"];
-        size_t lastdot = output_file_base.find_last_of(".");  // Find last dot character in file name
-        if (lastdot != std::string::npos) output_file_base = output_file_base.substr(0, lastdot);  // Strip off file extension
-        this->command_line_arguments["output-file"] = output_file_base + "." + this->command_line_arguments["output-file-type"];
+
         // Check if output file already exists
-        ifstream output_file(this->command_line_arguments["output-file"].c_str());
-        if (output_file) {
+        if (std::filesystem::exists(file_path)) {
             if (!this->force_overwrite) {
                 cerr << this->command_line_arguments["output-file"] << " already exists. Appending time stamp to output file.\n";
                 this->command_line_arguments["output-file"] = this->command_line_arguments["output-file"].substr(0, this->command_line_arguments["output-file"].size()-3) + "_" + this->start_time + "." + this->command_line_arguments["output-file-type"]; 
@@ -171,7 +170,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
                     cerr << "Filesystem error: " << err.what() << '\n';
                 }
             }
-        }
+        } 
         // Create log file name if not provided
         if (this->command_line_arguments["log-file"].empty()) {
             this->command_line_arguments["log-file"] = base_file_name + ".spade.log"; 
@@ -182,7 +181,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             cerr << this->command_line_arguments["log-file"] << " already exists. Appending time stamp to log file.\n";
             string log_base_name = this->command_line_arguments["log-file"];
             string log_extension = ".log";
-            lastdot = this->command_line_arguments["log-file"].find_last_of(".");  // Find last dot character in file name
+            size_t lastdot = this->command_line_arguments["log-file"].find_last_of(".");  // Find last dot character in file name
             if (lastdot != std::string::npos) {
                 log_extension = log_base_name.substr(lastdot);  // Get file extension
                 log_base_name = log_base_name.substr(0,lastdot);  // Get base name
