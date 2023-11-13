@@ -138,8 +138,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             cerr << "ODB file not provided on command line.\n";
             perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
-        ifstream odb_file(this->command_line_arguments["odb-file"].c_str());
-        if (!odb_file) {
+        if (!std::filesystem::exists(std::filesystem::path(this->command_line_arguments["odb-file"]))) {
             cerr << this->command_line_arguments["odb-file"] << " does not exist.\n";
             perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
@@ -148,26 +147,27 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         std::transform(this->command_line_arguments["output-file-type"].begin(), this->command_line_arguments["output-file-type"].end(), this->command_line_arguments["output-file-type"].begin(), ::tolower);
         if ((this->command_line_arguments["output-file-type"] != "json") && (this->command_line_arguments["output-file-type"] != "yaml")) this->command_line_arguments["output-file-type"] = "h5";
 
+        string base_file_name = std::filesystem::path(this->command_line_arguments["odb-file"]).replace_extension("").generic_string();
+
         // Handle output file name
+        if (this->command_line_arguments["output-file"].empty()) { this->command_line_arguments["output-file"] = base_file_name + "." + this->command_line_arguments["output-file-type"]; }
         std::filesystem::path file_path = this->command_line_arguments["output-file"];
-        this->command_line_arguments["output-file"] = file_path.replace_extension(this->command_line_arguments["output-file-type"]).generic_string();
-        string base_file_name = file_path.replace_extension("").generic_string();
         std::filesystem::perms directory_permissions = std::filesystem::status(file_path.parent_path()).permissions();
         if (std::filesystem::perms::none == (std::filesystem::perms::owner_write & directory_permissions)) {  // If parent path is not writable, exit with error
             cerr << "Do not have write permission for: " << file_path.parent_path() << '\n';
-            exit(1);
+            perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
 
         // Check if output file already exists
         if (std::filesystem::exists(file_path)) {
             if (!this->force_overwrite) {
                 cerr << this->command_line_arguments["output-file"] << " already exists. Appending time stamp to output file.\n";
-                this->command_line_arguments["output-file"] = this->command_line_arguments["output-file"].substr(0, this->command_line_arguments["output-file"].size()-3) + "_" + this->start_time + "." + this->command_line_arguments["output-file-type"]; 
+                this->command_line_arguments["output-file"] = base_file_name + "_" + this->start_time + "." + this->command_line_arguments["output-file-type"]; 
             } else {
-                try {
-                    std::filesystem::remove(this->command_line_arguments["output-file"]);
-                } catch(const std::filesystem::filesystem_error& err) {
-                    cerr << "Filesystem error: " << err.what() << '\n';
+                if ( remove(this->command_line_arguments["output-file"].c_str()) != 0 ) {
+                    perror("Error deleting output file ");
+                    cerr << this->command_line_arguments["output-file"] << " still exists. Appending time stamp to output file.\n";
+                    this->command_line_arguments["output-file"] = base_file_name + "_" + this->start_time + "." + this->command_line_arguments["output-file-type"]; 
                 }
             }
         } 
@@ -176,16 +176,11 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             this->command_line_arguments["log-file"] = base_file_name + ".spade.log"; 
         }
         // Check if log file already exists
-        ifstream log_file(this->command_line_arguments["log-file"].c_str());
-        if (log_file) {
+        std::filesystem::path log_file = this->command_line_arguments["log-file"];
+        if (std::filesystem::exists(log_file)) {
             cerr << this->command_line_arguments["log-file"] << " already exists. Appending time stamp to log file.\n";
-            string log_base_name = this->command_line_arguments["log-file"];
-            string log_extension = ".log";
-            size_t lastdot = this->command_line_arguments["log-file"].find_last_of(".");  // Find last dot character in file name
-            if (lastdot != std::string::npos) {
-                log_extension = log_base_name.substr(lastdot);  // Get file extension
-                log_base_name = log_base_name.substr(0,lastdot);  // Get base name
-            }
+            string log_extension = log_file.extension();
+            string log_base_name = log_file.replace_extension("").generic_string();
             this->command_line_arguments["log-file"] = log_base_name + "_" + this->start_time + log_extension;
         }
 
@@ -202,7 +197,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         this->command_line = this->command_name + " ";
         for (int i=1; i<argc; ++i) { this->command_line += string(argv[i]) + " "; }  // concatenate options into single string
 
-        if ((!this->unexpected_args.empty()) && (!this->help_command)) cout << "Unexpected arguments: " + this->unexpected_args + "\n";
+        if ((!this->unexpected_args.empty()) && (!this->help_command)) cerr << "Unexpected arguments: " + this->unexpected_args + "\n";
     }
 
 }
@@ -256,6 +251,7 @@ string CmdLineArguments::helpMessage () {
     help_message += "\t--history\tget information from specified history value (default: all)\n";
     help_message += "\t--history-region\tget information from specified history region (default: all)\n";
     help_message += "\t--instance\tget information from specified instance (default: all)\n";
+    help_message += "\t--log-file\tname of log file (default: <odb file name>.spade.log)\n";
     // TODO: Add more here
     help_message += "\nExample: " + this->command_name + " odb_file.odb\n";
     help_message += "\n";
