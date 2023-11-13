@@ -1366,7 +1366,16 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
     std::ifstream hdf5File (command_line_arguments["output-file"].c_str());
     log_file.logDebug("Creating hdf5 file " + command_line_arguments["output-file"]);
     const H5std_string FILE_NAME(command_line_arguments["output-file"]);
-    H5File h5_file(FILE_NAME, H5F_ACC_TRUNC);
+
+    H5::Exception::dontPrint();
+    H5::H5File* h5_file_pointer = 0;
+    try {
+        h5_file_pointer = new H5::H5File(FILE_NAME, H5F_ACC_TRUNC);
+    } catch(const H5::FileIException&) {
+        cerr << "Issue opening file: " << command_line_arguments["output-file"] << "\n";
+        perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+    }
+    H5::H5File h5_file = *h5_file_pointer;
 
     log_file.logVerbose("Writing top level data to odb group.");
     H5::Group odb_group = h5_file.createGroup(string("/odb").c_str());

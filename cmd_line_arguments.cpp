@@ -165,9 +165,8 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
                 this->command_line_arguments["output-file"] = base_file_name + "_" + this->start_time + "." + this->command_line_arguments["output-file-type"]; 
             } else {
                 if ( remove(this->command_line_arguments["output-file"].c_str()) != 0 ) {
-                    perror("Error deleting output file ");
-                    cerr << this->command_line_arguments["output-file"] << " still exists. Appending time stamp to output file.\n";
-                    this->command_line_arguments["output-file"] = base_file_name + "_" + this->start_time + "." + this->command_line_arguments["output-file-type"]; 
+                    cerr << "Cannot delete: " << this->command_line_arguments["output-file"] << "\n";
+                    perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
                 }
             }
         } 
