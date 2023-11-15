@@ -32,6 +32,7 @@ using namespace std;
 #include <stdlib.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <filesystem>
 
 #include <odb_API.h>
 #include <odb_Coupling.h>
@@ -52,7 +53,7 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
 
     if (isUpgradeRequiredForOdb(file_name)) {
         log_file.logDebug("Upgrade to odb required.");
-        odb_String upgraded_file_name = string("upgraded_" + command_line_arguments["odb-file"]).c_str();
+        odb_String upgraded_file_name = std::filesystem::path(command_line_arguments["odb-file"]).replace_extension(".upgraded.odb").generic_string().c_str();
         log_file.log("Upgrading file:" + command_line_arguments["odb-file"]);
         upgradeOdb(file_name, upgraded_file_name);
         file_name = upgraded_file_name;
