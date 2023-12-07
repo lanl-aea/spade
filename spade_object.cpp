@@ -851,9 +851,11 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
 
 field_value_type SpadeObject::process_field_values(odb_FieldValue &field_value, const odb_SequenceInvariant& invariants, Logging &log_file, CmdLineArguments &command_line_arguments) {
     field_value_type new_field_value;
+    new_field_value.empty = true;
     new_field_value.elementLabel = field_value.elementLabel();
     new_field_value.nodeLabel = field_value.nodeLabel();
     new_field_value.integrationPoint = field_value.integrationPoint();
+    if (new_field_value.integrationPoint != -1) { new_field_value.empty = false; }
     switch(field_value.type()) {
         case odb_Enum::SCALAR: new_field_value.type = "Scalar"; break;
         case odb_Enum::VECTOR: new_field_value.type = "Vector"; break;
@@ -865,35 +867,46 @@ field_value_type SpadeObject::process_field_values(odb_FieldValue &field_value, 
     }
     if (invariants.isMember(odb_Enum::MAGNITUDE)) {
         new_field_value.magnitude = field_value.magnitude();
+        new_field_value.empty = false;
     } else { new_field_value.magnitude = 0; }
     if (invariants.isMember(odb_Enum::TRESCA)) {
         new_field_value.tresca = field_value.tresca();
+        new_field_value.empty = false;
     } else { new_field_value.tresca = 0; }
     if (invariants.isMember(odb_Enum::PRESS)) {
         new_field_value.press = field_value.press();
+        new_field_value.empty = false;
     } else { new_field_value.press = 0; }
     if (invariants.isMember(odb_Enum::INV3)) {
         new_field_value.inv3 = field_value.inv3();
+        new_field_value.empty = false;
     } else { new_field_value.inv3 = 0; }
     if (invariants.isMember(odb_Enum::MAX_PRINCIPAL)) {
         new_field_value.maxPrincipal = field_value.maxPrincipal();
+        new_field_value.empty = false;
     } else { new_field_value.maxPrincipal = 0; }
     if (invariants.isMember(odb_Enum::MID_PRINCIPAL)) {
         new_field_value.midPrincipal = field_value.midPrincipal();
+        new_field_value.empty = false;
     } else { new_field_value.midPrincipal = 0; }
     if (invariants.isMember(odb_Enum::MIN_PRINCIPAL)) {
         new_field_value.minPrincipal = field_value.minPrincipal();
+        new_field_value.empty = false;
     } else { new_field_value.minPrincipal = 0; }
     if (invariants.isMember(odb_Enum::MAX_INPLANE_PRINCIPAL)) {
         new_field_value.maxInPlanePrincipal = field_value.maxInPlanePrincipal();
+        new_field_value.empty = false;
     } else { new_field_value.maxInPlanePrincipal = 0; }
     if (invariants.isMember(odb_Enum::MIN_INPLANE_PRINCIPAL)) {
         new_field_value.minInPlanePrincipal = field_value.minInPlanePrincipal();
+        new_field_value.empty = false;
     } else { new_field_value.minInPlanePrincipal = 0; }
     if (invariants.isMember(odb_Enum::OUTOFPLANE_PRINCIPAL)) {
         new_field_value.outOfPlanePrincipal = field_value.outOfPlanePrincipal();
+        new_field_value.empty = false;
     } else { new_field_value.outOfPlanePrincipal = 0; }
     new_field_value.sectionPoint.number =  to_string(field_value.sectionPoint().number());
+    if (new_field_value.sectionPoint.number != "-1") { new_field_value.empty = false; }
     new_field_value.sectionPoint.description =  field_value.sectionPoint().description().CStr();
     return new_field_value;
 }
@@ -1149,14 +1162,24 @@ field_output_type SpadeObject::process_field_output (odb_FieldOutput &field_outp
     }
     odb_SequenceFieldValue field_values = field_output.values();
     log_file.logVerbose("Reading field values.");
+    new_field_output.node_values_empty = true;
+    new_field_output.element_values_empty = true;
     if (field_output.validInvariants().size() > 0) {
-        new_field_output.values_empty = false;
         for (int i=0; i<field_values.size(); i++) {
             odb_FieldValue field_value = field_values.constGet(i);
-            new_field_output.values.push_back(process_field_values(field_value, field_output.validInvariants(), log_file, command_line_arguments));
+            field_value_type new_field_value = process_field_values(field_value, field_output.validInvariants(), log_file, command_line_arguments);
+            if (!new_field_value.empty) {
+                if (new_field_value.elementLabel != -1) { 
+                    new_field_output.elementValues[new_field_value.elementLabel] = new_field_value; 
+                    new_field_output.element_values_empty = false;
+                }
+                if (new_field_value.nodeLabel != -1) { 
+                    new_field_output.nodeValues[new_field_value.nodeLabel] = new_field_value;
+                    new_field_output.node_values_empty = false;
+                }
+            }
+//            new_field_output.values.push_back(process_field_values(field_value, field_output.validInvariants(), log_file, command_line_arguments));
         }
-    } else {
-        new_field_output.values_empty = true;
     }
     new_field_output.max_length = 0;
     new_field_output.max_width = 0;
@@ -1164,9 +1187,9 @@ field_output_type SpadeObject::process_field_output (odb_FieldOutput &field_outp
     log_file.logVerbose("Reading field bulk data.");
     for (int i=0; i<field_bulk_values.size(); i++) {
         odb_FieldBulkData field_bulk_value = field_bulk_values[i];
-        new_field_output.bulkDataBlocks.push_back(process_field_bulk_data(field_bulk_value, field_output.validInvariants(), field_output.isComplex(), log_file, command_line_arguments));
-        if (new_field_output.bulkDataBlocks[i].width > new_field_output.max_width) {  new_field_output.max_width = new_field_output.bulkDataBlocks[i].width; }
-        if (new_field_output.bulkDataBlocks[i].length > new_field_output.max_length) {  new_field_output.max_length = new_field_output.bulkDataBlocks[i].length; }
+        new_field_output.dataValues.push_back(process_field_bulk_data(field_bulk_value, field_output.validInvariants(), field_output.isComplex(), log_file, command_line_arguments));
+        if (new_field_output.dataValues[i].width > new_field_output.max_width) {  new_field_output.max_width = new_field_output.dataValues[i].width; }
+        if (new_field_output.dataValues[i].length > new_field_output.max_length) {  new_field_output.max_length = new_field_output.dataValues[i].length; }
     }
     return new_field_output;
 }
@@ -1494,7 +1517,6 @@ void SpadeObject::write_field_value(H5::H5File &h5_file, const string &group_nam
     if (field_value.integrationPoint != -1) {
         write_integer_dataset(value_group, "integrationPoint", field_value.integrationPoint);
     }
-    write_string_dataset(value_group, "type", field_value.type);
     if (field_value.magnitude != 0) {
         write_float_dataset(value_group, "magnitude", field_value.magnitude);
     }
@@ -1530,16 +1552,20 @@ void SpadeObject::write_field_value(H5::H5File &h5_file, const string &group_nam
         write_string_dataset(section_point_group, "number", field_value.sectionPoint.number);
         write_string_dataset(section_point_group, "description", field_value.sectionPoint.description);
     }
+    write_string_dataset(value_group, "type", field_value.type);
 }
 
 void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group_name, field_bulk_type &field_bulk_data){
     H5::Group bulk_group;
+    /*
     H5::Exception::dontPrint();
     try {
         bulk_group = h5_file.openGroup(group_name.c_str());
     } catch (...) {
         bulk_group = h5_file.createGroup(group_name.c_str());
     }
+    */
+    bulk_group = h5_file.createGroup(group_name.c_str());
     write_string_dataset(bulk_group, "position", field_bulk_data.position);
 //    write_string_dataset(bulk_group, "precision", field_bulk_data.precision);
     if (field_bulk_data.baseElementType != "") {
@@ -1597,15 +1623,24 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, con
     // TODO: find out a way to speed up this process
     log_file.logDebug("Writing field output values for " + group_name + ".");
     H5::Group values_group = h5_file.createGroup((group_name + "/values").c_str());
-    if (!field_output.values_empty) {
-        for (int i=0; i<field_output.values.size(); i++) {
-            string value_group_name = group_name + "/values/" + to_string(i);
-            write_field_value(h5_file, value_group_name, field_output.values[i]);
+    if (!field_output.node_values_empty) {
+        H5::Group node_values_group = h5_file.createGroup((group_name + "/values/nodes").c_str());
+        for (auto [node_number, field_output_value] : field_output.nodeValues) {
+//        for (int i=0; i<field_output.nodeValues.size(); i++) {
+            string value_group_name = group_name + "/values/nodes/" + to_string(node_number);
+            write_field_value(h5_file, value_group_name, field_output_value);
         }
     }
-    for (int i=0; i<field_output.bulkDataBlocks.size(); i++) {
+    if (!field_output.element_values_empty) {
+        H5::Group element_values_group = h5_file.createGroup((group_name + "/values/elements").c_str());
+        for (auto [element_number, field_output_value] : field_output.elementValues) {
+            string value_group_name = group_name + "/values/elements/" + to_string(element_number);
+            write_field_value(h5_file, value_group_name, field_output_value);
+        }
+    }
+    for (int i=0; i<field_output.dataValues.size(); i++) {
         string value_group_name = group_name + "/values/" + to_string(i);
-        write_field_bulk_data(h5_file, value_group_name, field_output.bulkDataBlocks[i]);
+        write_field_bulk_data(h5_file, value_group_name, field_output.dataValues[i]);
     }
     write_attribute(field_output_group, "max_width", to_string(field_output.max_width));
     write_attribute(field_output_group, "max_length", to_string(field_output.max_length));

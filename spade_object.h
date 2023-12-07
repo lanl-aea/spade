@@ -323,6 +323,7 @@ struct field_value_type {
     float outOfPlanePrincipal;
     string instance;  // Will store just the instance name
     section_point_type sectionPoint;
+    bool empty;  // If int or float values are not populated set this to true
 };
 
 struct field_bulk_type {
@@ -361,12 +362,13 @@ struct field_output_type {
     int dim2;
 //    string isEngineeringTensor;  // Boolean
     vector<field_location_type> locations;
-    vector<field_value_type> nodeValues;
-    vector<field_value_type> elementValues;
+    map<int, field_value_type> nodeValues;
+    map<int, field_value_type> elementValues;
     vector<field_bulk_type> dataValues;
-    bool values_empty;
     int max_width;
     int max_length;
+    bool node_values_empty;
+    bool element_values_empty;
 };
 
 struct frame_type {
