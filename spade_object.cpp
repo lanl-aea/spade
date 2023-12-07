@@ -1067,13 +1067,11 @@ field_bulk_type SpadeObject::process_field_bulk_data(odb_FieldBulkData &field_bu
         if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
             for (int node_count=0; node_count<new_field_bulk_data.length; ++node_count) {
                 vector<float> current_data;
-                vector<int> current_node_labels;
-                current_node_labels.push_back(node_labels[node_count]);
                 int total_points = node_count*new_field_bulk_data.width;
                 for (int component=0; component<new_field_bulk_data.width; ++component) {
                     current_data.push_back(data[total_points++]);
                 }
-                new_field_bulk_data.nodeLabels.push_back(current_node_labels);
+                new_field_bulk_data.nodeLabels.push_back(node_labels[node_count]);
                 new_field_bulk_data.data.push_back(current_data);
             }
             if (complex_data) {
@@ -1580,7 +1578,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
         write_integer_dataset(bulk_group, "valuesPerElement", field_bulk_data.valuesPerElement);
     }
     write_integer_2D_vector(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.elementLabels);
-    write_integer_2D_vector(bulk_group, "nodeLabels", field_bulk_data.width, field_bulk_data.nodeLabels);
+    write_integer_vector_dataset(bulk_group, "nodeLabels", field_bulk_data.nodeLabels);
     write_integer_2D_vector(bulk_group, "integrationPoints", field_bulk_data.width, field_bulk_data.integrationPoints);
     if (!field_bulk_data.emptyFaces) {
         write_string_2D_vector(h5_file, bulk_group, "faces", field_bulk_data.width, field_bulk_data.faces);
@@ -2180,7 +2178,10 @@ void SpadeObject::write_integer_2D_vector(const H5::Group& group, const string &
         hsize_t dimensions[] = {integer_data.size(), max_column_size};
         H5::DataSpace dataspace(2, dimensions);  // two dimensional data
         H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
-        dataset.write(integer_data.data(), H5::PredType::NATIVE_INT);
+        for (auto & row : integer_data) {
+            dataset.write(row.data(), H5::PredType::NATIVE_INT);
+        }
+//        dataset.write(integer_data.data(), H5::PredType::NATIVE_INT);
         dataset.close();
         dataspace.close();
     }
@@ -2229,7 +2230,10 @@ void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & d
         hsize_t dimensions[] = {float_data.size(), max_column_size};
         H5::DataSpace dataspace(2, dimensions);  // two dimensional data
         H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
-        dataset.write(float_data.data(), H5::PredType::NATIVE_FLOAT);
+        for (auto & row : float_data) {
+            dataset.write(row.data(), H5::PredType::NATIVE_FLOAT);
+        }
+//        dataset.write(float_data.data(), H5::PredType::NATIVE_FLOAT);
         dataset.close();
         dataspace.close();
     }
@@ -2278,7 +2282,10 @@ void SpadeObject::write_double_2D_vector(const H5::Group& group, const string & 
         hsize_t dimensions[] = {double_data.size(), max_column_size};
         H5::DataSpace dataspace(2, dimensions);  // two dimensional data
         H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
-        dataset.write(double_data.data(), H5::PredType::NATIVE_DOUBLE);
+        for (auto & row : double_data) {
+            dataset.write(row.data(), H5::PredType::NATIVE_DOUBLE);
+        }
+//        dataset.write(double_data.data(), H5::PredType::NATIVE_DOUBLE);
         dataset.close();
         dataspace.close();
     }
