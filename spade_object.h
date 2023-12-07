@@ -361,8 +361,9 @@ struct field_output_type {
     int dim2;
 //    string isEngineeringTensor;  // Boolean
     vector<field_location_type> locations;
-    vector<field_value_type> values;
-    vector<field_bulk_type> bulkDataBlocks;
+    vector<field_value_type> nodeValues;
+    vector<field_value_type> elementValues;
+    vector<field_bulk_type> dataValues;
     bool values_empty;
     int max_width;
     int max_length;
