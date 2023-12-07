@@ -2178,10 +2178,12 @@ void SpadeObject::write_integer_2D_vector(const H5::Group& group, const string &
         hsize_t dimensions[] = {integer_data.size(), max_column_size};
         H5::DataSpace dataspace(2, dimensions);  // two dimensional data
         H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
+        /*
         for (auto & row : integer_data) {
             dataset.write(row.data(), H5::PredType::NATIVE_INT);
         }
-//        dataset.write(integer_data.data(), H5::PredType::NATIVE_INT);
+        */
+        dataset.write(integer_data.data(), H5::PredType::NATIVE_INT);
         dataset.close();
         dataspace.close();
     }
@@ -2230,10 +2232,7 @@ void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & d
         hsize_t dimensions[] = {float_data.size(), max_column_size};
         H5::DataSpace dataspace(2, dimensions);  // two dimensional data
         H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
-        for (auto & row : float_data) {
-            dataset.write(row.data(), H5::PredType::NATIVE_FLOAT);
-        }
-//        dataset.write(float_data.data(), H5::PredType::NATIVE_FLOAT);
+        dataset.write(float_data.data(), H5::PredType::NATIVE_FLOAT);
         dataset.close();
         dataspace.close();
     }
@@ -2282,10 +2281,7 @@ void SpadeObject::write_double_2D_vector(const H5::Group& group, const string & 
         hsize_t dimensions[] = {double_data.size(), max_column_size};
         H5::DataSpace dataspace(2, dimensions);  // two dimensional data
         H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
-        for (auto & row : double_data) {
-            dataset.write(row.data(), H5::PredType::NATIVE_DOUBLE);
-        }
-//        dataset.write(double_data.data(), H5::PredType::NATIVE_DOUBLE);
+        dataset.write(double_data.data(), H5::PredType::NATIVE_DOUBLE);
         dataset.close();
         dataspace.close();
     }
