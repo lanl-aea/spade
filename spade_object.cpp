@@ -1584,7 +1584,7 @@ void SpadeObject::write_field_value(H5::H5File &h5_file, const string &group_nam
     write_string_dataset(value_group, "type", field_value.type);
 }
 
-void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group_name, field_bulk_type &field_bulk_data, bool is_complex){
+void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group_name, field_bulk_type &field_bulk_data, bool complex_data){
     H5::Group bulk_group;
     /*
     H5::Exception::dontPrint();
@@ -1596,17 +1596,35 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
     */
     bulk_group = h5_file.createGroup(group_name.c_str());
     write_string_dataset(bulk_group, "position", field_bulk_data.position);
-//    write_string_dataset(bulk_group, "precision", field_bulk_data.precision);
-    if (field_bulk_data.baseElementType != "") {
-        write_string_dataset(bulk_group, "baseElementType", field_bulk_data.baseElementType);
-    }
     write_string_dataset(bulk_group, "instance", field_bulk_data.instance);
-    write_integer_dataset(bulk_group, "orientationWidth", field_bulk_data.orientationWidth);
-    if (field_bulk_data.numberOfElements != 0) {
-        write_integer_dataset(bulk_group, "numberOfElements", field_bulk_data.numberOfElements);
-    }
-    if (field_bulk_data.valuesPerElement != 0) {
-        write_integer_dataset(bulk_group, "valuesPerElement", field_bulk_data.valuesPerElement);
+//    write_string_dataset(bulk_group, "precision", field_bulk_data.precision);
+    if(field_bulk_data.numberOfElements && field_bulk_data.elementLabels) { // If elements
+        if (field_bulk_data.baseElementType != "") {
+            write_string_dataset(bulk_group, "baseElementType", field_bulk_data.baseElementType);
+        }
+        write_integer_dataset(bulk_group, "orientationWidth", field_bulk_data.orientationWidth);
+        if (field_bulk_data.numberOfElements != 0) {
+            write_integer_dataset(bulk_group, "numberOfElements", field_bulk_data.numberOfElements);
+        }
+        if (field_bulk_data.valuesPerElement != 0) {
+            write_integer_dataset(bulk_group, "valuesPerElement", field_bulk_data.valuesPerElement);
+        }
+        write_string_vector_dataset(bulk_group, "componentLabels", field_bulk_data.componentLabels);
+        int current_position = 0;
+        int number_of_integration_points = field_bulk_data.length/field_bulk_data.numberOfElements;
+        for (int element=0; element<field_bulk_data.numberOfElements; ++element) {
+            for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
+                if(field_bulk_data.precision == "Single Precision") {
+                } else {
+                }
+                if (complex_data) {
+                }
+                if (!field_bulk_data.emptyMises) {
+                }
+            }
+        }
+    } else {  // Nodes
+
     }
     /*
     write_integer_2D_vector(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.elementLabels);
@@ -1626,7 +1644,6 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
     }
     write_float_2D_vector(bulk_group, "mises", field_bulk_data.width, field_bulk_data.mises);
     */
-    write_string_vector_dataset(bulk_group, "componentLabels", field_bulk_data.componentLabels);
 }
 
 void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, const string &group_name, field_output_type &field_output) {
