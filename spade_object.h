@@ -362,8 +362,9 @@ struct field_bulk_type {
     vector<vector<double>> localCoordSystemDouble;
     */
     vector<string> componentLabels;
-    bool emptyFaces;  // Keep track of whether or not any face data exists
-    bool emptyMises;  // Keep track of whether or not any mises data exists
+//    bool emptyFaces;  // Keep track of whether any face data exists
+    bool emptyMises;  // Keep track of whether any mises data exists
+    bool isComplex;  // Flag indicating if there is conjugate data
 };
 
 struct field_output_type {
