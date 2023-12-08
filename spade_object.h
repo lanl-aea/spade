@@ -364,7 +364,6 @@ struct field_bulk_type {
     vector<string> componentLabels;
 //    bool emptyFaces;  // Keep track of whether any face data exists
     bool emptyMises;  // Keep track of whether any mises data exists
-    bool isComplex;  // Flag indicating if there is conjugate data
 };
 
 struct field_output_type {
@@ -384,6 +383,7 @@ struct field_output_type {
     int max_length;
     bool node_values_empty;
     bool element_values_empty;
+    bool isComplex;  // Flag indicating if there is conjugate data
 };
 
 struct frame_type {
@@ -813,8 +813,9 @@ class SpadeObject {
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
           \param field_bulk_data Data to be written
+          \param complex_data Boolean indicating if the data is complex
         */
-        void write_field_bulk_data(H5::H5File &h5_file, const string &group_name, field_bulk_type &field_bulk_data);
+        void write_field_bulk_data(H5::H5File &h5_file, const string &group_name, field_bulk_type &field_bulk_data, bool complex_data);
         //! Write field value data to an HDF5 file
         /*!
           Write field value data into an HDF5 file

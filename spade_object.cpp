@@ -960,7 +960,6 @@ field_bulk_type SpadeObject::process_field_bulk_data(odb_FieldBulkData &field_bu
     new_field_bulk_data.valuesPerElement = field_bulk_data.valuesPerElement();                
 //    int* element_labels = field_bulk_data.elementLabels();
 
-    new_field_bulk_data.isComplex = complex_data;
     new_field_bulk_data.elementLabels = field_bulk_data.elementLabels();
     new_field_bulk_data.nodeLabels = field_bulk_data.nodeLabels();
     new_field_bulk_data.baseElementType = ""; // initializing to empty string
@@ -1213,6 +1212,7 @@ field_output_type SpadeObject::process_field_output (odb_FieldOutput &field_outp
     new_field_output.max_length = 0;
     new_field_output.max_width = 0;
     odb_SequenceFieldBulkData field_bulk_values = field_output.bulkDataBlocks();	
+    new_field_output.isComplex = field_output.isComplex();
     log_file.logVerbose("Reading field bulk data.");
     for (int i=0; i<field_bulk_values.size(); i++) {
         odb_FieldBulkData field_bulk_value = field_bulk_values[i];
@@ -1584,7 +1584,7 @@ void SpadeObject::write_field_value(H5::H5File &h5_file, const string &group_nam
     write_string_dataset(value_group, "type", field_value.type);
 }
 
-void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group_name, field_bulk_type &field_bulk_data){
+void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group_name, field_bulk_type &field_bulk_data, bool is_complex){
     H5::Group bulk_group;
     /*
     H5::Exception::dontPrint();
@@ -1671,7 +1671,7 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, con
     }
     for (int i=0; i<field_output.dataValues.size(); i++) {
         string value_group_name = group_name + "/values/" + to_string(i);
-        write_field_bulk_data(h5_file, value_group_name, field_output.dataValues[i]);
+        write_field_bulk_data(h5_file, value_group_name, field_output.dataValues[i], field_output.isComplex);
     }
     write_attribute(field_output_group, "max_width", to_string(field_output.max_width));
     write_attribute(field_output_group, "max_length", to_string(field_output.max_length));
