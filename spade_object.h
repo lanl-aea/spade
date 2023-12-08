@@ -337,6 +337,18 @@ struct field_bulk_type {
     string baseElementType;
     string instance; // Will store just the instance name
     // TODO: turn all of these into pointers and then declare 2D arrays with the length and width given rather than vectors that have to then be converted to arrays
+    int* elementLabels;
+    int* nodeLabels;
+    int* integrationPoints;
+    odb_Enum::odb_ElementFaceEnum* faces;
+    float* data;
+    double* dataDouble;
+    float* conjugateData;
+    double* conjugateDataDouble;
+    float* mises;
+    float* localCoordSystem;
+    double* localCoordSystemDouble;
+    /*
     vector<vector<int>> elementLabels;
     vector<int> nodeLabels;
     vector<vector<int>> integrationPoints;
@@ -348,8 +360,10 @@ struct field_bulk_type {
     vector<vector<float>> mises;
     vector<vector<float>> localCoordSystem;
     vector<vector<double>> localCoordSystemDouble;
+    */
     vector<string> componentLabels;
     bool emptyFaces;  // Keep track of whether or not any face data exists
+    bool emptyMises;  // Keep track of whether or not any mises data exists
 };
 
 struct field_output_type {
@@ -1112,7 +1126,7 @@ class SpadeObject {
           \param double_array The double array that should be written in the new dataset
         */
         void write_double_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const double* double_array);
-        //! Write an double vector as a dataset
+        //! Write a double vector as a dataset
         /*!
           Create a double array from a double vector and call write_double_array_dataset
           \param group Name of HDF5 group in which to write the new dataset
