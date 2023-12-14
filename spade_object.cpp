@@ -1741,7 +1741,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
             write_double_2D_array(bulk_group, "data", field_bulk_data.width, field_bulk_data.length, *data_double);
             write_double_2D_array(bulk_group, "conjugateData", field_bulk_data.width, field_bulk_data.length, *conjugate_data_double);
         }
-//        write_integer_vector_dataset(bulk_group, "nodeLabels", node_labels);
+//        write_integer_array_dataset(bulk_group, "nodeLabels", field_bulk_data.length, node_labels);
         write_integer_array_dataset(bulk_group, "nodeLabels", field_bulk_data.length, field_bulk_data.nodeLabels);
     }
 }
