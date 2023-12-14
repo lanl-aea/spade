@@ -1612,19 +1612,41 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
         write_string_vector_dataset(bulk_group, "componentLabels", field_bulk_data.componentLabels);
         int current_position = 0;
         int number_of_integration_points = field_bulk_data.length/field_bulk_data.numberOfElements;
-        for (int element=0; element<field_bulk_data.numberOfElements; ++element) {
-            for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
-                if(field_bulk_data.precision == "Single Precision") {
-                } else {
+        if(field_bulk_data.precision == "Single Precision") {
+            for (int element=0; element<field_bulk_data.numberOfElements; ++element) {
+                for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
+                    int total_points = current_position*field_bulk_data.width;
+                    if (complex_data) {
+                    }
+                    if (!field_bulk_data.emptyMises) {
+                    }
                 }
-                if (complex_data) {
-                }
-                if (!field_bulk_data.emptyMises) {
+            }
+        } else {
+            for (int element=0; element<field_bulk_data.numberOfElements; ++element) {
+                for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
+                    int total_points = current_position*field_bulk_data.width;
+                    if (complex_data) {
+                    }
+                    if (!field_bulk_data.emptyMises) {
+                    }
                 }
             }
         }
     } else {  // Nodes
-
+        if(field_bulk_data.precision == "Single Precision") {
+            for (int node_count=0; node_count<field_bulk_data.length; ++node_count) {
+                int total_points = node_count*field_bulk_data.width;
+                for (int component=0; component<field_bulk_data.width; ++component) {
+                }
+            }
+        } else {
+            for (int node_count=0; node_count<field_bulk_data.length; ++node_count) {
+                int total_points = node_count*field_bulk_data.width;
+                for (int component=0; component<field_bulk_data.width; ++component) {
+                }
+            }
+        }
     }
     /*
     write_integer_2D_vector(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.elementLabels);
