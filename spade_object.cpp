@@ -1651,9 +1651,9 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
                 }
             }
             /*
-            write_float_3D_array(bulk_group, "data", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, data);
-            write_float_3D_array(bulk_group, "conjugateData", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, conjugate_data);
-            write_float_3D_array(bulk_group, "localCoordSystem", field_bulk_data.orientationWidth, number_of_integration_points, field_bulk_data.numberOfElements, local_coordinate_system);
+            write_float_3D_array(bulk_group, "data", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *data);
+            write_float_3D_array(bulk_group, "conjugateData", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *conjugate_data);
+            write_float_3D_array(bulk_group, "localCoordSystem", field_bulk_data.orientationWidth, number_of_integration_points, field_bulk_data.numberOfElements, *local_coordinate_system);
             */
         } else {  // Double precision
             double local_coordinate_system_double[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.orientationWidth];
@@ -1689,19 +1689,19 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
                 }
             }
             /*
-            write_double_3D_array(bulk_group, "data", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, data_double);
-            write_double_3D_array(bulk_group, "conjugateData", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, conjugate_data_double);
-            write_double_3D_array(bulk_group, "localCoordSystem", field_bulk_data.orientationWidth, number_of_integration_points, field_bulk_data.numberOfElements, local_coordinate_system_double);
+            write_double_3D_array(bulk_group, "data", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *data_double);
+            write_double_3D_array(bulk_group, "conjugateData", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *conjugate_data_double);
+            write_double_3D_array(bulk_group, "localCoordSystem", field_bulk_data.orientationWidth, number_of_integration_points, field_bulk_data.numberOfElements, *local_coordinate_system_double);
             */
         }
         if (!empty_faces) {
-            write_string_2D_array(bulk_group, "faces", field_bulk_data.width, field_bulk_data.numberOfElements, faces);
+            write_string_2D_array(bulk_group, "faces", field_bulk_data.width, field_bulk_data.numberOfElements, *faces);
         }
         if (!field_bulk_data.emptyMises) {
-            write_float_2D_array(bulk_group, "mises", field_bulk_data.width, field_bulk_data.numberOfElements, mises);
+            write_float_2D_array(bulk_group, "mises", field_bulk_data.width, field_bulk_data.numberOfElements, *mises);
         }
-        write_integer_2D_array(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.numberOfElements, element_labels);
-        write_integer_2D_array(bulk_group, "integrationPoints", field_bulk_data.width, field_bulk_data.numberOfElements, integration_points);
+        write_integer_2D_array(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.numberOfElements, *element_labels);
+        write_integer_2D_array(bulk_group, "integrationPoints", field_bulk_data.width, field_bulk_data.numberOfElements, *integration_points);
     } else {  // Nodes
         int node_labels[field_bulk_data.length];
         if(field_bulk_data.precision == "Single Precision") {
@@ -1720,8 +1720,8 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
                     }
                 }
             }
-            write_float_2D_array(bulk_group, "data", field_bulk_data.width, field_bulk_data.length, data);
-            write_float_2D_array(bulk_group, "conjugateData", field_bulk_data.width, field_bulk_data.length, conjugate_data);
+            write_float_2D_array(bulk_group, "data", field_bulk_data.width, field_bulk_data.length, *data);
+            write_float_2D_array(bulk_group, "conjugateData", field_bulk_data.width, field_bulk_data.length, *conjugate_data);
         } else {  // Double precision
             double data_double[field_bulk_data.length][field_bulk_data.width];
             double conjugate_data_double[field_bulk_data.length][field_bulk_data.width];
@@ -1738,8 +1738,8 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
                     }
                 }
             }
-            write_double_2D_array(bulk_group, "data", field_bulk_data.width, field_bulk_data.length, data_double);
-            write_double_2D_array(bulk_group, "conjugateData", field_bulk_data.width, field_bulk_data.length, conjugate_data_double);
+            write_double_2D_array(bulk_group, "data", field_bulk_data.width, field_bulk_data.length, *data_double);
+            write_double_2D_array(bulk_group, "conjugateData", field_bulk_data.width, field_bulk_data.length, *conjugate_data_double);
         }
         write_integer_vector_dataset(bulk_group, "nodeLabels", node_labels);
     }
