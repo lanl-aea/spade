@@ -1687,6 +1687,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
                         mises[element][integration_point] = field_bulk_data.mises[current_position];
                     }
                 }
+            }
             /*
             write_double_3D_array(bulk_group, "data", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, data_double);
             write_double_3D_array(bulk_group, "conjugateData", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, conjugate_data_double);
@@ -1694,7 +1695,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
             */
         }
         if (!empty_faces) {
-            write_string_2D_array(h5_file, group_name, "faces", field_bulk_data.width, field_bulk_data.numberOfElements, faces);
+            write_string_2D_array(bulk_group, "faces", field_bulk_data.width, field_bulk_data.numberOfElements, faces);
         }
         if (!field_bulk_data.emptyMises) {
             write_float_2D_array(bulk_group, "mises", field_bulk_data.width, field_bulk_data.numberOfElements, mises);
@@ -1713,7 +1714,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
                     data[node_count][component] = field_bulk_data.data[total_points++];
                 }
                 if (complex_data) {
-                    total_points = current_position*field_bulk_data.width;
+                    total_points = node_count*field_bulk_data.width;
                     for (int component=0; component<field_bulk_data.width; ++component) {
                         conjugate_data[node_count][component] = field_bulk_data.conjugateData[total_points++];
                     }
@@ -1731,7 +1732,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
                     data_double[node_count][component] = field_bulk_data.data[total_points++];
                 }
                 if (complex_data) {
-                    total_points = current_position*field_bulk_data.width;
+                    total_points = node_count*field_bulk_data.width;
                     for (int component=0; component<field_bulk_data.width; ++component) {
                         conjugate_data_double[node_count][component] = field_bulk_data.conjugateDataDouble[total_points++];
                     }
