@@ -1599,6 +1599,12 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
     write_string_dataset(bulk_group, "instance", field_bulk_data.instance);
 //    write_string_dataset(bulk_group, "precision", field_bulk_data.precision);
     if(field_bulk_data.numberOfElements && field_bulk_data.elementLabels) { // If elements
+        bool empty_faces = true;
+        int number_of_integration_points = field_bulk_data.length/field_bulk_data.numberOfElements;
+        int element_labels[field_bulk_data.numberOfElements][number_of_integration_points];
+        int integration_points[field_bulk_data.numberOfElements][number_of_integration_points];
+        float mises[field_bulk_data.numberOfElements][number_of_integration_points];
+        string faces[field_bulk_data.numberOfElements][number_of_integration_points];
         if (field_bulk_data.baseElementType != "") {
             write_string_dataset(bulk_group, "baseElementType", field_bulk_data.baseElementType);
         }
@@ -1611,61 +1617,131 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
         }
         write_string_vector_dataset(bulk_group, "componentLabels", field_bulk_data.componentLabels);
         int current_position = 0;
-        int number_of_integration_points = field_bulk_data.length/field_bulk_data.numberOfElements;
         if(field_bulk_data.precision == "Single Precision") {
+            float local_coordinate_system[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.orientationWidth];
+            float data[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
+            float conjugate_data[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
             for (int element=0; element<field_bulk_data.numberOfElements; ++element) {
                 for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
+                    element_labels[element][integration_point] = field_bulk_data.elementLabels[current_position];
+                    if (field_bulk_data.integrationPoints) { integration_points[element][integration_point] = field_bulk_data.integrationPoints[current_position]; }
+                    if (field_bulk_data.faces) { 
+                        faces[element][integration_point] = faces_enum_strings[field_bulk_data.faces[current_position]]; 
+                        empty_faces = false;
+                    }
+                    if (field_bulk_data.localCoordSystem) {
+                        int current_pointer = current_position*new_field_bulk_data.orientationWidth;
+                        for (int coordinate_point=0; coordinate_point<field_bulk_data.orientationWidth; ++coordinate_point) {
+                            local_coordinate_system[element][integration_point][coordinate_point] = field_bulk_data.localCoordSystem[current_pointer++];
+                        }
+                    }
                     int total_points = current_position*field_bulk_data.width;
+                    for (int component=0; component<field_bulk_data.width; ++component) {
+                        data[element][integration_point][component] = field_bulk_data.data[total_points++];
+                    }
                     if (complex_data) {
+                        total_points = current_position*new_field_bulk_data.width;
+                        for (int component=0; component<new_field_bulk_data.width; ++component) {
+                            conjuate_data[element][integration_point][component] = field_bulk_data.conjugateData[total_points++];
+                        }
                     }
                     if (!field_bulk_data.emptyMises) {
+                        mises[element][integration_point] = field_bulk_data.mises[current_position];
                     }
                 }
             }
-        } else {
+            /*
+            write_float_3D_array(bulk_group, "data", field_bulk_data.width, data);
+            write_float_3D_array(bulk_group, "conjugateData", field_bulk_data.width, conjugate_data);
+            write_float_3D_array(bulk_group, "localCoordSystem", field_bulk_data.width, local_coordinate_system);
+            */
+        } else {  // Double precision
+            double local_coordinate_system_double[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.orientationWidth];
+            double data_double[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
+            double conjugate_data_double[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
             for (int element=0; element<field_bulk_data.numberOfElements; ++element) {
                 for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
+                    element_labels[element][integration_point] = field_bulk_data.elementLabels[current_position];
+                    if (field_bulk_data.integrationPoints) { integration_points[element][integration_point] = field_bulk_data.integrationPoints[current_position]; }
+                    if (field_bulk_data.faces) { 
+                        faces[element][integration_point] = faces_enum_strings[field_bulk_data.faces[current_position]]; 
+                        empty_faces = false;
+                    }
+                    if (field_bulk_data.localCoordSystemDouble) {
+                        int current_pointer = current_position*new_field_bulk_data.orientationWidth;
+                        for (int coordinate_point=0; coordinate_point<field_bulk_data.orientationWidth; ++coordinate_point) {
+                            local_coordinate_system_double[element][integration_point][coordinate_point] = field_bulk_data.localCoordSystemDouble[current_pointer++];
+                        }
+                    }
                     int total_points = current_position*field_bulk_data.width;
+                    for (int component=0; component<field_bulk_data.width; ++component) {
+                        data_double[element][integration_point][component] = field_bulk_data.dataDouble[total_points++];
+                    }
                     if (complex_data) {
+                        total_points = current_position*new_field_bulk_data.width;
+                        for (int component=0; component<new_field_bulk_data.width; ++component) {
+                            conjuate_data_double[element][integration_point][component] = field_bulk_data.conjugateDataDouble[total_points++];
+                        }
                     }
                     if (!field_bulk_data.emptyMises) {
+                        mises[element][integration_point] = field_bulk_data.mises[current_position];
                     }
                 }
-            }
+            /*
+            write_double_3D_array(bulk_group, "data", field_bulk_data.width, data_double);
+            write_double_3D_array(bulk_group, "conjugateData", field_bulk_data.width, conjugate_data_double);
+            write_double_3D_array(bulk_group, "localCoordSystem", field_bulk_data.width, local_coordinate_system_double);
+            */
         }
+        if (!empty_faces) {
+            write_string_2D_array(h5_file, bulk_group, "faces", field_bulk_data.width, faces);
+        }
+        if (!field_bulk_data.emptyMises) {
+            write_float_2D_array(bulk_group, "mises", field_bulk_data.width, mises);
+        }
+        write_integer_2D_array(bulk_group, "elementLabels", field_bulk_data.width, element_labels);
+        write_integer_2D_array(bulk_group, "integrationPoints", field_bulk_data.width, integration_points);
     } else {  // Nodes
+        int node_labels[field_bulk_data.length];
         if(field_bulk_data.precision == "Single Precision") {
+            float data[field_bulk_data.length][field_bulk_data.width];
+            float conjuate_data[field_bulk_data.length][field_bulk_data.width];
             for (int node_count=0; node_count<field_bulk_data.length; ++node_count) {
+                node_labels = field_bulk_data.nodeLabels[node_count];
                 int total_points = node_count*field_bulk_data.width;
                 for (int component=0; component<field_bulk_data.width; ++component) {
+                    data[node_count][component] = field_bulk_data.data[total_points++];
+                }
+                if (complex_data) {
+                    total_points = current_position*new_field_bulk_data.width;
+                    for (int component=0; component<new_field_bulk_data.width; ++component) {
+                        conjugate_data[node_count][component] = field_bulk_data.conjugateData[total_points++];
+                    }
                 }
             }
-        } else {
+            write_float_2D_array(bulk_group, "data", field_bulk_data.width, data);
+            write_float_2D_array(bulk_group, "conjugateData", field_bulk_data.width, conjugate_data);
+        } else {  // Double precision
+            double data_double[field_bulk_data.length][field_bulk_data.width];
+            double conjuate_data_double[field_bulk_data.length][field_bulk_data.width];
             for (int node_count=0; node_count<field_bulk_data.length; ++node_count) {
+                node_labels = field_bulk_data.nodeLabels[node_count];
                 int total_points = node_count*field_bulk_data.width;
                 for (int component=0; component<field_bulk_data.width; ++component) {
+                    data_double[node_count][component] = field_bulk_data.data[total_points++];
+                }
+                if (complex_data) {
+                    total_points = current_position*new_field_bulk_data.width;
+                    for (int component=0; component<new_field_bulk_data.width; ++component) {
+                        conjugate_data_double[node_count][component] = field_bulk_data.conjugateDataDouble[total_points++];
+                    }
                 }
             }
+            write_double_2D_array(bulk_group, "data", field_bulk_data.width, data_double);
+            write_double_2D_array(bulk_group, "conjugateData", field_bulk_data.width, conjugate_data_double);
         }
+        write_integer_vector_dataset(bulk_group, "nodeLabels", node_labels);
     }
-    /*
-    write_integer_2D_vector(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.elementLabels);
-    write_integer_vector_dataset(bulk_group, "nodeLabels", field_bulk_data.nodeLabels);
-    write_integer_2D_vector(bulk_group, "integrationPoints", field_bulk_data.width, field_bulk_data.integrationPoints);
-    if (!field_bulk_data.emptyFaces) {
-        write_string_2D_vector(h5_file, bulk_group, "faces", field_bulk_data.width, field_bulk_data.faces);
-    }
-    if (field_bulk_data.precision == "Single Precision") {
-        write_float_2D_vector(bulk_group, "data", field_bulk_data.width, field_bulk_data.data);
-        write_float_2D_vector(bulk_group, "conjugateData", field_bulk_data.width, field_bulk_data.conjugateData);
-        write_float_2D_vector(bulk_group, "localCoordSystem", field_bulk_data.width, field_bulk_data.localCoordSystem);
-    } else {
-        write_double_2D_vector(bulk_group, "data", field_bulk_data.width, field_bulk_data.dataDouble);
-        write_double_2D_vector(bulk_group, "conjugateData", field_bulk_data.width, field_bulk_data.conjugateDataDouble);
-        write_double_2D_vector(bulk_group, "localCoordSystem", field_bulk_data.width, field_bulk_data.localCoordSystemDouble);
-    }
-    write_float_2D_vector(bulk_group, "mises", field_bulk_data.width, field_bulk_data.mises);
-    */
 }
 
 void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, const string &group_name, field_output_type &field_output) {
