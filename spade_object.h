@@ -1110,9 +1110,9 @@ class SpadeObject {
           \param row_size Integer indicating the row dimension
           \param aisle_size Integer indicating the aisle dimension
           \param column_size Integer indicating the column dimension
-          \param float_array A pointer to the array of arrays of arrays of floats that should be written in the new dataset
+          \param float_array A vector of pointers to the array of arrays of floats that should be written in the new dataset
         */
-        void write_float_3D_array(const H5::Group &group, const string &dataset_name, const int &row_size, const int &aisle_size, const int &column_size, float *float_array);
+        void write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &aisle_size, const int &column_size, const vector<float *> &float_data);
         //! Write a vector of vectors of floats as a dataset
         /*!
           Create a dataset with a two-dimensional array of floats using the passed-in values
@@ -1168,7 +1168,7 @@ class SpadeObject {
           \param column_size Integer indicating the column dimension
           \param double_array A vector of pointers to the array of arrays of doubles that should be written in the new dataset
         */
-        void write_double_3D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &aisle_size, const int &column_size, const vector<*double> double_data);
+        void write_double_3D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &aisle_size, const int &column_size, const vector<double *> &double_data);
         //! Write a vector of vectors of doubles as a dataset
         /*!
           Create a dataset with a two-dimensional array of doubles using the passed-in values

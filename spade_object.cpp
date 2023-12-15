@@ -2377,7 +2377,7 @@ void SpadeObject::write_float_2D_array(const H5::Group& group, const string & da
     dataspace.close();
 }
 
-void SpadeObject::write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &aisle_size, const int &column_size, const vector<*float> float_data) {
+void SpadeObject::write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &aisle_size, const int &column_size, const vector<float *> &float_data) {
     hsize_t dimensions[] = {row_size, aisle_size, column_size};
     H5::DataSpace dataspace(3, dimensions);  // three dimensional data
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
@@ -2435,7 +2435,7 @@ void SpadeObject::write_double_2D_array(const H5::Group& group, const string & d
     dataspace.close();
 }
 
-void SpadeObject::write_double_3D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &aisle_size, const int &column_size, const vector<*double> double_data) {
+void SpadeObject::write_double_3D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &aisle_size, const int &column_size, const vector<double *> &double_data) {
     hsize_t dimensions[] = {row_size, aisle_size, column_size};
     H5::DataSpace dataspace(3, dimensions);  // three dimensional data
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
