@@ -653,7 +653,7 @@ class SpadeObject {
           \return field_value_type with data stored from the odb
           \sa process_odb()
         */
-        field_value_type process_field_values(odb_FieldValue &field_value, const odb_SequenceInvariant& invariants, Logging &log_file, CmdLineArguments &command_line_arguments);
+        field_value_type process_field_values(const odb_FieldValue &field_value, const odb_SequenceInvariant& invariants, Logging &log_file, CmdLineArguments &command_line_arguments);
         //! Process field bulk data from the odb file
         /*!
           Process a field bulk data object and store the results
@@ -694,7 +694,7 @@ class SpadeObject {
           \return history_point_type with data stored from the odb
           \sa process_odb()
         */
-        history_point_type process_history_point (odb_HistoryPoint history_point, Logging &log_file);
+        history_point_type process_history_point (const odb_HistoryPoint history_point, Logging &log_file);
         //! Process a history output from the odb file
         /*!
           Process a history output object and store the results
@@ -704,7 +704,7 @@ class SpadeObject {
           \return history_output_type with data stored from the odb
           \sa process_odb()
         */
-        history_output_type process_history_output (odb_HistoryOutput &history_region, Logging &log_file, CmdLineArguments &command_line_arguments);
+        history_output_type process_history_output (const odb_HistoryOutput &history_region, Logging &log_file, CmdLineArguments &command_line_arguments);
         //! Process a history region from the odb file
         /*!
           Process a history region object and store the results
@@ -714,7 +714,7 @@ class SpadeObject {
           \return history_region_type with data stored from the odb
           \sa process_odb()
         */
-        history_region_type process_history_region (odb_HistoryRegion &history_region, Logging &log_file, CmdLineArguments &command_line_arguments);
+        history_region_type process_history_region (const odb_HistoryRegion &history_region, Logging &log_file, CmdLineArguments &command_line_arguments);
         //! Process a step from the odb file
         /*!
           Process a step object and store the results

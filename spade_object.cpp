@@ -814,7 +814,7 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
 
     const odb_SequenceNode& nodes = assembly.nodes();
     for (int i=0; i<nodes.size(); i++)  { new_assembly.nodes.push_back(process_node(nodes.node(i), log_file)); }
-    odb_SequenceElement elements = assembly.elements();
+    const odb_SequenceElement& elements = assembly.elements();
     for (int i=0; i<elements.size(); i++)  { new_assembly.elements.push_back(process_element(elements.element(i), log_file)); }
 
     log_file.logDebug("\tnodeSets:");
@@ -840,13 +840,13 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     odb_InstanceRepositoryIT instance_iter(instances);
     for (instance_iter.first(); !instance_iter.isDone(); instance_iter.next()) {
         log_file.logVerbose("Starting to read instance: " + string(instance_iter.currentKey().CStr()));
-        odb_Instance instance = instances[instance_iter.currentKey()];
+        const odb_Instance& instance = instances[instance_iter.currentKey()];
         new_assembly.instances.push_back(process_instance(instance, odb, log_file));
     }
     odb_DatumCsysRepository datum_csyses = assembly.datumCsyses();
     odb_DatumCsysRepositoryIT datum_csyses_iter(datum_csyses);
     for (datum_csyses_iter.first(); !datum_csyses_iter.isDone(); datum_csyses_iter.next()) {
-        odb_DatumCsys datum_csys = datum_csyses[datum_csyses_iter.currentKey()];
+        const odb_DatumCsys& datum_csys = datum_csyses[datum_csyses_iter.currentKey()];
         new_assembly.datumCsyses.push_back(process_csys(datum_csys, log_file));
     }
     // TODO: Maybe reach out to 3DS to determine if they plan to implement 'odb_SequencePretensionSection' as it is declared, but not defined
@@ -856,7 +856,7 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     return new_assembly;
 }
 
-field_value_type SpadeObject::process_field_values(odb_FieldValue &field_value, const odb_SequenceInvariant& invariants, Logging &log_file, CmdLineArguments &command_line_arguments) {
+field_value_type SpadeObject::process_field_values(const odb_FieldValue &field_value, const odb_SequenceInvariant& invariants, Logging &log_file, CmdLineArguments &command_line_arguments) {
     field_value_type new_field_value;
     new_field_value.empty = true;
     new_field_value.elementLabel = field_value.elementLabel();
@@ -1201,7 +1201,7 @@ field_output_type SpadeObject::process_field_output (const odb_FieldOutput &fiel
     new_field_output.element_values_empty = true;
     if (field_output.validInvariants().size() > 0) {
         for (int i=0; i<field_values.size(); i++) {
-            odb_FieldValue field_value = field_values.constGet(i);
+            const odb_FieldValue& field_value = field_values.constGet(i);
             field_value_type new_field_value = process_field_values(field_value, field_output.validInvariants(), log_file, command_line_arguments);
             if (!new_field_value.empty) {
                 if (new_field_value.elementLabel != -1) { 
@@ -1261,7 +1261,7 @@ frame_type SpadeObject::process_frame (const odb_Frame &frame, Logging &log_file
     return new_frame;
 }
 
-history_point_type SpadeObject::process_history_point (odb_HistoryPoint history_point, Logging &log_file) {
+history_point_type SpadeObject::process_history_point (const odb_HistoryPoint history_point, Logging &log_file) {
     history_point_type new_history_point;
     try { 
         new_history_point.element = process_element(history_point.element(), log_file);
@@ -1308,7 +1308,7 @@ history_point_type SpadeObject::process_history_point (odb_HistoryPoint history_
     return new_history_point;
 }
 
-history_output_type SpadeObject::process_history_output (odb_HistoryOutput &history_output, Logging &log_file, CmdLineArguments &command_line_arguments) {
+history_output_type SpadeObject::process_history_output (const odb_HistoryOutput &history_output, Logging &log_file, CmdLineArguments &command_line_arguments) {
     history_output_type new_history_output;
     new_history_output.name = history_output.name().CStr();
     new_history_output.description = history_output.description().CStr();
@@ -1316,7 +1316,7 @@ history_output_type SpadeObject::process_history_output (odb_HistoryOutput &hist
         case odb_Enum::SCALAR: new_history_output.type = "Scalar"; break;
     }
 
-    odb_SequenceSequenceFloat data = history_output.data();
+    const odb_SequenceSequenceFloat& data = history_output.data();
     new_history_output.max_column_size = 0;
     for (int i=0; i<data.size(); i++) {
         odb_SequenceFloat data_dimension1 = data.constGet(i);
@@ -1328,7 +1328,7 @@ history_output_type SpadeObject::process_history_output (odb_HistoryOutput &hist
         new_history_output.data.push_back(dimension1);
     }
 
-    odb_SequenceSequenceFloat conjugate_data = history_output.conjugateData();
+    const odb_SequenceSequenceFloat& conjugate_data = history_output.conjugateData();
     new_history_output.max_column_size_conjugate = 0;
     for (int i=0; i<conjugate_data.size(); i++) {
         odb_SequenceFloat conjugate_data_dimension1 = conjugate_data.constGet(i);
@@ -1344,7 +1344,7 @@ history_output_type SpadeObject::process_history_output (odb_HistoryOutput &hist
 
 }
 
-history_region_type SpadeObject::process_history_region (odb_HistoryRegion &history_region, Logging &log_file, CmdLineArguments &command_line_arguments) {
+history_region_type SpadeObject::process_history_region (const odb_HistoryRegion &history_region, Logging &log_file, CmdLineArguments &command_line_arguments) {
     history_region_type new_history_region;
     new_history_region.name = history_region.name().CStr();
     new_history_region.description = history_region.description().CStr();
@@ -1357,7 +1357,7 @@ history_region_type SpadeObject::process_history_region (odb_HistoryRegion &hist
     }
     new_history_region.loadCase = history_region.loadCase().name().CStr();
     new_history_region.point = process_history_point(history_region.historyPoint(), log_file);
-    odb_HistoryOutputRepository history_outputs = history_region.historyOutputs();
+    const odb_HistoryOutputRepository& history_outputs = history_region.historyOutputs();
     odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
     log_file.logVerbose("Reading history output.");
     for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
@@ -1370,7 +1370,7 @@ history_region_type SpadeObject::process_history_region (odb_HistoryRegion &hist
 }
 
 void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
-    const step_type new_step;
+    step_type new_step;
     new_step.name = step.name().CStr();
     if ((command_line_arguments["step"] != "all") && (command_line_arguments["step"] != new_step.name)) {
         return;
@@ -1406,12 +1406,12 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_
         const odb_Frame& frame = frames.constGet(f);
         new_step.frames.push_back(process_frame(frame, log_file, command_line_arguments));
     }
-    odb_HistoryRegionRepository history_regions = step.historyRegions();
+    const odb_HistoryRegionRepository& history_regions = step.historyRegions();
     odb_HistoryRegionRepositoryIT history_region_iterator (history_regions);
     log_file.logVerbose("Reading history regions.");
     for (history_region_iterator.first(); !history_region_iterator.isDone(); history_region_iterator.next()) 
     {
-        odb_HistoryRegion history_region = history_region_iterator.currentValue();
+        const odb_HistoryRegion& history_region = history_region_iterator.currentValue();
         new_step.historyRegions.push_back(process_history_region(history_region, log_file, command_line_arguments));
     }
     // TODO: Write code to handle command line arguments that limit how much history or field output data is written
