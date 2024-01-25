@@ -665,7 +665,7 @@ class SpadeObject {
           \return field_bulk_type with data stored from the odb
           \sa process_odb()
         */
-        field_bulk_type process_field_bulk_data(odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data, Logging &log_file, CmdLineArguments &command_line_arguments);
+        field_bulk_type process_field_bulk_data(const odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data, Logging &log_file, CmdLineArguments &command_line_arguments);
         //! Process field output from the odb file
         /*!
           Process a field output object and store the results
@@ -675,7 +675,7 @@ class SpadeObject {
           \return field_output_type with data stored from the odb
           \sa process_odb()
         */
-        field_output_type process_field_output (odb_FieldOutput &field_output, Logging &log_file, CmdLineArguments &command_line_arguments);
+        field_output_type process_field_output (const odb_FieldOutput &field_output, Logging &log_file, CmdLineArguments &command_line_arguments);
         //! Process a frame from the odb file
         /*!
           Process a frame object and store the results
@@ -685,7 +685,7 @@ class SpadeObject {
           \return frame_type with data stored from the odb
           \sa process_odb()
         */
-        frame_type process_frame (odb_Frame &frame, Logging &log_file, CmdLineArguments &command_line_arguments);
+        frame_type process_frame (const odb_Frame &frame, Logging &log_file, CmdLineArguments &command_line_arguments);
         //! Process a history point from the odb file
         /*!
           Process a history region point and store the results
@@ -811,11 +811,12 @@ class SpadeObject {
         /*!
           Write field bulk data into an HDF5 file
           \param h5_file Open h5_file object for writing
+          \param log_file Logging object for writing log messages
           \param group_name Name of the group where data is to be written
           \param field_bulk_data Data to be written
           \param complex_data Boolean indicating if the data is complex
         */
-        void write_field_bulk_data(H5::H5File &h5_file, const string &group_name, field_bulk_type &field_bulk_data, bool complex_data);
+        void write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, const string &group_name, field_bulk_type &field_bulk_data, bool complex_data);
         //! Write field value data to an HDF5 file
         /*!
           Write field value data into an HDF5 file

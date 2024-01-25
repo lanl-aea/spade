@@ -240,9 +240,16 @@ void SpadeObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArguments 
     odb_StepRepositoryIT step_iter (step_repository);
     for (step_iter.first(); !step_iter.isDone(); step_iter.next()) 
     {
-        odb_Step current_step = step_repository[step_iter.currentKey()];
+        const odb_Step& current_step = step_repository[step_iter.currentKey()];
+//        process_step(step_repository[step_iter.currentKey()], odb, log_file, command_line_arguments);
         process_step(current_step, odb, log_file, command_line_arguments);
+    cout << "two" << endl;
+ cout << this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
+ cout << this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
     }
+    cout << "three" << endl;
+ cout << this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
+ cout << this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
 
 
 }
@@ -911,7 +918,7 @@ field_value_type SpadeObject::process_field_values(odb_FieldValue &field_value, 
     return new_field_value;
 }
 
-field_bulk_type SpadeObject::process_field_bulk_data(odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data, Logging &log_file, CmdLineArguments &command_line_arguments) {
+field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data, Logging &log_file, CmdLineArguments &command_line_arguments) {
     field_bulk_type new_field_bulk_data;
 //    new_field_bulk_data.emptyFaces = true;
     new_field_bulk_data.emptyMises = true;
@@ -1140,7 +1147,7 @@ field_bulk_type SpadeObject::process_field_bulk_data(odb_FieldBulkData &field_bu
     return new_field_bulk_data;
 }
 
-field_output_type SpadeObject::process_field_output (odb_FieldOutput &field_output, Logging &log_file, CmdLineArguments &command_line_arguments) {
+field_output_type SpadeObject::process_field_output (const odb_FieldOutput &field_output, Logging &log_file, CmdLineArguments &command_line_arguments) {
     field_output_type new_field_output;
     new_field_output.name = field_output.name().CStr();
     new_field_output.description = field_output.description().CStr();
@@ -1211,11 +1218,11 @@ field_output_type SpadeObject::process_field_output (odb_FieldOutput &field_outp
     }
     new_field_output.max_length = 0;
     new_field_output.max_width = 0;
-    odb_SequenceFieldBulkData field_bulk_values = field_output.bulkDataBlocks();	
+    const odb_SequenceFieldBulkData& field_bulk_values = field_output.bulkDataBlocks();	
     new_field_output.isComplex = field_output.isComplex();
     log_file.logVerbose("Reading field bulk data.");
     for (int i=0; i<field_bulk_values.size(); i++) {
-        odb_FieldBulkData field_bulk_value = field_bulk_values[i];
+        const odb_FieldBulkData& field_bulk_value = field_bulk_values[i];
         new_field_output.dataValues.push_back(process_field_bulk_data(field_bulk_value, field_output.validInvariants(), field_output.isComplex(), log_file, command_line_arguments));
         if (new_field_output.dataValues[i].width > new_field_output.max_width) {  new_field_output.max_width = new_field_output.dataValues[i].width; }
         if (new_field_output.dataValues[i].length > new_field_output.max_length) {  new_field_output.max_length = new_field_output.dataValues[i].length; }
@@ -1223,7 +1230,7 @@ field_output_type SpadeObject::process_field_output (odb_FieldOutput &field_outp
     return new_field_output;
 }
 
-frame_type SpadeObject::process_frame (odb_Frame &frame, Logging &log_file, CmdLineArguments &command_line_arguments) {
+frame_type SpadeObject::process_frame (const odb_Frame &frame, Logging &log_file, CmdLineArguments &command_line_arguments) {
     frame_type new_frame;
     new_frame.description = frame.description().CStr();
     new_frame.loadCase = frame.loadCase().name().CStr();
@@ -1238,14 +1245,14 @@ frame_type SpadeObject::process_frame (odb_Frame &frame, Logging &log_file, CmdL
     new_frame.frameValue = frame.frameValue();
     new_frame.frequency = frame.frequency();
 
-    odb_FieldOutputRepository& field_outputs = frame.fieldOutputs();
+    const odb_FieldOutputRepository& field_outputs = frame.fieldOutputs();
     odb_FieldOutputRepositoryIT field_outputs_iterator(field_outputs);
     log_file.logVerbose("Reading field output.");
     new_frame.max_length = 0;
     new_frame.max_width = 0;
     int field_output_count = 0;
     for (field_outputs_iterator.first(); !field_outputs_iterator.isDone(); field_outputs_iterator.next()) {
-        odb_FieldOutput& field = field_outputs[field_outputs_iterator.currentKey()]; 
+        const odb_FieldOutput& field = field_outputs[field_outputs_iterator.currentKey()]; 
         new_frame.fieldOutputs.push_back(process_field_output(field, log_file, command_line_arguments));
         if (new_frame.fieldOutputs[field_output_count].max_width > new_frame.max_width) {  new_frame.max_width = new_frame.fieldOutputs[field_output_count].max_width; }
         if (new_frame.fieldOutputs[field_output_count].max_length > new_frame.max_length) {  new_frame.max_length = new_frame.fieldOutputs[field_output_count].max_length; }
@@ -1363,7 +1370,7 @@ history_region_type SpadeObject::process_history_region (odb_HistoryRegion &hist
 }
 
 void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
-    step_type new_step;
+    const step_type new_step;
     new_step.name = step.name().CStr();
     if ((command_line_arguments["step"] != "all") && (command_line_arguments["step"] != new_step.name)) {
         return;
@@ -1393,11 +1400,10 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_
     for (int i=0; i<inertia_about_origin.size(); i++) { new_step.inertiaAboutOrigin[i] = inertia_about_origin[i]; }
     odb_LoadCaseRepository load_cases = step.loadCases();
     for (int i=0; i<load_cases.size(); i++) { new_step.loadCases.push_back(load_cases[i].name().CStr()); }
-    odb_SequenceFrame frames = step.frames();
-    int numFrames = frames.size();
+    const odb_SequenceFrame& frames = step.frames();
     log_file.logVerbose("Reading frames.");
-    for (int f=0; f<numFrames; f++) {
-        odb_Frame frame = frames.constGet(f);
+    for (int f=0; f<frames.size(); f++) {
+        const odb_Frame& frame = frames.constGet(f);
         new_step.frames.push_back(process_frame(frame, log_file, command_line_arguments));
     }
     odb_HistoryRegionRepository history_regions = step.historyRegions();
@@ -1410,6 +1416,8 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_
     }
     // TODO: Write code to handle command line arguments that limit how much history or field output data is written
     this->steps.push_back(new_step);
+ cout << this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
+ cout << this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
 }
 
 void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file) {
@@ -1584,7 +1592,7 @@ void SpadeObject::write_field_value(H5::H5File &h5_file, const string &group_nam
     write_string_dataset(value_group, "type", field_value.type);
 }
 
-void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group_name, field_bulk_type &field_bulk_data, bool complex_data){
+void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, const string &group_name, field_bulk_type &field_bulk_data, bool complex_data){
     H5::Group bulk_group;
     /*
     H5::Exception::dontPrint();
@@ -1617,6 +1625,10 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
         }
         write_string_vector_dataset(bulk_group, "componentLabels", field_bulk_data.componentLabels);
         int current_position = 0;
+//        for (int i=0; i<field_bulk_data.length*field_bulk_data.width; i++) {
+//            cout << field_bulk_data.data[i] << endl;
+//        }
+// cout << field_bulk_data.data[0] << endl;
         if(field_bulk_data.precision == "Single Precision") {
             float local_coordinate_system[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.orientationWidth];
             float data[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
@@ -1637,7 +1649,11 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
                     }
                     int total_points = current_position*field_bulk_data.width;
                     for (int component=0; component<field_bulk_data.width; ++component) {
+             cout << "total_points " << total_points << endl;
                         data[element][integration_point][component] = field_bulk_data.data[total_points++];
+//                        ostringstream float_string;
+//                        float_string << std::scientific << data[element][integration_point][component];
+//                        log_file.logDebug("element: " + to_string(element + 1) + " integration point: " + to_string(integration_point + 1) + " component: " + to_string(component + 1) + " float data: " + float_string.str());
                     }
                     if (complex_data) {
                         total_points = current_position*field_bulk_data.width;
@@ -1650,6 +1666,31 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
                     }
                 }
             }
+            // Need to check if this data is empty or not
+            hsize_t dimensions[] = {field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements};
+            H5::DataSpace dataspace(3, dimensions);  // three dimensional data
+            H5::DataSet dataset = bulk_group.createDataSet("data", H5::PredType::NATIVE_FLOAT, dataspace);
+            dataset.write(data, H5::PredType::NATIVE_FLOAT);
+            dataset.close();
+            dataspace.close();
+
+            /*
+            // Need to check if this data is empty or not
+            hsize_t conjugate_dimensions[] = {field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements};
+            H5::DataSpace conjugate_dataspace(3, conjugate_dimensions);  // three dimensional data
+            H5::DataSet conjugate_dataset = bulk_group.createDataSet("conjugateData", H5::PredType::NATIVE_FLOAT, conjugate_dataspace);
+            conjugate_dataset.write(conjugate_data, H5::PredType::NATIVE_FLOAT);
+            conjugate_dataset.close();
+            conjugate_dataspace.close();
+
+            hsize_t coord_dimensions[] = {field_bulk_data.orientationWidth, number_of_integration_points, field_bulk_data.numberOfElements};
+            H5::DataSpace coord_dataspace(3, coord_dimensions);  // three dimensional data
+            H5::DataSet coord_dataset = bulk_group.createDataSet("data", H5::PredType::NATIVE_FLOAT, coord_dataspace);
+            coord_dataset.write(local_coordinate_system, H5::PredType::NATIVE_FLOAT);
+            coord_dataset.close();
+            coord_dataspace.close();
+            */
+
             /*
             write_float_3D_data(bulk_group, "data", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *data);
             write_float_3D_data(bulk_group, "conjugateData", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *conjugate_data);
@@ -1675,6 +1716,9 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
                     }
                     int total_points = current_position*field_bulk_data.width;
                     for (int component=0; component<field_bulk_data.width; ++component) {
+                        ostringstream double_string;
+                        double_string << std::scientific << field_bulk_data.dataDouble[total_points+1];
+                        log_file.logDebug("element: " + to_string(element + 1) + " integration point: " + to_string(integration_point + 1) + " component: " + to_string(component + 1) + " double data: " + double_string.str());
                         data_double[element][integration_point][component] = field_bulk_data.dataDouble[total_points++];
                     }
                     if (complex_data) {
@@ -1788,7 +1832,7 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, con
     }
     for (int i=0; i<field_output.dataValues.size(); i++) {
         string value_group_name = group_name + "/values/" + to_string(i);
-        write_field_bulk_data(h5_file, value_group_name, field_output.dataValues[i], field_output.isComplex);
+        write_field_bulk_data(h5_file, log_file, value_group_name, field_output.dataValues[i], field_output.isComplex);
     }
     write_attribute(field_output_group, "max_width", to_string(field_output.max_width));
     write_attribute(field_output_group, "max_length", to_string(field_output.max_length));
