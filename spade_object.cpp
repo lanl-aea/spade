@@ -241,15 +241,20 @@ void SpadeObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArguments 
     for (step_iter.first(); !step_iter.isDone(); step_iter.next()) 
     {
         const odb_Step& current_step = step_repository[step_iter.currentKey()];
-//        process_step(step_repository[step_iter.currentKey()], odb, log_file, command_line_arguments);
         process_step(current_step, odb, log_file, command_line_arguments);
     cout << "two" << endl;
+ cout << &this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
+ cout << &this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
  cout << this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
  cout << this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
     }
     cout << "three" << endl;
+ cout << &this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
+ cout << &this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
  cout << this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
  cout << this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
+    /*
+    */
 
 
 }
@@ -920,8 +925,7 @@ field_value_type SpadeObject::process_field_values(const odb_FieldValue &field_v
 
 field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data, Logging &log_file, CmdLineArguments &command_line_arguments) {
     field_bulk_type new_field_bulk_data;
-//    new_field_bulk_data.emptyFaces = true;
-    new_field_bulk_data.emptyMises = true;
+    new_field_bulk_data.emptyFaces = true;
     switch(field_bulk_data.position()) {
         case odb_Enum::NODAL: new_field_bulk_data.position = "Nodal"; break;
         case odb_Enum::INTEGRATION_POINT: new_field_bulk_data.position = "Integration Point"; break;
@@ -933,60 +937,35 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
     new_field_bulk_data.length = field_bulk_data.length();
     new_field_bulk_data.width = field_bulk_data.width();
 
-/*
     float* data = 0;
     double* data_double = 0;
     float* conjugate_data = 0;
     double* conjugate_data_double = 0;
     float* local_coordinate_system = 0;
     double* local_coordinate_system_double = 0;
-*/
 
 
     if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
         new_field_bulk_data.precision = "Single Precision";
-//        data = field_bulk_data.data();
-//        conjugate_data = field_bulk_data.conjugateData();
-//        local_coordinate_system = field_bulk_data.localCoordSystem();
-        new_field_bulk_data.data = field_bulk_data.data();
-        new_field_bulk_data.conjugateData = field_bulk_data.conjugateData();
-        new_field_bulk_data.localCoordSystem = field_bulk_data.localCoordSystem();
+        data = field_bulk_data.data();
+        conjugate_data = field_bulk_data.conjugateData();
+        local_coordinate_system = field_bulk_data.localCoordSystem();
     } else {
         new_field_bulk_data.precision = "Double Precision";
-//        data_double = field_bulk_data.dataDouble();
-//        conjugate_data_double = field_bulk_data.conjugateDataDouble();
-//        local_coordinate_system_double = field_bulk_data.localCoordSystemDouble();
-        new_field_bulk_data.dataDouble = field_bulk_data.dataDouble();
-        new_field_bulk_data.conjugateDataDouble = field_bulk_data.conjugateDataDouble();
-        new_field_bulk_data.localCoordSystemDouble = field_bulk_data.localCoordSystemDouble();
+        data_double = field_bulk_data.dataDouble();
+        conjugate_data_double = field_bulk_data.conjugateDataDouble();
+        local_coordinate_system_double = field_bulk_data.localCoordSystemDouble();
     }
 
     new_field_bulk_data.numberOfElements = 0;
     new_field_bulk_data.numberOfElements = field_bulk_data.numberOfElements();                
     new_field_bulk_data.valuesPerElement = 0;
     new_field_bulk_data.valuesPerElement = field_bulk_data.valuesPerElement();                
-//    int* element_labels = field_bulk_data.elementLabels();
+    int* element_labels = field_bulk_data.elementLabels();
+    float* bulk_mises = field_bulk_data.mises();
 
-    new_field_bulk_data.elementLabels = field_bulk_data.elementLabels();
-    new_field_bulk_data.nodeLabels = field_bulk_data.nodeLabels();
     new_field_bulk_data.baseElementType = ""; // initializing to empty string
-    if(new_field_bulk_data.numberOfElements && new_field_bulk_data.elementLabels) { // If elements
-        new_field_bulk_data.integrationPoints = field_bulk_data.integrationPoints();
-        new_field_bulk_data.faces = field_bulk_data.faces();
-        new_field_bulk_data.orientationWidth = field_bulk_data.orientationWidth();
-        new_field_bulk_data.baseElementType = field_bulk_data.baseElementType().CStr();
-        odb_SequenceString component_labels = field_bulk_data.componentLabels();
-        for (int i=0; i<field_bulk_data.componentLabels().size(); i++) {
-            new_field_bulk_data.componentLabels.push_back(component_labels[i].CStr());
-        }
-        if (invariants.isMember(odb_Enum::MISES)) {
-            new_field_bulk_data.emptyMises = false;
-            new_field_bulk_data.mises = field_bulk_data.mises();
-        }
-    }
 
-/*
-    new_field_bulk_data.baseElementType = ""; // initializing to empty string
     if(new_field_bulk_data.numberOfElements && element_labels) { // If elements
         int number_of_integration_points = new_field_bulk_data.length/new_field_bulk_data.numberOfElements;
         int* integration_points = field_bulk_data.integrationPoints();
@@ -1002,13 +981,18 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
 
         int current_position = 0;
         if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
+            vector<vector <float>> current_local_coordinate_system_2D;
+            vector<vector <float>> current_data_2D;
+            vector<vector <float>> current_conjugate_data_2D;
             for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
                 vector<int> current_element_labels;
                 vector<int> current_integration_points;
                 vector<string> current_faces;
-                vector<float> current_local_coordinate_system;
-                vector<float> current_data;
+                vector<float> current_mises;
                 for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
+                    vector<float> current_local_coordinate_system;
+                    vector<float> current_data;
+                    vector<float> current_conjugate_data;
                     current_element_labels.push_back(element_labels[current_position]);
                     if (integration_points) { current_integration_points.push_back(integration_points[current_position]); }
                     if (faces) { 
@@ -1024,14 +1008,30 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
                     int total_points = current_position*new_field_bulk_data.width;
                     for (int component=0; component<new_field_bulk_data.width; ++component) {
                         current_data.push_back(data[total_points++]);
+//                        ostringstream float_string;
+//                        float_string << std::scientific << current_data[current_data.size() - 1];
+//                        log_file.logDebug("element: " + to_string(element + 1) + " integration point: " + to_string(integration_point + 1) + " component: " + to_string(component + 1) + " float data: " + float_string.str());
+                    }
+                    if (complex_data) {
+                        total_points = current_position*field_bulk_data.width;
+                        for (int component=0; component<field_bulk_data.width; ++component) {
+                            current_conjugate_data.push_back(conjugate_data[total_points++]);
+                        }
+                    }
+                    if (invariants.isMember(odb_Enum::MISES)) {
+                        current_mises.push_back(bulk_mises[current_position]);
                     }
                 }
                 new_field_bulk_data.elementLabels.push_back(current_element_labels);
-                new_field_bulk_data.integrationPoints.push_back(current_integration_points);
+                new_field_bulk_data.integrationPoints.push_back(current_integration_point);
                 new_field_bulk_data.faces.push_back(current_faces);
-                new_field_bulk_data.localCoordSystem.push_back(current_local_coordinate_system);
-                new_field_bulk_data.data.push_back(current_data);
+                new_field_bulk_data.mises.push_back(current_mises);
+                current_local_coordinate_system_2D.push_back(current_local_coordinate_system);
+                current_data_2D.push_back(current_data);
             }
+            new_field_bulk_data.element.data.push_back(current_data_2D);
+            new_field_bulk_data.element.localCoordSystem.push_back(current_local_coordinate_system_2D);
+            new_field_bulk_data.element.conjugateData.push_back(current_conjugate_data_2D);
         } else {
             for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
                 vector<int> current_element_labels;
@@ -1143,7 +1143,6 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
             }
         }
     }
-    */
     return new_field_bulk_data;
 }
 
@@ -1592,7 +1591,7 @@ void SpadeObject::write_field_value(H5::H5File &h5_file, const string &group_nam
     write_string_dataset(value_group, "type", field_value.type);
 }
 
-void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, const string &group_name, field_bulk_type &field_bulk_data, bool complex_data){
+void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, const string &group_name, field_bulk_type &field_bulk_data, bool complex_data) {
     H5::Group bulk_group;
     /*
     H5::Exception::dontPrint();
@@ -1624,11 +1623,8 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
             write_integer_dataset(bulk_group, "valuesPerElement", field_bulk_data.valuesPerElement);
         }
         write_string_vector_dataset(bulk_group, "componentLabels", field_bulk_data.componentLabels);
+        /*
         int current_position = 0;
-//        for (int i=0; i<field_bulk_data.length*field_bulk_data.width; i++) {
-//            cout << field_bulk_data.data[i] << endl;
-//        }
-// cout << field_bulk_data.data[0] << endl;
         if(field_bulk_data.precision == "Single Precision") {
             float local_coordinate_system[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.orientationWidth];
             float data[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
@@ -1673,6 +1669,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
             dataset.write(data, H5::PredType::NATIVE_FLOAT);
             dataset.close();
             dataspace.close();
+        */
 
             /*
             // Need to check if this data is empty or not
@@ -1696,6 +1693,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
             write_float_3D_data(bulk_group, "conjugateData", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *conjugate_data);
             write_float_3D_data(bulk_group, "localCoordSystem", field_bulk_data.orientationWidth, number_of_integration_points, field_bulk_data.numberOfElements, *local_coordinate_system);
             */
+           /*
         } else {  // Double precision
             double local_coordinate_system_double[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.orientationWidth];
             double data_double[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
@@ -1732,21 +1730,22 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
                     }
                 }
             }
-            /*
-            write_double_3D_data(bulk_group, "data", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *data_double);
-            write_double_3D_data(bulk_group, "conjugateData", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *conjugate_data_double);
-            write_double_3D_data(bulk_group, "localCoordSystem", field_bulk_data.orientationWidth, number_of_integration_points, field_bulk_data.numberOfElements, *local_coordinate_system_double);
-            */
+            
+//            write_double_3D_data(bulk_group, "data", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *data_double);
+//            write_double_3D_data(bulk_group, "conjugateData", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *conjugate_data_double);
+//            write_double_3D_data(bulk_group, "localCoordSystem", field_bulk_data.orientationWidth, number_of_integration_points, field_bulk_data.numberOfElements, *local_coordinate_system_double);
         }
+           */
         if (!empty_faces) {
             write_string_2D_array(bulk_group, "faces", field_bulk_data.width, field_bulk_data.numberOfElements, *faces);
         }
-        if (!field_bulk_data.emptyMises) {
+        if (!field_bulk_data.mises.empty()) {
             write_float_2D_array(bulk_group, "mises", field_bulk_data.width, field_bulk_data.numberOfElements, *mises);
         }
         write_integer_2D_array(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.numberOfElements, *element_labels);
         write_integer_2D_array(bulk_group, "integrationPoints", field_bulk_data.width, field_bulk_data.numberOfElements, *integration_points);
     } else {  // Nodes
+    /*
         int node_labels[field_bulk_data.length];
         if(field_bulk_data.precision == "Single Precision") {
             float data[field_bulk_data.length][field_bulk_data.width];
@@ -1782,6 +1781,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
                     }
                 }
             }
+    */
             write_double_2D_array(bulk_group, "data", field_bulk_data.width, field_bulk_data.length, *data_double);
             write_double_2D_array(bulk_group, "conjugateData", field_bulk_data.width, field_bulk_data.length, *conjugate_data_double);
         }

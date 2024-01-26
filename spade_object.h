@@ -326,6 +326,22 @@ struct field_value_type {
     bool empty;  // If int or float values are not populated set this to true
 };
 
+struct field_bulk_element_type {
+    vector<vector<vector <float>>> data;
+    vector<vector<vector <double>>> dataDouble;
+    vector<vector<vector <float>>> conjugateData;
+    vector<vector<vector <double>>> conjugateDataDouble;
+    vector<vector<vector <float>>> localCoordSystem;
+    vector<vector<vector <double>>> localCoordSystemDouble;
+};
+
+struct field_bulk_node_type {
+    vector<vector<float>> data;
+    vector<vector<double>> dataDouble;
+    vector<vector<float>> conjugateData;
+    vector<vector<double>> conjugateDataDouble;
+};
+
 struct field_bulk_type {
     string position;
     string precision;
@@ -336,34 +352,18 @@ struct field_bulk_type {
     int width;
     string baseElementType;
     string instance; // Will store just the instance name
-    // TODO: turn all of these into pointers and then declare 2D arrays with the length and width given rather than vectors that have to then be converted to arrays
     int* elementLabels;
-    int* nodeLabels;
     int* integrationPoints;
-    odb_Enum::odb_ElementFaceEnum* faces;
-    float* data;
-    double* dataDouble;
-    float* conjugateData;
-    double* conjugateDataDouble;
-    float* mises;
-    float* localCoordSystem;
-    double* localCoordSystemDouble;
-    /*
+//    odb_Enum::odb_ElementFaceEnum* faces;
+    vector<vector<string>> faces;
     vector<vector<int>> elementLabels;
     vector<int> nodeLabels;
     vector<vector<int>> integrationPoints;
-    vector<vector<string>> faces;
-    vector<vector<float>> data;
-    vector<vector<double>> dataDouble;
-    vector<vector<float>> conjugateData;
-    vector<vector<double>> conjugateDataDouble;
+    field_bulk_node_type node;
+    field_bulk_element_type element;
     vector<vector<float>> mises;
-    vector<vector<float>> localCoordSystem;
-    vector<vector<double>> localCoordSystemDouble;
-    */
     vector<string> componentLabels;
-//    bool emptyFaces;  // Keep track of whether any face data exists
-    bool emptyMises;  // Keep track of whether any mises data exists
+    bool emptyFaces;  // Keep track of whether any face data exists
 };
 
 struct field_output_type {
