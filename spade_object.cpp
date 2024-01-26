@@ -989,10 +989,10 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
                 vector<int> current_integration_points;
                 vector<string> current_faces;
                 vector<float> current_mises;
+                vector<float> current_local_coordinate_system;
+                vector<float> current_data;
+                vector<float> current_conjugate_data;
                 for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
-                    vector<float> current_local_coordinate_system;
-                    vector<float> current_data;
-                    vector<float> current_conjugate_data;
                     current_element_labels.push_back(element_labels[current_position]);
                     if (integration_points) { current_integration_points.push_back(integration_points[current_position]); }
                     if (faces) { 
@@ -1023,80 +1023,69 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
                     }
                 }
                 new_field_bulk_data.elementLabels.push_back(current_element_labels);
-                new_field_bulk_data.integrationPoints.push_back(current_integration_point);
+                new_field_bulk_data.integrationPoints.push_back(current_integration_points);
                 new_field_bulk_data.faces.push_back(current_faces);
                 new_field_bulk_data.mises.push_back(current_mises);
                 current_local_coordinate_system_2D.push_back(current_local_coordinate_system);
                 current_data_2D.push_back(current_data);
+                current_conjugate_data_2D.push_back(current_conjugate_data);
             }
             new_field_bulk_data.element.data.push_back(current_data_2D);
             new_field_bulk_data.element.localCoordSystem.push_back(current_local_coordinate_system_2D);
             new_field_bulk_data.element.conjugateData.push_back(current_conjugate_data_2D);
         } else {
+            vector<vector <double>> current_local_coordinate_system_2D;
+            vector<vector <double>> current_data_2D;
+            vector<vector <double>> current_conjugate_data_2D;
             for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
                 vector<int> current_element_labels;
                 vector<int> current_integration_points;
                 vector<string> current_faces;
-                vector<double> current_local_coordinate_system_double;
-                vector<double> current_data_double;
+                vector<float> current_mises;
+                vector<double> current_local_coordinate_system;
+                vector<double> current_data;
+                vector<double> current_conjugate_data;
                 for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
                     current_element_labels.push_back(element_labels[current_position]);
                     if (integration_points) { current_integration_points.push_back(integration_points[current_position]); }
-                    if (faces) { current_faces.push_back(this->faces_enum_strings[faces[current_position]]); }
-                    if (local_coordinate_system_double) {
+                    if (faces) { 
+                        current_faces.push_back(this->faces_enum_strings[faces[current_position]]); 
+                        new_field_bulk_data.emptyFaces = false;
+                    }
+                    if (local_coordinate_system) {
                         int current_pointer = current_position*new_field_bulk_data.orientationWidth;
                         for (int coordinate_point=0; coordinate_point<new_field_bulk_data.orientationWidth; ++coordinate_point) {
-                            current_local_coordinate_system_double.push_back(local_coordinate_system_double[current_pointer++]);
+                            current_local_coordinate_system.push_back(local_coordinate_system[current_pointer++]);
                         }
                     }
                     int total_points = current_position*new_field_bulk_data.width;
                     for (int component=0; component<new_field_bulk_data.width; ++component) {
-                        current_data_double.push_back(data_double[total_points++]);
+                        current_data.push_back(data[total_points++]);
+//                        ostringstream double_string;
+//                        double_string << std::scientific << current_data[current_data.size() - 1];
+//                        log_file.logDebug("element: " + to_string(element + 1) + " integration point: " + to_string(integration_point + 1) + " component: " + to_string(component + 1) + " double data: " + double_string.str());
+                    }
+                    if (complex_data) {
+                        total_points = current_position*field_bulk_data.width;
+                        for (int component=0; component<field_bulk_data.width; ++component) {
+                            current_conjugate_data.push_back(conjugate_data[total_points++]);
+                        }
+                    }
+                    if (invariants.isMember(odb_Enum::MISES)) {
+                        current_mises.push_back(bulk_mises[current_position]);
                     }
                 }
                 new_field_bulk_data.elementLabels.push_back(current_element_labels);
                 new_field_bulk_data.integrationPoints.push_back(current_integration_points);
                 new_field_bulk_data.faces.push_back(current_faces);
-                new_field_bulk_data.localCoordSystemDouble.push_back(current_local_coordinate_system_double);
-                new_field_bulk_data.dataDouble.push_back(current_data_double);
-            }
-        }
-        if(complex_data) {
-            current_position = 0;
-            if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
-                for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
-                    vector<float> current_conjugate_data;
-                    for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, ++current_position) {
-                        int total_points = current_position*new_field_bulk_data.width;
-                        for (int component=0; component<new_field_bulk_data.width; ++component) {
-                            current_conjugate_data.push_back(conjugate_data[total_points++]);
-                        }
-                    }
-                    new_field_bulk_data.conjugateData.push_back(current_conjugate_data);
-                }
-            } else {
-                for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
-                    vector<double> current_conjugate_data_double;
-                    for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, ++current_position) {
-                        int total_points = current_position*new_field_bulk_data.width;
-                        for (int component=0; component<new_field_bulk_data.width; ++component) {
-                            current_conjugate_data_double.push_back(conjugate_data_double[total_points++]);
-                        }
-                    }
-                    new_field_bulk_data.conjugateDataDouble.push_back(current_conjugate_data_double);
-                }
-            }
-        }
-        if (invariants.isMember(odb_Enum::MISES)) {
-            current_position = 0;
-            float* bulk_mises = field_bulk_data.mises();
-            for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
-                vector<float> current_mises;
-                for (int integration_point=0; integration_point<number_of_integration_points; ++integration_point, ++current_position) { 		    
-                    current_mises.push_back(bulk_mises[current_position]);
-                }
                 new_field_bulk_data.mises.push_back(current_mises);
+                current_local_coordinate_system_2D.push_back(current_local_coordinate_system);
+                current_data_2D.push_back(current_data);
+                current_conjugate_data_2D.push_back(current_conjugate_data);
             }
+            new_field_bulk_data.element.dataDouble.push_back(current_data_2D);
+            new_field_bulk_data.element.localCoordSystemDouble.push_back(current_local_coordinate_system_2D);
+            new_field_bulk_data.element.conjugateDataDouble.push_back(current_conjugate_data_2D);
         }
     } else {  // Nodes
         int* node_labels = field_bulk_data.nodeLabels();	
