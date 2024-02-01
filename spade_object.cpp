@@ -242,19 +242,21 @@ void SpadeObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArguments 
     {
         const odb_Step& current_step = step_repository[step_iter.currentKey()];
         process_step(current_step, odb, log_file, command_line_arguments);
+        /*
     cout << "two" << endl;
  cout << &this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
  cout << &this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
  cout << this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
  cout << this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
+        */
     }
+        /*
     cout << "three" << endl;
  cout << &this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
  cout << &this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
  cout << this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
  cout << this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
-    /*
-    */
+        */
 
 
 }
@@ -1013,8 +1015,8 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
 //                        log_file.logDebug("element: " + to_string(element + 1) + " integration point: " + to_string(integration_point + 1) + " component: " + to_string(component + 1) + " float data: " + float_string.str());
                     }
                     if (complex_data) {
-                        total_points = current_position*field_bulk_data.width;
-                        for (int component=0; component<field_bulk_data.width; ++component) {
+                        total_points = current_position*new_field_bulk_data.width;
+                        for (int component=0; component<new_field_bulk_data.width; ++component) {
                             current_conjugate_data.push_back(conjugate_data[total_points++]);
                         }
                     }
@@ -1066,8 +1068,8 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
 //                        log_file.logDebug("element: " + to_string(element + 1) + " integration point: " + to_string(integration_point + 1) + " component: " + to_string(component + 1) + " double data: " + double_string.str());
                     }
                     if (complex_data) {
-                        total_points = current_position*field_bulk_data.width;
-                        for (int component=0; component<field_bulk_data.width; ++component) {
+                        total_points = current_position*new_field_bulk_data.width;
+                        for (int component=0; component<new_field_bulk_data.width; ++component) {
                             current_conjugate_data.push_back(conjugate_data[total_points++]);
                         }
                     }
@@ -1097,7 +1099,7 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
                     current_data.push_back(data[total_points++]);
                 }
                 new_field_bulk_data.nodeLabels.push_back(node_labels[node_count]);
-                new_field_bulk_data.data.push_back(current_data);
+                new_field_bulk_data.node.data.push_back(current_data);
             }
             if (complex_data) {
                 for (int node_count=0; node_count<new_field_bulk_data.length; ++node_count) {
@@ -1106,19 +1108,18 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
                     for (int component=0; component<new_field_bulk_data.width; ++component) {
                         current_conjugate_data.push_back(conjugate_data[total_points++]);
                     }
-                    new_field_bulk_data.conjugateData.push_back(current_conjugate_data);
+                    new_field_bulk_data.node.conjugateData.push_back(current_conjugate_data);
                 }
             }      
         } else {
             for (int node_count=0; node_count<new_field_bulk_data.length; ++node_count) {
                 vector<double> current_data_double;
-                vector<int> current_node_labels;
-                current_node_labels.push_back(node_labels[node_count]);
                 int total_points = node_count*new_field_bulk_data.width;
                 for (int component=0; component<new_field_bulk_data.width; ++component) {
                     current_data_double.push_back(data_double[total_points++]);
                 }
-                new_field_bulk_data.dataDouble.push_back(current_data_double);
+                new_field_bulk_data.nodeLabels.push_back(node_labels[node_count]);
+                new_field_bulk_data.node.dataDouble.push_back(current_data_double);
             }             
             if (complex_data) {
                 for (int node_count=0; node_count<new_field_bulk_data.length; ++node_count) {
@@ -1127,7 +1128,7 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
                     for (int component=0; component<new_field_bulk_data.width; ++component) {
                         current_conjugate_data_double.push_back(conjugate_data_double[total_points++]);
                     }
-                    new_field_bulk_data.conjugateDataDouble.push_back(current_conjugate_data_double);
+                    new_field_bulk_data.node.conjugateDataDouble.push_back(current_conjugate_data_double);
                 }
             }
         }
@@ -1404,8 +1405,10 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_
     }
     // TODO: Write code to handle command line arguments that limit how much history or field output data is written
     this->steps.push_back(new_step);
+    /*
  cout << this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
  cout << this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
+    */
 }
 
 void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file) {
@@ -1594,7 +1597,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
     write_string_dataset(bulk_group, "position", field_bulk_data.position);
     write_string_dataset(bulk_group, "instance", field_bulk_data.instance);
 //    write_string_dataset(bulk_group, "precision", field_bulk_data.precision);
-    if(field_bulk_data.numberOfElements && field_bulk_data.elementLabels) { // If elements
+    if(field_bulk_data.numberOfElements && !field_bulk_data.elementLabels.empty()) { // If elements
         bool empty_faces = true;
         int number_of_integration_points = field_bulk_data.length/field_bulk_data.numberOfElements;
         int element_labels[field_bulk_data.numberOfElements][number_of_integration_points];
@@ -1770,12 +1773,12 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
                     }
                 }
             }
-    */
             write_double_2D_array(bulk_group, "data", field_bulk_data.width, field_bulk_data.length, *data_double);
             write_double_2D_array(bulk_group, "conjugateData", field_bulk_data.width, field_bulk_data.length, *conjugate_data_double);
         }
+    */
 //        write_integer_array_dataset(bulk_group, "nodeLabels", field_bulk_data.length, node_labels);
-        write_integer_array_dataset(bulk_group, "nodeLabels", field_bulk_data.length, field_bulk_data.nodeLabels);
+//        write_integer_array_dataset(bulk_group, "nodeLabels", field_bulk_data.length, field_bulk_data.nodeLabels);
     }
 }
 

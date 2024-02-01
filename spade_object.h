@@ -352,9 +352,6 @@ struct field_bulk_type {
     int width;
     string baseElementType;
     string instance; // Will store just the instance name
-    int* elementLabels;
-    int* integrationPoints;
-//    odb_Enum::odb_ElementFaceEnum* faces;
     vector<vector<string>> faces;
     vector<vector<int>> elementLabels;
     vector<int> nodeLabels;
