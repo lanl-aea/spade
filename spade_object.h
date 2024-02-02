@@ -333,6 +333,7 @@ struct field_bulk_element_type {
     vector<vector<vector <double>>> conjugateDataDouble;
     vector<vector<vector <float>>> localCoordSystem;
     vector<vector<vector <double>>> localCoordSystemDouble;
+    vector<float> vData;
 };
 
 struct field_bulk_node_type {
@@ -1110,7 +1111,8 @@ class SpadeObject {
           \param column_size Integer indicating the column dimension
           \param float_array A vector of pointers to the array of arrays of floats that should be written in the new dataset
         */
-        void write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &aisle_size, const int &column_size, const vector<float *> &float_data);
+//        void write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &aisle_size, const int &column_size, const vector<float *> &float_data);
+        void write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &aisle_size, const int &column_size, const vector<vector<vector <float>>> &float_data);
         //! Write a vector of vectors of floats as a dataset
         /*!
           Create a dataset with a two-dimensional array of floats using the passed-in values

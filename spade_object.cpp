@@ -31,6 +31,7 @@ using namespace std;
 #include <regex>
 #include <stdlib.h>
 #include <dirent.h>
+#include <cmath>
 #include <sys/stat.h>
 #include <filesystem>
 
@@ -242,22 +243,7 @@ void SpadeObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArguments 
     {
         const odb_Step& current_step = step_repository[step_iter.currentKey()];
         process_step(current_step, odb, log_file, command_line_arguments);
-        /*
-    cout << "two" << endl;
- cout << &this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
- cout << &this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
- cout << this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
- cout << this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
-        */
     }
-        /*
-    cout << "three" << endl;
- cout << &this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
- cout << &this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
- cout << this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
- cout << this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
-        */
-
 
 }
 
@@ -958,6 +944,9 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
         conjugate_data_double = field_bulk_data.conjugateDataDouble();
         local_coordinate_system_double = field_bulk_data.localCoordSystemDouble();
     }
+for (int i=0; i<new_field_bulk_data.length; i++) {
+    new_field_bulk_data.element.vData.push_back(data[i]);
+}
 
     new_field_bulk_data.numberOfElements = 0;
     new_field_bulk_data.numberOfElements = field_bulk_data.numberOfElements();                
@@ -1405,10 +1394,6 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_
     }
     // TODO: Write code to handle command line arguments that limit how much history or field output data is written
     this->steps.push_back(new_step);
-    /*
- cout << this->steps[0].frames[1].fieldOutputs[2].dataValues[0].data[0] << endl;
- cout << this->steps[0].frames[2].fieldOutputs[2].dataValues[0].data[0] << endl;
-    */
 }
 
 void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &log_file) {
@@ -1615,9 +1600,8 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
             write_integer_dataset(bulk_group, "valuesPerElement", field_bulk_data.valuesPerElement);
         }
         write_string_vector_dataset(bulk_group, "componentLabels", field_bulk_data.componentLabels);
-        /*
-        int current_position = 0;
         if(field_bulk_data.precision == "Single Precision") {
+        /*
             float local_coordinate_system[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.orientationWidth];
             float data[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
             float conjugate_data[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
@@ -1664,29 +1648,34 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
         */
 
             /*
-            // Need to check if this data is empty or not
-            hsize_t conjugate_dimensions[] = {field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements};
-            H5::DataSpace conjugate_dataspace(3, conjugate_dimensions);  // three dimensional data
-            H5::DataSet conjugate_dataset = bulk_group.createDataSet("conjugateData", H5::PredType::NATIVE_FLOAT, conjugate_dataspace);
-            conjugate_dataset.write(conjugate_data, H5::PredType::NATIVE_FLOAT);
-            conjugate_dataset.close();
-            conjugate_dataspace.close();
-
-            hsize_t coord_dimensions[] = {field_bulk_data.orientationWidth, number_of_integration_points, field_bulk_data.numberOfElements};
-            H5::DataSpace coord_dataspace(3, coord_dimensions);  // three dimensional data
-            H5::DataSet coord_dataset = bulk_group.createDataSet("data", H5::PredType::NATIVE_FLOAT, coord_dataspace);
-            coord_dataset.write(local_coordinate_system, H5::PredType::NATIVE_FLOAT);
-            coord_dataset.close();
-            coord_dataspace.close();
-            */
-
-            /*
             write_float_3D_data(bulk_group, "data", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *data);
             write_float_3D_data(bulk_group, "conjugateData", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *conjugate_data);
             write_float_3D_data(bulk_group, "localCoordSystem", field_bulk_data.orientationWidth, number_of_integration_points, field_bulk_data.numberOfElements, *local_coordinate_system);
             */
-           /*
+herr_t status;
+hsize_t dimsf[3];
+hid_t dataset, datatype, dataspace;
+dimsf[0] = field_bulk_data.width;
+dimsf[1] = number_of_integration_points;
+dimsf[2] = field_bulk_data.numberOfElements;
+dataspace = H5Screate_simple(3, dimsf, NULL); 
+
+datatype = H5Tcopy(H5T_NATIVE_FLOAT);
+status = H5Tset_order(datatype, H5T_ORDER_LE);
+
+dataset = H5Dcreate(bulk_group.getId(), "data", datatype, dataspace,
+			H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+status = H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
+		      H5P_DEFAULT, &field_bulk_data.element.vData[0]);
+
+//free(data[0]);
+//free(field_bulk_data.element.vData);
+            write_float_3D_data(bulk_group, "data", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, field_bulk_data.element.data);
+            write_float_3D_data(bulk_group, "conjugateData", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, field_bulk_data.element.conjugateData);
+            write_float_3D_data(bulk_group, "localCoordSystem", field_bulk_data.orientationWidth, number_of_integration_points, field_bulk_data.numberOfElements, field_bulk_data.element.localCoordSystem);
         } else {  // Double precision
+           /*
             double local_coordinate_system_double[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.orientationWidth];
             double data_double[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
             double conjugate_data_double[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
@@ -1722,12 +1711,15 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
                     }
                 }
             }
+           */
             
 //            write_double_3D_data(bulk_group, "data", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *data_double);
 //            write_double_3D_data(bulk_group, "conjugateData", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, *conjugate_data_double);
 //            write_double_3D_data(bulk_group, "localCoordSystem", field_bulk_data.orientationWidth, number_of_integration_points, field_bulk_data.numberOfElements, *local_coordinate_system_double);
+//            write_double_3D_data(bulk_group, "data", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, field_bulk_data.element.dataDouble);
+//            write_double_3D_data(bulk_group, "conjugateData", field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements, field_bulk_data.element.conjugateDataDouble);
+//            write_double_3D_data(bulk_group, "localCoordSystem", field_bulk_data.orientationWidth, number_of_integration_points, field_bulk_data.numberOfElements, field_bulk_data.element.localCoordSystemDouble);
         }
-           */
         if (!empty_faces) {
             write_string_2D_array(bulk_group, "faces", field_bulk_data.width, field_bulk_data.numberOfElements, *faces);
         }
@@ -2413,13 +2405,30 @@ void SpadeObject::write_float_2D_array(const H5::Group& group, const string & da
     dataspace.close();
 }
 
-void SpadeObject::write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &aisle_size, const int &column_size, const vector<float *> &float_data) {
+//void SpadeObject::write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &aisle_size, const int &column_size, const vector<float *> &float_data) {
+void SpadeObject::write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &aisle_size, const int &column_size, const vector<vector<vector<float>>> &float_data) {
+    /*
     hsize_t dimensions[] = {row_size, aisle_size, column_size};
     H5::DataSpace dataspace(3, dimensions);  // three dimensional data
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
+    */
+    /*
+    for (int i=0; i<float_data.size(); i++) {
+        for (int j=0; j<float_data[i].size(); j++) {
+            for (int k=0; k<float_data[i][j].size(); k++) {
+                if (!std::isnan(float_data[i][j][k]))
+                cout << float_data[i][j][k] << " ";
+            }
+            cout << endl;
+        }
+        cout << endl;
+    }
+    */
+   /*
     dataset.write(float_data.data(), H5::PredType::NATIVE_FLOAT);
     dataset.close();
     dataspace.close();
+   */
 }
 
 void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<float>> & float_data) {
