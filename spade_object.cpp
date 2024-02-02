@@ -925,6 +925,7 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
     new_field_bulk_data.length = field_bulk_data.length();
     new_field_bulk_data.width = field_bulk_data.width();
     int full_length = new_field_bulk_data.length * new_field_bulk_data.width;
+    int coord_length = 0;
 
     float* data = 0;
     double* data_double = 0;
@@ -939,14 +940,37 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
     new_field_bulk_data.valuesPerElement = field_bulk_data.valuesPerElement();                
     int* element_labels = field_bulk_data.elementLabels();
     float* bulk_mises = field_bulk_data.mises();
+    new_field_bulk_data.baseElementType = ""; // initializing to empty string
 
     if(new_field_bulk_data.numberOfElements && element_labels) { // If elements
         int number_of_integration_points = new_field_bulk_data.length/new_field_bulk_data.numberOfElements;
+        int* integration_points = field_bulk_data.integrationPoints();
+        odb_Enum::odb_ElementFaceEnum* faces = field_bulk_data.faces();
+        new_field_bulk_data.orientationWidth = field_bulk_data.orientationWidth();
+        new_field_bulk_data.baseElementType = field_bulk_data.baseElementType().CStr();
+        coord_length = new_field_bulk_data.length * new_field_bulk_data.orientationWidth;
 
         new_field_bulk_data.elementLabels.insert(new_field_bulk_data.elementLabels.end(), &element_labels[0], &element_labels[new_field_bulk_data.numberOfElements]);  // asign array to vector
+
+        odb_SequenceString component_labels = field_bulk_data.componentLabels();
+        for (int i=0; i<field_bulk_data.componentLabels().size(); i++) {  // Usually just around 3 labels or less
+            new_field_bulk_data.componentLabels.push_back(component_labels[i].CStr());
+        }
         if (invariants.isMember(odb_Enum::MISES)) {
             new_field_bulk_data.mises.insert(new_field_bulk_data.mises.end(), &bulk_mises[0], &bulk_mises[new_field_bulk_data.length]);
         }
+        if (integration_points) { 
+            new_field_bulk_data.integrationPoints.insert(new_field_bulk_data.integrationPoints.end(), &integration_points[0], &integration_points[new_field_bulk_data.length]);
+        }
+        if (faces) { 
+            for (int i=0; i<new_field_bulk_data.length; i++) {
+                new_field_bulk_data.faces.push_back(this->faces_enum_strings[faces[i]]); 
+            }
+            new_field_bulk_data.emptyFaces = false;
+        }
+    } else {  // Nodes
+        int* node_labels = field_bulk_data.nodeLabels();	
+        new_field_bulk_data.nodeLabels.insert(new_field_bulk_data.nodeLabels.end(), &node_labels[0], &node_labels[new_field_bulk_data.length]);
     }
 
     if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
@@ -954,18 +978,30 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
         data = field_bulk_data.data();
         conjugate_data = field_bulk_data.conjugateData();
         local_coordinate_system = field_bulk_data.localCoordSystem();
-        new_field_bulk_data.data.insert(new_field_bulk_data.data.end(), &data[0], &data[full_length]);  // asign array to vector
+        new_field_bulk_data.data.insert(new_field_bulk_data.data.end(), &data[0], &data[full_length]);
+        if (complex_data) {
+            new_field_bulk_data.conjugateData.insert(new_field_bulk_data.conjugateData.end(), &conjugate_data[0], &conjugate_data[full_length]);
+        }
+        if ((local_coordinate_system) && (coord_length)) {
+            new_field_bulk_data.localCoordSystem.insert(new_field_bulk_data.localCoordSystem.end(), &local_coordinate_system[0], &local_coordinate_system[coord_length]);
+        }
     } else {
         new_field_bulk_data.precision = "Double Precision";
         data_double = field_bulk_data.dataDouble();
         conjugate_data_double = field_bulk_data.conjugateDataDouble();
         local_coordinate_system_double = field_bulk_data.localCoordSystemDouble();
         new_field_bulk_data.dataDouble.insert(new_field_bulk_data.dataDouble.end(), &data_double[0], &data_double[full_length]);
+        if (complex_data) {
+            new_field_bulk_data.conjugateDataDouble.insert(new_field_bulk_data.conjugateDataDouble.end(), &conjugate_data_double[0], &conjugate_data_double[full_length]);
+        }
+        if ((local_coordinate_system_double) && (coord_length)) {
+            new_field_bulk_data.localCoordSystemDouble.insert(new_field_bulk_data.localCoordSystemDouble.end(), &local_coordinate_system_double[0], &local_coordinate_system_double[coord_length]);
+        }
     }
 
-    new_field_bulk_data.baseElementType = ""; // initializing to empty string
 
     if(new_field_bulk_data.numberOfElements && element_labels) { // If elements
+                /*
         int number_of_integration_points = new_field_bulk_data.length/new_field_bulk_data.numberOfElements;
         int* integration_points = field_bulk_data.integrationPoints();
         odb_Enum::odb_ElementFaceEnum* faces = field_bulk_data.faces();
@@ -1021,18 +1057,16 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
                         current_mises.push_back(bulk_mises[current_position]);
                     }
                 }
-                /*
                 new_field_bulk_data.elementLabels.push_back(current_element_labels);
                 new_field_bulk_data.integrationPoints.push_back(current_integration_points);
                 new_field_bulk_data.faces.push_back(current_faces);
                 new_field_bulk_data.mises.push_back(current_mises);
-                */
                 current_local_coordinate_system_2D.push_back(current_local_coordinate_system);
                 current_data_2D.push_back(current_data);
                 current_conjugate_data_2D.push_back(current_conjugate_data);
             }
-//            new_field_bulk_data.element.localCoordSystem.push_back(current_local_coordinate_system_2D);
-//            new_field_bulk_data.element.conjugateData.push_back(current_conjugate_data_2D);
+            new_field_bulk_data.element.localCoordSystem.push_back(current_local_coordinate_system_2D);
+            new_field_bulk_data.element.conjugateData.push_back(current_conjugate_data_2D);
         } else {
             vector<vector <double>> current_local_coordinate_system_2D;
             vector<vector <double>> current_data_2D;
@@ -1075,20 +1109,20 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
                         current_mises.push_back(bulk_mises[current_position]);
                     }
                 }
-                /*
                 new_field_bulk_data.elementLabels.push_back(current_element_labels);
                 new_field_bulk_data.integrationPoints.push_back(current_integration_points);
                 new_field_bulk_data.faces.push_back(current_faces);
                 new_field_bulk_data.mises.push_back(current_mises);
-                */
                 current_local_coordinate_system_2D.push_back(current_local_coordinate_system);
                 current_data_2D.push_back(current_data);
                 current_conjugate_data_2D.push_back(current_conjugate_data);
             }
-//            new_field_bulk_data.element.localCoordSystemDouble.push_back(current_local_coordinate_system_2D);
-//            new_field_bulk_data.element.conjugateDataDouble.push_back(current_conjugate_data_2D);
+            new_field_bulk_data.element.localCoordSystemDouble.push_back(current_local_coordinate_system_2D);
+            new_field_bulk_data.element.conjugateDataDouble.push_back(current_conjugate_data_2D);
         }
+                */
     } else {  // Nodes
+    /*
         int* node_labels = field_bulk_data.nodeLabels();	
         if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
             for (int node_count=0; node_count<new_field_bulk_data.length; ++node_count) {
@@ -1106,7 +1140,7 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
                     for (int component=0; component<new_field_bulk_data.width; ++component) {
                         current_conjugate_data.push_back(conjugate_data[total_points++]);
                     }
-//                    new_field_bulk_data.node.conjugateData.push_back(current_conjugate_data);
+                    new_field_bulk_data.node.conjugateData.push_back(current_conjugate_data);
                 }
             }      
         } else {
@@ -1125,10 +1159,11 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
                     for (int component=0; component<new_field_bulk_data.width; ++component) {
                         current_conjugate_data_double.push_back(conjugate_data_double[total_points++]);
                     }
-//                    new_field_bulk_data.node.conjugateDataDouble.push_back(current_conjugate_data_double);
+                    new_field_bulk_data.node.conjugateDataDouble.push_back(current_conjugate_data_double);
                 }
             }
         }
+    */
     }
     return new_field_bulk_data;
 }
