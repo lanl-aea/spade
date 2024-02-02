@@ -944,9 +944,7 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
         conjugate_data_double = field_bulk_data.conjugateDataDouble();
         local_coordinate_system_double = field_bulk_data.localCoordSystemDouble();
     }
-for (int i=0; i<new_field_bulk_data.length; i++) {
-    new_field_bulk_data.element.vData.push_back(data[i]);
-}
+new_field_bulk_data.element.vData.insert(new_field_bulk_data.element.vData.end(), &data[0], &data[new_field_bulk_data.length]);  // asign float array to float vector
 
     new_field_bulk_data.numberOfElements = 0;
     new_field_bulk_data.numberOfElements = field_bulk_data.numberOfElements();                
