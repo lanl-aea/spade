@@ -326,23 +326,6 @@ struct field_value_type {
     bool empty;  // If int or float values are not populated set this to true
 };
 
-struct field_bulk_element_type {
-    vector<vector<vector <float>>> data;
-    vector<vector<vector <double>>> dataDouble;
-    vector<vector<vector <float>>> conjugateData;
-    vector<vector<vector <double>>> conjugateDataDouble;
-    vector<vector<vector <float>>> localCoordSystem;
-    vector<vector<vector <double>>> localCoordSystemDouble;
-    vector<float> vData;
-};
-
-struct field_bulk_node_type {
-    vector<vector<float>> data;
-    vector<vector<double>> dataDouble;
-    vector<vector<float>> conjugateData;
-    vector<vector<double>> conjugateDataDouble;
-};
-
 struct field_bulk_type {
     string position;
     string precision;
@@ -353,13 +336,21 @@ struct field_bulk_type {
     int width;
     string baseElementType;
     string instance; // Will store just the instance name
-    vector<vector<string>> faces;
-    vector<vector<int>> elementLabels;
+//    vector<vector<string>> faces;
+    vector<string> faces;
+//    vector<vector<int>> elementLabels;
+    vector<int> elementLabels;
     vector<int> nodeLabels;
-    vector<vector<int>> integrationPoints;
-    field_bulk_node_type node;
-    field_bulk_element_type element;
-    vector<vector<float>> mises;
+//    vector<vector<int>> integrationPoints;
+    vector<int> integrationPoints;
+    vector<float> data;
+    vector<double> dataDouble;
+    vector<float> conjugateData;
+    vector<double> conjugateDataDouble;
+    vector<float> localCoordSystem;
+    vector<double> localCoordSystemDouble;
+//    vector<vector<float>> mises;
+    vector<float> mises;
     vector<string> componentLabels;
     bool emptyFaces;  // Keep track of whether any face data exists
 };
