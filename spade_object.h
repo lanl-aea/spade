@@ -336,12 +336,9 @@ struct field_bulk_type {
     int width;
     string baseElementType;
     string instance; // Will store just the instance name
-//    vector<vector<string>> faces;
     vector<string> faces;
-//    vector<vector<int>> elementLabels;
     vector<int> elementLabels;
     vector<int> nodeLabels;
-//    vector<vector<int>> integrationPoints;
     vector<int> integrationPoints;
     vector<float> data;
     vector<double> dataDouble;
@@ -349,7 +346,6 @@ struct field_bulk_type {
     vector<double> conjugateDataDouble;
     vector<float> localCoordSystem;
     vector<double> localCoordSystemDouble;
-//    vector<vector<float>> mises;
     vector<float> mises;
     vector<string> componentLabels;
     bool emptyFaces;  // Keep track of whether any face data exists

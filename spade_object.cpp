@@ -2424,11 +2424,8 @@ void SpadeObject::write_float_2D_array(const H5::Group& group, const string & da
 
 void SpadeObject::write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<float> &float_data) {
     herr_t status;
-    hsize_t dimensions[3];
+    hsize_t dimensions[] = {aisle_size, row_size, column_size};
     hid_t dataset, datatype, dataspace;
-    dimensions[0] = aisle_size;
-    dimensions[1] = row_size;
-    dimensions[2] = column_size;
     dataspace = H5Screate_simple(3, dimensions, NULL); 
 
     datatype = H5Tcopy(H5T_NATIVE_FLOAT);
@@ -2440,14 +2437,16 @@ void SpadeObject::write_float_3D_data(const H5::Group &group, const string &data
     H5Dclose(dataset);
 }
 
-void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<float>> & float_data) {
+void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<float>> &float_data) {
     if (!float_data.empty()) {
-        hsize_t dimensions[] = {float_data.size(), max_column_size};
-        H5::DataSpace dataspace(2, dimensions);  // two dimensional data
-        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
-        dataset.write(float_data.data(), H5::PredType::NATIVE_FLOAT);
-        dataset.close();
-        dataspace.close();
+        // Conver to 2D array
+        float float_array[float_data.size()][max_column_size];
+        for (int i=0; i<float_data.size(); i++) {
+            for (int j=0; j<float_data[i].size(); j++) {
+                float_array[i][j] = float_data[i][j];
+            }
+        }
+        write_float_2D_array(group, dataset_name, float_data.size(), max_column_size, *float_array);
     }
 }
 
@@ -2491,11 +2490,8 @@ void SpadeObject::write_double_2D_array(const H5::Group& group, const string & d
 
 void SpadeObject::write_double_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<double> &double_data) {
     herr_t status;
-    hsize_t dimensions[3];
+    hsize_t dimensions[] = {aisle_size, row_size, column_size};
     hid_t dataset, datatype, dataspace;
-    dimensions[0] = aisle_size;
-    dimensions[1] = row_size;
-    dimensions[2] = column_size;
     dataspace = H5Screate_simple(3, dimensions, NULL); 
 
     datatype = H5Tcopy(H5T_NATIVE_DOUBLE);
