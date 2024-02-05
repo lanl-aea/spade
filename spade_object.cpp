@@ -2368,19 +2368,22 @@ void SpadeObject::write_integer_2D_array(const H5::Group& group, const string & 
     dataspace.close();
 }
 
-void SpadeObject::write_integer_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<int>> & integer_data) {
+void SpadeObject::write_integer_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<int>> & integer_data) {
     if (!integer_data.empty()) {
-        hsize_t dimensions[] = {integer_data.size(), max_column_size};
-        H5::DataSpace dataspace(2, dimensions);  // two dimensional data
-        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
-        /*
-        for (auto & row : integer_data) {
-            dataset.write(row.data(), H5::PredType::NATIVE_INT);
+        hsize_t dimensions(integer_data.size());
+        H5::DataSpace dataspace(1, &dimensions);
+        H5::VarLenType datatype(H5::PredType::NATIVE_INT);
+        H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
+        hvl_t variable_length[dimensions];
+        for (hsize_t i = 0; i < dimensions; ++i)
+        {
+            variable_length[i].len = integer_data[i].size();
+            variable_length[i].p = &integer_data[i][0];
         }
-        */
-        dataset.write(integer_data.data(), H5::PredType::NATIVE_INT);
-        dataset.close();
+        dataset.write(variable_length, datatype);
         dataspace.close();
+        datatype.close();
+        dataset.close();
     }
 }
 

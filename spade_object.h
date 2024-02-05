@@ -1052,7 +1052,7 @@ class SpadeObject {
           \param data_array The vector of vectors of integers that should be written in the new dataset
           \sa write_integer_2D_array()
         */
-        void write_integer_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<int>> & integer_data);
+        void write_integer_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<int>> & integer_data);
         //! Write an float as a dataset
         /*!
           Create a dataset with a float using the passed-in value
