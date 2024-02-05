@@ -897,7 +897,7 @@ class SpadeObject {
           \param group_name Name of the group where data is to be written
           \param tangential_behavior Data to be written
         */
-        void write_tangential_behavior(H5::H5File &h5_file, const string &group_name, const tangential_behavior_type& tangential_behavior);
+        void write_tangential_behavior(H5::H5File &h5_file, const string &group_name, tangential_behavior_type& tangential_behavior);
         //! Write interactions data to an HDF5 file
         /*!
           Write standard and or explicit interaction data into an HDF5 file
@@ -1184,7 +1184,7 @@ class SpadeObject {
           \param data_array The vector of vectors of doubles that should be written in the new dataset
           \sa write_double_2D_array()
         */
-        void write_double_2D_vector(const H5::Group &group, const string &dataset_name, const int &max_column_size, const vector<vector<double>> &data_array);
+        void write_double_2D_vector(const H5::Group &group, const string &dataset_name, const int &max_column_size, vector<vector<double>> &data_array);
 
 
     private:

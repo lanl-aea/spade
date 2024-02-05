@@ -2101,7 +2101,7 @@ void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_nam
     }
 }
 
-void SpadeObject::write_tangential_behavior(H5::H5File &h5_file, const string &group_name, const tangential_behavior_type& tangential_behavior) {
+void SpadeObject::write_tangential_behavior(H5::H5File &h5_file, const string &group_name, tangential_behavior_type& tangential_behavior) {
     H5::Group tangential_behavior_group = h5_file.createGroup((group_name + "/tangentialBehavior").c_str());
     write_string_dataset(tangential_behavior_group, "formulation", tangential_behavior.formulation);
     write_string_dataset(tangential_behavior_group, "directionality", tangential_behavior.directionality);
@@ -2539,15 +2539,22 @@ void SpadeObject::write_double_3D_data(const H5::Group &group, const string &dat
     H5Dclose(dataset);
 }
 
-void SpadeObject::write_double_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<double>> & double_data) {
+void SpadeObject::write_double_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<double>> & double_data) {
     if (!double_data.empty()) { // Convert to 2D array
-        double double_array[double_data.size()][max_column_size];
-        for (int i=0; i<double_data.size(); i++) {
-            for (int j=0; j<double_data[i].size(); j++) {
-                double_array[i][j] = double_data[i][j];
-            }
+        hsize_t dimensions(double_data.size());
+        H5::DataSpace dataspace(1, &dimensions);
+        H5::VarLenType datatype(H5::PredType::NATIVE_DOUBLE);
+        H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
+        hvl_t variable_length[dimensions];
+        for (hsize_t i = 0; i < dimensions; ++i)
+        {
+            variable_length[i].len = double_data[i].size();
+            variable_length[i].p = &double_data[i][0];
         }
-        write_double_2D_array(group, dataset_name, double_data.size(), max_column_size, *double_array);
+        dataset.write(variable_length, datatype);
+        dataspace.close();
+        datatype.close();
+        dataset.close();
     }
 }
 
