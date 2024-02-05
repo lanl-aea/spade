@@ -2534,13 +2534,14 @@ void SpadeObject::write_double_3D_data(const H5::Group &group, const string &dat
 }
 
 void SpadeObject::write_double_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<double>> & double_data) {
-    if (!double_data.empty()) {
-        hsize_t dimensions[] = {double_data.size(), max_column_size};
-        H5::DataSpace dataspace(2, dimensions);  // two dimensional data
-        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
-        dataset.write(double_data.data(), H5::PredType::NATIVE_DOUBLE);
-        dataset.close();
-        dataspace.close();
+    if (!double_data.empty()) { // Convert to 2D array
+        double double_array[double_data.size()][max_column_size];
+        for (int i=0; i<double_data.size(); i++) {
+            for (int j=0; j<double_data[i].size(); j++) {
+                double_array[i][j] = double_data[i][j];
+            }
+        }
+        write_double_2D_array(group, dataset_name, double_data.size(), max_column_size, *double_array);
     }
 }
 
