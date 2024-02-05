@@ -1996,7 +1996,7 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name)
     }
 }
 
-void SpadeObject::write_analytic_surface(H5::H5File &h5_file, const string &group_name, const analytic_surface_type &analytic_surface) {
+void SpadeObject::write_analytic_surface(H5::H5File &h5_file, const string &group_name, analytic_surface_type &analytic_surface) {
     string analytic_surface_group_name = group_name + "/analyticSurface";
     H5::Group surface_group = h5_file.createGroup(analytic_surface_group_name.c_str());
     write_string_dataset(surface_group, "name", analytic_surface.name);
@@ -2452,16 +2452,22 @@ void SpadeObject::write_float_3D_data(const H5::Group &group, const string &data
     H5Dclose(dataset);
 }
 
-void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<float>> &float_data) {
+void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<float>> &float_data) {
     if (!float_data.empty()) {
-        // Convert to 2D array
-        float float_array[float_data.size()][max_column_size];
-        for (int i=0; i<float_data.size(); i++) {
-            for (int j=0; j<float_data[i].size(); j++) {
-                float_array[i][j] = float_data[i][j];
-            }
+        hsize_t dimensions(float_data.size());
+        H5::DataSpace dataspace(1, &dimensions);
+        H5::VarLenType datatype(H5::PredType::NATIVE_FLOAT);
+        H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
+        hvl_t variable_length[dimensions];
+        for (hsize_t i = 0; i < dimensions; ++i)
+        {
+            variable_length[i].len = float_data[i].size();
+            variable_length[i].p = &float_data[i][0];
         }
-        write_float_2D_array(group, dataset_name, float_data.size(), max_column_size, *float_array);
+        dataset.write(variable_length, datatype);
+        dataspace.close();
+        datatype.close();
+        dataset.close();
     }
 }
 
