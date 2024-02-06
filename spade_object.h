@@ -64,7 +64,7 @@ struct tangential_behavior_type {
     string temperatureDependency;  // Boolean
     int dependencies;
     string exponentialDecayDefinition;
-    vector<vector<double>> table;
+    vector<vector<double>> table;  // Must remain as 2D vector due to varying sizes of columns
     int max_column_size;
     double shearStressLimit;  // String NONE or a double
     string maximumElasticSlip;
@@ -249,7 +249,7 @@ struct analytic_surface_type {
     string type;
     double filletRadius;
     vector<analytic_surface_segment_type> segments;
-    vector<vector<float>> localCoordData;
+    vector<vector<float>> localCoordData;  // Must remain as 2D vector due to varying sizes of columns
     int max_column_size;
 };
 
