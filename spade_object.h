@@ -1014,7 +1014,7 @@ class SpadeObject {
           \param data_array The vector of vectors of strings that should be written in the new dataset
           \sa write_string_2D_array()
         */
-        void write_string_2D_vector(H5::H5File &h5_file, const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<string>> & string_data);
+        void write_string_2D_vector(H5::H5File &h5_file, const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<string>> & string_data);
         //! Write an integer array as a dataset
         /*!
           Create a dataset with an array of integers using the passed-in value

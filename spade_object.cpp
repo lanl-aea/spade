@@ -2319,21 +2319,34 @@ void SpadeObject::write_string_2D_array(const H5::Group& group, const string & d
     dataspace.close();
 }
 
-void SpadeObject::write_string_2D_vector(H5::H5File &h5_file, const H5::Group& group, const string & dataset_name, const int & max_column_size, const vector<vector<string>> & string_data) {
+void SpadeObject::write_string_2D_vector(H5::H5File &h5_file, const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<string>> & string_data) {
     if (!string_data.empty()) {
-        // TODO: This is not an ideal solution, but I tried so many ways to write a 2 dimensional vector of strings to hdf5 file and I couldn't figure it out
-        // This solution writes a separate datset for each row of the data
-        H5::Group dataset_group = h5_file.createGroup(dataset_name.c_str());
-        for( int i = 0; i<string_data.size(); ++i) {
-            write_string_vector_dataset(dataset_group, to_string(i), string_data[i]);
+        hsize_t dimensions[] = {string_data.size(), max_column_size};
+        H5::DataSpace  dataspace(2, dimensions);
+        H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
+        H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
+
+        const char* c_array[string_data.size()][max_column_size];
+        string blank = "";
+        for (int i=0; i<string_data.size(); i++) {
+            for (int j=0; j<max_column_size; j++) {
+                if (j >= string_data[i].size()) {
+                    c_array[i][j] = blank.c_str();
+                } else {
+                    c_array[i][j] = string_data[i][j].c_str();
+                }
+            }
         }
+        dataset.write(&c_array[0], string_type);
+        dataset.close();
+        dataspace.close();
     }
 }
 
 void SpadeObject::write_integer_dataset(const H5::Group& group, const string & dataset_name, const int & int_value) {
     hsize_t dimensions[] = {1};
     H5::DataSpace dataspace(1, dimensions);  // Just one integer
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::STD_I32BE, dataspace);
+    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
     dataset.write(&int_value, H5::PredType::NATIVE_INT);
     dataset.close();
     dataspace.close();
