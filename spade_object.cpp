@@ -1338,27 +1338,23 @@ history_output_type SpadeObject::process_history_output (const odb_HistoryOutput
     }
 
     const odb_SequenceSequenceFloat& data = history_output.data();
-    new_history_output.max_column_size = 0;
+    new_history_output.row_size = data.size();
     for (int i=0; i<data.size(); i++) {
         odb_SequenceFloat data_dimension1 = data.constGet(i);
-        if (data_dimension1.size() > new_history_output.max_column_size) { new_history_output.max_column_size = data_dimension1.size(); }
         vector<float> dimension1;
         for (int j=0; j<data_dimension1.size(); j++) {
-            dimension1.push_back(data_dimension1.constGet(j));
+            new_history_output.data.push_back(data_dimension1.constGet(j));
         }
-        new_history_output.data.push_back(dimension1);
     }
 
     const odb_SequenceSequenceFloat& conjugate_data = history_output.conjugateData();
-    new_history_output.max_column_size_conjugate = 0;
+    new_history_output.row_size_conjugate = conjugate_data.size();
     for (int i=0; i<conjugate_data.size(); i++) {
         odb_SequenceFloat conjugate_data_dimension1 = conjugate_data.constGet(i);
-        if (conjugate_data_dimension1.size() > new_history_output.max_column_size_conjugate) { new_history_output.max_column_size_conjugate = conjugate_data_dimension1.size(); }
         vector<float> dimension1;
         for (int j=0; j<conjugate_data_dimension1.size(); j++) {
-            dimension1.push_back(conjugate_data_dimension1.constGet(j));
+            new_history_output.conjugateData.push_back(conjugate_data_dimension1.constGet(j));
         }
-        new_history_output.conjugateData.push_back(dimension1);
     }
 
     return new_history_output;
@@ -1892,8 +1888,8 @@ void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_
     write_string_dataset(history_output_group, "name", history_output.name);
     write_string_dataset(history_output_group, "description", history_output.description);
     write_string_dataset(history_output_group, "type", history_output.type);
-    write_float_2D_vector(history_output_group, "data", history_output.max_column_size, history_output.data);
-    write_float_2D_vector(history_output_group, "conjugateData", history_output.max_column_size_conjugate, history_output.conjugateData);
+    write_float_2D_data(history_output_group, "data", history_output.row_size, 2, history_output.data);
+    write_float_2D_data(history_output_group, "conjugateData", history_output.row_size_conjugate, 2, history_output.conjugateData);
 }
 
 void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions) {
@@ -2439,18 +2435,20 @@ void SpadeObject::write_float_2D_array(const H5::Group& group, const string & da
 }
 
 void SpadeObject::write_float_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<float> &float_data) {
-    herr_t status;
-    hsize_t dimensions[] = {row_size, column_size};
-    hid_t dataset, datatype, dataspace;
-    dataspace = H5Screate_simple(2, dimensions, NULL); 
+    if (!float_data.empty()) {
+        herr_t status;
+        hsize_t dimensions[] = {row_size, column_size};
+        hid_t dataset, datatype, dataspace;
+        dataspace = H5Screate_simple(2, dimensions, NULL); 
 
-    datatype = H5Tcopy(H5T_NATIVE_FLOAT);
-    status = H5Tset_order(datatype, H5T_ORDER_LE);
-    dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    status = H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &float_data[0]);
-    H5Sclose(dataspace);
-    H5Tclose(datatype);
-    H5Dclose(dataset);
+        datatype = H5Tcopy(H5T_NATIVE_FLOAT);
+        status = H5Tset_order(datatype, H5T_ORDER_LE);
+        dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        status = H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &float_data[0]);
+        H5Sclose(dataspace);
+        H5Tclose(datatype);
+        H5Dclose(dataset);
+    }
 }
 
 void SpadeObject::write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<float> &float_data) {
@@ -2526,18 +2524,20 @@ void SpadeObject::write_double_2D_array(const H5::Group& group, const string & d
 }
 
 void SpadeObject::write_double_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<double> &double_data) {
-    herr_t status;
-    hsize_t dimensions[] = {row_size, column_size};
-    hid_t dataset, datatype, dataspace;
-    dataspace = H5Screate_simple(2, dimensions, NULL); 
+    if (!double_data.empty()) {
+        herr_t status;
+        hsize_t dimensions[] = {row_size, column_size};
+        hid_t dataset, datatype, dataspace;
+        dataspace = H5Screate_simple(2, dimensions, NULL); 
 
-    datatype = H5Tcopy(H5T_NATIVE_DOUBLE);
-    status = H5Tset_order(datatype, H5T_ORDER_LE);
-    dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &double_data[0]);
-    H5Sclose(dataspace);
-    H5Tclose(datatype);
-    H5Dclose(dataset);
+        datatype = H5Tcopy(H5T_NATIVE_DOUBLE);
+        status = H5Tset_order(datatype, H5T_ORDER_LE);
+        dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &double_data[0]);
+        H5Sclose(dataspace);
+        H5Tclose(datatype);
+        H5Dclose(dataset);
+    }
 }
 
 void SpadeObject::write_double_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<double> &double_data) {
