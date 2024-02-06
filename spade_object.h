@@ -239,8 +239,9 @@ struct rebar_orientation_type {
 
 struct analytic_surface_segment_type {
     string type;
-    vector<vector<float>> data;
-    int max_column_size;
+    vector<float> data;
+    int column_size;
+    int row_size;
 };
 
 struct analytic_surface_type {

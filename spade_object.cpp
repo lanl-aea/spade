@@ -60,6 +60,7 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
         file_name = upgraded_file_name;
     }
     // Set up enum strings to be used with multiple functions later
+    // Found at: /apps/SIMULIA/EstProducts/2023/SMAOdb/PublicInterfaces/odb_Enum.h
     this->dimension_enum_strings[0] = "Unknown Dimension";
     this->dimension_enum_strings[1] = "Three Dimensional";
     this->dimension_enum_strings[2] = "Two Dimensional Planar";
@@ -672,18 +673,24 @@ datum_csys_type SpadeObject::process_csys(const odb_DatumCsys &datum_csys, Loggi
 analytic_surface_segment_type SpadeObject::process_segment (const odb_AnalyticSurfaceSegment &segment, Logging &log_file) {
     analytic_surface_segment_type new_segment;
     new_segment.type = segment.type().CStr();
+    /*  
+    switch(segment.type()) {  // Documentation says these enum types exist, but they are not found in odb_Enum.h and gives compiler error
+        case odb_Enum::CIRCLE: new_segment.column_size = 2; break;
+        case odb_Enum::PARABOLA: new_segment.column_size = 2; break;
+        case odb_Enum::START: new_segment.column_size = 1; break;
+        case odb_Enum::LINE: new_segment.column_size = 1; break;
+    }
+    */
     odb_SequenceSequenceFloat segment_data = segment.data();
-    int column_number = 0;
+    new_segment.column_size = 0;
+    new_segment.row_size = segment_data.size();
     for (int i=0; i<segment_data.size(); i++) {
         odb_SequenceFloat segment_data_dimension1 = segment_data[i];
-        if (segment_data_dimension1.size() > column_number) { column_number = segment_data_dimension1.size(); }
-        vector<float> dimension1;
+        new_segment.column_size = segment_data_dimension1.size();
         for (int j=0; j<segment_data_dimension1.size(); j++) {
-            dimension1.push_back(segment_data_dimension1[j]);
+            new_segment.data.push_back(segment_data_dimension1[j]);
         }
-        new_segment.data.push_back(dimension1);
     }
-    new_segment.max_column_size = column_number;
     return new_segment;
 }
 
@@ -2000,7 +2007,7 @@ void SpadeObject::write_analytic_surface(H5::H5File &h5_file, const string &grou
         string segment_group_name = analytic_surface_group_name + "/segments/" + to_string(i);
         H5::Group segment_group = h5_file.createGroup(segment_group_name.c_str());
         write_string_dataset(segment_group, "type", analytic_surface.segments[i].type);
-        write_float_2D_vector(segment_group, "data", analytic_surface.segments[i].max_column_size, analytic_surface.segments[i].data);
+        write_float_2D_data(segment_group, "data", analytic_surface.segments[i].row_size, analytic_surface.segments[i].column_size, analytic_surface.segments[i].data);
     }
     write_float_2D_vector(surface_group, "localCoordData", analytic_surface.max_column_size, analytic_surface.localCoordData);
 }
