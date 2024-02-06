@@ -2452,18 +2452,20 @@ void SpadeObject::write_float_2D_data(const H5::Group &group, const string &data
 }
 
 void SpadeObject::write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<float> &float_data) {
-    herr_t status;
-    hsize_t dimensions[] = {aisle_size, row_size, column_size};
-    hid_t dataset, datatype, dataspace;
-    dataspace = H5Screate_simple(3, dimensions, NULL); 
+    if (!float_data.empty()) {
+        herr_t status;
+        hsize_t dimensions[] = {aisle_size, row_size, column_size};
+        hid_t dataset, datatype, dataspace;
+        dataspace = H5Screate_simple(3, dimensions, NULL); 
 
-    datatype = H5Tcopy(H5T_NATIVE_FLOAT);
-    status = H5Tset_order(datatype, H5T_ORDER_LE);
-    dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    status = H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &float_data[0]);
-    H5Sclose(dataspace);
-    H5Tclose(datatype);
-    H5Dclose(dataset);
+        datatype = H5Tcopy(H5T_NATIVE_FLOAT);
+        status = H5Tset_order(datatype, H5T_ORDER_LE);
+        dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        status = H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &float_data[0]);
+        H5Sclose(dataspace);
+        H5Tclose(datatype);
+        H5Dclose(dataset);
+    }
 }
 
 void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<float>> &float_data) {
@@ -2541,18 +2543,20 @@ void SpadeObject::write_double_2D_data(const H5::Group &group, const string &dat
 }
 
 void SpadeObject::write_double_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<double> &double_data) {
-    herr_t status;
-    hsize_t dimensions[] = {aisle_size, row_size, column_size};
-    hid_t dataset, datatype, dataspace;
-    dataspace = H5Screate_simple(3, dimensions, NULL); 
+    if (!double_data.empty()) {
+        herr_t status;
+        hsize_t dimensions[] = {aisle_size, row_size, column_size};
+        hid_t dataset, datatype, dataspace;
+        dataspace = H5Screate_simple(3, dimensions, NULL); 
 
-    datatype = H5Tcopy(H5T_NATIVE_DOUBLE);
-    status = H5Tset_order(datatype, H5T_ORDER_LE);
-    dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &double_data[0]);
-    H5Sclose(dataspace);
-    H5Tclose(datatype);
-    H5Dclose(dataset);
+        datatype = H5Tcopy(H5T_NATIVE_DOUBLE);
+        status = H5Tset_order(datatype, H5T_ORDER_LE);
+        dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &double_data[0]);
+        H5Sclose(dataspace);
+        H5Tclose(datatype);
+        H5Dclose(dataset);
+    }
 }
 
 void SpadeObject::write_double_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<double>> & double_data) {
