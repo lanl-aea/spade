@@ -52,8 +52,8 @@ struct user_xy_data_type {
     string yAxisLabel;
     string legendLabel;
     string description;
-    vector<vector<float>> data;
-    int max_column_size;
+    vector<float> data;
+    int row_size;
 };
 
 struct tangential_behavior_type {
@@ -403,13 +403,9 @@ struct history_output_type {
     string name;
     string description;
     string type;
-//    vector<vector<float>> data;
     vector<float> data;
-//    int max_column_size;
     int row_size;
-//    vector<vector<float>> conjugateData;
     vector<float> conjugateData;
-//    int max_column_size_conjugate;
     int row_size_conjugate;
 };
 

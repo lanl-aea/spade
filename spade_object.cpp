@@ -197,16 +197,13 @@ void SpadeObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArguments 
         odb_SequenceSequenceFloat user_xy_data_data;
         userXYData.getData(user_xy_data_data);
         int column_number = 0;
+        user_xy_data.row_size = user_xy_data_data.size();
         for (int i=0; i<user_xy_data_data.size(); i++) {
             odb_SequenceFloat user_xy_data_data_dimension1 = user_xy_data_data[i];
-            if (user_xy_data_data_dimension1.size() > column_number) { column_number = user_xy_data_data_dimension1.size(); } // use the maximum for the number of columns
-            vector<float> dimension1;
             for (int j=0; j<user_xy_data_data_dimension1.size(); j++) {
-                dimension1.push_back(user_xy_data_data_dimension1[j]);
+                user_xy_data.data.push_back(user_xy_data_data_dimension1[j]);
             }
-            user_xy_data.data.push_back(dimension1);
         }
-        user_xy_data.max_column_size = column_number;
         this->user_xy_data.push_back(user_xy_data);
     }
 
@@ -1500,7 +1497,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
         write_string_dataset(user_xy_data_group, "yAxisLabel", this->user_xy_data[i].yAxisLabel);
         write_string_dataset(user_xy_data_group, "legendLabel", this->user_xy_data[i].legendLabel);
         write_string_dataset(user_xy_data_group, "description", this->user_xy_data[i].description);
-        write_float_2D_vector(user_xy_data_group, "data", this->user_xy_data[i].max_column_size, this->user_xy_data[i].data);
+        write_float_2D_data(user_xy_data_group, "data", this->user_xy_data[i].row_size, 2, this->user_xy_data[i].data);  // x-y data has two columns: x and y
     }
 
     log_file.logVerbose("Writing constraints data.");
@@ -1888,7 +1885,7 @@ void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_
     write_string_dataset(history_output_group, "name", history_output.name);
     write_string_dataset(history_output_group, "description", history_output.description);
     write_string_dataset(history_output_group, "type", history_output.type);
-    write_float_2D_data(history_output_group, "data", history_output.row_size, 2, history_output.data);
+    write_float_2D_data(history_output_group, "data", history_output.row_size, 2, history_output.data);  // history output data has 2 columns: frameValue and value
     write_float_2D_data(history_output_group, "conjugateData", history_output.row_size_conjugate, 2, history_output.conjugateData);
 }
 
