@@ -1628,8 +1628,6 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
     if(field_bulk_data.numberOfElements && !field_bulk_data.elementLabels.empty()) { // If elements
         bool empty_faces = true;
         int number_of_integration_points = field_bulk_data.length/field_bulk_data.numberOfElements;
-        int element_labels[field_bulk_data.numberOfElements][number_of_integration_points];
-        int integration_points[field_bulk_data.numberOfElements][number_of_integration_points];
         float mises[field_bulk_data.numberOfElements][number_of_integration_points];
         string faces[field_bulk_data.numberOfElements][number_of_integration_points];
         if (field_bulk_data.baseElementType != "") {
@@ -1644,94 +1642,15 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
         }
         write_string_vector_dataset(bulk_group, "componentLabels", field_bulk_data.componentLabels);
         if(field_bulk_data.precision == "Single Precision") {
-        /*
-            float local_coordinate_system[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.orientationWidth];
-            float data[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
-            float conjugate_data[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
-            for (int element=0; element<field_bulk_data.numberOfElements; ++element) {
-                for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
-                    element_labels[element][integration_point] = field_bulk_data.elementLabels[current_position];
-                    if (field_bulk_data.integrationPoints) { integration_points[element][integration_point] = field_bulk_data.integrationPoints[current_position]; }
-                    if (field_bulk_data.faces) { 
-                        faces[element][integration_point] = faces_enum_strings[field_bulk_data.faces[current_position]]; 
-                        empty_faces = false;
-                    }
-                    if (field_bulk_data.localCoordSystem) {
-                        int current_pointer = current_position*field_bulk_data.orientationWidth;
-                        for (int coordinate_point=0; coordinate_point<field_bulk_data.orientationWidth; ++coordinate_point) {
-                            local_coordinate_system[element][integration_point][coordinate_point] = field_bulk_data.localCoordSystem[current_pointer++];
-                        }
-                    }
-                    int total_points = current_position*field_bulk_data.width;
-                    for (int component=0; component<field_bulk_data.width; ++component) {
-                        data[element][integration_point][component] = field_bulk_data.data[total_points++];
-//                        ostringstream float_string;
-//                        float_string << std::scientific << data[element][integration_point][component];
-//                        log_file.logDebug("element: " + to_string(element + 1) + " integration point: " + to_string(integration_point + 1) + " component: " + to_string(component + 1) + " float data: " + float_string.str());
-                    }
-                    if (complex_data) {
-                        total_points = current_position*field_bulk_data.width;
-                        for (int component=0; component<field_bulk_data.width; ++component) {
-                            conjugate_data[element][integration_point][component] = field_bulk_data.conjugateData[total_points++];
-                        }
-                    }
-                    if (!field_bulk_data.emptyMises) {
-                        mises[element][integration_point] = field_bulk_data.mises[current_position];
-                    }
-                }
-            }
-            // Need to check if this data is empty or not
-            hsize_t dimensions[] = {field_bulk_data.width, number_of_integration_points, field_bulk_data.numberOfElements};
-            H5::DataSpace dataspace(3, dimensions);  // three dimensional data
-            H5::DataSet dataset = bulk_group.createDataSet("data", H5::PredType::NATIVE_FLOAT, dataspace);
-            dataset.write(data, H5::PredType::NATIVE_FLOAT);
-            dataset.close();
-            dataspace.close();
-        */
-
+//            ostringstream float_string;
+//            float_string << std::scientific << data[element][integration_point][component];
+//            log_file.logDebug("element: " + to_string(element + 1) + " integration point: " + to_string(integration_point + 1) + " component: " + to_string(component + 1) + " float data: " + float_string.str());
+//            log_file.logDebug("number of elements: " + to_string(field_bulk_data.numberOfElements) + " number of integration point: " + to_string(number_of_integration_points) + " width: " + to_string(field_bulk_data.width));
             write_float_3D_data(bulk_group, "data", field_bulk_data.numberOfElements, number_of_integration_points, field_bulk_data.width, field_bulk_data.data);
 //            vector<float>().swap(field_bulk_data.data);  // Swap float vector with empty float vector (freeing memory of vector)
             write_float_3D_data(bulk_group, "conjugateData", field_bulk_data.numberOfElements, number_of_integration_points, field_bulk_data.width, field_bulk_data.conjugateData);
             write_float_3D_data(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements, number_of_integration_points, field_bulk_data.orientationWidth, field_bulk_data.localCoordSystem);
         } else {  // Double precision
-           /*
-            double local_coordinate_system_double[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.orientationWidth];
-            double data_double[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
-            double conjugate_data_double[field_bulk_data.numberOfElements][number_of_integration_points][field_bulk_data.width];
-            for (int element=0; element<field_bulk_data.numberOfElements; ++element) {
-                for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
-                    element_labels[element][integration_point] = field_bulk_data.elementLabels[current_position];
-                    if (field_bulk_data.integrationPoints) { integration_points[element][integration_point] = field_bulk_data.integrationPoints[current_position]; }
-                    if (field_bulk_data.faces) { 
-                        faces[element][integration_point] = faces_enum_strings[field_bulk_data.faces[current_position]]; 
-                        empty_faces = false;
-                    }
-                    if (field_bulk_data.localCoordSystemDouble) {
-                        int current_pointer = current_position*field_bulk_data.orientationWidth;
-                        for (int coordinate_point=0; coordinate_point<field_bulk_data.orientationWidth; ++coordinate_point) {
-                            local_coordinate_system_double[element][integration_point][coordinate_point] = field_bulk_data.localCoordSystemDouble[current_pointer++];
-                        }
-                    }
-                    int total_points = current_position*field_bulk_data.width;
-                    for (int component=0; component<field_bulk_data.width; ++component) {
-                        ostringstream double_string;
-                        double_string << std::scientific << field_bulk_data.dataDouble[total_points+1];
-                        log_file.logDebug("element: " + to_string(element + 1) + " integration point: " + to_string(integration_point + 1) + " component: " + to_string(component + 1) + " double data: " + double_string.str());
-                        data_double[element][integration_point][component] = field_bulk_data.dataDouble[total_points++];
-                    }
-                    if (complex_data) {
-                        total_points = current_position*field_bulk_data.width;
-                        for (int component=0; component<field_bulk_data.width; ++component) {
-                            conjugate_data_double[element][integration_point][component] = field_bulk_data.conjugateDataDouble[total_points++];
-                        }
-                    }
-                    if (!field_bulk_data.emptyMises) {
-                        mises[element][integration_point] = field_bulk_data.mises[current_position];
-                    }
-                }
-            }
-           */
-            
             write_double_3D_data(bulk_group, "data", field_bulk_data.numberOfElements, number_of_integration_points, field_bulk_data.width, field_bulk_data.dataDouble);
 //            vector<double>().swap(field_bulk_data.dataDouble);  // Swap vector with empty vector (freeing memory of vector)
             write_double_3D_data(bulk_group, "conjugateData", field_bulk_data.numberOfElements, number_of_integration_points, field_bulk_data.width, field_bulk_data.conjugateDataDouble);
@@ -1741,11 +1660,10 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
             write_string_2D_array(bulk_group, "faces", field_bulk_data.width, field_bulk_data.numberOfElements, *faces);
         }
         if (!field_bulk_data.mises.empty()) {
-            write_float_2D_array(bulk_group, "mises", field_bulk_data.width, field_bulk_data.numberOfElements, *mises);
+            write_float_2D_data(bulk_group, "mises", field_bulk_data.width, field_bulk_data.numberOfElements, field_bulk_data.mises);
         }
-//        write_integer_2D_array(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.numberOfElements, *element_labels);
         write_integer_vector_dataset(bulk_group, "elementLabels", field_bulk_data.elementLabels);
-        write_integer_2D_array(bulk_group, "integrationPoints", field_bulk_data.width, field_bulk_data.numberOfElements, *integration_points);
+        write_integer_2D_data(bulk_group, "integrationPoints", number_of_integration_points, field_bulk_data.numberOfElements, field_bulk_data.integrationPoints);
     } else {  // Nodes
     /*
         int node_labels[field_bulk_data.length];
@@ -2476,8 +2394,8 @@ void SpadeObject::write_float_2D_data(const H5::Group &group, const string &data
 void SpadeObject::write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<float> &float_data) {
     if (!float_data.empty()) {
         herr_t status;
-        hsize_t dimensions[] = {aisle_size, row_size, column_size};
         hid_t dataset, datatype, dataspace;
+        hsize_t dimensions[] = {aisle_size, row_size, column_size};
         dataspace = H5Screate_simple(3, dimensions, NULL); 
 
         datatype = H5Tcopy(H5T_NATIVE_FLOAT);
