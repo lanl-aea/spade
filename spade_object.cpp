@@ -349,7 +349,6 @@ element_type* SpadeObject::process_element(const odb_Element &element, Logging &
 set_type SpadeObject::process_set (const odb_Set &set, Logging &log_file) {
     set_type new_set;
     if (set.name().empty()) {
-        log_file.logVerbose("Empty set.");
         return new_set;
     }
 
@@ -1261,8 +1260,10 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_
     const odb_SequenceFrame& frames = step.frames();
     log_file.logVerbose("Reading frames.");
     for (int f=0; f<frames.size(); f++) {
-        const odb_Frame& frame = frames.constGet(f);
-        new_step.frames.push_back(process_frame(frame, log_file, command_line_arguments));
+        if ((command_line_arguments["frame"] == "all") || (command_line_arguments["frame"] == to_string(f))) {
+            const odb_Frame& frame = frames.constGet(f);
+            new_step.frames.push_back(process_frame(frame, log_file, command_line_arguments));
+        }
     }
     const odb_HistoryRegionRepository& history_regions = step.historyRegions();
     odb_HistoryRegionRepositoryIT history_region_iterator (history_regions);
