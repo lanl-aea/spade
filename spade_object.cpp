@@ -1061,7 +1061,6 @@ field_output_type SpadeObject::process_field_output (const odb_FieldOutput &fiel
         new_field_output.validInvariants.push_back(invariant.c_str());
     }
     odb_SequenceFieldValue field_values = field_output.values();
-    log_file.logVerbose("Reading field values.");
     new_field_output.node_values_empty = true;
     new_field_output.element_values_empty = true;
     if (field_output.validInvariants().size() > 0) {
@@ -1078,14 +1077,12 @@ field_output_type SpadeObject::process_field_output (const odb_FieldOutput &fiel
                     new_field_output.node_values_empty = false;
                 }
             }
-//            new_field_output.values.push_back(process_field_values(field_value, field_output.validInvariants(), log_file, command_line_arguments));
         }
     }
     new_field_output.max_length = 0;
     new_field_output.max_width = 0;
     const odb_SequenceFieldBulkData& field_bulk_values = field_output.bulkDataBlocks();	
     new_field_output.isComplex = field_output.isComplex();
-    log_file.logVerbose("Reading field bulk data.");
     for (int i=0; i<field_bulk_values.size(); i++) {
         const odb_FieldBulkData& field_bulk_value = field_bulk_values[i];
         new_field_output.dataValues.push_back(process_field_bulk_data(field_bulk_value, field_output.validInvariants(), field_output.isComplex(), log_file, command_line_arguments));
@@ -1112,7 +1109,7 @@ frame_type SpadeObject::process_frame (const odb_Frame &frame, Logging &log_file
 
     const odb_FieldOutputRepository& field_outputs = frame.fieldOutputs();
     odb_FieldOutputRepositoryIT field_outputs_iterator(field_outputs);
-    log_file.logVerbose("Reading field output.");
+    log_file.logVerbose("Reading field output for " + new_frame.description + ".");
     new_frame.max_length = 0;
     new_frame.max_width = 0;
     int field_output_count = 0;
@@ -1481,7 +1478,6 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
             write_integer_dataset(bulk_group, "valuesPerElement", field_bulk_data.valuesPerElement);
         }
         write_string_vector_dataset(bulk_group, "componentLabels", field_bulk_data.componentLabels);
-        log_file.logDebug("number of elements: " + to_string(field_bulk_data.numberOfElements) + " number of integration point: " + to_string(number_of_integration_points) + " width: " + to_string(field_bulk_data.width));
         if(field_bulk_data.precision == "Single Precision") {
             write_float_3D_data(bulk_group, "data", field_bulk_data.numberOfElements, number_of_integration_points, field_bulk_data.width, field_bulk_data.data);
             vector<float>().swap(field_bulk_data.data);  // Swap float vector with empty float vector (freeing memory of vector)
@@ -1502,7 +1498,6 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
         write_integer_vector_dataset(bulk_group, "elementLabels", field_bulk_data.elementLabels);
         write_integer_2D_data(bulk_group, "integrationPoints", field_bulk_data.numberOfElements, number_of_integration_points, field_bulk_data.integrationPoints);
     } else {  // Nodes
-        log_file.logDebug("number of nodes: " + to_string(field_bulk_data.nodeLabels.size()) + " width: " + to_string(field_bulk_data.width));
         if(field_bulk_data.precision == "Single Precision") {
             write_float_2D_data(bulk_group, "data", field_bulk_data.length, field_bulk_data.width, field_bulk_data.data);
             vector<float>().swap(field_bulk_data.data);  // Swap float vector with empty float vector (freeing memory of vector)
@@ -1538,13 +1533,10 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, con
             write_string_dataset(section_point_group, "description", field_output.locations[i].sectionPoint[j].description);
         }
     }
-    // TODO: find out a way to speed up this process
-    log_file.logDebug("Writing field output values for " + group_name + ".");
     H5::Group values_group = h5_file.createGroup((group_name + "/values").c_str());
     if (!field_output.node_values_empty) {
         H5::Group node_values_group = h5_file.createGroup((group_name + "/values/nodes").c_str());
         for (auto [node_number, field_output_value] : field_output.nodeValues) {
-//        for (int i=0; i<field_output.nodeValues.size(); i++) {
             string value_group_name = group_name + "/values/nodes/" + to_string(node_number);
             write_field_value(h5_file, value_group_name, field_output_value);
         }
@@ -1578,7 +1570,7 @@ void SpadeObject::write_frames(H5::H5File &h5_file, Logging &log_file, const str
         write_float_dataset(frame_group, "frameValue", frame.frameValue);
         write_float_dataset(frame_group, "frequency", frame.frequency);
         H5::Group field_outputs_group = h5_file.createGroup((frame_group_name + "/fieldOutputs").c_str());
-        log_file.logVerbose("Writing field output.");
+        log_file.logVerbose("Writing field output for " + frame_group_name + ".");
         for (int i=0; i<frame.fieldOutputs.size(); i++) {
             string field_output_group_name = frame_group_name + "/fieldOutputs/" + to_string(i);
             write_field_output(h5_file, log_file, field_output_group_name, frame.fieldOutputs[i]);
