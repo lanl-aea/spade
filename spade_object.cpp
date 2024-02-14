@@ -1743,7 +1743,8 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
         if (!field_bulk_data.mises.empty()) {
             write_float_2D_array(bulk_group, "mises", field_bulk_data.width, field_bulk_data.numberOfElements, *mises);
         }
-        write_integer_2D_array(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.numberOfElements, *element_labels);
+//        write_integer_2D_array(bulk_group, "elementLabels", field_bulk_data.width, field_bulk_data.numberOfElements, *element_labels);
+        write_integer_vector_dataset(bulk_group, "elementLabels", field_bulk_data.elementLabels);
         write_integer_2D_array(bulk_group, "integrationPoints", field_bulk_data.width, field_bulk_data.numberOfElements, *integration_points);
     } else {  // Nodes
     /*
@@ -2379,6 +2380,23 @@ void SpadeObject::write_integer_2D_array(const H5::Group& group, const string & 
     dataset.write(integer_array, H5::PredType::NATIVE_INT);
     dataset.close();
     dataspace.close();
+}
+
+void SpadeObject::write_integer_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<int> &integer_data) {
+    if (!integer_data.empty()) {
+        herr_t status;
+        hsize_t dimensions[] = {row_size, column_size};
+        hid_t dataset, datatype, dataspace;
+        dataspace = H5Screate_simple(2, dimensions, NULL); 
+
+        datatype = H5Tcopy(H5T_NATIVE_INT);
+        status = H5Tset_order(datatype, H5T_ORDER_LE);
+        dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        status = H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &integer_data[0]);
+        H5Sclose(dataspace);
+        H5Tclose(datatype);
+        H5Dclose(dataset);
+    }
 }
 
 void SpadeObject::write_integer_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<int>> & integer_data) {

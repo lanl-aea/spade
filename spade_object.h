@@ -1044,6 +1044,16 @@ class SpadeObject {
           \param float_array A pointer to the array of arrays of integers that should be written in the new dataset
         */
         void write_integer_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, int *integer_array);
+        //! Write an arrays of arrays of integers as a dataset
+        /*!
+          Create a dataset with a two-dimensional array of integers using the passed-in values
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where a two-dimensional array is to be written
+          \param row_size Integer indicating the row dimension
+          \param column_size Integer indicating the column dimension
+          \param integer_array A vector of integers should be written in the new dataset
+        */
+        void write_integer_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<int> &integer_data);
         //! Write a vector of vectors of integers as a dataset
         /*!
           Create a dataset with a two-dimensional array of integers using the passed-in values
