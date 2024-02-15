@@ -1093,6 +1093,7 @@ field_output_type SpadeObject::process_field_output (const odb_FieldOutput &fiel
 
 frame_type SpadeObject::process_frame (const odb_Frame &frame, Logging &log_file, CmdLineArguments &command_line_arguments) {
     frame_type new_frame;
+    new_frame.skip = false;
     new_frame.description = frame.description().CStr();
     new_frame.loadCase = frame.loadCase().name().CStr();
     switch(frame.domain()) {
@@ -1101,10 +1102,20 @@ frame_type SpadeObject::process_frame (const odb_Frame &frame, Logging &log_file
         case odb_Enum::MODAL: new_frame.domain = "Modal"; break;
     }
     new_frame.incrementNumber = frame.incrementNumber();
+    if ((command_line_arguments["frame"] != "all") && (command_line_arguments["frame"] != to_string(new_frame.incrementNumber))) {
+        new_frame.skip = true;
+        return new_frame;
+    }
     new_frame.cyclicModeNumber = frame.cyclicModeNumber();
     new_frame.mode = frame.mode();
     new_frame.frameValue = frame.frameValue();
     new_frame.frequency = frame.frequency();
+    if (command_line_arguments["frame-value"] != "all") {
+        if (to_string(new_frame.frameValue).find(command_line_arguments["frame-value"]) == std::string::npos) {
+            new_frame.skip = true;
+            return new_frame;
+        }
+    }
 
     const odb_FieldOutputRepository& field_outputs = frame.fieldOutputs();
     odb_FieldOutputRepositoryIT field_outputs_iterator(field_outputs);
@@ -1260,9 +1271,10 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_
     const odb_SequenceFrame& frames = step.frames();
     log_file.logVerbose("Reading frames.");
     for (int f=0; f<frames.size(); f++) {
-        if ((command_line_arguments["frame"] == "all") || (command_line_arguments["frame"] == to_string(f))) {
-            const odb_Frame& frame = frames.constGet(f);
-            new_step.frames.push_back(process_frame(frame, log_file, command_line_arguments));
+        const odb_Frame& frame = frames.constGet(f);
+        frame_type new_frame = process_frame(frame, log_file, command_line_arguments);
+        if (!new_frame.skip) {
+            new_step.frames.push_back(new_frame);
         }
     }
     const odb_HistoryRegionRepository& history_regions = step.historyRegions();
