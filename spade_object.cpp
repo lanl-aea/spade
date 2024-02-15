@@ -232,7 +232,7 @@ void SpadeObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArguments 
     }
 
     log_file.logVerbose("Reading root assembly.");
-    this->root_assembly = process_assembly(odb.rootAssembly(), odb, log_file);
+    this->root_assembly = process_assembly(odb.rootAssembly(), odb, log_file, command_line_arguments);
 
     log_file.logVerbose("Reading steps.");
     odb_StepRepository step_repository = odb.steps();
@@ -796,7 +796,7 @@ connector_orientation_type SpadeObject::process_connector_orientation (const odb
     return new_connector_orientation;
 }
 
-assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &odb, Logging &log_file) {
+assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments) {
     assembly_type new_assembly;
     new_assembly.name = assembly.name().CStr();
     log_file.logVerbose("Reading assembly data for " + new_assembly.name);
@@ -835,6 +835,9 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     for (instance_iter.first(); !instance_iter.isDone(); instance_iter.next()) {
         log_file.logVerbose("Starting to read instance: " + string(instance_iter.currentKey().CStr()));
         const odb_Instance& instance = instances[instance_iter.currentKey()];
+        if ((command_line_arguments["instance"] != "all") && (command_line_arguments["instance"] != instance.name().CStr())) {
+            continue;
+        }
         new_assembly.instances.push_back(process_instance(instance, odb, log_file));
     }
     odb_DatumCsysRepository datum_csyses = assembly.datumCsyses();
@@ -1082,6 +1085,9 @@ field_output_type SpadeObject::process_field_output (const odb_FieldOutput &fiel
     new_field_output.isComplex = field_output.isComplex();
     for (int i=0; i<field_bulk_values.size(); i++) {
         const odb_FieldBulkData& field_bulk_value = field_bulk_values[i];
+        if ((command_line_arguments["instance"] != "all") && (command_line_arguments["instance"] != field_bulk_value.instance().name().CStr())) {
+            continue;
+        }
         new_field_output.dataValues.push_back(process_field_bulk_data(field_bulk_value, field_output.validInvariants(), field_output.isComplex(), log_file, command_line_arguments));
         if (new_field_output.dataValues[i].width > new_field_output.max_width) {  new_field_output.max_width = new_field_output.dataValues[i].width; }
         if (new_field_output.dataValues[i].length > new_field_output.max_length) {  new_field_output.max_length = new_field_output.dataValues[i].length; }
@@ -2241,6 +2247,7 @@ void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & d
 }
 
 void SpadeObject::write_double_dataset(const H5::Group &group, const string &dataset_name, const double &double_value) {
+    if (!double_value) { return; }
     hsize_t dimensions[] = {1};
     H5::DataSpace dataspace(1, dimensions);  // Just one integer
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);

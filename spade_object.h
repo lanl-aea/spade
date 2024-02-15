@@ -627,10 +627,11 @@ class SpadeObject {
           \param assembly An odb assembly object
           \param odb An open odb object
           \param log_file Logging object for writing log messages
+          \param command_line_arguments CmdLineArguments object storing command line arguments
           \return assembly_type with data stored from the odb
           \sa process_odb()
         */
-        assembly_type process_assembly (odb_Assembly &assembly, odb_Odb &odb, Logging &log_file);
+        assembly_type process_assembly (odb_Assembly &assembly, odb_Odb &odb, Logging &log_file, CmdLineArguments &command_line_arguments);
         //! Process field value from the odb file
         /*!
           Process a field value object and store the results
