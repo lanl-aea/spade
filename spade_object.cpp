@@ -361,8 +361,6 @@ set_type SpadeObject::process_set (const odb_Set &set, Logging &log_file) {
     log_file.logDebug("\t\tset " + new_set.name + ": " + new_set.type);
 
     odb_SequenceString names = set.instanceNames();
-    int numInstances = names.size();
-
     for (int i=0; i<names.size(); i++) {
         odb_String name = names.constGet(i);        
         log_file.logDebug("\t\t\tinstance: " + string(name.CStr()));
@@ -1285,7 +1283,9 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_
     for (history_region_iterator.first(); !history_region_iterator.isDone(); history_region_iterator.next()) 
     {
         const odb_HistoryRegion& history_region = history_region_iterator.currentValue();
-        new_step.historyRegions.push_back(process_history_region(history_region, log_file, command_line_arguments));
+        if ((command_line_arguments["history-region"] == "all") || (command_line_arguments["history-region"] == history_region.name().CStr())) {
+            new_step.historyRegions.push_back(process_history_region(history_region, log_file, command_line_arguments));
+        }
     }
     // TODO: Write code to handle command line arguments that limit how much history or field output data is written
     this->steps.push_back(new_step);
