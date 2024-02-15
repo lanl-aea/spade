@@ -1230,7 +1230,9 @@ history_region_type SpadeObject::process_history_region (const odb_HistoryRegion
     log_file.logVerbose("Reading history output.");
     for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
         odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
-        new_history_region.historyOutputs.push_back( process_history_output(history_output, log_file, command_line_arguments));
+        if ((command_line_arguments["history"] == "all") || (command_line_arguments["history"] == history_output.name().CStr())) {
+            new_history_region.historyOutputs.push_back( process_history_output(history_output, log_file, command_line_arguments));
+        }
     }
 
 
