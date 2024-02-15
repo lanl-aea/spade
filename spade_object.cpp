@@ -2011,6 +2011,7 @@ void SpadeObject::write_section_category(H5::H5File &h5_file, const H5::Group &g
 }
 
 void SpadeObject::write_attribute(const H5::Group& group, const string & attribute_name, const string & string_value) {
+    if (string_value.empty()) { return; }
     H5::DataSpace attribute_space(H5S_SCALAR);
     int string_size = string_value.size();
     if (string_size == 0) { string_size++; }  // If the string is empty, make the string size equal to one, as StrType must have a positive size
@@ -2021,6 +2022,8 @@ void SpadeObject::write_attribute(const H5::Group& group, const string & attribu
 }
 
 void SpadeObject::write_string_dataset(const H5::Group& group, const string & dataset_name, const string & string_value) {
+    if (string_value.empty()) { return; }
+    H5::DataSpace attribute_space(H5S_SCALAR);
     hsize_t dimensions[] = {1};
     H5::DataSpace dataspace(1, dimensions);  // Just one string
     int string_size = string_value.size();
@@ -2033,22 +2036,22 @@ void SpadeObject::write_string_dataset(const H5::Group& group, const string & da
 }
 
 void SpadeObject::write_string_vector_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values) {
-    if (!string_values.empty()) {
-        std::vector<const char*> c_string_array;
-        for (int i = 0; i < string_values.size(); ++i) {
-            c_string_array.push_back(string_values[i].c_str());
-        }
-        hsize_t dimensions[1] {c_string_array.size()};
-        H5::DataSpace  dataspace(1, dimensions);
-        H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
-        H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
-        dataset.write(c_string_array.data(), string_type);
-        dataset.close();
-        dataspace.close();
+    if (string_values.empty()) { return; }
+    std::vector<const char*> c_string_array;
+    for (int i = 0; i < string_values.size(); ++i) {
+        c_string_array.push_back(string_values[i].c_str());
     }
+    hsize_t dimensions[1] {c_string_array.size()};
+    H5::DataSpace  dataspace(1, dimensions);
+    H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
+    H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
+    dataset.write(c_string_array.data(), string_type);
+    dataset.close();
+    dataspace.close();
 }
 
 void SpadeObject::write_string_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, string *string_array) {
+    if (!string_array) { return; }
     hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::C_S1, dataspace);
@@ -2058,30 +2061,30 @@ void SpadeObject::write_string_2D_array(const H5::Group& group, const string & d
 }
 
 void SpadeObject::write_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<string>> & string_data) {
-    if (!string_data.empty()) {
-        hsize_t dimensions[] = {string_data.size(), max_column_size};
-        H5::DataSpace  dataspace(2, dimensions);
-        H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
-        H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
+    if (string_data.empty()) { return; }
+    hsize_t dimensions[] = {string_data.size(), max_column_size};
+    H5::DataSpace  dataspace(2, dimensions);
+    H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
+    H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
 
-        const char* c_array[string_data.size()][max_column_size];
-        string blank = "";
-        for (int i=0; i<string_data.size(); i++) {
-            for (int j=0; j<max_column_size; j++) {
-                if (j >= string_data[i].size()) {
-                    c_array[i][j] = blank.c_str();
-                } else {
-                    c_array[i][j] = string_data[i][j].c_str();
-                }
+    const char* c_array[string_data.size()][max_column_size];
+    string blank = "";
+    for (int i=0; i<string_data.size(); i++) {
+        for (int j=0; j<max_column_size; j++) {
+            if (j >= string_data[i].size()) {
+                c_array[i][j] = blank.c_str();
+            } else {
+                c_array[i][j] = string_data[i][j].c_str();
             }
         }
-        dataset.write(&c_array[0], string_type);
-        dataset.close();
-        dataspace.close();
     }
+    dataset.write(&c_array[0], string_type);
+    dataset.close();
+    dataspace.close();
 }
 
 void SpadeObject::write_integer_dataset(const H5::Group& group, const string & dataset_name, const int & int_value) {
+    if (!int_value) { return; }
     hsize_t dimensions[] = {1};
     H5::DataSpace dataspace(1, dimensions);  // Just one integer
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
@@ -2091,6 +2094,7 @@ void SpadeObject::write_integer_dataset(const H5::Group& group, const string & d
 }
 
 void SpadeObject::write_integer_array_dataset(const H5::Group& group, const string & dataset_name, const int array_size, const int* int_array) {
+    if (!int_array) { return; }
     hsize_t dimensions[] = {array_size};
     H5::DataSpace dataspace(1, dimensions);
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
@@ -2100,17 +2104,17 @@ void SpadeObject::write_integer_array_dataset(const H5::Group& group, const stri
 }
 
 void SpadeObject::write_integer_vector_dataset(const H5::Group& group, const string & dataset_name, const vector<int> & int_data) {
-    if (!int_data.empty()) {
-        hsize_t dimensions[] = {int_data.size()};
-        H5::DataSpace dataspace(1, dimensions);
-        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
-        dataset.write(int_data.data(), H5::PredType::NATIVE_INT);
-        dataset.close();
-        dataspace.close();
-    }
+    if (int_data.empty()) { return; }
+    hsize_t dimensions[] = {int_data.size()};
+    H5::DataSpace dataspace(1, dimensions);
+    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
+    dataset.write(int_data.data(), H5::PredType::NATIVE_INT);
+    dataset.close();
+    dataspace.close();
 }
 
 void SpadeObject::write_integer_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, int *integer_array) {
+    if (!integer_array) { return; }
     hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
@@ -2120,42 +2124,41 @@ void SpadeObject::write_integer_2D_array(const H5::Group& group, const string & 
 }
 
 void SpadeObject::write_integer_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<int> &integer_data) {
-    if (!integer_data.empty()) {
-        herr_t status;
-        hsize_t dimensions[] = {row_size, column_size};
-        hid_t dataset, datatype, dataspace;
-        dataspace = H5Screate_simple(2, dimensions, NULL); 
+    if (integer_data.empty()) { return; }
+    herr_t status;
+    hsize_t dimensions[] = {row_size, column_size};
+    hid_t dataset, datatype, dataspace;
+    dataspace = H5Screate_simple(2, dimensions, NULL); 
 
-        datatype = H5Tcopy(H5T_NATIVE_INT);
-        status = H5Tset_order(datatype, H5T_ORDER_LE);
-        dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        status = H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &integer_data[0]);
-        H5Sclose(dataspace);
-        H5Tclose(datatype);
-        H5Dclose(dataset);
-    }
+    datatype = H5Tcopy(H5T_NATIVE_INT);
+    status = H5Tset_order(datatype, H5T_ORDER_LE);
+    dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    status = H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &integer_data[0]);
+    H5Sclose(dataspace);
+    H5Tclose(datatype);
+    H5Dclose(dataset);
 }
 
 void SpadeObject::write_integer_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<int>> & integer_data) {
-    if (!integer_data.empty()) {
-        hsize_t dimensions(integer_data.size());
-        H5::DataSpace dataspace(1, &dimensions);
-        H5::VarLenType datatype(H5::PredType::NATIVE_INT);
-        H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
-        hvl_t variable_length[dimensions];
-        for (hsize_t i = 0; i < dimensions; ++i)
-        {
-            variable_length[i].len = integer_data[i].size();
-            variable_length[i].p = &integer_data[i][0];
-        }
-        dataset.write(variable_length, datatype);
-        dataspace.close();
-        datatype.close();
-        dataset.close();
+    if (integer_data.empty()) { return; }
+    hsize_t dimensions(integer_data.size());
+    H5::DataSpace dataspace(1, &dimensions);
+    H5::VarLenType datatype(H5::PredType::NATIVE_INT);
+    H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
+    hvl_t variable_length[dimensions];
+    for (hsize_t i = 0; i < dimensions; ++i)
+    {
+        variable_length[i].len = integer_data[i].size();
+        variable_length[i].p = &integer_data[i][0];
     }
+    dataset.write(variable_length, datatype);
+    dataspace.close();
+    datatype.close();
+    dataset.close();
 }
 
 void SpadeObject::write_float_dataset(const H5::Group &group, const string &dataset_name, const float &float_value) {
+    if (!float_value) { return; }
     hsize_t dimensions[] = {1};
     H5::DataSpace dataspace(1, dimensions);  // Just one integer
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
@@ -2165,6 +2168,7 @@ void SpadeObject::write_float_dataset(const H5::Group &group, const string &data
 }
 
 void SpadeObject::write_float_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const float* float_array) {
+    if (!float_array) { return; }
     hsize_t dimensions[] = {array_size};
     H5::DataSpace dataspace(1, dimensions);
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
@@ -2174,17 +2178,17 @@ void SpadeObject::write_float_array_dataset(const H5::Group &group, const string
 }
 
 void SpadeObject::write_float_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<float> &float_data) {
-    if (!float_data.empty()) {
-        hsize_t dimensions[] = {float_data.size()};
-        H5::DataSpace dataspace(1, dimensions);
-        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
-        dataset.write(float_data.data(), H5::PredType::NATIVE_FLOAT);
-        dataset.close();
-        dataspace.close();
-    }
+    if (float_data.empty()) { return; }
+    hsize_t dimensions[] = {float_data.size()};
+    H5::DataSpace dataspace(1, dimensions);
+    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
+    dataset.write(float_data.data(), H5::PredType::NATIVE_FLOAT);
+    dataset.close();
+    dataspace.close();
 }
 
 void SpadeObject::write_float_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, float *float_array) {
+    if (!float_array) { return; }
     hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
@@ -2194,56 +2198,53 @@ void SpadeObject::write_float_2D_array(const H5::Group& group, const string & da
 }
 
 void SpadeObject::write_float_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<float> &float_data) {
-    if (!float_data.empty()) {
-        herr_t status;
-        hsize_t dimensions[] = {row_size, column_size};
-        hid_t dataset, datatype, dataspace;
-        dataspace = H5Screate_simple(2, dimensions, NULL); 
+    if (float_data.empty()) { return; }
+    herr_t status;
+    hsize_t dimensions[] = {row_size, column_size};
+    hid_t dataset, datatype, dataspace;
+    dataspace = H5Screate_simple(2, dimensions, NULL); 
 
-        datatype = H5Tcopy(H5T_NATIVE_FLOAT);
-        status = H5Tset_order(datatype, H5T_ORDER_LE);
-        dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        status = H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &float_data[0]);
-        H5Sclose(dataspace);
-        H5Tclose(datatype);
-        H5Dclose(dataset);
-    }
+    datatype = H5Tcopy(H5T_NATIVE_FLOAT);
+    status = H5Tset_order(datatype, H5T_ORDER_LE);
+    dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    status = H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &float_data[0]);
+    H5Sclose(dataspace);
+    H5Tclose(datatype);
+    H5Dclose(dataset);
 }
 
 void SpadeObject::write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<float> &float_data) {
-    if (!float_data.empty()) {
-        herr_t status;
-        hid_t dataset, datatype, dataspace;
-        hsize_t dimensions[] = {aisle_size, row_size, column_size};
-        dataspace = H5Screate_simple(3, dimensions, NULL); 
+    if (float_data.empty()) { return; }
+    herr_t status;
+    hid_t dataset, datatype, dataspace;
+    hsize_t dimensions[] = {aisle_size, row_size, column_size};
+    dataspace = H5Screate_simple(3, dimensions, NULL); 
 
-        datatype = H5Tcopy(H5T_NATIVE_FLOAT);
-        status = H5Tset_order(datatype, H5T_ORDER_LE);
-        dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        status = H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &float_data[0]);
-        H5Sclose(dataspace);
-        H5Tclose(datatype);
-        H5Dclose(dataset);
-    }
+    datatype = H5Tcopy(H5T_NATIVE_FLOAT);
+    status = H5Tset_order(datatype, H5T_ORDER_LE);
+    dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    status = H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &float_data[0]);
+    H5Sclose(dataspace);
+    H5Tclose(datatype);
+    H5Dclose(dataset);
 }
 
 void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<float>> &float_data) {
-    if (!float_data.empty()) {
-        hsize_t dimensions(float_data.size());
-        H5::DataSpace dataspace(1, &dimensions);
-        H5::VarLenType datatype(H5::PredType::NATIVE_FLOAT);
-        H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
-        hvl_t variable_length[dimensions];
-        for (hsize_t i = 0; i < dimensions; ++i)
-        {
-            variable_length[i].len = float_data[i].size();
-            variable_length[i].p = &float_data[i][0];
-        }
-        dataset.write(variable_length, datatype);
-        dataspace.close();
-        datatype.close();
-        dataset.close();
+    if (float_data.empty()) { return; }
+    hsize_t dimensions(float_data.size());
+    H5::DataSpace dataspace(1, &dimensions);
+    H5::VarLenType datatype(H5::PredType::NATIVE_FLOAT);
+    H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
+    hvl_t variable_length[dimensions];
+    for (hsize_t i = 0; i < dimensions; ++i)
+    {
+        variable_length[i].len = float_data[i].size();
+        variable_length[i].p = &float_data[i][0];
     }
+    dataset.write(variable_length, datatype);
+    dataspace.close();
+    datatype.close();
+    dataset.close();
 }
 
 void SpadeObject::write_double_dataset(const H5::Group &group, const string &dataset_name, const double &double_value) {
@@ -2257,6 +2258,7 @@ void SpadeObject::write_double_dataset(const H5::Group &group, const string &dat
 }
 
 void SpadeObject::write_double_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const double* double_array) {
+    if (!double_array) { return; }
     hsize_t dimensions[] = {array_size};
     H5::DataSpace dataspace(1, dimensions);
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
@@ -2266,17 +2268,17 @@ void SpadeObject::write_double_array_dataset(const H5::Group &group, const strin
 }
 
 void SpadeObject::write_double_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<double> &double_data) {
-    if (!double_data.empty()) {
-        hsize_t dimensions[] = {double_data.size()};
-        H5::DataSpace dataspace(1, dimensions);
-        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
-        dataset.write(double_data.data(), H5::PredType::NATIVE_DOUBLE);
-        dataset.close();
-        dataspace.close();
-    }
+    if (double_data.empty()) { return; }
+    hsize_t dimensions[] = {double_data.size()};
+    H5::DataSpace dataspace(1, dimensions);
+    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
+    dataset.write(double_data.data(), H5::PredType::NATIVE_DOUBLE);
+    dataset.close();
+    dataspace.close();
 }
 
 void SpadeObject::write_double_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, double *double_array) {
+    if (!double_array) { return; }
     hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
     H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
@@ -2286,56 +2288,54 @@ void SpadeObject::write_double_2D_array(const H5::Group& group, const string & d
 }
 
 void SpadeObject::write_double_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<double> &double_data) {
-    if (!double_data.empty()) {
-        herr_t status;
-        hsize_t dimensions[] = {row_size, column_size};
-        hid_t dataset, datatype, dataspace;
-        dataspace = H5Screate_simple(2, dimensions, NULL); 
+    if (double_data.empty()) { return; }
+    herr_t status;
+    hsize_t dimensions[] = {row_size, column_size};
+    hid_t dataset, datatype, dataspace;
+    dataspace = H5Screate_simple(2, dimensions, NULL); 
 
-        datatype = H5Tcopy(H5T_NATIVE_DOUBLE);
-        status = H5Tset_order(datatype, H5T_ORDER_LE);
-        dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &double_data[0]);
-        H5Sclose(dataspace);
-        H5Tclose(datatype);
-        H5Dclose(dataset);
-    }
+    datatype = H5Tcopy(H5T_NATIVE_DOUBLE);
+    status = H5Tset_order(datatype, H5T_ORDER_LE);
+    dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &double_data[0]);
+    H5Sclose(dataspace);
+    H5Tclose(datatype);
+    H5Dclose(dataset);
 }
 
 void SpadeObject::write_double_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<double> &double_data) {
-    if (!double_data.empty()) {
-        herr_t status;
-        hsize_t dimensions[] = {aisle_size, row_size, column_size};
-        hid_t dataset, datatype, dataspace;
-        dataspace = H5Screate_simple(3, dimensions, NULL); 
+    if (double_data.empty()) { return; }
+    herr_t status;
+    hsize_t dimensions[] = {aisle_size, row_size, column_size};
+    hid_t dataset, datatype, dataspace;
+    dataspace = H5Screate_simple(3, dimensions, NULL); 
 
-        datatype = H5Tcopy(H5T_NATIVE_DOUBLE);
-        status = H5Tset_order(datatype, H5T_ORDER_LE);
-        dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &double_data[0]);
-        H5Sclose(dataspace);
-        H5Tclose(datatype);
-        H5Dclose(dataset);
-    }
+    datatype = H5Tcopy(H5T_NATIVE_DOUBLE);
+    status = H5Tset_order(datatype, H5T_ORDER_LE);
+    dataset = H5Dcreate(group.getId(), dataset_name.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &double_data[0]);
+    H5Sclose(dataspace);
+    H5Tclose(datatype);
+    H5Dclose(dataset);
 }
 
 void SpadeObject::write_double_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<double>> & double_data) {
-    if (!double_data.empty()) { // Convert to 2D array
-        hsize_t dimensions(double_data.size());
-        H5::DataSpace dataspace(1, &dimensions);
-        H5::VarLenType datatype(H5::PredType::NATIVE_DOUBLE);
-        H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
-        hvl_t variable_length[dimensions];
-        for (hsize_t i = 0; i < dimensions; ++i)
-        {
-            variable_length[i].len = double_data[i].size();
-            variable_length[i].p = &double_data[i][0];
-        }
-        dataset.write(variable_length, datatype);
-        dataspace.close();
-        datatype.close();
-        dataset.close();
+    if (double_data.empty()) { return; }
+     // Convert to 2D array
+    hsize_t dimensions(double_data.size());
+    H5::DataSpace dataspace(1, &dimensions);
+    H5::VarLenType datatype(H5::PredType::NATIVE_DOUBLE);
+    H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
+    hvl_t variable_length[dimensions];
+    for (hsize_t i = 0; i < dimensions; ++i)
+    {
+        variable_length[i].len = double_data[i].size();
+        variable_length[i].p = &double_data[i][0];
     }
+    dataset.write(variable_length, datatype);
+    dataspace.close();
+    datatype.close();
+    dataset.close();
 }
 
 
