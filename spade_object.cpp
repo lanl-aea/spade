@@ -1593,7 +1593,9 @@ void SpadeObject::write_frames(H5::H5File &h5_file, Logging &log_file, const str
         H5::Group field_outputs_group = h5_file.createGroup((frame_group_name + "/fieldOutputs").c_str());
         log_file.logVerbose("Writing field output for " + frame_group_name + ".");
         for (int i=0; i<frame.fieldOutputs.size(); i++) {
-            string field_output_group_name = frame_group_name + "/fieldOutputs/" + to_string(i);
+            string clean_name = frame.fieldOutputs[i].name;
+            std::replace( clean_name.begin(), clean_name.end(), '/', '|');   // Can't have a slash in an index name for hdf5
+            string field_output_group_name = frame_group_name + "/fieldOutputs/" + clean_name;
             write_field_output(h5_file, log_file, field_output_group_name, frame.fieldOutputs[i]);
         }
         write_attribute(frame_group, "max_width", to_string(frame.max_width));
