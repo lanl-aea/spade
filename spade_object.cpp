@@ -1649,7 +1649,7 @@ void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group
             string history_output_group_name = history_region_group_name + "/historyOutputs/" + history_region.historyOutputs[i].name;
             write_history_output(h5_file, history_output_group_name, history_region.historyOutputs[i]);
         }
-        history_region.historyOutputs = vector<history_output_type>();  // set the vector to an empty vector - i.e. clear the memory
+        vector<history_output_type>().swap(history_region.historyOutputs);  // Swap vector with empty vector (freeing/clearing memory of vector)
     }
 }
 
