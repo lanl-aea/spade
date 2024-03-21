@@ -128,8 +128,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         while (optind < argc) this->unexpected_args += string(argv[optind++]) + " ";
     }
     this->command_name = string(argv[0]);
-    this->command_name.erase(this->command_name.find("./"), 2);  // Find and erase './' if present in command name
-
+    this->command_name = std::filesystem::path(this->command_name).filename().generic_string();
 
 
     if (!this->help_command) {
