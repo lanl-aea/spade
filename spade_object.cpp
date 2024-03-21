@@ -954,7 +954,7 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
         new_field_bulk_data.baseElementType = field_bulk_data.baseElementType().CStr();
         coord_length = new_field_bulk_data.length * new_field_bulk_data.orientationWidth;
 
-        new_field_bulk_data.elementLabels.insert(new_field_bulk_data.elementLabels.end(), &element_labels[0], &element_labels[new_field_bulk_data.numberOfElements]);  // asign array to vector
+        new_field_bulk_data.elementLabels.insert(new_field_bulk_data.elementLabels.end(), &element_labels[0], &element_labels[new_field_bulk_data.length]);  // asign array to vector
 
         odb_SequenceString component_labels = field_bulk_data.componentLabels();
         for (int i=0; i<field_bulk_data.componentLabels().size(); i++) {  // Usually just around 3 labels or less
@@ -1083,7 +1083,9 @@ field_output_type SpadeObject::process_field_output (const odb_FieldOutput &fiel
     new_field_output.max_width = 0;
     const odb_SequenceFieldBulkData& field_bulk_values = field_output.bulkDataBlocks();	
     new_field_output.isComplex = field_output.isComplex();
-    for (int i=0; i<field_bulk_values.size(); i++) {
+    for (int i=0; i<field_bulk_values.size(); i++) {  // There seems to be a "block" per element type and if the element type is the same per section point
+                                                      // e.g. In one odb the "E" field values had three "blocks" One for element type B23 (section point 1)
+                                                      // one for element type B23 (section point 5), and one for element type GAPUNI
         const odb_FieldBulkData& field_bulk_value = field_bulk_values[i];
         if ((command_line_arguments["instance"] != "all") && (command_line_arguments["instance"] != field_bulk_value.instance().name().CStr())) {
             continue;
@@ -1516,7 +1518,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
         if (!field_bulk_data.mises.empty()) {
             write_float_2D_data(bulk_group, "mises", field_bulk_data.numberOfElements, field_bulk_data.width, field_bulk_data.mises);
         }
-        write_integer_vector_dataset(bulk_group, "elementLabels", field_bulk_data.elementLabels);
+        write_integer_2D_data(bulk_group, "elementLabels", field_bulk_data.numberOfElements, number_of_integration_points, field_bulk_data.elementLabels);
         write_integer_2D_data(bulk_group, "integrationPoints", field_bulk_data.numberOfElements, number_of_integration_points, field_bulk_data.integrationPoints);
     } else {  // Nodes
         if(field_bulk_data.precision == "Single Precision") {
@@ -1570,7 +1572,7 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, con
         }
     }
     for (int i=0; i<field_output.dataValues.size(); i++) {
-        string value_group_name = group_name + "/values/" + to_string(i);
+        string value_group_name = group_name + "/values/" + to_string(i);  // Another viable name might be element type plus section point
         write_field_bulk_data(h5_file, log_file, value_group_name, field_output.dataValues[i], field_output.isComplex);
     }
     write_attribute(field_output_group, "max_width", to_string(field_output.max_width));
