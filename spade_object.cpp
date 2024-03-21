@@ -1622,7 +1622,7 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
     if (history_point.hasElement) {
         string element_group_name = history_point_group_name + "/element";
         H5::Group element_group = h5_file.createGroup(element_group_name.c_str());
-        write_element(h5_file, element_group_name, *history_point.element);
+        write_element(h5_file, element_group, element_group_name, *history_point.element);
     }
     if (history_point.hasNode) {
         string node_group_name = history_point_group_name + "/node";
@@ -1916,7 +1916,7 @@ void SpadeObject::write_interactions(H5::H5File &h5_file, const string &group_na
     }
 }
 
-void SpadeObject::write_element(H5::H5File &h5_file, const string &group_name, const element_type &element) {
+void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const string &group_name, const element_type &element) {
     string element_link;
     string newGroupName = group_name + "/" + to_string(element.label);
     string element_key;
@@ -1926,7 +1926,7 @@ void SpadeObject::write_element(H5::H5File &h5_file, const string &group_name, c
     element_key = to_string(element.label) + element_key;
     try {
         element_link = this->element_links.at(element_key);
-        h5_file.link(H5L_TYPE_SOFT, element_link, newGroupName);
+        write_string_dataset(group, to_string(element.label), element_link);
     } catch (const std::out_of_range& oor) {
         H5::Group element_group = h5_file.createGroup((group_name + "/" + to_string(element.label)).c_str());
         write_string_dataset(element_group, "type", element.type);
@@ -1943,7 +1943,7 @@ void SpadeObject::write_element(H5::H5File &h5_file, const string &group_name, c
 void SpadeObject::write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type*> &elements) {
     if (!elements.empty()) {
         H5::Group elements_group = h5_file.createGroup((group_name + "/elements").c_str());
-        for (auto element : elements) { write_element(h5_file, group_name + "/elements", *element); }
+        for (auto element : elements) { write_element(h5_file, elements_group, group_name + "/elements", *element); }
     }
 }
 

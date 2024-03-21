@@ -923,10 +923,11 @@ class SpadeObject {
         /*!
           Write data from element type into an HDF5 file
           \param h5_file Open h5_file object for writing
+          \param group Name of HDF5 group in which to write the new data
           \param group_name Name of the group where data is to be written
           \param element Element data to be written
         */
-        void write_element(H5::H5File &h5_file, const string &group_name, const element_type &element);
+        void write_element(H5::H5File &h5_file, H5::Group &group, const string &group_name, const element_type &element);
         //! Write elements data to an HDF5 file
         /*!
           Write vector of element data into an HDF5 file
