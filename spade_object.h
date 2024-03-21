@@ -325,6 +325,16 @@ struct field_value_type {
     string instance;  // Will store just the instance name
     section_point_type sectionPoint;
     bool empty;  // If int or float values are not populated set this to true
+    bool magnitudeEmpty;
+    bool trescaEmpty;
+    bool pressEmpty;
+    bool inv3Empty;
+    bool maxPrincipalEmpty;
+    bool midPrincipalEmpty;
+    bool minPrincipalEmpty;
+    bool maxInPlanePrincipalEmpty;
+    bool minInPlanePrincipalEmpty;
+    bool outOfPlanePrincipalEmpty;
 };
 
 struct field_bulk_type {
