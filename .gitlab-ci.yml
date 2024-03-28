@@ -99,7 +99,7 @@ microbump:
     # Tag production commit and previous developer commit. Continue if already tagged.
     - git config user.name "${GITLAB_USER_NAME}"
     - git config user.email "${GITLAB_USER_EMAIL}"
-        - git tag -a ${production_version} -m "production release ${production_version}" || true
+    - git tag -a ${production_version} -m "production release ${production_version}" || true
     # Assume last merge was dev->main. Pick previous.
     - last_merge_hash=$(git log --pretty=format:"%H" --merges -n 2 | tail -n 1)
     - git tag -a ${developer_version} -m "developer pre-release ${developer_version}" ${last_merge_hash} || true
