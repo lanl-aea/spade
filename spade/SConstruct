@@ -6,6 +6,7 @@ import pathlib
 import waves
 
 import utilities
+import _settings
 
 user_env = os.environ.copy()
 env = Environment(
@@ -18,25 +19,17 @@ gpp_path = pathlib.Path(env["CXX"]).resolve().parent.parent
 gpp_lib = gpp_path / "lib"
 gpp_include = gpp_path / "include"
 
-abaqus_paths = [
-    "/apps/abaqus/Commands/abq2023",
-    "/usr/projects/ea/DassaultSystemes/SIMULIA/Commands/abq2023",
-    "abq2023"
-]
+
+abaqus_version = ARGUMENTS.get('abaqus_version', _settings._default_abaqus_version)
+abaqus_command_paths = [f"{_}{abaqus_version}" for _ in _settings._abaqus_command_paths]
+abaqus_paths = abaqus_command_paths
 env["abaqus"] = env.Detect(abaqus_paths)
 abaqus_installation, abaqus_code_bin, abaqus_code_include = utilities.return_abaqus_code_paths(env["abaqus"])
 
-odb_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE " \
-	    "-DABQ_LINUX -DABQ_LNX86_64 -DSMA_GNUC -DFOR_TRAIL -DHAS_BOOL " \
-	    "-DASSERT_ENABLED -D_BSD_TYPES -D_BSD_SOURCE -D_GNU_SOURCE " \
-	    "-D_POSIX_SOURCE -D_XOPEN_SOURCE_EXTENDED -D_XOPEN_SOURCE " \
-	    "-DHAVE_OPENGL -DHKS_OPEN_GL -DGL_GLEXT_PROTOTYPES " \
-	    "-DMULTI_THREADING_ENABLED -D_REENTRANT -DABQ_MPI_SUPPORT -DBIT64 " \
-	    "-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 " \
-	    f"-I{abaqus_code_include} -I{abaqus_installation} " \
-	    f"-I{gpp_include} -I. -I{gpp_lib} -static-libstdc++"
-abaqus_link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O " \
-                    f"-lhdf5 -lhdf5_cpp -L{gpp_lib} -lstdc++ -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
+odb_flags = _settings._compiler_flags + f"-I{abaqus_code_include} -I{abaqus_installation} " + \
+            f"-I{gpp_include} -I. -I{gpp_lib}"
+abaqus_link_flags = _settings._link_flags + f"-L{gpp_lib} -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
+# TODO: May wish to confirm that h5c++ is definitely in the same place as gpp (lib and include)
 h5_flags = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
 
 # Build static objects
@@ -46,12 +39,18 @@ objects.extend(env.Object("cmd_line_arguments.cpp"))
 objects.extend(env.Object("logging.cpp"))
 objects.extend(env.Object("spade_object.cpp", CXXFLAGS=h5_flags + odb_flags))
 
+build_artifacts = [_.name for _ in objects]  # Get list of .o files
+build_artifacts.append(f"{_settings._project_name_cpp}.o")
+build_artifacts.append(f"abaqus_v6.env")
+# Need to remove .o and abaqus_v6.env files so different versions don't get accidentally linked
+
 # Build executable with Abaqus make
+target_name = f"{_settings._project_name_short}_{abaqus_version}"
+abaqus_make_command = f"{env['abaqus']} make job={_settings._project_name_cpp}.cpp"
 env.Command(
-    target=["spade_cpp"],
-    source=["spade_cpp.cpp"] + objects,
-    action=["${abaqus_program} make job=${TARGET.name}"],
-    abaqus_program=env["abaqus"]
+    target=[target_name],
+    source=[f"{_settings._project_name_short}.cpp"] + objects,
+    action=[abaqus_make_command, Move(_settings._project_name_cpp, target_name), Delete(build_artifacts)]
 )
 
 # Write build abaqus environment file
