@@ -1,0 +1,68 @@
+package:
+  name: spade
+  version: {{ VERSION }}
+
+about:
+  home: https://re-git.lanl.gov/aea/python-projects/spade
+  summary: 'Tool for extracting data from an Abaqus output database (odb) file into a hierarchical data format (hdf5) file'
+
+source:
+  path: '..'
+
+build:
+  noarch: python
+  script: {{ PYTHON }} setup.py install
+  script_env:
+    - VERSION
+  ignore_run_exports:
+    - python_abi
+
+build:
+  number: 0
+  script_env:
+    - SETUPTOOLS_SCM_PRETEND_VERSION={{ VERSION }}
+  script:
+    # Build and install Conda package
+    - $PYTHON -m build --no-isolation
+    - $PYTHON -m pip install dist/$PKG_NAME-$PKG_VERSION.tar.gz --no-deps --ignore-installed -v --no-build-isolation
+    - $PYTHON -m pip show $PKG_NAME
+    # Install documentation to bundle in Conda package
+  ignore_run_exports:
+    - python_abi
+  entry_points:
+    - spade = spade.main:main
+
+requirements:
+  build:
+    - python {{ python }}
+    - numpy
+    - sphinx >=3.0.4
+    - sphinx_rtd_theme >=0.4.3
+    - sphinxcontrib-bibtex
+    - setuptools_scm[toml] >=6.2
+    - compilers
+    - hdf5
+    - scons
+    - waves
+    - sysroot_linux-64 >=2.17
+  host:
+    - python {{ python }}
+    - numpy
+    - python-build
+    - pip
+    - setuptools >=62
+    - setuptools_scm[toml] >=6.2
+    - sphinx
+    - compilers
+    - hdf5
+    - scons
+    - waves
+    - sysroot_linux-64 >=2.17
+  run:
+    - python
+    - {{ pin_compatible('numpy') }}
+    - scons
+    - waves
+    - compilers
+    - hdf5
+    - sysroot_linux-64 >=2.17
