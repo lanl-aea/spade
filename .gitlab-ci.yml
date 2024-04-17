@@ -12,10 +12,11 @@ stages:
   - deploy
 
 before_script:
-  # Assumes CI executes on AEA compute servers
-  # TODO: recover environment path from modulefile instead of assuming the sstelmo path(s)
-  # https://re-git.lanl.gov/aea/python-projects/waves/-/issues/7
-  - aea_compute_path="/projects/aea_compute"
+  - package_name='spade'
+  # Set the AEA compute environment deployment directory by host
+  - aea_projects="/projects"                                                    
+  - if [ $(hostname) == ??-rfe?.lanl.gov ]; then aea_projects="/usr/projects/ea"; fi
+  - aea_compute_path="${aea_projects}/aea_compute"
   - aea_conda_channel="${aea_compute_path}/aea-conda"
   - aea_modulefiles="${aea_compute_path}/modulefiles"
   - module use ${aea_modulefiles}
@@ -30,19 +31,15 @@ before_script:
   # TODO: kick off 'environment' job for missing environments instead of re-creating the environment build logic here
   # https://re-git.lanl.gov/aea/python-projects/waves/-/issues/8
   - environment_path="${aea_compute_path}/${project_environment}"
-  - conda_options='--force'
-  - |
-      if [[ ! -d ${environment_path} ]]; then
-          export ALL_PROXY="proxyout.lanl.gov:8080"
-          export HTTP_PROXY="http://$ALL_PROXY"
-          export HTTPS_PROXY=$HTTP_PROXY
-          conda env create --prefix ${environment_path} --file environment.yml ${conda_options};
-          chmod -R 755 ${environment_path}
-          unset ALL_PROXY
-          unset HTTP_PROXY
-          unset HTTPS_PROXY
-      fi
   - if [[ ${project_environment} != ${environment} ]]; then module unload ${environment}; module load ${project_environment}; fi
+  # Environment troubleshooting information
+  - echo $PATH
+  - echo $PYTHONPATH
+  - echo $MANPATH
+  - echo $LD_LIBRARY_PATH
+  - echo $CI_PIPELINE_SOURCE                                                    
+  - conda info
+  - env | grep -i proxy
   - conda_artifacts_directory='conda-bld'
 
 environment:
@@ -54,12 +51,22 @@ environment:
       changes:
         - "modulefiles/*"
         - "environment.yml"
+    - if: $ENVIRONMENT == "build"
   script:
+    # Don't rebuild environment for merge request pipelines unless the environment is missing
+    - if [[ -d "${environment_path}" ]]; then exists=true; else exists=false; fi
+    - if [[ $CI_PIPELINE_SOURCE == "merge_request_event" ]] && ${exists}; then exit 0; fi
+    # Don't rebuild environment for main unless the environment file has changed or the environment doesn't exist
+    - files=$(git diff --name-only ${CI_COMMIT_SHA} ${CI_COMMIT_BEFORE_SHA}) || true
+    - if [[ $CI_COMMIT_BRANCH == "main" ]]; then production=true; else production=false; fi                                                                     
+    - if [[ "${files}" == *"environment.yml"* ]]; then modified=true; else modified=false; fi
+    - if ${production} && ${exists} && ! ${modified}; then exit 0; fi
     # Set LANL proxies
     - export ALL_PROXY="proxyout.lanl.gov:8080"
     - export HTTP_PROXY="http://$ALL_PROXY"
     - export HTTPS_PROXY=$HTTP_PROXY
     # Re-build the Conda environment on changes to environment files
+    - conda_options='--force'
     - conda env create --prefix ${environment_path} --file environment.yml ${conda_options}
     # Remove write permissions from group to avoid accidental environment changes
     - chmod -R 755 ${environment_path}
@@ -102,8 +109,74 @@ microbump:
     - git tag -a ${production_version} -m "production release ${production_version}" || true
     # Assume last merge was dev->main. Pick previous.
     - last_merge_hash=$(git log --pretty=format:"%H" --merges -n 2 | tail -n 1)
-    - git tag -a ${developer_version} -m "developer pre-release ${developer_version}" ${last_merge_hash} || true
-    - git push https://gitlab-ci-token:${GITLAB_ACCESS_TOKEN}@re-git.lanl.gov/${CI_PROJECT_PATH}.git --tags
+    - git tag -a ${developer_version} -m "developer release ${developer_version}" ${last_merge_hash} || true
+    - git push oauth2-origin --tags
+  tags:
+    - shell-aea
+
+conda-build:
+  stage: build
+  variables:
+    GIT_STRATEGY: clone
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "dev"
+  script:
+    # Only build one compiler variant during merge request testing
+    - python_version="3.11"
+    - variants=""
+    - if [[ $CI_PIPELINE_SOURCE == "merge_request_event" ]] && [[ $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != "main" ]]; then variants="--variants {'python':['${python_version}']}"; fi
+    - echo $variants
+    # Set the LANL internal proxies
+    - export ALL_PROXY="proxyout.lanl.gov:8080"
+    - export HTTP_PROXY="http://$ALL_PROXY"
+    - export HTTPS_PROXY=$HTTP_PROXY
+    # Check that the documentation builds
+    # - scons html
+    # Run the Conda package build/test
+    - mkdir ${conda_artifacts_directory}
+    - croot="/scratch/$USER/$(basename $PWD)/${conda_artifacts_directory}"
+    - VERSION=$(python -m setuptools_scm) conda mambabuild recipe --channel conda-forge --no-anaconda-upload --croot ${croot} --output-folder ${conda_artifacts_directory} ${variants}
+    - conda build purge --croot ${croot}
+  artifacts:                                                                    
+    expire_in: '2 hrs'
+    paths:
+      - conda-bld/linux-64/spade-*-*.tar.bz2
+  tags:
+    - shell-aea
+
+deploy:
+  stage: deploy
+  variables:
+    GIT_STRATEGY: clone
+  dependencies:
+    - conda-build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $DEPLOY == "deploy"
+  script:                                                                       
+    # Override default permissions. Set group to rx with no write permissions.
+    - umask 0022
+    # Build alternate OS packages (assumes original built on linux-64)
+    - conda convert ${conda_artifacts_directory}/linux-64/${package_name}-*-*.tar.bz2 --platform osx-64 --output-dir ${conda_artifacts_directory}
+    - conda convert ${conda_artifacts_directory}/linux-64/${package_name}-*-*.tar.bz2 --platform win-64 --output-dir ${conda_artifacts_directory}
+    # Copy Conda package to AEA Conda Channel
+    - cp ${conda_artifacts_directory}/linux-64/${package_name}-*-*.tar.bz2 ${aea_conda_channel}/linux-64
+    - cp ${conda_artifacts_directory}/osx-64/${package_name}-*-*.tar.bz2 ${aea_conda_channel}/osx-64
+    - cp ${conda_artifacts_directory}/win-64/${package_name}-*-*.tar.bz2 ${aea_conda_channel}/win-64
+    # Change group for access by all W-13 staff and clean up permissions
+    - chgrp w13users ${aea_conda_channel}/*-64/${package_name}-*-*.tar.bz2 || true
+    - chmod go+rx-w ${aea_conda_channel}/*-64/${package_name}-*-*.tar.bz2 || true
+    - chmod go+rx-w ${aea_conda_channel}/*-64/${package_name}-*-*.tar.bz2 || true
+    # Update the AEA Conda Channel index
+    - conda index ${aea_conda_channel}
+    # Troubleshooting conda channel deploy and index update
+    - conda search -c file:///projects/aea_compute/aea-conda/ --override-channels ${package_name}
   tags:
     - shell-aea
 
