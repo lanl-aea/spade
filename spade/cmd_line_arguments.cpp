@@ -244,7 +244,7 @@ string CmdLineArguments::helpMessage () {
     help_message += "\t-f,\t--force-overwrite\tif extracted file already exists, then over write the file\n";
     help_message += "\t--step\tget information from specified step (default: all)\n";
     help_message += "\t--frame\tget information from specified frame (default: all)\n";
-    help_message += "\t--frame-value\tget information from specified frame (default: all)\n";
+    help_message += "\t--frame-value\tget information from specified frame value (default: all)\n";
     help_message += "\t--field\tget information from specified field (default: all)\n";
     help_message += "\t--history\tget information from specified history value (default: all)\n";
     help_message += "\t--history-region\tget information from specified history region (default: all)\n";
