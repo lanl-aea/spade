@@ -117,13 +117,13 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
     }
 
 
-    log_file.logVerbose("Starting to write output file: " + command_line_arguments.getTimeStamp(false));
+    log_file.logVerbose("Starting to write extracted file: " + command_line_arguments.getTimeStamp(false));
 
-    if (command_line_arguments["output-file-type"] == "h5") this->write_h5(command_line_arguments, log_file);
-    else if (command_line_arguments["output-file-type"] == "json") this->write_json(command_line_arguments, log_file);
-    else if (command_line_arguments["output-file-type"] == "yaml") this->write_yaml(command_line_arguments, log_file);
+    if (command_line_arguments["extracted-file-type"] == "h5") this->write_h5(command_line_arguments, log_file);
+    else if (command_line_arguments["extracted-file-type"] == "json") this->write_json(command_line_arguments, log_file);
+    else if (command_line_arguments["extracted-file-type"] == "yaml") this->write_yaml(command_line_arguments, log_file);
 
-    log_file.logVerbose("Finished writing output file: " + command_line_arguments.getTimeStamp(false));
+    log_file.logVerbose("Finished writing extracted file: " + command_line_arguments.getTimeStamp(false));
 
 }
 
@@ -1305,7 +1305,6 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_
             new_step.historyRegions.push_back(process_history_region(history_region, log_file, command_line_arguments));
         }
     }
-    // TODO: Write code to handle command line arguments that limit how much history or field output data is written
     this->steps.push_back(new_step);
 }
 
@@ -1313,16 +1312,16 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
 // Write out data to hdf5 file
 
     // Open file for writing
-    std::ifstream hdf5File (command_line_arguments["output-file"].c_str());
-    log_file.logDebug("Creating hdf5 file " + command_line_arguments["output-file"]);
-    const H5std_string FILE_NAME(command_line_arguments["output-file"]);
+    std::ifstream hdf5File (command_line_arguments["extracted-file"].c_str());
+    log_file.logDebug("Creating hdf5 file " + command_line_arguments["extracted-file"]);
+    const H5std_string FILE_NAME(command_line_arguments["extracted-file"]);
 
     H5::Exception::dontPrint();
     H5::H5File* h5_file_pointer = 0;
     try {
         h5_file_pointer = new H5::H5File(FILE_NAME, H5F_ACC_TRUNC);
     } catch(const H5::FileIException&) {
-        cerr << "Issue opening file: " << command_line_arguments["output-file"] << "\n";
+        cerr << "Issue opening file: " << command_line_arguments["extracted-file"] << "\n";
         perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
     }
     H5::H5File h5_file = *h5_file_pointer;

@@ -39,8 +39,8 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
     this->help_command = false;
     this->force_overwrite = false;
     this->command_line_arguments["odb-file"] = "";
-    this->command_line_arguments["output-file"] = "";
-    this->command_line_arguments["output-file-type"] = "";
+    this->command_line_arguments["extracted-file"] = "";
+    this->command_line_arguments["extracted-file-type"] = "";
     this->command_line_arguments["step"] = "";
     this->command_line_arguments["frame"] = "";
     this->command_line_arguments["frame-value"] = "";
@@ -55,8 +55,8 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         int option_index = 0;
         static struct option long_options[] = {
             {"help",             no_argument,       0,  'h'},
-            {"output-file",      required_argument, 0,  'o'},
-            {"output-file-type", required_argument, 0,  't'},
+            {"extracted-file",      required_argument, 0,  'e'},
+            {"extracted-file-type", required_argument, 0,  't'},
             {"verbose",          no_argument,       0,  'v'},
             {"debug",            no_argument,       0,  'd'},
             {"force-overwrite",  no_argument,       0,  'f'},
@@ -99,13 +99,13 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
 
             case 'o': {
                 string option_arg = string(optarg);
-                this->command_line_arguments["output-file"] = optarg;
+                this->command_line_arguments["extracted-file"] = optarg;
                 break;
             }
 
             case 't': {
                 string option_arg = string(optarg);
-                this->command_line_arguments["output-file-type"] = optarg;
+                this->command_line_arguments["extracted-file-type"] = optarg;
                 break;
             }
 
@@ -142,29 +142,29 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
 
-        // Handle output file type
-        std::transform(this->command_line_arguments["output-file-type"].begin(), this->command_line_arguments["output-file-type"].end(), this->command_line_arguments["output-file-type"].begin(), ::tolower);
-        if ((this->command_line_arguments["output-file-type"] != "json") && (this->command_line_arguments["output-file-type"] != "yaml")) this->command_line_arguments["output-file-type"] = "h5";
+        // Handle extracted file type
+        std::transform(this->command_line_arguments["extracted-file-type"].begin(), this->command_line_arguments["extracted-file-type"].end(), this->command_line_arguments["extracted-file-type"].begin(), ::tolower);
+        if ((this->command_line_arguments["extracted-file-type"] != "json") && (this->command_line_arguments["extracted-file-type"] != "yaml")) this->command_line_arguments["extracted-file-type"] = "h5";
 
         string base_file_name = std::filesystem::path(this->command_line_arguments["odb-file"]).replace_extension("").generic_string();
 
-        // Handle output file name
-        if (this->command_line_arguments["output-file"].empty()) { this->command_line_arguments["output-file"] = base_file_name + "." + this->command_line_arguments["output-file-type"]; }
-        std::filesystem::path file_path = this->command_line_arguments["output-file"];
+        // Handle extracted file name
+        if (this->command_line_arguments["extracted-file"].empty()) { this->command_line_arguments["extracted-file"] = base_file_name + "." + this->command_line_arguments["extracted-file-type"]; }
+        std::filesystem::path file_path = this->command_line_arguments["extracted-file"];
         std::filesystem::perms directory_permissions = std::filesystem::status(file_path.parent_path()).permissions();
         if (std::filesystem::perms::none == (std::filesystem::perms::owner_write & directory_permissions)) {  // If parent path is not writable, exit with error
             cerr << "Do not have write permission for: " << file_path.parent_path() << '\n';
             perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
 
-        // Check if output file already exists
+        // Check if extracted file already exists
         if (std::filesystem::exists(file_path)) {
             if (!this->force_overwrite) {
-                cerr << this->command_line_arguments["output-file"] << " already exists. Appending time stamp to output file.\n";
-                this->command_line_arguments["output-file"] = base_file_name + "_" + this->start_time + "." + this->command_line_arguments["output-file-type"]; 
+                cerr << this->command_line_arguments["extracted-file"] << " already exists. Appending time stamp to extracted file.\n";
+                this->command_line_arguments["extracted-file"] = base_file_name + "_" + this->start_time + "." + this->command_line_arguments["extracted-file-type"]; 
             } else {
-                if ( remove(this->command_line_arguments["output-file"].c_str()) != 0 ) {
-                    cerr << "Cannot delete: " << this->command_line_arguments["output-file"] << "\n";
+                if ( remove(this->command_line_arguments["extracted-file"].c_str()) != 0 ) {
+                    cerr << "Cannot delete: " << this->command_line_arguments["extracted-file"] << "\n";
                     perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
                 }
             }
@@ -213,8 +213,8 @@ string CmdLineArguments::verboseArguments () {
 
     arguments += "\n";
     arguments += "\tinput file: " + this->command_line_arguments["odb-file"] + "\n";
-    arguments += "\toutput file: " + this->command_line_arguments["output-file"] + "\n";
-    arguments += "\toutput file type: " + this->command_line_arguments["output-file-type"] + "\n";
+    arguments += "\textracted file: " + this->command_line_arguments["extracted-file"] + "\n";
+    arguments += "\textracted file type: " + this->command_line_arguments["extracted-file-type"] + "\n";
     if (this->verbose_output) { arguments += "\tverbose: True\n"; } else { arguments += "\tverbose: False\n"; }   
     arguments += "\tstep: " + this->command_line_arguments["step"] + "\n";
     arguments += "\tframe: " + this->command_line_arguments["frame"] + "\n";
@@ -233,15 +233,15 @@ string CmdLineArguments::verboseArguments () {
 string CmdLineArguments::helpMessage () {
     string help_message;
 
-    help_message += "usage: " + this->command_name + " [-h] [-v] [-o output_file_name.h5] [-t h5] [--step all] [--frame 0] [--frame-value frame_value] [--field field_name] [--history all] [--history-region all] [--instance instance_name] odb_file.odb\n\n";
+    help_message += "usage: " + this->command_name + " [-h] [-v] [-o extracted_file_name.h5] [-t h5] [--step all] [--frame 0] [--frame-value frame_value] [--field field_name] [--history all] [--history-region all] [--instance instance_name] odb_file.odb\n\n";
     help_message += "Extract data from an Abaqus odb file and store it in an hdf5 file\n";
     help_message += "\npositional arguments:\n\todb_file.odb\tAbaqus odb file\n";
     help_message += "\noptional arguments:\n";
     help_message += "\t-h,\t--help\tshow this help message and exit\n";
     help_message += "\t-v,\t--verbose\tturn on verbose logging\n";
-    help_message += "\t-o,\t--output-file\tname of output file (default: <odb file name>.h5)\n";
-    help_message += "\t-t,\t--output-file-type\ttype of file to store output (default: h5)\n";
-    help_message += "\t-f,\t--force-overwrite\tif output file already exists, then over write the file\n";
+    help_message += "\t-e,\t--extracted-file\tname of extracted file (default: <odb file name>.h5)\n";
+    help_message += "\t-t,\t--extracted-file-type\ttype of file to store extracted output (default: h5)\n";
+    help_message += "\t-f,\t--force-overwrite\tif extracted file already exists, then over write the file\n";
     help_message += "\t--step\tget information from specified step (default: all)\n";
     help_message += "\t--frame\tget information from specified frame (default: all)\n";
     help_message += "\t--frame-value\tget information from specified frame (default: all)\n";
