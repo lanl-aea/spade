@@ -2,12 +2,13 @@
 
 # Prereqs and conflicts
 conflict aea-release
+conflict aea-quarterly
 conflict aea-beta
 conflict waves-env
 
 # Set AEA standard software version and environment names
-set anaconda_version "2021.11"
-set python_version "3.9"
+set anaconda_version "2023.03"
+set python_version "3.10"
 set environment "spade-env"
 
 # Get current hostname
@@ -18,8 +19,8 @@ set projects ""
 set software_prefix ""
 set anaconda_path ""
 # HPC case
-if { [ string match "sn-rfe?.lanl.gov" $hostname ] ||
-     [ string match "sn???.localdomain" $hostname ] } {
+if { [ string match "ro-rfe?.lanl.gov" $hostname ] ||
+     [ string match "ro???.localdomain" $hostname ] } {
     set software_prefix "/usr/projects/hpcsoft/common/x86_64"
     set projects "/usr/projects/ea"
 
