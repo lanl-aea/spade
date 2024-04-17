@@ -10,4 +10,5 @@ spade/spade_cpp_*
 !recipe/
 !environment.yml
 !modulefiles/
+!pyproject.toml
 __pycache__/

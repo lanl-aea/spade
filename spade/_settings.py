@@ -3,7 +3,7 @@ import datetime
 
 # semi-private project meta variables for package internal use to avoid hard-coded duplication
 _project_name = "Serialized Proprietary Abaqus Data Extractor"
-_project_description = ""
+_project_description = "Tool for extracting data from an Abaqus output database (odb) file into a hierarchical data format (hdf5) file"
 _project_name_short = "spade"
 _project_name_cpp = "spade_cpp"
 _project_source = "src"
