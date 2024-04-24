@@ -7,7 +7,7 @@ workflow:
 stages:
   - environment
   - version
-#  - test
+  - test
   - build
   - deploy
 
