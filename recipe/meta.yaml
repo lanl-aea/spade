@@ -40,12 +40,12 @@ requirements:
     - sphinx_rtd_theme >=0.4.3
     - sphinxcontrib-bibtex
     - setuptools_scm[toml] >=6.2
-#    - compilers
     - {{ compiler('cxx') }}
     - hdf5
     - scons
     - waves
     - sysroot_linux-64 >=2.17
+    - ld_impl_linux-64 
   host:
     - python {{ python }}
     - numpy
@@ -54,18 +54,18 @@ requirements:
     - setuptools >=62
     - setuptools_scm[toml] >=6.2
     - sphinx
-#    - compilers
     - {{ compiler('cxx') }}
     - hdf5
     - scons
     - waves
     - sysroot_linux-64 >=2.17
+    - ld_impl_linux-64 
   run:
     - python
     - {{ pin_compatible('numpy') }}
     - scons
     - waves
-#    - compilers
     - {{ compiler('cxx') }}
     - hdf5
     - sysroot_linux-64 >=2.17
+    - ld_impl_linux-64 

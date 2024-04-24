@@ -9,3 +9,4 @@ dependencies:
   - hdf5
   - {{ compiler('cxx') }}
   - sysroot_linux-64 >=2.17
+  - ld_impl_linux-64 
