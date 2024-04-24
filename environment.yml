@@ -7,5 +7,5 @@ dependencies:
   - scons
   - waves
   - hdf5
-  - compilers
+  - {{ compiler('cxx') }}
   - sysroot_linux-64 >=2.17
