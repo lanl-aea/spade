@@ -40,7 +40,8 @@ requirements:
     - sphinx_rtd_theme >=0.4.3
     - sphinxcontrib-bibtex
     - setuptools_scm[toml] >=6.2
-    - compilers
+#    - compilers
+    - {{ compiler('cxx') }}
     - hdf5
     - scons
     - waves
@@ -53,7 +54,8 @@ requirements:
     - setuptools >=62
     - setuptools_scm[toml] >=6.2
     - sphinx
-    - compilers
+#    - compilers
+    - {{ compiler('cxx') }}
     - hdf5
     - scons
     - waves
@@ -63,6 +65,7 @@ requirements:
     - {{ pin_compatible('numpy') }}
     - scons
     - waves
-    - compilers
+#    - compilers
+    - {{ compiler('cxx') }}
     - hdf5
     - sysroot_linux-64 >=2.17
