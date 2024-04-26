@@ -50,7 +50,7 @@ abaqus_make_command = f"{env['abaqus']} make job={_settings._project_name_cpp}.c
 env.Command(
     target=[target_name],
     source=[f"{_settings._project_name_cpp}.cpp"] + objects,
-    action=[abaqus_make_command, Move(_settings._project_name_cpp, target_name), Delete(build_artifacts)]
+    action=[abaqus_make_command, Move(target_name, _settings._project_name_cpp), Delete(build_artifacts)]
 )
 
 # Write build abaqus environment file
