@@ -189,7 +189,7 @@ fast-test:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
     - project_root=${PWD}
-    - scons
-    - ./spade -h
+    - scons abaqus_version=2023 --directory=spade
+    - ./spade_2023 -h
   tags:
     - shell-aea
