@@ -74,7 +74,7 @@ def main():
                                    f"--directory={source_directory.resolve()}",
                                    posix=(os.name == 'posix'))
         sub_process = subprocess.Popen(scons_command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE, env=current_env)
+                                       stderr=subprocess.PIPE, env=current_env, cwd=f"{source_directory}")
         out, error_code = sub_process.communicate()
         if error_code:
             print(error_code.decode("utf-8"), file=sys.stderr)
