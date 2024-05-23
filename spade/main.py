@@ -4,6 +4,7 @@ import sys
 import shlex
 import subprocess
 import pathlib
+import platform
 
 from spade import _settings
 from spade import __version__
@@ -66,11 +67,12 @@ def main():
     abaqus_prefix = abaqus_prefix / args.abaqus_version
     abaqus_path = abaqus_prefix / _settings._abaqus_suffix
     source_directory = pathlib.Path(__file__).parent
-    spade_version = source_directory / f"{_settings._project_name_short}_{args.abaqus_version}"
+    platform_string = "_".join(f"{platform.system()} {platform.release()}".split())
+    spade_version = source_directory / f"{_settings._project_name_short}_{args.abaqus_version}_{platform_string}"
     current_env = os.environ.copy()
     if not spade_version.exists():
         # Compile necessary version
-        scons_command = shlex.split(f"scons abaqus_version={args.abaqus_version} "
+        scons_command = shlex.split(f"scons abaqus_version={args.abaqus_version} platform={platform_string} "
                                    f"--directory={source_directory.resolve()}",
                                    posix=(os.name == 'posix'))
         sub_process = subprocess.Popen(scons_command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,

@@ -21,6 +21,7 @@ gpp_include = gpp_path / "include"
 
 
 abaqus_version = ARGUMENTS.get('abaqus_version', _settings._default_abaqus_version)
+platform_string = ARGUMENTS.get("platform", "")
 abaqus_command_paths = [f"{_}{abaqus_version}" for _ in _settings._abaqus_command_paths]
 abaqus_paths = abaqus_command_paths
 env["abaqus"] = env.Detect(abaqus_paths)
@@ -45,7 +46,7 @@ build_artifacts.append(f"abaqus_v6.env")
 # Need to remove .o and abaqus_v6.env files so different versions don't get accidentally linked
 
 # Build executable with Abaqus make
-target_name = f"{_settings._project_name_short}_{abaqus_version}"
+target_name = f"{_settings._project_name_short}_{abaqus_version}_{platform_string}"
 abaqus_make_command = f"{env['abaqus']} make job={_settings._project_name_cpp}.cpp"
 env.Command(
     target=[target_name],
