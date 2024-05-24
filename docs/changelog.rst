@@ -8,6 +8,11 @@ Changelog
 v0.3.0 (unreleased)
 *******************
 
+Breaking changes
+================
+- Accept arbitrary abaqus command paths instead of a version with hardcoded prefix path assumptions (:issue:`8`,
+  :merge:`19`). By `Kyle Brindley`_.
+
 *******************
 v0.2.1 (2024-05-24)
 *******************
