@@ -116,7 +116,6 @@ def main() -> None:
         sys.exit(str(err))
 
 
-
 def get_parser():
     """Get parser object for command line options
 
