@@ -31,3 +31,8 @@ _link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5
 _default_abaqus_version = str(datetime.datetime.now().year - 1)
 
 _installed_docs_index = _project_root_abspath / "docs/index.html"
+
+# SCons extensions
+_cd_action_prefix = 'cd ${TARGET.dir.abspath} &&'
+_redirect_action_postfix = "> ${TARGETS[-1].abspath} 2>&1"
+_stdout_extension = ".stdout"
