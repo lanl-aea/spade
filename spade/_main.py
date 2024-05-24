@@ -20,8 +20,8 @@ def extract_wrapper(args):
     :raises RuntimeError: If any subprocess returns a non-zero exit code or an Abaqus ODB file is not provided.
     """
     # File name inputs
-    if args.odb_file:
-        full_command_line_arguments += f" {args.odb_file}"
+    if args.ODB_FILE:
+        full_command_line_arguments += f" {args.ODB_FILE}"
     else:
         raise RuntimeError("Abaqus output database (ODB) file not specified.")
     if args.extracted_file:
@@ -111,7 +111,6 @@ def extract_parser():
     # File inputs
     parser.add_argument(
         "ODB_FILE",
-        dest='odb_file',
         type=str,
         help='ODB file from which to extract data',
         metavar='ODB_FILE.odb'
