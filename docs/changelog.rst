@@ -17,6 +17,10 @@ Documentation
 =============
 - Add experimental, external API documentation (:issue:`16`, :merge:`16`). By `Kyle Brindley`_.
 
+Internal Changes
+================
+- Add SCons extensions unit tests (:issue:`22`, :merge:`18`). By `Kyle Brindley`_.
+
 *******************
 v0.2.0 (2024-05-24)
 *******************
