@@ -14,7 +14,7 @@ except PackageNotFoundError:
         import setuptools_scm
         __version__ = setuptools_scm.get_version(root=pathlib.Path(__file__).parent.parent)
         # Remove third-party packages from the project namespace
-        del pathlib, setuptools_scm
+        del pathlib, warnings, setuptools_scm
 
 # Remove third-party packages from the project namespace
-del warnings, version, PackageNotFoundError
+del version, PackageNotFoundError
