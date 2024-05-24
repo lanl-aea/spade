@@ -19,6 +19,7 @@ def extract_wrapper(args):
 
     :raises RuntimeError: If any subprocess returns a non-zero exit code or an Abaqus ODB file is not provided.
     """
+    full_command_line_arguments = ""
     # File name inputs
     if args.ODB_FILE:
         full_command_line_arguments += f" {args.ODB_FILE}"
@@ -150,7 +151,6 @@ def main() -> None:
     """This is the main function that performs actions based on command line arguments."""
     parser = get_parser()
     args = parser.parse_args()
-    full_command_line_arguments = ""
 
     try:
         if args.subcommand == "docs":
