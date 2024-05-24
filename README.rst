@@ -49,7 +49,7 @@ Documentation
 Author Info
 ===========
 
-* `Prabhu Khalsa`
+* `Prabhu Khalsa`_
 * `Kyle Brindley`_
 
 ***********
