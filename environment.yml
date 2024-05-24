@@ -3,6 +3,7 @@ channels:
 
 dependencies:
   - python
+  - boa
   - setuptools_scm[toml] >=6.2
   - scons
   - waves
