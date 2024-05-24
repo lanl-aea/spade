@@ -41,6 +41,7 @@ system_tests = [
     f"{spade_command} docs --help",
     f"{spade_command} extract --help",
     # Tutorials
+    # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/22
 ]
 # TODO: Move abaqus command to a search in SConstruct
 for odb_file in odb_files:

@@ -8,6 +8,11 @@ Changelog
 v0.2.1 (unreleased)
 *******************
 
+New Features
+============
+- Add experimental, untested scons extensions module. Unit tests pending :issue:`23`. System tests pending :issue:`22`
+  (:issue:`16`, :merge:`16`). By `Kyle Brindley`_.
+
 *******************
 v0.2.0 (2024-05-24)
 *******************
