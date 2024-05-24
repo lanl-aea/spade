@@ -19,6 +19,8 @@ Description
 
 .. _cli_subcommands:
 
+.. _docs_cli:
+
 *********************
 |PROJECT| Subcommands
 *********************
@@ -30,6 +32,8 @@ docs
    :ref: spade._main.get_parser
    :nodefault:
    :path: docs
+
+.. _extract_cli:
 
 *********************
 |PROJECT| Subcommands

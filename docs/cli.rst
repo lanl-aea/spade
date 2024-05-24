@@ -14,6 +14,8 @@ Command Line Utility
 Sub-commands
 ============
 
+.. _docs_cli:
+
 docs
 ----
 
@@ -21,6 +23,8 @@ docs
    :ref: spade._main.get_parser
    :nodefault:
    :path: docs
+
+.. _extract_cli:
 
 extract
 -------
