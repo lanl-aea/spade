@@ -131,15 +131,11 @@ deploy:
     # Override default permissions. Set group to rx with no write permissions.
     - umask 0022
     # Build alternate OS packages (assumes original built on linux-64)
-    - conda convert ${conda_artifacts_directory}/linux-64/${package_name}-*-*.tar.bz2 --platform osx-64 --output-dir ${conda_artifacts_directory}
-    - conda convert ${conda_artifacts_directory}/linux-64/${package_name}-*-*.tar.bz2 --platform win-64 --output-dir ${conda_artifacts_directory}
+    # TODO: Remove recipe hardcoded linux dependencies before building Windows package
     # Copy Conda package to AEA Conda Channel
     - cp ${conda_artifacts_directory}/linux-64/${package_name}-*-*.tar.bz2 ${aea_conda_channel}/linux-64
-    - cp ${conda_artifacts_directory}/osx-64/${package_name}-*-*.tar.bz2 ${aea_conda_channel}/osx-64
-    - cp ${conda_artifacts_directory}/win-64/${package_name}-*-*.tar.bz2 ${aea_conda_channel}/win-64
     # Change group for access by all W-13 staff and clean up permissions
     - chgrp w13users ${aea_conda_channel}/*-64/${package_name}-*-*.tar.bz2 || true
-    - chmod go+rx-w ${aea_conda_channel}/*-64/${package_name}-*-*.tar.bz2 || true
     - chmod go+rx-w ${aea_conda_channel}/*-64/${package_name}-*-*.tar.bz2 || true
     # Update the AEA Conda Channel index
     - conda index ${aea_conda_channel}
