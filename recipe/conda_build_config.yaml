@@ -1,0 +1,12 @@
+libstdcxx:  # [linux]
+  - 12      # [linux]
+  - 13      # [linux]
+python:
+  - 3.10
+  - 3.11
+numpy:
+  - 1.21
+  - 1.22
+zip_keys:
+  - python
+  - numpy

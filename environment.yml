@@ -3,9 +3,10 @@ channels:
 
 dependencies:
   - python
+  - boa
   - setuptools_scm[toml] >=6.2
   - scons
-  - waves
   - hdf5
-  - compilers
+  - cxx-compiler
   - sysroot_linux-64 >=2.17
+  - ld_impl_linux-64 
