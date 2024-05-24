@@ -11,7 +11,7 @@ try:
     __version__ = version("spade")
 except PackageNotFoundError:
     try:
-        from mcnp_abaqus_tools import _version
+        from spade import _version
         __version__ = _version.version
     except ImportError:
         # Should only hit this when running as an un-installed package in the local repository
