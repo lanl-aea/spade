@@ -86,7 +86,7 @@ def cli_builder(
     subcommand: str = "",
     required: str = "",
     options: str = "",
-    abaqus_command: typing.List[str] = _settings._default_abaqus_commands,
+    abaqus_commands: typing.List[str] = _settings._default_abaqus_commands,
 ) -> SCons.Builder.Builder:
     """Return a generic SPADE CLI builder.
 
@@ -111,7 +111,7 @@ def cli_builder(
     * ``subcommand``: A SPADE subcommand
     * ``required``: A space delimited string of subcommand required arguments
     * ``options``: A space delimited string of subcommand optional arguments
-    * ``abaqus_command``: The Abaqus command line executable absolute or relative path. When provided as a task
+    * ``abaqus_commands``: The Abaqus command line executable absolute or relative path. When provided as a task
       keyword argument, this must be a space delimited string, not a list.
     * ``cd_action_prefix``: Advanced behavior. Most users should accept the defaults.
     * ``redirect_action_postfix``: Advanced behavior. Most users should accept the defaults.
@@ -141,7 +141,7 @@ def cli_builder(
     :param subcommand: A SPADE subcommand
     :param required: A space delimited string of subcommand required arguments
     :param options: A space delimited string of subcommand optional arguments
-    :param abaqus_command: The Abaqus command line executable absolute or relative path options
+    :param abaqus_commands: The Abaqus command line executable absolute or relative path options
 
     :returns: SCons SPADE CLI builder
     """  # noqa: E501
@@ -167,7 +167,7 @@ def extract(
     subcommand: str = "extract",
     required: str = "${SOURCE.abspath} --extracted-file ${TARGET.abspath} --force-overwrite",
     options: str = "",
-    abaqus_command: typing.List[str] = _settings._default_abaqus_commands,
+    abaqus_commands: typing.List[str] = _settings._default_abaqus_commands,
 ) -> SCons.Builder.Builder:
     """Return a SPADE extract subcommand CLI builder.
 
@@ -192,7 +192,7 @@ def extract(
     * ``subcommand``: A SPADE subcommand
     * ``required``: A space delimited string of subcommand required arguments
     * ``options``: A space delimited string of subcommand optional arguments
-    * ``abaqus_command``: The Abaqus command line executable absolute or relative path. When provided as a task
+    * ``abaqus_commands``: The Abaqus command line executable absolute or relative path. When provided as a task
       keyword argument, this must be a space delimited string, not a list.
     * ``cd_action_prefix``: Advanced behavior. Most users should accept the defaults.
     * ``redirect_action_postfix``: Advanced behavior. Most users should accept the defaults.
