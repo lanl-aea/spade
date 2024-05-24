@@ -16,6 +16,8 @@ config.log
 conda-bld/
 build/
 *.cae
+*.odb
+*.log
 *.rpy*
 *.jnl
 ABQ*
