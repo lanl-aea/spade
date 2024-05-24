@@ -78,6 +78,8 @@ fast-test:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
+    - scons regression
+    # TODO: Wrap the package build/test commands in project tasks and regression alias
     - project_root=${PWD}
     - scons abaqus_version=2023 --directory=spade
     - ./spade/spade_2023_Linux -h
