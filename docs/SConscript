@@ -1,0 +1,174 @@
+#! /usr/bin/env python
+import re
+import typing
+import pathlib
+
+import SCons.Defaults
+import SCons.Builder
+
+
+Import(["env", "project_variables_substitution"])
+
+
+# VVV Sphinx Builder prototype
+# TODO: Use WAVES from conda-forge as a build-time (NOT runtime) dependency
+def sphinx_build(program="sphinx-build", options="", builder="html", tags=""):
+    sphinx_builder = Builder(
+        action=["${program} ${sphinx_options} -b ${builder} ${TARGET.dir.dir.abspath} ${TARGET.dir.abspath} ${tags}"],
+        program=program,
+        sphinx_options=options,
+        builder=builder,
+        tags=tags
+    )
+    return sphinx_builder
+
+
+def _custom_scanner(
+    pattern: str,
+    suffixes: typing.Iterable[str],
+    flags: typing.Optional[int] = None
+) -> SCons.Scanner.Scanner:
+    """Custom Scons scanner
+
+    constructs a scanner object based on a regular expression pattern. Will only search for files matching the list of
+    suffixes provided. ``_custom_scanner`` will always use the ``re.MULTILINE`` flag
+    https://docs.python.org/3/library/re.html#re.MULTILINE
+
+    :param pattern: Regular expression pattern.
+    :param suffixes: List of suffixes of files to search
+    :param flags: An integer representing the combination of re module flags to be used during compilation.
+        Additional flags can be combined using the bitwise OR (|) operator. The re.MULTILINE flag is automatically added
+        to the combination.
+
+    :return: Custom Scons scanner
+    """
+    flags = re.MULTILINE if not flags else re.MULTILINE | flags
+    expression = re.compile(pattern, flags)
+
+    def suffix_only(node_list: list) -> list:
+        """Recursively search for files that end in the given suffixes
+
+        :param node_list: List of SCons Node objects representing the nodes to process
+
+        :return: List of file dependencies to include for recursive scanning
+        """
+        return [node for node in node_list if node.path.endswith(tuple(suffixes))]
+
+    def regex_scan(node: SCons.Node.FS, env: SCons.Environment.Environment, path: str) -> list:
+        """Scan function for extracting dependencies from the content of a file based on the given regular expression.
+
+        The interface of the scan function is fixed by SCons. It must include ``node``, ``env`` and ``path``. It may
+        contain additional arguments if needed. For more information please read the SCons Scanner tutorial:
+        https://scons.org/doc/1.2.0/HTML/scons-user/c3755.html
+
+        :param node: SCons Node object representing the file to scan
+        :param SCons.Environment.Environment env: SCons Environment object
+        :param path: Path argument passed to the scan function
+
+        :return: List of file dependencies found during scanning
+        """
+        contents = node.get_text_contents()
+        includes = expression.findall(contents)
+        includes = [file.strip() for file in includes]
+        return includes
+
+    custom_scanner = SCons.Scanner.Scanner(function=regex_scan, skeys=suffixes, recursive=suffix_only)
+    return custom_scanner
+
+
+def sphinx_scanner() -> SCons.Scanner.Scanner:
+    """SCons scanner that searches for directives
+
+    * ``.. include::``
+    * ``.. literalinclude::``
+    * ``.. image::``
+    * ``.. figure::``
+    * ``.. bibliography::``
+
+    inside ``.rst`` and ``.txt`` files
+
+    :return: Abaqus input file dependency Scanner
+    :rtype: SCons.Scanner.Scanner
+    """
+    return _custom_scanner(r'^\s*\.\. (?:include|literalinclude|image|figure|bibliography)::\s*(.+)$', ['.rst', '.txt'])
+# ^^^ Sphinx Builder prototype
+
+
+env.Append(SCANNERS=sphinx_scanner())
+env.Append(BUILDERS={"SphinxBuild": sphinx_build(options="-W")})
+
+env.Substfile("conf.py.in", SUBST_DICT=project_variables_substitution)
+
+copy_files = (
+    ("README.txt", "#/README.rst"),
+    ("CITATION.bib", "#/CITATION.bib"),
+    ("LICENSE.txt", "#/LICENSE.txt"),
+)
+for target, source in copy_files:
+    Command(
+        target=target,
+        source=source,
+        action=Copy("$TARGET", "$SOURCE")
+    )
+
+# Things required for Sphinx configuration or missed by scanning *.rst and *.txt files
+sphinx_configuration_files = [
+    "conf.py",
+    "references.bib",  # Found in conf.py, which is not currently scanned
+    "targets.txt",  # Found in conf.py, which is not currently scanned
+    "spade_smaller.png",
+    "_static/custom.css",
+    "_static/favicon.ico"
+]
+
+sphinx_source_files = [
+    "README.rst",
+    "SConscript",
+    "changelog.rst",
+    "citation.rst",
+    "cli.rst",
+    "devops.rst",
+    "index.rst",
+    "installation.rst",
+    "internal_api.rst",
+    "license.rst",
+    "release_philosophy.rst",
+    "user.rst",
+    "zreferences.rst"
+]
+
+targets = [f"html/{pathlib.Path(source).with_suffix('.html')}" for source in sphinx_source_files if ".rst" in source]
+sources = sphinx_configuration_files + sphinx_source_files
+html = env.SphinxBuild(
+    target=targets,
+    source=sources,
+    builder="html"
+)
+env.Clean(html, [Dir("html")] + sources)
+env.Alias("html", html)
+
+targets = ["man/turbo-turtle.1"]
+sources = ["man_index.rst"] + sphinx_configuration_files
+man = env.SphinxBuild(
+    target=targets,
+    source=sources,
+    builder="man",
+    tags="-t man"
+)
+env.Clean(man, [Dir("man")] + sources)
+env.Alias("man", man)
+
+targets = f"latex/turbo-turtle-{env['version']}.pdf"
+sources = sphinx_configuration_files + sphinx_source_files
+latexpdf = env.Command(
+    target=targets,
+    source=sources,
+    action="${program} -M latexpdf ${TARGET.dir.dir.abspath} ${TARGET.dir.dir.abspath} ${tags} ${sphinx_options}",
+    program="sphinx-build",
+    sphinx_options="-W"
+)
+env.Clean(latexpdf, [Dir("latex")] + sources)
+env.Alias("latexpdf", latexpdf)
+
+env.Alias("documentation", html + man + latexpdf)
+env.Alias("regression", html + man + latexpdf)

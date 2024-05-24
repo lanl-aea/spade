@@ -1,0 +1,21 @@
+.. README anchors
+.. include:: README.txt
+    :start-after: target-start-do-not-remove
+    :end-before: target-end-do-not-remove
+
+.. Project references
+.. _`documentation`: https://re-git.lanl.gov/aea/python-projects/spade/index.html
+.. _`repository`: https://re-git.lanl.gov/aea/python-projects/spade
+.. _`issues`: https://re-git.lanl.gov/aea/python-projects/spade/-/issues
+
+.. External references
+.. _`PEP-440`: https://www.python.org/dev/peps/pep-0440/
+.. _`setuptools`: https://setuptools.pypa.io/en/latest/
+.. _`setuptools_scm`: https://pypi.org/project/setuptools-scm/
+.. _`semantic versioning`: https://semver.org/
+.. _`SCons`: https://scons.org/
+.. _`Python packages`: https://docs.python.org/3/tutorial/modules.html#packages>
+.. _`Conda package structure`: https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/packages.html#package-structure
+.. _`Gitlab Flow`: https://about.gitlab.com/topics/version-control/what-is-gitlab-flow/
+.. _`Using plug-ins section of the Abaqus/CAE User's Guide`: https://help.3ds.com/2023/english/dssimulia_established/simacaecaerefmap/simacae-c-plgregisterstored.htm?contextscope=all&highlight=using+plugins&id=9fcb7bcc65db4b8d93760006eede175e&analyticsContext=search-result&analyticsSearch=using%20plugins&myapp=false
+.. _`Abaqus Environment Documentation`: https://help.3ds.com/2023/english/dssimulia_established/simacaeilgrefmap/simailg-m-envusing-sb.htm?contextscope=all&highlight=abaqus_v6.env&id=18a97d67637947f9af33ac74513c8801&analyticsContext=search-result&analyticsSearch=abaqus_v6.env&myapp=false
