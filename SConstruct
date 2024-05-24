@@ -34,6 +34,7 @@ env = Environment(
 )
 for key, value in project_variables.items():
     env[key] = value
+env["abaqus"] = waves.scons_extensions.add_program(["/apps/abaqus/Commands/abq2023", "abq2023"], env)
 
 variant_dir_base = pathlib.Path(env["variant_dir_base"])
 build_dir = variant_dir_base / "docs"

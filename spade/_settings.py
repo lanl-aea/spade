@@ -10,13 +10,11 @@ _project_name_short = "spade"
 _project_name_cpp = "spade_cpp"
 _project_source = "src"
 _abaqus_environment_file = "abaqus_v6.env"
-_abaqus_prefix = [pathlib.Path("/apps"), pathlib.Path("/usr/projects/ea")]
 _additional_abaqus_prefix = "SIMULIA/EstProducts/"
 _abaqus_suffix = "linux_a64/code/bin/"
-_abaqus_command_paths = [
-    "/apps/abaqus/Commands/abq",
-    "/usr/projects/ea/DassaultSystemes/SIMULIA/Commands/abq",
-    "abq"
+_default_abaqus_commands = [
+    "abaqus",
+    "abq2023"
 ]
 _compiler_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE " \
             "-DABQ_LINUX -DABQ_LNX86_64 -DSMA_GNUC -DFOR_TRAIL -DHAS_BOOL " \
