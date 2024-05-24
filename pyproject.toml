@@ -39,8 +39,4 @@ repository = "https://re-git.lanl.gov/aea/python-projects/spade"
 write_to = "spade/_version.py"
 
 [tool.pytest.ini_options]
-markers = [
-    "unittest: marks codebase unit tests",
-    "integrationtest: marks integration tests",
-]
 addopts = "-v --capture=sys --tb=long --showlocals --failed-first --strict-markers -r a"
