@@ -11,21 +11,12 @@ import argparse
 import SCons.Builder
 
 from spade import _settings
+from spade import _utilities
 
 
 _exclude_from_namespace = set(globals().keys())
 
 
-# Ripped from Turbo-Turtle. Probably worth keeping a project specific version.
-def character_delimited_list(sequence: typing.Iterable, character: str = " ") -> str:
-    """Map a list of non-strings to a character delimited string
-
-    :param sequence: Sequence to turn into a character delimited string
-    :param character: Character(s) to use when joining sequence elements
-
-    :returns: string delimited by specified character
-    """
-    return character.join(map(str, sequence))
 
 
 # TODO: Decide if SPADE should be downstream or upstream of WAVES. If downstream, it's ok to add WAVES as a run time
@@ -157,7 +148,7 @@ def cli_builder(
         subcommand=subcommand,
         required=required,
         options=options,
-        abaqus_commands=character_delimited_list(abaqus_commands)
+        abaqus_commands=_utilities.character_delimited_list(abaqus_commands)
     )
     return builder
 

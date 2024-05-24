@@ -54,3 +54,15 @@ def return_abaqus_code_paths(abaqus_program, code_directory="code"):
         abaqus_code_include = abaqus_code_path / "include"
 
     return abaqus_installation, abaqus_code_bin, abaqus_code_include
+
+
+# Ripped from Turbo-Turtle. Probably worth keeping a project specific version.
+def character_delimited_list(sequence: typing.Iterable, character: str = " ") -> str:
+    """Map a list of non-strings to a character delimited string
+
+    :param sequence: Sequence to turn into a character delimited string
+    :param character: Character(s) to use when joining sequence elements
+
+    :returns: string delimited by specified character
+    """
+    return character.join(map(str, sequence))
