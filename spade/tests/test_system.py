@@ -47,7 +47,7 @@ system_tests = [
 for odb_file in odb_files:
     system_tests.append(
         [f"/apps/abaqus/Commands/abq2023 fetch -job {odb_file}",
-         f"{spade_command} extract --abaqus-commands /apps/abaqus/Commands/abq2023 abq2023 {odb_file}"]
+         f"{spade_command} extract {odb_file} --abaqus-commands /apps/abaqus/Commands/abq2023 abq2023"]
     )
 if installed:
     system_tests.append(
