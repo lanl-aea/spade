@@ -18,6 +18,7 @@ before_script:
   - aea_conda_channel="${aea_compute_path}/aea-conda"
   - aea_modulefiles="${aea_compute_path}/modulefiles"
   - module use ${aea_modulefiles}
+  - module load texlive
   # Start with an AEA environment to put Conda on PATH
   - project_environment='spade-env'
   - environment_choices="aea-beta aea-quarterly aea-release"
