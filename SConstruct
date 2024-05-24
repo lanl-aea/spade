@@ -34,7 +34,15 @@ env = Environment(
 )
 for key, value in project_variables.items():
     env[key] = value
-env["abaqus"] = waves.scons_extensions.add_program(["/apps/abaqus/Commands/abq2023", "abq2023"], env)
+
+# Hardcoded from WAVES find_program/add_program
+conf = env.Configure()
+abaqus_paths = ["/apps/abaqus/Commands/abq2023", "abq2023"]
+program_paths = [conf.CheckProg(name) for name in abaqus_paths]
+conf.Finish()
+first_found_path = next((path for path in program_paths if path is not None), None)
+if first_found_path:
+    env.AppendENVPath("PATH", first_found_path, delete_existing=False)
 
 variant_dir_base = pathlib.Path(env["variant_dir_base"])
 build_dir = variant_dir_base / "docs"
