@@ -49,4 +49,5 @@ changelog = "https://aea.re-pages.lanl.gov/python-projects/spade/changelog.html"
 write_to = "spade/_version.py"
 
 [tool.pytest.ini_options]
-addopts = "-v --capture=sys --tb=long --showlocals --failed-first --strict-markers -r a"
+markers = ["systemtest"]
+addopts = "--tb=long --showlocals --failed-first --strict-markers"

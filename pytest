@@ -1,0 +1,46 @@
+#! /usr/bin/env python
+
+import pathlib
+
+# Inherit the parent construction environment
+Import("env")
+
+# Limit list of source files to allow Conda build-test to test off the installed package
+pytest_source_list = [
+    "pyproject.toml",
+]
+
+pytest_command = "PYTHONDONTWRITEBYTECODE=1 pytest --junitxml=${TARGET.abspath}"
+coverage_command = "coverage xml -o ${TARGETS[1].abspath}"
+target = ["test_results.xml", "coverage.xml"]
+
+targets = env.Command(
+    target=target,
+    source=pytest_source_list,
+    action=[
+        "${pytest_command} -vvv -n 4 -m 'not systemtest' --cov",
+        "${coverage_command}"
+    ],
+    pytest_command=pytest_command,
+    coverage_command=coverage_command
+)
+env.Alias("pytest", targets)
+env.Alias("unittests", targets)
+env.Alias("regression", targets)
+# Always run pytests in place of a complete source list
+env.AlwaysBuild(targets)
+
+target = ["systemtest_results.xml"]
+source = pytest_source_list + [str(pathlib.Path("turbo_turtle/tests/test_systemtest.py"))]
+targets = env.Command(
+    target=target,
+    source=source,
+    action=[
+        "${pytest_command} -v --no-showlocals -n 4 -m systemtest --tb=short --cache-clear"
+    ],
+    pytest_command=pytest_command
+)
+env.Alias("systemtest", targets)
+env.Alias("regression", targets)
+# Always run pytests in place of a complete source list
+env.AlwaysBuild(targets)
