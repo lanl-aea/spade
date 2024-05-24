@@ -15,6 +15,7 @@ __pycache__/
 config.log
 conda-bld/
 build/
+*.png
 *.cae
 *.odb
 *.log
