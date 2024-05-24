@@ -8,6 +8,10 @@ dependencies:
   - flake8
   - hdf5
   - ld_impl_linux-64
+  - pip
+  - pytest
+  - pytest-cov
+  - pytest-xdist
   - scons >=4
   - setuptools >=62
   - setuptools_scm[toml] >=6.2,<8

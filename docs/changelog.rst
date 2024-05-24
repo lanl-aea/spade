@@ -16,6 +16,10 @@ Bug fixes
 =========
 - Fix entry point for CLI (:issue:`14`, :merge:`10`). By `Kyle Brindley`_.
 
+Internal Changes
+================
+- Add pytest packages to CI environment. By `Kyle Brindley`_.
+
 *******************
 v0.1.0 (2024-05-24)
 *******************
