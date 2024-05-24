@@ -41,7 +41,8 @@ def find_command(options: typing.Iterable[str]) -> str:
     """
     command_abspath = search_commands(options)
     if command_abspath is None:
-        raise RuntimeError(f"Could not find any executable on PATH in: {_utilities.character_delimited_string(options)}")
+        raise RuntimeError("Could not find any executable on PATH in: "
+                           f"{_utilities.character_delimited_string(options)}")
     return command_abspath
 
 
@@ -186,8 +187,13 @@ def get_parser() -> argparse.ArgumentParser:
                         help='Get information from the specified history region (default: %(default)s)')
     parser.add_argument('--instance', type=str, default="all",
                         help='Get information from the specified instance (default: %(default)s)')
-    parser.add_argument('-a', '--abaqus-commands', nargs="+", type=pathlib.Path, default=_settings._default_abaqus_commands,
-                        help='Ordered list of Abaqus executable paths. Use first found (default: %(default)s)')
+    parser.add_argument(
+        '-a', '--abaqus-commands',
+        nargs="+",
+        type=pathlib.Path,
+        default=_settings._default_abaqus_commands,
+        help='Ordered list of Abaqus executable paths. Use first found (default: %(default)s)'
+    )
 
     # True or false inputs
     parser.add_argument('-v', '--verbose', action='store_true', default=False,

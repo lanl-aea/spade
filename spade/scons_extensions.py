@@ -17,8 +17,6 @@ from spade import _utilities
 _exclude_from_namespace = set(globals().keys())
 
 
-
-
 # TODO: Decide if SPADE should be downstream or upstream of WAVES. If downstream, it's ok to add WAVES as a run time
 # dependence and use the WAVES function
 def _first_target_emitter(
