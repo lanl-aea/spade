@@ -11,3 +11,15 @@ spade/spade_cpp_*
 !modulefiles/
 !pyproject.toml
 __pycache__/
+.sconsign.dblite
+config.log
+conda-bld/
+build/
+*.cae
+*.rpy*
+*.jnl
+ABQ*
+*.zip
+*.pyc
+*pycache*/
+*.jou
