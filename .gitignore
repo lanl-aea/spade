@@ -27,3 +27,4 @@ ABQ*
 *pycache*/
 *.jou
 .coverage
+spade/spade_????_*
