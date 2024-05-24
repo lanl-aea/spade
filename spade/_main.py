@@ -10,11 +10,8 @@ from spade import _settings
 from spade import __version__
 
 
-def main():
-    """This is the main function that performs actions based on command line arguments.
-
-    :returns: return code
-    """
+def main() -> None:
+    """This is the main function that performs actions based on command line arguments."""
     parser = get_parser()
     args, unknown = parser.parse_known_args()
     full_command_line_arguments = ""
@@ -23,8 +20,7 @@ def main():
     if args.odb_file:
         full_command_line_arguments += f" {args.odb_file}"
     else:
-        print("Abaqus output database (odb) file not specified.", file=sys.stderr)
-        return 1
+        sys.exit("Abaqus output database (odb) file not specified.")
     if args.extracted_file:
         full_command_line_arguments += f" --extracted-file {args.extracted_file}"
     if args.log_file:
@@ -80,7 +76,7 @@ def main():
         out, error_code = sub_process.communicate()
         if error_code:
             print(error_code.decode("utf-8"), file=sys.stderr)
-            print("Could not compile with specified Abaqus version")
+            print("Could not compile with specified Abaqus version", file=sys.stderr)
             sys.exit(sub_process.returncode)
     full_command_line_arguments = str(spade_version) + full_command_line_arguments
 
@@ -97,11 +93,7 @@ def main():
     if error_code:
         print(error_code.decode("utf-8"), file=sys.stderr)
     return_code = sub_process.returncode
-
-    if return_code:
-        return return_code
-    else:
-        return 0
+    sys.exit(return_code)
 
 
 def get_parser():
@@ -156,4 +148,4 @@ def get_parser():
 
 
 if __name__ == "__main__":
-    sys.exit(main())  # pragma: no cover
+    main()  # pragma: no cover
