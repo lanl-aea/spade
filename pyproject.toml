@@ -26,7 +26,7 @@ dependencies = [
     "compilers",
     "hdf5",
     "numpy",
-    "scons"
+    "scons",
     "sysroot_linux-64 >=2.17",
 ]
 
