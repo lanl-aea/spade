@@ -11,23 +11,18 @@ from spade import __version__
 from spade import _docs
 
 
-def main() -> None:
-    """This is the main function that performs actions based on command line arguments."""
-    parser = get_parser()
-    args, unknown = parser.parse_known_args()
-    full_command_line_arguments = ""
+def extract_wrapper(args):
+    """Main parser behavior when no subcommand is specified
 
-    try:
-        if args.subcommand == "docs":
-            _docs.main(print_local_path=args.print_local_path)
-    except RuntimeError as err:
-        sys.exit(str(err))
+    :param args: argument namespace
 
+    :raises RuntimeError: If any subprocess returns a non-zero exit code or an Abaqus ODB file is not provided.
+    """
     # File name inputs
     if args.odb_file:
         full_command_line_arguments += f" {args.odb_file}"
     else:
-        sys.exit("Abaqus output database (odb) file not specified.")
+        raise RuntimeError("Abaqus output database (odb) file not specified.")
     if args.extracted_file:
         full_command_line_arguments += f" --extracted-file {args.extracted_file}"
     if args.log_file:
@@ -83,8 +78,7 @@ def main() -> None:
         out, error_code = sub_process.communicate()
         if error_code:
             print(error_code.decode("utf-8"), file=sys.stderr)
-            print("Could not compile with specified Abaqus version", file=sys.stderr)
-            sys.exit(sub_process.returncode)
+            raise RuntimeError("Could not compile with specified Abaqus version")
     full_command_line_arguments = str(spade_version) + full_command_line_arguments
 
     try:
@@ -100,7 +94,26 @@ def main() -> None:
     if error_code:
         print(error_code.decode("utf-8"), file=sys.stderr)
     return_code = sub_process.returncode
-    sys.exit(return_code)
+
+    # TODO: Sort out which error message return value should be put in the message
+    if return_code != 0:
+        raise RuntimeError(return_code)
+
+
+def main() -> None:
+    """This is the main function that performs actions based on command line arguments."""
+    parser = get_parser()
+    args, unknown = parser.parse_known_args()
+    full_command_line_arguments = ""
+
+    try:
+        if args.subcommand == "docs":
+            _docs.main(print_local_path=args.print_local_path)
+        else:
+            extract_wrapper(args)
+    except RuntimeError as err:
+        sys.exit(str(err))
+
 
 
 def get_parser():
