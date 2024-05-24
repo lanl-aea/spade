@@ -14,6 +14,7 @@
 
    installation
    user
+   external_api
    cli
 
 .. raw:: latex
