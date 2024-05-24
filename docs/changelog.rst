@@ -5,6 +5,18 @@ Changelog
 #########
 
 *******************
+v0.1.1 (unreleased)
+*******************
+
+New Features
+============
+- Bundle HTML and man page documentation with package (:issue:`14`, :merge:`10`). By `Kyle Brindley`_.
+
+Bug fixes
+=========
+- Fix entry point for CLI (:issue:`14`, :merge:`10`). By `Kyle Brindley`_.
+
+*******************
 v0.1.0 (2024-05-24)
 *******************
 
