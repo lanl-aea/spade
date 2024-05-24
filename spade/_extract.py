@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import shlex
 import shutil
@@ -61,8 +62,8 @@ def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
 
     # TODO: Figure out what exceptions are likely to raise and convert to RuntimeError
     official_version_regex = r"(?i)official\s+version:\s+abaqus\s+\b(20)\d{2}\b"
-    official_version_match = re.search(license_year_regex, abaqus_version_check)
-    official_version = int(license_year_match[0].split(' ')[-1])
+    official_version_match = re.search(official_version_regex, abaqus_version_check)
+    official_version = int(official_version_match[0].split(' ')[-1])
 
     return official_version
 
@@ -116,11 +117,11 @@ def main(args: argparse.ArgumentParser) -> None:
     abaqus_version = abaqus_official_version(abaqus_command)
     source_directory = pathlib.Path(__file__).parent
     platform_string = "_".join(f"{platform.system()} {platform.release()}".split())
-    spade_version = source_directory / f"{_settings._project_name_short}_{args.abaqus_version}_{platform_string}"
+    spade_version = source_directory / f"{_settings._project_name_short}_{abaqus_version}_{platform_string}"
     current_env = os.environ.copy()
     if not spade_version.exists():
         # Compile necessary version
-        scons_command = shlex.split(f"scons abaqus_version={args.abaqus_version} platform={platform_string} "
+        scons_command = shlex.split(f"scons abaqus_version={abaqus_version} platform={platform_string} "
                                    f"--directory={source_directory.resolve()}",
                                    posix=(os.name == 'posix'))
         sub_process = subprocess.Popen(scons_command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
@@ -183,7 +184,7 @@ def get_parser() -> argparse.ArgumentParser:
                         help='Get information from the specified history region (default: %(default)s)')
     parser.add_argument('--instance', type=str, default="all",
                         help='Get information from the specified instance (default: %(default)s)')
-    parser.add_argument('-a', '--abaqus-commands', type=pathlib.Path, default=_settings._default_abaqus_commands,
+    parser.add_argument('-a', '--abaqus-commands', nargs="+", type=pathlib.Path, default=_settings._default_abaqus_commands,
                         help='Ordered list of Abaqus executable paths. Use first found (default: %(default)s)')
 
     # True or false inputs
