@@ -23,7 +23,7 @@ def extract_wrapper(args):
     if args.odb_file:
         full_command_line_arguments += f" {args.odb_file}"
     else:
-        raise RuntimeError("Abaqus output database (odb) file not specified.")
+        raise RuntimeError("Abaqus output database (ODB) file not specified.")
     if args.extracted_file:
         full_command_line_arguments += f" --extracted-file {args.extracted_file}"
     if args.log_file:
@@ -101,6 +101,52 @@ def extract_wrapper(args):
         raise RuntimeError(return_code)
 
 
+def extract_parser():
+    """Return a 'no-help' parser for the extract subcommand
+
+    :return: parser
+    """
+    parser = argparse.ArgumentParser(add_help=False)
+
+    # File inputs
+    parser.add_argument(
+        "ODB_FILE",
+        dest='odb_file',
+        type=str,
+        help='ODB file from which to extract data',
+        metavar='ODB_FILE.odb'
+    )
+    parser.add_argument('-e', '--extracted-file', type=str,
+                             help='Name of extracted file. (default: <ODB file name>.h5)')
+    parser.add_argument('-l', '--log-file', type=str,
+                             help=f'Name of log file. (default: <ODB file name>.{_settings._project_name_short}.h5)')
+
+    parser.add_argument('--frame', type=str, default="all",
+                             help='Get information from the specified frame (default: %(default)s)')
+    parser.add_argument('--frame-value', type=str, default="all",
+                             help='Get information from the specified frame value (default: %(default)s)')
+    parser.add_argument('--step', type=str, default="all",
+                             help='Get information from the specified step (default: %(default)s)')
+    parser.add_argument('--field', type=str, default="all",
+                             help='Get information from the specified field (default: %(default)s)')
+    parser.add_argument('--history', type=str, default="all",
+                             help='Get information from the specified history value (default: %(default)s)')
+    parser.add_argument('--history-region', type=str, default="all",
+                             help='Get information from the specified history region (default: %(default)s)')
+    parser.add_argument('--instance', type=str, default="all",
+                             help='Get information from the specified instance (default: %(default)s)')
+    parser.add_argument('-a', '--abaqus-version', type=str, default=_settings._default_abaqus_version,
+                             help='Get information from the specified instance (default: %(default)s)')
+
+    # True or false inputs
+    parser.add_argument('-v', '--verbose', action='store_true', default=False,
+                             help='Turn on verbose logging')
+    parser.add_argument('-f', '--force-overwrite', action='store_true', default=False,
+                             help='Force the overwrite of the hdf5 file if it already exists')
+    parser.add_argument('-d', '--debug', action='store_true', default=False, help=argparse.SUPPRESS)
+    return parser
+
+
 def main() -> None:
     """This is the main function that performs actions based on command line arguments."""
     parser = get_parser()
@@ -122,60 +168,34 @@ def get_parser():
     :return: parser
     :rtype: ArgumentParser
     """
-    main_parser = argparse.ArgumentParser(description=_settings._project_description,
-                                          prog=f"{_settings._project_name_short}")
+    main_parser = argparse.ArgumentParser(
+        description=_settings._project_description,
+        prog=f"{_settings._project_name_short}"
+    )
 
-    main_parser.add_argument('-v', '--version', action='version',
-                             version=f'{_settings._project_name_short} {__version__}')
-
-    # File inputs
-    main_parser.add_argument(nargs='?', dest='odb_file', type=str,
-                    help='odb file from which to extract data',
-                    metavar='ODB_FILE.odb')
-    main_parser.add_argument('-e', '--extracted-file', type=str,
-                             help='Name of extracted file. (default: <odb file name>.h5)')
-    main_parser.add_argument('-l', '--log-file', type=str,
-                             help=f'Name of log file. (default: <odb file name>.{_settings._project_name_short}.h5)')
-
-    # String inputs
-    # main_parser.add_argument('-t', '--extracted-file-type', type=str, default="hdf5",
-                            #  help='Type of file for storing extracted output (default: %(default)s)')
-    main_parser.add_argument('--frame', type=str, default="all",
-                             help='Get information from the specified frame (default: %(default)s)')
-    main_parser.add_argument('--frame-value', type=str, default="all",
-                             help='Get information from the specified frame value (default: %(default)s)')
-    main_parser.add_argument('--step', type=str, default="all",
-                             help='Get information from the specified step (default: %(default)s)')
-    main_parser.add_argument('--field', type=str, default="all",
-                             help='Get information from the specified field (default: %(default)s)')
-    main_parser.add_argument('--history', type=str, default="all",
-                             help='Get information from the specified history value (default: %(default)s)')
-    main_parser.add_argument('--history-region', type=str, default="all",
-                             help='Get information from the specified history region (default: %(default)s)')
-    main_parser.add_argument('--instance', type=str, default="all",
-                             help='Get information from the specified instance (default: %(default)s)')
-    main_parser.add_argument('-a', '--abaqus-version', type=str, default=_settings._default_abaqus_version,
-                             help='Get information from the specified instance (default: %(default)s)')
-
-    # True or false inputs
-    main_parser.add_argument('-V', '--verbose', action='store_true', default=False,
-                             help='Turn on verbose logging')
-    main_parser.add_argument('-f', '--force-overwrite', action='store_true', default=False,
-                             help='Force the overwrite of the hdf5 file if it already exists')
-    main_parser.add_argument('-d', '--debug', action='store_true', default=False, help=argparse.SUPPRESS)
+    main_parser.add_argument(
+        '-V', '--version',
+        action='version',
+        version=f'{_settings._project_name_short} {__version__}'
+    )
 
     subparsers = main_parser.add_subparsers(
-        # So args.subcommand will contain the name of the subcommand called
         title="subcommands",
         metavar="{subcommand}",
         dest="subcommand")
 
     subparsers.add_parser(
         "docs",
-         help=f"Open the {_settings._project_name_short.upper()} HTML documentation",
-         description=f"Open the packaged {_settings._project_name_short.upper()} HTML documentation in the  " \
-                      "system default web browser",
+        help=f"Open the {_settings._project_name_short.upper()} HTML documentation",
+        description=f"Open the packaged {_settings._project_name_short.upper()} HTML documentation in the  " \
+                     "system default web browser",
         parents=[_docs.get_parser()]
+    )
+
+    subparsers.add_parser(
+        "extract",
+        help="Extract ODB file to H5",
+        parents=[extract_parser()]
     )
 
     return main_parser
