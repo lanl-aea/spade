@@ -5,8 +5,12 @@ Changelog
 #########
 
 *******************
-v0.1.1 (unreleased)
+v0.2.0 (unreleased)
 *******************
+
+Breaking changes
+================
+- Separate subcommand to drive data extraction (:issue:`17`, :merge:`15`). By `Kyle Brindley`_.
 
 New Features
 ============
@@ -19,6 +23,8 @@ Bug fixes
 Internal Changes
 ================
 - Add pytest packages to CI environment. By `Kyle Brindley`_.
+- Add pytests for unit and system tests. Drive test suite exclusively with pytest. Add a real data extract system test
+  (:issue:`17`, :merge:`15`). By `Kyle Brindley`_.
 
 *******************
 v0.1.0 (2024-05-24)
