@@ -190,6 +190,6 @@ fast-test:
   script:
     - project_root=${PWD}
     - scons abaqus_version=2023 --directory=spade
-    - ./spade_2023 -h
+    - ./spade_2023_Linux -h
   tags:
     - shell-aea

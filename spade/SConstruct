@@ -21,7 +21,7 @@ gpp_include = gpp_path / "include"
 
 
 abaqus_version = ARGUMENTS.get('abaqus_version', _settings._default_abaqus_version)
-platform_string = ARGUMENTS.get("platform", "")
+platform_string = ARGUMENTS.get("platform", "Linux")
 abaqus_command_paths = [f"{_}{abaqus_version}" for _ in _settings._abaqus_command_paths]
 abaqus_paths = abaqus_command_paths
 env["abaqus"] = env.Detect(abaqus_paths)
