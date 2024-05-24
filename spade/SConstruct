@@ -18,11 +18,10 @@ gpp_lib = gpp_path / "lib"
 gpp_include = gpp_path / "include"
 
 
-abaqus_version = ARGUMENTS.get('abaqus_version', _settings._default_abaqus_version)
+abaqus_path = ARGUMENTS.get("abaqus_command")
+abaqus_version = ARGUMENTS.get('abaqus_version')
 platform_string = ARGUMENTS.get("platform", "Linux")
-abaqus_command_paths = [f"{_}{abaqus_version}" for _ in _settings._abaqus_command_paths]
-abaqus_paths = abaqus_command_paths
-env["abaqus"] = env.Detect(abaqus_paths)
+env["abaqus"] = env.Detect(abaqus_path)
 abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_abaqus_code_paths(env["abaqus"])
 
 odb_flags = _settings._compiler_flags + f"-I{abaqus_code_include} -I{abaqus_installation} " + \

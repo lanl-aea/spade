@@ -46,7 +46,8 @@ system_tests = [
 # TODO: Move abaqus command to a search in SConstruct
 for odb_file in odb_files:
     system_tests.append(
-        [f"/apps/abaqus/Commands/abq2023 fetch -job {odb_file}", f"{spade_command} extract --abaqus-version 2023 {odb_file}"]
+        [f"/apps/abaqus/Commands/abq2023 fetch -job {odb_file}",
+         f"{spade_command} extract --abaqus-commands /apps/abaqus/Commands/abq2023 abq2023 {odb_file}"]
     )
 if installed:
     system_tests.append(

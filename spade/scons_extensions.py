@@ -16,6 +16,18 @@ from spade import _settings
 _exclude_from_namespace = set(globals().keys())
 
 
+# Ripped from Turbo-Turtle. Probably worth keeping a project specific version.
+def character_delimited_list(sequence: typing.Iterable, character: str = " ") -> str:
+    """Map a list of non-strings to a character delimited string
+
+    :param sequence: Sequence to turn into a character delimited string
+    :param character: Character(s) to use when joining sequence elements
+
+    :returns: string delimited by specified character
+    """
+    return character.join(map(str, sequence))
+
+
 # TODO: Decide if SPADE should be downstream or upstream of WAVES. If downstream, it's ok to add WAVES as a run time
 # dependence and use the WAVES function
 def _first_target_emitter(
@@ -74,7 +86,7 @@ def cli_builder(
     subcommand: str = "",
     required: str = "",
     options: str = "",
-    abaqus_version: str = _settings._default_abaqus_version,
+    abaqus_command: typing.List[str] = _default_abaqus_commands,
 ) -> SCons.Builder.Builder:
     """Return a generic SPADE CLI builder.
 
@@ -99,14 +111,15 @@ def cli_builder(
     * ``subcommand``: A SPADE subcommand
     * ``required``: A space delimited string of subcommand required arguments
     * ``options``: A space delimited string of subcommand optional arguments
-    * ``abaqus_version``: The Abaqus version year, e.g. 2023.
+    * ``abaqus_command``: The Abaqus command line executable absolute or relative path. When provided as a task
+      keyword argument, this must be a space delimited string, not a list.
     * ``cd_action_prefix``: Advanced behavior. Most users should accept the defaults.
     * ``redirect_action_postfix``: Advanced behavior. Most users should accept the defaults.
 
     .. code-block::
        :caption: action string construction
 
-       ${cd_action_prefix} ${program} ${subcommand} ${required} ${options} --abaqus-version ${abaqus_version} ${redirect_action_postfix}
+       ${cd_action_prefix} ${program} ${subcommand} ${required} ${options} --abaqus-commands ${abaqus_commands} ${redirect_action_postfix}
 
     .. code-block::
        :caption: SConstruct
@@ -124,16 +137,16 @@ def cli_builder(
            source=["source.csv"],
        )
 
-    :param str program: The SPADE command line executable absolute or relative path
-    :param str subcommand: A SPADE subcommand
-    :param str required: A space delimited string of subcommand required arguments
-    :param str options: A space delimited string of subcommand optional arguments
-    :param list abaqus_version: The Abaqus command line executable absolute or relative path options
+    :param program: The SPADE command line executable absolute or relative path
+    :param subcommand: A SPADE subcommand
+    :param required: A space delimited string of subcommand required arguments
+    :param options: A space delimited string of subcommand optional arguments
+    :param abaqus_command: The Abaqus command line executable absolute or relative path options
 
     :returns: SCons SPADE CLI builder
     """  # noqa: E501
     action = ["${cd_action_prefix} ${program} ${subcommand} ${required} ${options} " \
-                  "--abaqus-version ${abaqus_version} " \
+                  "--abaqus-commands ${abaqus_commands} " \
                   "${redirect_action_postfix}"]
     builder = SCons.Builder.Builder(
         action=action,
@@ -144,7 +157,7 @@ def cli_builder(
         subcommand=subcommand,
         required=required,
         options=options,
-        abaqus_version=abaqus_version
+        abaqus_commands=character_delimited_list(abaqus_commands)
     )
     return builder
 
@@ -154,7 +167,7 @@ def extract(
     subcommand: str = "extract",
     required: str = "${SOURCE.abspath} --extracted-file ${TARGET.abspath} --force-overwrite",
     options: str = "",
-    abaqus_version: str = _settings._default_abaqus_version,
+    abaqus_command: typing.List[str] = _default_abaqus_commands,
 ) -> SCons.Builder.Builder:
     """Return a SPADE extract subcommand CLI builder.
 
@@ -179,14 +192,15 @@ def extract(
     * ``subcommand``: A SPADE subcommand
     * ``required``: A space delimited string of subcommand required arguments
     * ``options``: A space delimited string of subcommand optional arguments
-    * ``abaqus_version``: The Abaqus version year, e.g. 2023.
+    * ``abaqus_command``: The Abaqus command line executable absolute or relative path. When provided as a task
+      keyword argument, this must be a space delimited string, not a list.
     * ``cd_action_prefix``: Advanced behavior. Most users should accept the defaults.
     * ``redirect_action_postfix``: Advanced behavior. Most users should accept the defaults.
 
     .. code-block::
        :caption: action string construction
 
-       ${cd_action_prefix} ${program} ${subcommand} ${required} ${options} --abaqus-version ${abaqus_version} ${redirect_action_postfix}
+       ${cd_action_prefix} ${program} ${subcommand} ${required} ${options} --abaqus-commands ${abaqus_commands} ${redirect_action_postfix}
 
     .. code-block::
        :caption: SConstruct
@@ -201,16 +215,16 @@ def extract(
            source=["source.odb"],
        )
 
-    :param str program: The SPADE command line executable absolute or relative path
-    :param str subcommand: A SPADE subcommand
-    :param str required: A space delimited string of subcommand required arguments
-    :param str options: A space delimited string of subcommand optional arguments
-    :param list abaqus_version: The Abaqus command line executable absolute or relative path options
+    :param program: The SPADE command line executable absolute or relative path
+    :param subcommand: A SPADE subcommand
+    :param required: A space delimited string of subcommand required arguments
+    :param options: A space delimited string of subcommand optional arguments
+    :param abaqus_commands: The Abaqus command line executable absolute or relative path options
 
     :returns: SCons SPADE extract CLI builder
     """  # noqa: E501
     return cli_builder(program=program, subcommand=subcommand, required=required, options=options,
-                       abaqus_version=abaqus_version)
+                       abaqus_commands=abaqus_commands)
 
 
 _module_objects = set(globals().keys()) - _exclude_from_namespace

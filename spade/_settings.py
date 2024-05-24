@@ -25,9 +25,7 @@ _compiler_flags = "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOUR
             "-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -static-libstdc++ "
 _link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -lstdc++ "
 
-# Last year in the form of YYYY
-_default_abaqus_version = str(datetime.datetime.now().year - 1)
-
+# Docs subcommand
 _installed_docs_index = _project_root_abspath / "docs/index.html"
 
 # SCons extensions
