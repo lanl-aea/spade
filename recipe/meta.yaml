@@ -38,8 +38,10 @@ requirements:
   build:
     - python {{ python }}
     - numpy
-    - sphinx >=3.0.4
-    - sphinx_rtd_theme >=0.4.3
+    - sphinx >=5.1
+    - sphinx-argparse
+    - sphinx-copybutton >=0.5.1
+    - sphinx_rtd_theme >=1
     - sphinxcontrib-bibtex
     - setuptools_scm[toml] >=6.2
     - {{ compiler('cxx') }}
@@ -54,7 +56,6 @@ requirements:
     - pip
     - setuptools >=62
     - setuptools_scm[toml] >=6.2
-    - sphinx
     - {{ compiler('cxx') }}
     - hdf5
     - scons
