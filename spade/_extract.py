@@ -118,32 +118,32 @@ def get_parser() -> argparse.ArgumentParser:
         metavar='ODB_FILE.odb'
     )
     parser.add_argument('-e', '--extracted-file', type=str,
-                             help='Name of extracted file. (default: <ODB file name>.h5)')
+                        help='Name of extracted file. (default: <ODB file name>.h5)')
     parser.add_argument('-l', '--log-file', type=str,
-                             help=f'Name of log file. (default: <ODB file name>.{_settings._project_name_short}.h5)')
+                        help=f'Name of log file. (default: <ODB file name>.{_settings._project_name_short}.h5)')
 
     parser.add_argument('--frame', type=str, default="all",
-                             help='Get information from the specified frame (default: %(default)s)')
+                        help='Get information from the specified frame (default: %(default)s)')
     parser.add_argument('--frame-value', type=str, default="all",
-                             help='Get information from the specified frame value (default: %(default)s)')
+                        help='Get information from the specified frame value (default: %(default)s)')
     parser.add_argument('--step', type=str, default="all",
-                             help='Get information from the specified step (default: %(default)s)')
+                        help='Get information from the specified step (default: %(default)s)')
     parser.add_argument('--field', type=str, default="all",
-                             help='Get information from the specified field (default: %(default)s)')
+                        help='Get information from the specified field (default: %(default)s)')
     parser.add_argument('--history', type=str, default="all",
-                             help='Get information from the specified history value (default: %(default)s)')
+                        help='Get information from the specified history value (default: %(default)s)')
     parser.add_argument('--history-region', type=str, default="all",
-                             help='Get information from the specified history region (default: %(default)s)')
+                        help='Get information from the specified history region (default: %(default)s)')
     parser.add_argument('--instance', type=str, default="all",
-                             help='Get information from the specified instance (default: %(default)s)')
-    parser.add_argument('-a', '--abaqus-version', type=str, default=_settings._default_abaqus_version,
-                             help='Get information from the specified instance (default: %(default)s)')
+                        help='Get information from the specified instance (default: %(default)s)')
+    parser.add_argument('-a', '--abaqus-commands', type=pathlib.Path, default=_settings._default_abaqus_commands,
+                        help='Ordered list of Abaqus executable paths. Use first found (default: %(default)s)')
 
     # True or false inputs
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
-                             help='Turn on verbose logging')
+                        help='Turn on verbose logging')
     parser.add_argument('-f', '--force-overwrite', action='store_true', default=False,
-                             help='Force the overwrite of the hdf5 file if it already exists')
+                        help='Force the overwrite of the hdf5 file if it already exists')
     parser.add_argument('-d', '--debug', action='store_true', default=False, help=argparse.SUPPRESS)
     return parser
 
