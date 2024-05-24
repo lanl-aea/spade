@@ -84,6 +84,18 @@ fast-test:
   tags:
     - shell-aea
 
+flake8:
+  stage: test
+  variables:
+    GIT_STRATEGY: clone
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - scons flake8
+  tags:
+    - shell-aea
+
 conda-build:
   stage: test
   variables:
