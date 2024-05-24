@@ -1,5 +1,6 @@
 import os
 import shlex
+import typing
 import tempfile
 import subprocess
 from importlib.metadata import version, PackageNotFoundError
@@ -11,7 +12,9 @@ from spade import _settings
 
 env = os.environ.copy()
 spade_command = "spade"
-odb_extract_command = "odb_extract"
+odb_files = [
+    "viewer_tutorial.odb"
+]
 
 # If executing in repository, add package to PYTHONPATH
 try:
@@ -35,6 +38,11 @@ system_tests = [
     f"{spade_command} docs --help",
     # Tutorials
 ]
+# TODO: Move abaqus command to a search in SConstruct
+for odb_file in odb_files:
+    system_tests.append(
+        [f"/apps/abaqus/Commands/abq2023 fetch -job {odb_file}", f"{spade_command} --abaqus-version 2023 {odb_file}"]
+    )
 if installed:
     system_tests.append(
         # The HTML docs path doesn't exist in the repository. Can only system test from an installed package.
@@ -43,12 +51,15 @@ if installed:
 
 
 @pytest.mark.systemtest
-@pytest.mark.parametrize("command", system_tests)
-def test_run_tutorial(command: str) -> None:
+@pytest.mark.parametrize("commands", system_tests)
+def test_run_tutorial(commands: typing.Union[str, typing.Iterable[str]]) -> None:
     """Run the system tests in a temporary directory
 
-    :param command: command string for the system test
+    :param commands: command string or list of strings for the system test
     """
+    if isinstance(commands, str):
+        commands = [commands]
     with tempfile.TemporaryDirectory() as temp_directory:
-        command = shlex.split(command)
-        subprocess.check_output(command, env=env, cwd=temp_directory).decode("utf-8")
+        for command in commands:
+            command = shlex.split(command)
+            subprocess.check_output(command, env=env, cwd=temp_directory).decode("utf-8")
