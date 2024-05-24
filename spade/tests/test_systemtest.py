@@ -13,7 +13,8 @@ from spade import _settings
 env = os.environ.copy()
 spade_command = "spade"
 odb_files = [
-    "viewer_tutorial.odb"
+    "viewer_tutorial.odb",
+    "w-reactor_global.odb"
 ]
 
 # If executing in repository, add package to PYTHONPATH
