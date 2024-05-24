@@ -110,18 +110,15 @@ def cli_builder(
     .. code-block::
        :caption: SConstruct
 
-       import waves
        import spade
        env = Environment()
-       env["spade"] = waves.scons_extensions.add_program(["spade"], env)
        env.Append(BUILDERS={
-           "TurboTurtleCLIBuilder": spade.scons_extensions.cli_builder(
-               program=env["spade"],
+           "SpadeCLIBuilder": spade.scons_extensions.cli_builder(
                subcommand="extract",
-               required="--input-file ${SOURCES.abspath} --output-file ${TARGET.abspath}"
+               required="${SOURCE.abspath} --extract-file ${TARGET.abspath} --force-overwrite"
            )
        })
-       env.TurboTurtleCLIBuilder(
+       env.SpadeCLIBuilder(
            target=["target.cae"],
            source=["source.csv"],
        )
@@ -149,6 +146,70 @@ def cli_builder(
         abaqus_version=abaqus_version
     )
     return builder
+
+
+def extract(
+    program: str = "spade",
+    subcommand: str = "extract",
+    required: str = "${SOURCE.abspath} --extract-file ${TARGET.abspath} --force-overwrite",
+    options: str = "",
+    abaqus_version: str = _default_abaqus_version,
+) -> SCons.Builder.Builder:
+    """Return a SPADE extract subcommand CLI builder.
+
+    See the :ref:`extract_cli` CLI documentation for detailed subcommand usage and options. Builds subcommand specific
+    options for the :meth:`spade.scons_extensions.cli_builder` function.
+
+    At least one target must be specified. The first target determines the working directory for the builder's action.
+    The action changes the working directory to the first target's parent directory prior to execution.
+
+    The emitter will assume all emitted targets build in the current build directory. If the target(s) must be built in
+    a build subdirectory, e.g. in a parameterized target build, then the first target must be provided with the build
+    subdirectory, e.g. ``parameter_set1/my_target.ext``. When in doubt, provide a STDOUT redirect file as a target, e.g.
+    ``target.stdout``.
+
+    This builder and any builders created from this template will be most useful if the ``options`` argument places
+    SCons substitution variables in the action string, e.g. ``--argument ${argument}``, such that the task definitions
+    can modify the options on a per-task basis. Any option set in this manner *must* be provided by the task definition.
+
+    *Builder/Task keyword arguments*
+
+    * ``program``: The SPADE command line executable absolute or relative path
+    * ``subcommand``: A SPADE subcommand
+    * ``required``: A space delimited string of subcommand required arguments
+    * ``options``: A space delimited string of subcommand optional arguments
+    * ``abaqus_version``: The Abaqus version year, e.g. 2023.
+    * ``cd_action_prefix``: Advanced behavior. Most users should accept the defaults.
+    * ``redirect_action_postfix``: Advanced behavior. Most users should accept the defaults.
+
+    .. code-block::
+       :caption: action string construction
+
+       ${cd_action_prefix} ${program} ${subcommand} ${required} ${options} --abaqus-version ${abaqus_version} ${redirect_action_postfix}
+
+    .. code-block::
+       :caption: SConstruct
+
+       import spade
+       env = Environment()
+       env.Append(BUILDERS={
+           "SpadeExtract": spade.scons_extensions.cli_builder()
+       })
+       env.SpadeExtract(
+           target=["target.h5"],
+           source=["source.odb"],
+       )
+
+    :param str program: The SPADE command line executable absolute or relative path
+    :param str subcommand: A SPADE subcommand
+    :param str required: A space delimited string of subcommand required arguments
+    :param str options: A space delimited string of subcommand optional arguments
+    :param list abaqus_version: The Abaqus command line executable absolute or relative path options
+
+    :returns: SCons SPADE extract CLI builder
+    """  # noqa: E501
+    return cli_builder(program=program, subcommand=subcommand, required=required, options=options,
+                       abaqus_version=abaqus_version)
 
 
 _module_objects = set(globals().keys()) - _exclude_from_namespace
