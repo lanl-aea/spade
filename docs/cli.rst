@@ -23,7 +23,7 @@ docs
    :path: docs
 
 extract
-----
+-------
 
 .. argparse::
    :ref: spade._main.get_parser
