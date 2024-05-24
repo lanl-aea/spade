@@ -3,7 +3,7 @@
 import os
 import pathlib
 
-import utilities
+import _utilities
 import _settings
 
 user_env = os.environ.copy()
@@ -23,7 +23,7 @@ platform_string = ARGUMENTS.get("platform", "Linux")
 abaqus_command_paths = [f"{_}{abaqus_version}" for _ in _settings._abaqus_command_paths]
 abaqus_paths = abaqus_command_paths
 env["abaqus"] = env.Detect(abaqus_paths)
-abaqus_installation, abaqus_code_bin, abaqus_code_include = utilities.return_abaqus_code_paths(env["abaqus"])
+abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_abaqus_code_paths(env["abaqus"])
 
 odb_flags = _settings._compiler_flags + f"-I{abaqus_code_include} -I{abaqus_installation} " + \
             f"-I{gpp_include} -I. -I{gpp_lib}"
