@@ -157,3 +157,27 @@ deploy:
     - conda search --channel file://${aea_conda_channel}/ --override-channels ${package_name}
   tags:
     - shell-aea
+
+# It MUST be called pages
+pages:
+  stage: deploy
+  variables:
+    GIT_STRATEGY: clone
+  dependencies: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_COMMIT_BRANCH == "main"
+  script:
+    - rm -rf public && mkdir -p public
+    # Ensure the ``_version.py`` file is created
+    # TODO: I don't think the setuptools_scm call is necessary anymore
+    - python -m setuptools_scm
+    - scons html --clean && scons html
+    - cp -r build/docs/html/* public/
+  artifacts:
+    paths:
+      # It MUST be called public
+      - public
+  tags:
+    - shell-aea
