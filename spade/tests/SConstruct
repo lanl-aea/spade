@@ -1,0 +1,35 @@
+#! /usr/bin/env python
+import os
+
+import spade
+
+
+AddOption(
+    "--spade-command",
+    dest="spade_command",
+    default="spade",
+    nargs=1,
+    type="string",
+    action="store",
+    metavar="DIR",
+    help="Override for the spade command (default: '%default')"
+)
+
+env = Environment(
+    ENV=os.environ.copy(),
+    spade_command=GetOption("spade_command"),
+)
+env["spade"] = env["spade_command"]
+env.Append(BUILDERS={
+    "SpadeExtract": spade.scons_extensions.extract(program=env["spade"])
+})
+env.Command(
+    target=["viewer_tutorial.odb"],
+    source=["SConstruct"],
+    # TODO: Find the abaqus command instead of hardcoding for CI server(s)
+    action=["/apps/abaqus/Commands/abq2023 fetch -job ${TARGET.file}"]
+)
+env.SpadeExtract(
+    target=["viewer_tutorial.h5"],
+    source=["viewer_tutorial.odb"],
+)

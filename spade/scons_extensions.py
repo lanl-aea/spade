@@ -5,6 +5,7 @@
    Treat as experimental.
 """
 import typing
+import pathlib
 import argparse
 
 import SCons.Builder
@@ -115,7 +116,7 @@ def cli_builder(
        env.Append(BUILDERS={
            "SpadeCLIBuilder": spade.scons_extensions.cli_builder(
                subcommand="extract",
-               required="${SOURCE.abspath} --extract-file ${TARGET.abspath} --force-overwrite"
+               required="${SOURCE.abspath} --extracted-file ${TARGET.abspath} --force-overwrite"
            )
        })
        env.SpadeCLIBuilder(
@@ -151,7 +152,7 @@ def cli_builder(
 def extract(
     program: str = "spade",
     subcommand: str = "extract",
-    required: str = "${SOURCE.abspath} --extract-file ${TARGET.abspath} --force-overwrite",
+    required: str = "${SOURCE.abspath} --extracted-file ${TARGET.abspath} --force-overwrite",
     options: str = "",
     abaqus_version: str = _settings._default_abaqus_version,
 ) -> SCons.Builder.Builder:
@@ -193,7 +194,7 @@ def extract(
        import spade
        env = Environment()
        env.Append(BUILDERS={
-           "SpadeExtract": spade.scons_extensions.cli_builder()
+           "SpadeExtract": spade.scons_extensions.extract()
        })
        env.SpadeExtract(
            target=["target.h5"],
