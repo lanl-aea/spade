@@ -2,6 +2,7 @@ import pathlib
 import datetime
 
 # semi-private project meta variables for package internal use to avoid hard-coded duplication
+_project_root_abspath = pathlib.Path(__file__).parent.resolve()
 _project_name = "Serialized Proprietary Abaqus Data Extractor"
 _project_description = "Tool for extracting data from an Abaqus output database (odb) file into a hierarchical data " \
                        "format (hdf5) file"
@@ -28,3 +29,5 @@ _link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5
 
 # Last year in the form of YYYY
 _default_abaqus_version = str(datetime.datetime.now().year - 1)
+
+_installed_docs_index = _project_root_abspath / "docs/index.html"
