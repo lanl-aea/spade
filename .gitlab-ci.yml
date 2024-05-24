@@ -7,7 +7,6 @@ workflow:
 stages:
   - environment
   - test
-  - build
   - deploy
 
 before_script:

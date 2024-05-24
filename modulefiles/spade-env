@@ -33,7 +33,6 @@ set environment_bin "$environment_path/bin"
 set environment_man "$environment_path/share/man"
 
 # Set the bash environment variables similarly to HPC anaconda module
-prepend-path PATH "$environment_bin:$anaconda_bin"
 prepend-path PATH "$environment_bin"
 prepend-path MANPATH "$environment_man"
 
