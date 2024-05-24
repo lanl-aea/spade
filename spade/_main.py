@@ -11,6 +11,7 @@ from spade import __version__
 from spade import _docs
 
 
+# TODO: Move to a subcommand and separate module?
 def extract_wrapper(args):
     """Main parser behavior when no subcommand is specified
 
