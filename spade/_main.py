@@ -8,6 +8,7 @@ import platform
 
 from spade import _settings
 from spade import __version__
+from spade import _docs
 
 
 def main() -> None:
@@ -15,6 +16,12 @@ def main() -> None:
     parser = get_parser()
     args, unknown = parser.parse_known_args()
     full_command_line_arguments = ""
+
+    try:
+        if args.subcommand == "docs":
+            _docs.main(print_local_path=args.print_local_path)
+    except RuntimeError as err:
+        sys.exit(str(err))
 
     # File name inputs
     if args.odb_file:
@@ -143,6 +150,20 @@ def get_parser():
     main_parser.add_argument('-f', '--force-overwrite', action='store_true', default=False,
                              help='Force the overwrite of the hdf5 file if it already exists')
     main_parser.add_argument('-d', '--debug', action='store_true', default=False, help=argparse.SUPPRESS)
+
+    subparsers = main_parser.add_subparsers(
+        # So args.subcommand will contain the name of the subcommand called
+        title="subcommands",
+        metavar="{subcommand}",
+        dest="subcommand")
+
+    subparsers.add_parser(
+        "docs",
+         help=f"Open the {_settings._project_name_short.upper()} HTML documentation",
+         description=f"Open the packaged {_settings._project_name_short.upper()} HTML documentation in the  " \
+                      "system default web browser",
+        parents=[_docs.get_parser()]
+    )
 
     return main_parser
 
