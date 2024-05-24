@@ -1,0 +1,4 @@
+[flake8]
+exclude = build,tests,test_vertices.py
+select = W,E2,E3,E501,E7
+max-line-length = 120
