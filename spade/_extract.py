@@ -124,7 +124,7 @@ def main(args: argparse.ArgumentParser) -> None:
     current_env = os.environ.copy()
     if not spade_version.exists():
         # Compile necessary version
-        scons_command = shlex.split(f"scons abaqus_command=${abaqus_command} "
+        scons_command = shlex.split(f"scons abaqus_command={abaqus_command} "
                                     f"abaqus_version={abaqus_version} platform={platform_string} "
                                     f"--directory={source_directory.resolve()}",
                                     posix=(os.name == 'posix'))
