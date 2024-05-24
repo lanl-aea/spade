@@ -18,6 +18,7 @@ build/
 *.png
 *.cae
 *.odb
+*.h5
 *.log
 *.rpy*
 *.jnl
