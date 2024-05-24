@@ -27,7 +27,7 @@ before_script:
   - module load ${environment}
   # Activate CI environment if available. If not, rely on environment job running before other jobs.
   - module use ${PWD}/modulefiles
-  - project_environment='waves-env'
+  - project_environment="${package_name}-env"
   - environment_path="${aea_compute_path}/${project_environment}"
   - echo ${environment_path}
   - if [[ -d ${environment_path} ]]; then module unload ${environment}; module load ${project_environment}; fi
@@ -94,7 +94,6 @@ conda-build:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
-    - if: $CI_COMMIT_BRANCH == "dev"
   script:
     # Only build one compiler variant during merge request testing
     - python_version="3.11"
@@ -128,7 +127,6 @@ deploy:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - if: $CI_COMMIT_BRANCH == "main"
-    - if: $CI_COMMIT_BRANCH == "dev"
     - if: $DEPLOY == "deploy"
   script:
     # Override default permissions. Set group to rx with no write permissions.
