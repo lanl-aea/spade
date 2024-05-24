@@ -1,11 +1,4 @@
-import warnings
 from importlib.metadata import version, PackageNotFoundError
-
-warnings.filterwarnings(
-    action="ignore",
-    message="The `squeeze` kwarg to GroupBy is being removed",
-    category=UserWarning,
-)
 
 try:
     __version__ = version("spade")
