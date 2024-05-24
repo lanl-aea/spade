@@ -36,14 +36,14 @@ def main(print_local_path: bool = False) -> None:
 
     :param print_local_path: Flag to print the local path to terminal instead of calling the default web browser
     """
+    if not _settings._installed_docs_index.exists():
+       # This should only be reached if the package installation structure doesn't match the assumptions in
+       # _settings.py. It is used by the Conda build tests as a sign-of-life that the assumptions are correct.
+       raise RuntimeError("Could not find package documentation HTML index file")
 
-    if print_local_path:
-        if _settings._installed_docs_index.exists():
-            print(_settings._installed_docs_index, file=sys.stdout)
-        else:
-            # This should only be reached if the package installation structure doesn't match the assumptions in
-            # _settings.py. It is used by the Conda build tests as a sign-of-life that the assumptions are correct.
-            raise RuntimeError("Could not find package documentation HTML index file")
+    elif print_local_path:
+        print(_settings._installed_docs_index, file=sys.stdout)
+
     else:
         import webbrowser
         webbrowser.open(str(_settings._installed_docs_index))
