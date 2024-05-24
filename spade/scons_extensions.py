@@ -73,7 +73,7 @@ def cli_builder(
     subcommand: str = "",
     required: str = "",
     options: str = "",
-    abaqus_version: str = _default_abaqus_version,
+    abaqus_version: str = _settings._default_abaqus_version,
 ) -> SCons.Builder.Builder:
     """Return a generic SPADE CLI builder.
 
@@ -153,7 +153,7 @@ def extract(
     subcommand: str = "extract",
     required: str = "${SOURCE.abspath} --extract-file ${TARGET.abspath} --force-overwrite",
     options: str = "",
-    abaqus_version: str = _default_abaqus_version,
+    abaqus_version: str = _settings._default_abaqus_version,
 ) -> SCons.Builder.Builder:
     """Return a SPADE extract subcommand CLI builder.
 
