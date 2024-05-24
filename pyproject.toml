@@ -30,7 +30,7 @@ zip-safe = false
 where = ["."]
 
 [project.scripts]
-spade = "spade.main:main"
+spade = "spade._main:main"
 
 [project.urls]
 repository = "https://re-git.lanl.gov/aea/python-projects/spade"

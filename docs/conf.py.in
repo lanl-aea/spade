@@ -24,8 +24,6 @@ author_manpage = author_manpage.rstrip(', ')
 # Mock modules unavailable in the Conda development environment, e.g. Abaqus Python modules, and large imports not
 # required by the documentation build, e.g. cubit.
 mock_modules = [
-    # Python 2/3 and Cubit
-    "spade", "spade._settings", "spade._utilities"
 ]
 for mod_name in mock_modules:
     sys.modules[mod_name] = unittest.mock.Mock()
