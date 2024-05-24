@@ -77,8 +77,7 @@ test:
   imports:
     - spade
   commands:
-    - spade -h
-    # TODO: Move all tests, including above system tests, to pytest wrappers
     # Test as-installed project unit tests
-    #- cd $SP_DIR/$PKG_NAME
-    #- pytest -vv -n 4
+    - cd $SP_DIR/$PKG_NAME
+    - pytest -vvv -n 4 -m "not systemtest"
+    - pytest -v -n 4 -m "systemtest" --tb=short
