@@ -26,11 +26,13 @@ build:
     - $PYTHON -m build --no-isolation
     - $PYTHON -m pip install dist/$PKG_NAME-$PKG_VERSION.tar.gz --no-deps --ignore-installed -v --no-build-isolation
     - $PYTHON -m pip show $PKG_NAME
-    # Install documentation to bundle in Conda package
+    # Build man page and HTML documentation to bundle in Conda package
+    - scons man html
+    - $PYTHON package_documentation.py
   ignore_run_exports:
     - python_abi
   entry_points:
-    - spade = spade.main:main
+    - spade = spade._main:main
 
 requirements:
   build:
@@ -44,7 +46,7 @@ requirements:
     - hdf5
     - scons
     - sysroot_linux-64 >=2.17
-    - ld_impl_linux-64 
+    - ld_impl_linux-64
   host:
     - python {{ python }}
     - numpy
@@ -57,7 +59,7 @@ requirements:
     - hdf5
     - scons
     - sysroot_linux-64 >=2.17
-    - ld_impl_linux-64 
+    - ld_impl_linux-64
   run:
     - python
     - {{ pin_compatible('numpy') }}
@@ -65,4 +67,4 @@ requirements:
     - {{ compiler('cxx') }}
     - hdf5
     - sysroot_linux-64 >=2.17
-    - ld_impl_linux-64 
+    - ld_impl_linux-64
