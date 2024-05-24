@@ -31,7 +31,7 @@ env.Alias("regression", targets)
 env.AlwaysBuild(targets)
 
 target = ["systemtest_results.xml"]
-source = pytest_source_list + [str(pathlib.Path("spade/tests/test_systemtest.py"))]
+source = pytest_source_list + [str(pathlib.Path("spade/tests/test_system.py"))]
 targets = env.Command(
     target=target,
     source=source,
