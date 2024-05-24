@@ -104,7 +104,7 @@ def extract_wrapper(args):
 def main() -> None:
     """This is the main function that performs actions based on command line arguments."""
     parser = get_parser()
-    args, unknown = parser.parse_known_args()
+    args = parser.parse_args()
     full_command_line_arguments = ""
 
     try:
