@@ -42,3 +42,14 @@ extract
    :ref: spade._main.get_parser
    :nodefault:
    :path: extract
+
+******************
+Python Package API
+******************
+****************
+SCons Extensions
+****************
+
+.. automodule:: spade.scons_extensions
+    :members:
+    :show-inheritance:
