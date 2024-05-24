@@ -21,6 +21,7 @@
 #include <getopt.h>
 #include <iomanip>
 #include <ctime>
+#include <filesystem>
 //#include <cctype>
 #include <algorithm>
 
@@ -70,7 +71,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             {0,0,0,0 }
         };
 
-        c = getopt_long(argc, argv, "ho:t:vd", long_options, &option_index);
+        c = getopt_long(argc, argv, "ho:t:vdf", long_options, &option_index);
         if (c == -1) break;
 
         switch (c) {
@@ -109,7 +110,6 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             }
 
             case 'f': {
-                string option_arg = string(optarg);
                 this->force_overwrite = true;
                 break;
             }
@@ -128,8 +128,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         while (optind < argc) this->unexpected_args += string(argv[optind++]) + " ";
     }
     this->command_name = string(argv[0]);
-    this->command_name.erase(this->command_name.find("./"), 2);  // Find and erase './' if present in command name
-
+    this->command_name = std::filesystem::path(this->command_name).filename().generic_string();
 
 
     if (!this->help_command) {
@@ -138,47 +137,48 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             cerr << "ODB file not provided on command line.\n";
             perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
-        ifstream odb_file(this->command_line_arguments["odb-file"].c_str());
-        if (!odb_file) {
+        if (!std::filesystem::exists(std::filesystem::path(this->command_line_arguments["odb-file"]))) {
             cerr << this->command_line_arguments["odb-file"] << " does not exist.\n";
             perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
-
-        string base_file_name = this->command_line_arguments["odb-file"].substr(0,this->command_line_arguments["odb-file"].size()-4);  //remove '.odb'
 
         // Handle output file type
         std::transform(this->command_line_arguments["output-file-type"].begin(), this->command_line_arguments["output-file-type"].end(), this->command_line_arguments["output-file-type"].begin(), ::tolower);
         if ((this->command_line_arguments["output-file-type"] != "json") && (this->command_line_arguments["output-file-type"] != "yaml")) this->command_line_arguments["output-file-type"] = "h5";
 
+        string base_file_name = std::filesystem::path(this->command_line_arguments["odb-file"]).replace_extension("").generic_string();
+
         // Handle output file name
-        if (this->command_line_arguments["output-file"].empty()) {
-            this->command_line_arguments["output-file"] = base_file_name;
+        if (this->command_line_arguments["output-file"].empty()) { this->command_line_arguments["output-file"] = base_file_name + "." + this->command_line_arguments["output-file-type"]; }
+        std::filesystem::path file_path = this->command_line_arguments["output-file"];
+        std::filesystem::perms directory_permissions = std::filesystem::status(file_path.parent_path()).permissions();
+        if (std::filesystem::perms::none == (std::filesystem::perms::owner_write & directory_permissions)) {  // If parent path is not writable, exit with error
+            cerr << "Do not have write permission for: " << file_path.parent_path() << '\n';
+            perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
         }
-        string output_file_base = this->command_line_arguments["output-file"];
-        size_t lastdot = output_file_base.find_last_of(".");  // Find last dot character in file name
-        if (lastdot != std::string::npos) output_file_base = output_file_base.substr(0, lastdot);  // Strip off file extension
-        this->command_line_arguments["output-file"] = output_file_base + "." + this->command_line_arguments["output-file-type"];
+
         // Check if output file already exists
-        ifstream output_file(this->command_line_arguments["output-file"].c_str());
-        if (output_file) {
-            cerr << this->command_line_arguments["output-file"] << " already exists. Appending time stamp to output file.\n";
-            this->command_line_arguments["output-file"] = this->command_line_arguments["output-file"].substr(0, this->command_line_arguments["output-file"].size()-3) + "_" + this->start_time + "." + this->command_line_arguments["output-file-type"]; 
-        }
+        if (std::filesystem::exists(file_path)) {
+            if (!this->force_overwrite) {
+                cerr << this->command_line_arguments["output-file"] << " already exists. Appending time stamp to output file.\n";
+                this->command_line_arguments["output-file"] = base_file_name + "_" + this->start_time + "." + this->command_line_arguments["output-file-type"]; 
+            } else {
+                if ( remove(this->command_line_arguments["output-file"].c_str()) != 0 ) {
+                    cerr << "Cannot delete: " << this->command_line_arguments["output-file"] << "\n";
+                    perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+                }
+            }
+        } 
         // Create log file name if not provided
         if (this->command_line_arguments["log-file"].empty()) {
-            this->command_line_arguments["log-file"] = base_file_name + ".odb_extract.log"; 
+            this->command_line_arguments["log-file"] = base_file_name + ".spade.log"; 
         }
         // Check if log file already exists
-        ifstream log_file(this->command_line_arguments["log-file"].c_str());
-        if (log_file) {
+        std::filesystem::path log_file = this->command_line_arguments["log-file"];
+        if (std::filesystem::exists(log_file)) {
             cerr << this->command_line_arguments["log-file"] << " already exists. Appending time stamp to log file.\n";
-            string log_base_name = this->command_line_arguments["log-file"];
-            string log_extension = ".log";
-            lastdot = this->command_line_arguments["log-file"].find_last_of(".");  // Find last dot character in file name
-            if (lastdot != std::string::npos) {
-                log_extension = log_base_name.substr(lastdot);  // Get file extension
-                log_base_name = log_base_name.substr(0,lastdot);  // Get base name
-            }
+            string log_extension = log_file.extension();
+            string log_base_name = log_file.replace_extension("").generic_string();
             this->command_line_arguments["log-file"] = log_base_name + "_" + this->start_time + log_extension;
         }
 
@@ -195,7 +195,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         this->command_line = this->command_name + " ";
         for (int i=1; i<argc; ++i) { this->command_line += string(argv[i]) + " "; }  // concatenate options into single string
 
-        if ((!this->unexpected_args.empty()) && (!this->help_command)) cout << "Unexpected arguments: " + this->unexpected_args + "\n";
+        if ((!this->unexpected_args.empty()) && (!this->help_command)) cerr << "Unexpected arguments: " + this->unexpected_args + "\n";
     }
 
 }
@@ -249,6 +249,7 @@ string CmdLineArguments::helpMessage () {
     help_message += "\t--history\tget information from specified history value (default: all)\n";
     help_message += "\t--history-region\tget information from specified history region (default: all)\n";
     help_message += "\t--instance\tget information from specified instance (default: all)\n";
+    help_message += "\t--log-file\tname of log file (default: <odb file name>.spade.log)\n";
     // TODO: Add more here
     help_message += "\nExample: " + this->command_name + " odb_file.odb\n";
     help_message += "\n";

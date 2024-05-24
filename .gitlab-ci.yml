@@ -1,0 +1,122 @@
+workflow:
+  rules:  # Do not create pipelines for tag updates
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: always
+
+stages:
+  - environment
+  - version
+  - test
+  - build
+  - deploy
+
+before_script:
+  # Assumes CI executes on AEA compute servers
+  # TODO: recover environment path from modulefile instead of assuming the sstelmo path(s)
+  # https://re-git.lanl.gov/aea/python-projects/waves/-/issues/7
+  - aea_compute_path="/projects/aea_compute"
+  - aea_conda_channel="${aea_compute_path}/aea-conda"
+  - aea_modulefiles="${aea_compute_path}/modulefiles"
+  - module use ${aea_modulefiles}
+  - module use ${PWD}/modulefiles
+  # Prefer the CI environment and fall back to AEA environment(s)
+  - project_environment='spade-env'
+  - environment_choices="${project_environment} aea-beta aea-release"
+  - for env in ${environment_choices}; do if [[ -d "${aea_compute_path}/${env}" ]]; then environment=${env}; break; fi; done
+  - echo ${environment}
+  - module load ${environment}
+  - conda info
+  # TODO: kick off 'environment' job for missing environments instead of re-creating the environment build logic here
+  # https://re-git.lanl.gov/aea/python-projects/waves/-/issues/8
+  - environment_path="${aea_compute_path}/${project_environment}"
+  - conda_options='--force'
+  - |
+      if [[ ! -d ${environment_path} ]]; then
+          export ALL_PROXY="proxyout.lanl.gov:8080"
+          export HTTP_PROXY="http://$ALL_PROXY"
+          export HTTPS_PROXY=$HTTP_PROXY
+          conda env create --prefix ${environment_path} --file environment.yml ${conda_options};
+          chmod -R 755 ${environment_path}
+          unset ALL_PROXY
+          unset HTTP_PROXY
+          unset HTTPS_PROXY
+      fi
+  - if [[ ${project_environment} != ${environment} ]]; then module unload ${environment}; module load ${project_environment}; fi
+  - conda_artifacts_directory='conda-bld'
+
+environment:
+  stage: environment
+  variables:
+    GIT_STRATEGY: clone
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"
+      changes:
+        - "modulefiles/*"
+        - "environment.yml"
+  script:
+    # Set LANL proxies
+    - export ALL_PROXY="proxyout.lanl.gov:8080"
+    - export HTTP_PROXY="http://$ALL_PROXY"
+    - export HTTPS_PROXY=$HTTP_PROXY
+    # Re-build the Conda environment on changes to environment files
+    - conda env create --prefix ${environment_path} --file environment.yml ${conda_options}
+    # Remove write permissions from group to avoid accidental environment changes
+    - chmod -R 755 ${environment_path}
+    # place the common modulefiles in an accessible location
+    - cp ${PWD}/modulefiles/* ${aea_modulefiles}
+    # Link SCons man pages to the expected MANPATH location
+    - ln ${environment_path}/scons.1 ${environment_path}/man/man1/scons.1
+    - ln ${environment_path}/sconsign.1 ${environment_path}/man/man1/sconsign.1
+    - ln ${environment_path}/scons-time.1 ${environment_path}/man/man1/scons-time.1
+  tags:
+    - shell-aea
+
+microbump:
+  stage: version
+  variables:
+    GIT_STRATEGY: clone
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_COMMIT_BRANCH == "main"
+  script:
+    # Conditionally "bump" micro version number. setuptools_scm already bumps number, just need to strip local version.
+    - old_version=$(python -m setuptools_scm)
+    # First capture group is the major.minor.micro numbers
+    # Second capture group is everything following micro
+    - version_regex='\([0-9]\+\.[0-9]\+\.[0-9]\+\)\(.*\)'
+    # Returns clean production tag regardless if tagged already
+    - production_version=$(echo ${old_version} | sed "s/${version_regex}/\1/g")
+    # Catch unexpected production version regex and exit with error if suffix is found
+    - suffix=$(echo ${production_version} | sed "s/${version_regex}/\2/g")
+    - |
+        if [ -n "${suffix}" ]; then
+            echo "Could not resolve the production version from ${old_version}. Left with ${production_version} and ${suffix}."
+            exit 1
+        fi
+    - developer_version=${production_version}+dev
+    # Tag production commit and previous developer commit. Continue if already tagged.
+    - git config user.name "${GITLAB_USER_NAME}"
+    - git config user.email "${GITLAB_USER_EMAIL}"
+    - git tag -a ${production_version} -m "production release ${production_version}" || true
+    # Assume last merge was dev->main. Pick previous.
+    - last_merge_hash=$(git log --pretty=format:"%H" --merges -n 2 | tail -n 1)
+    - git tag -a ${developer_version} -m "developer pre-release ${developer_version}" ${last_merge_hash} || true
+    - git push https://gitlab-ci-token:${GITLAB_ACCESS_TOKEN}@re-git.lanl.gov/${CI_PROJECT_PATH}.git --tags
+  tags:
+    - shell-aea
+
+fast-test:
+  stage: test
+  variables:
+    GIT_STRATEGY: clone
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - project_root=${PWD}
+    - scons
+    - ./spade -h
+  tags:
+    - shell-aea

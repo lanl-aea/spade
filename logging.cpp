@@ -14,7 +14,7 @@ Logging::Logging (string const &log_file_name, bool const &log_verbose, bool con
 
     this->log_file.open(log_file_name.c_str());
     if (!this->log_file.is_open()) {
-        cerr << "Couldn't open: " << log_file_name << " Log messages will be printed to stdout.\n";
+        cerr << "Couldn't open: " << log_file_name << " Log messages will be printed to stdout." << endl;
         perror("");
         this->output_stream = &std::cout;
     } else { this->output_stream = &this->log_file; }
@@ -32,9 +32,10 @@ Logging::~Logging () {
     if (this->log_file.is_open()) { this->log_file.close(); }
 }
 
-void Logging::log (string const &output) { *this->output_stream << output; }
-void Logging::logVerbose (string const &output) { if (this->log_verbose) { *this->output_stream << output; } }
-void Logging::logDebug (string const &output) { if (this->log_debug) { cout << output; } }
+void Logging::log (string const &output) { *this->output_stream << output << endl; }
+void Logging::logVerbose (string const &output) { if (this->log_verbose) { *this->output_stream << output << endl; } }
+void Logging::logWarning (string const &output) { *this->output_stream << "WARNING: " << output << endl;  }
+void Logging::logDebug (string const &output) { if (this->log_debug) { cout << output << endl; } }
 
 void Logging::logErrorAndExit (string const &output) {
     *this->output_stream << output << endl;

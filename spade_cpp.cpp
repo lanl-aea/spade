@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * \file odb_extract.cpp
+  * \file spade.cpp
   ******************************************************************************
   * Extract data from an Abaqus odb file and write the data to an hdf5 file
   ******************************************************************************
@@ -16,8 +16,7 @@
 
 #include "cmd_line_arguments.h"
 #include "logging.h"
-#include "odb_parser.h"
-#include "output_writer.h"
+#include "spade_object.h"
 
 using namespace std;
 
@@ -32,14 +31,12 @@ int ABQmain(int argc, char **argv)
     CmdLineArguments command_line_arguments(argc, argv);
     if (command_line_arguments.help()) { cout<<command_line_arguments.helpMessage(); return 0; }  // If help option used, print help and exit
     Logging log_file(command_line_arguments["log-file"], command_line_arguments.verbose(), command_line_arguments.debug());
-    log_file.log("\nCommand line used:\n"+ command_line_arguments.commandLine() + "\n");
+    log_file.log("\nCommand line used:\n"+ command_line_arguments.commandLine());
     log_file.logVerbose("Arguments given:\n" + command_line_arguments.verboseArguments());
-    log_file.logDebug("Debug logging turned on\n");
-    OdbParser odb_parser(command_line_arguments, log_file);
-    log_file.logDebug("OdbParser object successfully created.\n");
-    OutputWriter output_writer(command_line_arguments, log_file, odb_parser);
-    log_file.logDebug("OutputWriter object successfully created.\n");
-    log_file.logVerbose("Successful completion of " + command_line_arguments.commandName() + "\n");
+    log_file.logDebug("Debug logging turned on");
+    SpadeObject spade_object(command_line_arguments, log_file);
+    log_file.logDebug("OdbExtractObject object successfully created.");
+    log_file.logVerbose("Successful completion of " + command_line_arguments.commandName());
 
     return (0);
 }
