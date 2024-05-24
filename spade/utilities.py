@@ -5,6 +5,7 @@ import sys
 import pathlib
 import subprocess
 
+
 def compiler_help(env):
     compiler_help_message = "\nEnvironment:\n"
     keys = [
@@ -18,6 +19,7 @@ def compiler_help(env):
             compiler_help_message += f"    {key}: {env[key]}\n"
     return compiler_help_message
 
+
 def find_abaqus_paths(abaqus_program):
     subprocess_command = [abaqus_program, "information=environment"]
     abaqus_environment = subprocess.check_output(subprocess_command).decode("utf-8")
@@ -30,6 +32,7 @@ def find_abaqus_paths(abaqus_program):
     else:
         abaqus_paths = None
     return abaqus_paths
+
 
 def return_abaqus_code_paths(abaqus_program, code_directory="code"):
     abaqus_paths = find_abaqus_paths(abaqus_program)

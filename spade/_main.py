@@ -150,7 +150,7 @@ def get_parser():
                              help='Turn on verbose logging')
     main_parser.add_argument('-f', '--force-overwrite', action='store_true', default=False,
                              help='Force the overwrite of the hdf5 file if it already exists')
-    main_parser.add_argument('-d', '--debug', action='store_true', default=False, help=argparse.SUPPRESS)  # Hidden argument
+    main_parser.add_argument('-d', '--debug', action='store_true', default=False, help=argparse.SUPPRESS)
 
     return main_parser
 
