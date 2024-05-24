@@ -43,7 +43,7 @@ build_artifacts.append(f"abaqus_v6.env")
 
 # Build executable with Abaqus make
 target_name = f"{_settings._project_name_short}_{abaqus_version}_{platform_string}"
-abaqus_make_command = f"{env['abaqus']} make job={_settings._project_name_cpp}.cpp"
+abaqus_make_command = f"{abaqus_command} make job={_settings._project_name_cpp}.cpp"
 env.Command(
     target=[target_name],
     source=[f"{_settings._project_name_cpp}.cpp"] + objects,
