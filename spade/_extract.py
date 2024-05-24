@@ -44,6 +44,34 @@ def find_command(options: typing.Iterable[str]) -> str:
     return command_abspath
 
 
+def abaqus_installation_bin(abaqus_command: pathlib.Path) -> str:
+    """Return 'code/bin' string from abaqus_command 'information=environment"
+
+    :param str abaqus_command: string value used to call Abaqus via subprocess
+
+    :return: Abaqus official version string
+    """
+    try:
+        abaqus_environment = subprocess.check_output([abaqus_command, 'information=environment']).decode('utf-8')
+
+    except FileNotFoundError:
+        raise RuntimeError(f"Abaqus command not found at: '{abaqus_command}'")
+
+    except OSError:
+        raise RuntimeError(f"Abaqus command failed. Command used: '{abaqus_command}'")
+
+    # TODO: Figure out what exceptions are likely to raise and convert to RuntimeError
+    installed_paths_regex = r"(?i)abaqus\s+is\s+located\s+in\s+the\s+directory\s+(.*)"
+    installed_paths_match = re.search(installed_paths_regex, abaqus_environment)
+    installed_paths = installed_paths_match[0].split(' ')
+
+    abaqus_installation_bin = next(path for path in installed_paths if path.endswith("bin"))
+    if abaqus_installation_bin is None:
+        raise RuntimeError(f"Could not find Abaqus installation bin for '{abaqus_command}'")
+
+    return abaqus_installation_bin
+
+
 def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
     """Return 'official version' string from abaqus_command 'information=version"
 
@@ -115,6 +143,7 @@ def main(args: argparse.ArgumentParser) -> None:
 
     abaqus_command = find_command(args.abaqus_commands)
     abaqus_version = abaqus_official_version(abaqus_command)
+    abaqus_bin = abaqus_installation_bin(abaqus_command)
     source_directory = pathlib.Path(__file__).parent
     platform_string = "_".join(f"{platform.system()} {platform.release()}".split())
     spade_version = source_directory / f"{_settings._project_name_short}_{abaqus_version}_{platform_string}"
@@ -133,9 +162,9 @@ def main(args: argparse.ArgumentParser) -> None:
     full_command_line_arguments = str(spade_version) + full_command_line_arguments
 
     try:
-        current_env['LD_LIBRARY_PATH'] = f"{abaqus_path}:{current_env['LD_LIBRARY_PATH']}"
+        current_env['LD_LIBRARY_PATH'] = f"{abaqus_bin}:{current_env['LD_LIBRARY_PATH']}"
     except KeyError:
-        current_env['LD_LIBRARY_PATH'] = f"{abaqus_path}"
+        current_env['LD_LIBRARY_PATH'] = f"{abaqus_bin}"
     command_line_arguments = shlex.split(full_command_line_arguments, posix=(os.name == 'posix'))
     sub_process = subprocess.Popen(command_line_arguments, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, env=current_env)
