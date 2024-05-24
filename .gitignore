@@ -26,3 +26,4 @@ ABQ*
 *.pyc
 *pycache*/
 *.jou
+.coverage
