@@ -69,3 +69,16 @@ requirements:
     - hdf5
     - sysroot_linux-64 >=2.17
     - ld_impl_linux-64
+
+test:
+  requires:
+    - pytest
+    - pytest-xdist
+  imports:
+    - spade
+  commands:
+    - spade -h
+    # TODO: Move all tests, including above system tests, to pytest wrappers
+    # Test as-installed project unit tests
+    #- cd $SP_DIR/$PKG_NAME
+    #- pytest -vv -n 4
