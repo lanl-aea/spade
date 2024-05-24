@@ -5,14 +5,19 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "spade"
 authors = [
-    {name = "Prabhu Khalsa", email = "pkhalsa@lanl.gov"}
+    {name = "Prabhu Khalsa", email = "pkhalsa@lanl.gov"},
+    {name = "Kyle Brindley", email = "kbrindley@lanl.gov"},
 ]
 description = "Tool for extracting data from an Abaqus output database (odb) file into a hierarchical data format (hdf5) file"
 readme = "README.rst"
 requires-python = ">=3.8"
+license = {text = "BSD-3-Clause"}
 classifiers = [
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering"
 ]
@@ -20,6 +25,8 @@ dynamic = ["version"]
 dependencies = [
     "compilers",
     "hdf5",
+    "numpy",
+    "scons"
     "sysroot_linux-64 >=2.17",
 ]
 
@@ -33,7 +40,10 @@ where = ["."]
 spade = "spade._main:main"
 
 [project.urls]
+homepage = "https://re-git.lanl.gov/aea/python-projects/spade"
+documentation = "https://aea.re-pages.lanl.gov/python-projects/spade"
 repository = "https://re-git.lanl.gov/aea/python-projects/spade"
+changelog = "https://aea.re-pages.lanl.gov/python-projects/spade/changelog.html"
 
 [tool.setuptools_scm]
 write_to = "spade/_version.py"
