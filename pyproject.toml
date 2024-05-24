@@ -21,7 +21,6 @@ dependencies = [
     "compilers",
     "hdf5",
     "sysroot_linux-64 >=2.17",
-    "waves"
 ]
 
 [tool.setuptools]

@@ -59,7 +59,7 @@ if { [module-info mode load] || [module-info mode switch2] } {
 }
 
 # Set help information
-module-whatis "Configure the common WAVES development bash and Conda environments"
+module-whatis "Configure the common SPADE development bash and Conda environments"
 proc ModulesHelp {} {
     global hostname
     global environment
@@ -69,7 +69,7 @@ proc ModulesHelp {} {
     global environment_bin
     global environment_man
 
-    puts stderr "\nWAVES modulefiles debugging information"
+    puts stderr "\nSPADE modulefiles debugging information"
     puts stderr "hostname: $hostname"
     puts stderr "environment: $environment"
     puts stderr "projects: $projects"

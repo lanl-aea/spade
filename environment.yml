@@ -6,7 +6,6 @@ dependencies:
   - boa
   - setuptools_scm[toml] >=6.2
   - scons
-  - waves
   - hdf5
   - cxx-compiler
   - sysroot_linux-64 >=2.17
