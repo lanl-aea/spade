@@ -131,7 +131,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
     this->command_name = std::filesystem::path(this->command_name).filename().generic_string();
 
     if (found_unexpected_args){
-        cerr << "Found unexpected arguments. Exiting with an error\n";
+        cerr << "Found unexpected arguments\n";
         perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
     }
 
