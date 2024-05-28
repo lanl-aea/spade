@@ -1,27 +1,52 @@
 #! /usr/bin/env python
-
 import os
 import pathlib
+import platform
 
 import _utilities
 import _settings
 
+
+# Project command line options
+AddOption(
+    "--abaqus-command",
+    dest="abaqus_command",
+    default="abaqus",
+    nargs=1,
+    type="string",
+    action="store",
+    help="Abaqus executable relative or absolute path (default: '%default')"
+)
+AddOption(
+    "--platform-string",
+    dest="platform_string",
+    default="unknown",
+    nargs=1,
+    type="string",
+    action="store",
+    help="Platform string to use in versioned spade executable name (default: '%default')"
+)
+
+# Project environment
 user_env = os.environ.copy()
 env = Environment(
     ENV=user_env,
     CC=user_env["CC"],
-    CXX=user_env["CXX"]
+    CXX=user_env["CXX"],
+    variant_dir_base=GetOption("abaqus_command"),
+    variant_dir_base=GetOption("platform_string")
 )
+abaqus_command = env["abaqus_command"]
+platform_string = env["platform_string"]
 
+# Abaqus and system settings
+abaqus_version = abaqus_official_version(abaqus_command)
+abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_abaqus_code_paths(abaqus_command)
+
+# Compiler options and settings
 gpp_path = pathlib.Path(env["CXX"]).resolve().parent.parent
 gpp_lib = gpp_path / "lib"
 gpp_include = gpp_path / "include"
-
-
-abaqus_command = ARGUMENTS.get("abaqus_command")
-abaqus_version = ARGUMENTS.get('abaqus_version')
-platform_string = ARGUMENTS.get("platform", "Linux")
-abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_abaqus_code_paths(abaqus_command)
 
 odb_flags = _settings._compiler_flags + f"-I{abaqus_code_include} -I{abaqus_installation} " + \
             f"-I{gpp_include} -I. -I{gpp_lib}"
