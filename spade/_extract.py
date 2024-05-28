@@ -54,8 +54,10 @@ def main(args: argparse.ArgumentParser) -> None:
                 stdout=scons_stdout
             )
         except subprocess.CalledProcessError as err:
-            print(str(err), file=sys.stderr)
-            raise RuntimeError("Could not compile with specified Abaqus version")
+            message = "Could not compile with specified Abaqus version"
+            if args.debug:
+                message += f": {str(err)}"
+            raise RuntimeError(message)
     full_command_line_arguments = str(spade_version) + cpp_wrapper(args)
 
     # Run c++ executable
@@ -67,7 +69,10 @@ def main(args: argparse.ArgumentParser) -> None:
     try:
         subprocess.run(command_line_arguments, env=current_env, check=True)
     except subprocess.CalledProcessError as err:
-        raise RuntimeError(str(err))
+        message = f"{_settings._project_name_short} extract failed in Abaqus ODB application"
+        if args.debug:
+            message += f": {str(err)}"
+        raise RuntimeError(message)
 
 
 def get_parser() -> argparse.ArgumentParser:

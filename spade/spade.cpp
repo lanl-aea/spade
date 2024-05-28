@@ -28,7 +28,6 @@ using namespace std;
 */
 int ABQmain(int argc, char **argv)
 {
-    perror("SPADE c++ ERROR");
     try {
         CmdLineArguments command_line_arguments(argc, argv);
         if (command_line_arguments.help()) { cout<<command_line_arguments.helpMessage(); return 0; }  // If help option used, print help and exit
