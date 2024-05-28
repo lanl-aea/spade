@@ -112,6 +112,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument('-f', '--force-overwrite', action='store_true', default=False,
                         help='Force the overwrite of the hdf5 file if it already exists')
     parser.add_argument('-d', '--debug', action='store_true', default=False, help=argparse.SUPPRESS)
+    parser.add_argument('--recompile', action='store_true', default=False, help=argparse.SUPPRESS)
     return parser
 
 
@@ -153,6 +154,8 @@ def cli_wrapper(args):
         full_command_line_arguments += " --force-overwrite"
     if args.debug:
         full_command_line_arguments += " --debug"
+    if args.recompile:
+        full_command_line_arguments += " --recompile"
 
 
 # Limit help() and 'from module import *' behavior to the module's public API

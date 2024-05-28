@@ -26,6 +26,13 @@ AddOption(
     action="store",
     help="Platform string to use in versioned spade executable name (default: '%default')"
 )
+AddOption(
+    "--recompile",
+    dest="recompile",
+    default=False,
+    action="store_true",
+    help="Recompile the spade executable. Implemented as an AlwaysBuild when True (default: '%default')"
+)
 
 # Project environment
 user_env = os.environ.copy()
@@ -33,11 +40,13 @@ env = Environment(
     ENV=user_env,
     CC=user_env["CC"],
     CXX=user_env["CXX"],
-    variant_dir_base=GetOption("abaqus_command"),
-    variant_dir_base=GetOption("platform_string")
+    abaqus_command=GetOption("abaqus_command"),
+    platform_string=GetOption("platform_string"),
+    recompile=GetOption("recompile")
 )
 abaqus_command = env["abaqus_command"]
 platform_string = env["platform_string"]
+recompile = env["recompile"]
 
 # Abaqus and system settings
 abaqus_version = _utilities.abaqus_official_version(abaqus_command)
@@ -75,6 +84,8 @@ env.Command(
     source=[f"{_settings._project_name_cpp}.cpp"] + objects,
     action=[abaqus_make_command, Move(target_name, _settings._project_name_cpp), Delete(build_artifacts)]
 )
+if recompile:
+    env.AlwaysBuild(target_name)
 
 # Write build abaqus environment file
 compile_cpp = f"{env['CXX']} {odb_flags}"
