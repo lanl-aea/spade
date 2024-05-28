@@ -14,10 +14,13 @@ Internal Changes
 - Force recompile during system tests (:issue:`25`, :merge:`22`). By `Kyle Brindley`_.
 - Match c++ CLI usage to implementation (:issue:`24`, :merge:`23`). By `Kyle Brindley`_.
 - Track Abaqus hotfix version (:merge:`24`). By `Kyle Brindley`_.
+- Exit with an error on bad c++ CLI options. Should not occur during production use because c++ CLI options are
+  constructed internally by Python wrapper (:issue:`28`, :merge:`26`). By `Kyle Brindley`_.
 
 Enhancements
 ============
 - Apply file overwrite option to both extracted H5 file and log file (:issue:`9`, :merge:`25`). By `Kyle Brindley`_.
+- Stream STDOUT and STDERR instead of printing at the end of execution (:issue:`28`, :merge:`26`). By `Kyle Brindley`_.
 
 *******************
 v0.3.0 (2024-05-24)
