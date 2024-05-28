@@ -31,10 +31,11 @@ dependencies = [
 ]
 
 [tool.setuptools]
+packages =[
+    "spade",
+    "spade.tests"
+]
 zip-safe = false
-
-[tool.setuptools.packages.find]
-where = ["."]
 
 [project.scripts]
 spade = "spade._main:main"
