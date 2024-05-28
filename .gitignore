@@ -31,3 +31,4 @@ ABQ*
 spade/spade_????_*
 spade/spade_????.HF*_*
 *.stdout
+spade/_version.py
