@@ -8,6 +8,10 @@ Changelog
 v0.3.1 (unreleased)
 *******************
 
+Internal Changes
+================
+- Limit Conda package files (:issue:`26`, :merge:`21`). By `Kyle Brindley`_.
+
 *******************
 v0.3.0 (2024-05-24)
 *******************
