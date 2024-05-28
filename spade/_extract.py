@@ -21,43 +21,6 @@ def main(args: argparse.ArgumentParser) -> None:
 
     :raises RuntimeError: If any subprocess returns a non-zero exit code or an Abaqus ODB file is not provided.
     """
-    full_command_line_arguments = ""
-    # File name inputs
-    if args.ODB_FILE:
-        full_command_line_arguments += f" {args.ODB_FILE}"
-    else:
-        raise RuntimeError("Abaqus output database (ODB) file not specified.")
-    if args.extracted_file:
-        full_command_line_arguments += f" --extracted-file {args.extracted_file}"
-    if args.log_file:
-        full_command_line_arguments += f" --log-file {args.extracted_file}"
-
-    # String inputs
-    # if args.extracted_file_type:
-    #    full_command_line_arguments += f" --extracted-file-type {args.extracted_file_type}"
-    if args.frame:
-        full_command_line_arguments += f" --frame {args.frame}"
-    if args.frame_value:
-        full_command_line_arguments += f" --frame-value {args.frame_value}"
-    if args.step:
-        full_command_line_arguments += f" --step {args.step}"
-    if args.field:
-        full_command_line_arguments += f" --field {args.field}"
-    if args.history:
-        full_command_line_arguments += f" --history {args.history}"
-    if args.history_region:
-        full_command_line_arguments += f" --history-region {args.history_region}"
-    if args.instance:
-        full_command_line_arguments += f" --instance {args.instance}"
-
-    # True or False inputs
-    if args.verbose:
-        full_command_line_arguments += " --verbose"
-    if args.force_overwrite:
-        full_command_line_arguments += " --force-overwrite"
-    if args.debug:
-        full_command_line_arguments += " --debug"
-
     try:
         abaqus_command = _utilities.find_command(args.abaqus_commands)
     except FileNotFoundError as err:
@@ -79,7 +42,7 @@ def main(args: argparse.ArgumentParser) -> None:
         if error_code:
             print(error_code.decode("utf-8"), file=sys.stderr)
             raise RuntimeError("Could not compile with specified Abaqus version")
-    full_command_line_arguments = str(spade_version) + full_command_line_arguments
+    full_command_line_arguments = str(spade_version) + cli_wrapper(args)
 
     try:
         current_env['LD_LIBRARY_PATH'] = f"{abaqus_bin}:{current_env['LD_LIBRARY_PATH']}"
@@ -148,6 +111,46 @@ def get_parser() -> argparse.ArgumentParser:
                         help='Force the overwrite of the hdf5 file if it already exists')
     parser.add_argument('-d', '--debug', action='store_true', default=False, help=argparse.SUPPRESS)
     return parser
+
+
+def cli_wrapper(args):
+    full_command_line_arguments = ""
+
+    # File name inputs
+    if args.ODB_FILE:
+        full_command_line_arguments += f" {args.ODB_FILE}"
+    else:
+        raise RuntimeError("Abaqus output database (ODB) file not specified.")
+    if args.extracted_file:
+        full_command_line_arguments += f" --extracted-file {args.extracted_file}"
+    if args.log_file:
+        full_command_line_arguments += f" --log-file {args.extracted_file}"
+
+    # String inputs
+    # if args.extracted_file_type:
+    #    full_command_line_arguments += f" --extracted-file-type {args.extracted_file_type}"
+    if args.frame:
+        full_command_line_arguments += f" --frame {args.frame}"
+    if args.frame_value:
+        full_command_line_arguments += f" --frame-value {args.frame_value}"
+    if args.step:
+        full_command_line_arguments += f" --step {args.step}"
+    if args.field:
+        full_command_line_arguments += f" --field {args.field}"
+    if args.history:
+        full_command_line_arguments += f" --history {args.history}"
+    if args.history_region:
+        full_command_line_arguments += f" --history-region {args.history_region}"
+    if args.instance:
+        full_command_line_arguments += f" --instance {args.instance}"
+
+    # True or False inputs
+    if args.verbose:
+        full_command_line_arguments += " --verbose"
+    if args.force_overwrite:
+        full_command_line_arguments += " --force-overwrite"
+    if args.debug:
+        full_command_line_arguments += " --debug"
 
 
 # Limit help() and 'from module import *' behavior to the module's public API
