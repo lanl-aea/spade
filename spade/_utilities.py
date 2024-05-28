@@ -65,7 +65,7 @@ def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
     :return: Abaqus official version string
     """
     try:
-        abaqus_version_check = subprocess.check_output([abaqus_command, 'information=version']).decode('utf-8')
+        abaqus_version = subprocess.check_output([abaqus_command, 'information=version']).decode('utf-8')
 
     except FileNotFoundError:
         raise RuntimeError(f"Abaqus command not found at: '{abaqus_command}'")
@@ -74,9 +74,12 @@ def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
         raise RuntimeError(f"Abaqus command failed. Command used: '{abaqus_command}'")
 
     # TODO: Figure out what exceptions are likely to raise and convert to RuntimeError
-    official_version_regex = r"(?i)official\s+version:\s+abaqus\s+\b(20)\d{2}\b"
-    official_version_match = re.search(official_version_regex, abaqus_version_check)
-    official_version = int(official_version_match[0].split(' ')[-1])
+    official_version_regex = r"(?i)official\s+version:\s+abaqus\s+(.*)"
+    official_version_match = re.search(official_version_regex, abaqus_version)
+    if official_version_match:
+        official_version = official_version_match.groups()[0]
+    else:
+        raise RuntimeError("Could not find Abaqus official version")
 
     return official_version
 
@@ -85,7 +88,7 @@ def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
 def character_delimited_list(sequence: typing.Iterable, character: str = " ") -> str:
     """Map a list of non-strings to a character delimited string
 
-    :param sequence: Sequence to turn into a character delimited string
+
     :param character: Character(s) to use when joining sequence elements
 
     :returns: string delimited by specified character
