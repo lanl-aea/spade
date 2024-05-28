@@ -47,8 +47,8 @@ requirements:
     - {{ compiler('cxx') }}
     - hdf5
     - scons
-    - sysroot_linux-64 >=2.17
-    - ld_impl_linux-64
+    - sysroot_linux-64 >=2.17  # [linux]
+    - ld_impl_linux-64         # [linux]
   host:
     - python {{ python }}
     - numpy
@@ -59,16 +59,16 @@ requirements:
     - {{ compiler('cxx') }}
     - hdf5
     - scons
-    - sysroot_linux-64 >=2.17
-    - ld_impl_linux-64
+    - sysroot_linux-64 >=2.17  # [linux]
+    - ld_impl_linux-64         # [linux]
   run:
     - python
     - {{ pin_compatible('numpy') }}
     - scons
     - {{ compiler('cxx') }}
     - hdf5
-    - sysroot_linux-64 >=2.17
-    - ld_impl_linux-64
+    - sysroot_linux-64 >=2.17  # [linux]
+    - ld_impl_linux-64         # [linux]
 
 test:
   requires:
