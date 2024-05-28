@@ -21,6 +21,7 @@ def main(args: argparse.ArgumentParser) -> None:
 
     :raises RuntimeError: If any subprocess returns a non-zero exit code or an Abaqus ODB file is not provided.
     """
+    # Setup environment
     try:
         abaqus_command = _utilities.find_command(args.abaqus_commands)
     except FileNotFoundError as err:
@@ -32,23 +33,25 @@ def main(args: argparse.ArgumentParser) -> None:
     platform_string = "_".join(f"{platform.system()} {platform.release()}".split())
     spade_version = source_directory / f"{_settings._project_name_short}_{abaqus_version}_{platform_string}"
     current_env = os.environ.copy()
+
+    # Compile c++ executable
     if not spade_version.exists() or args.recompile:
-        scons_options = f"--directory={source_directory.resolve()}"
         project_options = f"--abaqus-command={abaqus_command} " \
                           f"--platform-string={platform_string} "
         if args.recompile:
             project_options += " --recompile"
         # Compile necessary version
-        scons_command = shlex.split(f"scons {scons_options} {project_options}",
+        scons_command = shlex.split(f"scons {project_options}",
                                     posix=(os.name == "posix"))
         sub_process = subprocess.Popen(scons_command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE, env=current_env, cwd=f"{source_directory}")
+                                       stderr=subprocess.PIPE, env=current_env, cwd=source_directory)
         out, error_code = sub_process.communicate()
         if error_code:
             print(error_code.decode("utf-8"), file=sys.stderr)
             raise RuntimeError("Could not compile with specified Abaqus version")
     full_command_line_arguments = str(spade_version) + cpp_wrapper(args)
 
+    # Run c++ executable
     try:
         current_env["LD_LIBRARY_PATH"] = f"{abaqus_bin}:{current_env['LD_LIBRARY_PATH']}"
     except KeyError:
