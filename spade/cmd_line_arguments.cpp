@@ -32,6 +32,7 @@ using namespace std;
 CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
 
     int c;
+    bool found_unexpected_args = false;
     this->command_line = "";
     this->unexpected_args = "";
     this->verbose_output = false;
@@ -98,13 +99,11 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             }
 
             case 'o': {
-                string option_arg = string(optarg);
                 this->command_line_arguments["extracted-file"] = optarg;
                 break;
             }
 
             case 't': {
-                string option_arg = string(optarg);
                 this->command_line_arguments["extracted-file-type"] = optarg;
                 break;
             }
@@ -115,6 +114,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             }
 
             case '?': {
+                found_unexpected_args = true;
                 break;
             }
 
@@ -130,6 +130,10 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
     this->command_name = string(argv[0]);
     this->command_name = std::filesystem::path(this->command_name).filename().generic_string();
 
+    if (found_unexpected_args){
+        cerr << "Found unexpected arguments. Exiting with an error\n";
+        perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+    }
 
     if (!this->help_command) {
         // Check for odb-file and if it exists
