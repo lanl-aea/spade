@@ -248,7 +248,7 @@ string CmdLineArguments::helpMessage () {
     help_message += "\t-v,\t--verbose\tturn on verbose logging\n";
     help_message += "\t-o,\t--extracted-file\tname of extracted file (default: <odb file name>.h5)\n";
     help_message += "\t-t,\t--extracted-file-type\ttype of file to store extracted output (default: h5)\n";
-    help_message += "\t-f,\t--force-overwrite\tif extracted file already exists, then over write the file\n";
+    help_message += "\t-f,\t--force-overwrite\toverwrite existing extracted and log file(s)\n";
     help_message += "\t--step\tget information from specified step (default: all)\n";
     help_message += "\t--frame\tget information from specified frame (default: all)\n";
     help_message += "\t--frame-value\tget information from specified frame value (default: all)\n";

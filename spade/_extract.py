@@ -116,7 +116,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("-v", "--verbose", action="store_true", default=False,
                         help="Turn on verbose logging")
     parser.add_argument("-f", "--force-overwrite", action="store_true", default=False,
-                        help="Force the overwrite of the hdf5 file if it already exists")
+                        help="Overwrite the extracted and log file(s)")
     parser.add_argument("-d", "--debug", action="store_true", default=False, help=argparse.SUPPRESS)
     parser.add_argument("--recompile", action="store_true", default=False, help=argparse.SUPPRESS)
     return parser
