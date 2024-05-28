@@ -7,7 +7,7 @@ _project_name = "Serialized Proprietary Abaqus Data Extractor"
 _project_description = "Tool for extracting data from an Abaqus output database (odb) file into a hierarchical data " \
                        "format (hdf5) file"
 _project_name_short = "spade"
-_project_name_cpp = "spade_cpp"
+_project_name_cpp = "spade"
 _project_source = "src"
 _abaqus_environment_file = "abaqus_v6.env"
 _additional_abaqus_prefix = "SIMULIA/EstProducts/"
