@@ -1,9 +1,6 @@
 import os
-import re
 import sys
 import shlex
-import shutil
-import typing
 import pathlib
 import argparse
 import platform
@@ -14,60 +11,6 @@ from spade import _utilities
 
 
 _exclude_from_namespace = set(globals().keys())
-
-
-# Comes from WAVES internal utilities. Probably worth keeping a project specific version here.
-def search_commands(options: typing.Iterable[str]) -> typing.Optional[str]:
-    """Return the first found command in the list of options. Return None if none are found.
-
-    :param list options: executable path(s) to test
-
-    :returns: command absolute path
-    """
-    command_search = (shutil.which(command) for command in options)
-    command_abspath = next((command for command in command_search if command is not None), None)
-    return command_abspath
-
-
-# Comes from WAVES internal utilities. Probably worth keeping a project specific version here.
-def find_command(options: typing.Iterable[str]) -> str:
-    """Return first found command in list of options.
-
-    :param options: alternate command options
-
-    :returns: command absolute path
-
-    :raises RuntimeError: If no matching command is found
-    """
-    command_abspath = search_commands(options)
-    if command_abspath is None:
-        raise RuntimeError("Could not find any executable on PATH in: "
-                           f"{_utilities.character_delimited_string(options)}")
-    return command_abspath
-
-
-def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
-    """Return 'official version' string from abaqus_command 'information=version"
-
-    :param str abaqus_command: string value used to call Abaqus via subprocess
-
-    :return: Abaqus official version string
-    """
-    try:
-        abaqus_version_check = subprocess.check_output([abaqus_command, 'information=version']).decode('utf-8')
-
-    except FileNotFoundError:
-        raise RuntimeError(f"Abaqus command not found at: '{abaqus_command}'")
-
-    except OSError:
-        raise RuntimeError(f"Abaqus command failed. Command used: '{abaqus_command}'")
-
-    # TODO: Figure out what exceptions are likely to raise and convert to RuntimeError
-    official_version_regex = r"(?i)official\s+version:\s+abaqus\s+\b(20)\d{2}\b"
-    official_version_match = re.search(official_version_regex, abaqus_version_check)
-    official_version = int(official_version_match[0].split(' ')[-1])
-
-    return official_version
 
 
 # TODO: full API
@@ -115,8 +58,10 @@ def main(args: argparse.ArgumentParser) -> None:
     if args.debug:
         full_command_line_arguments += " --debug"
 
-    abaqus_command = find_command(args.abaqus_commands)
-    abaqus_version = abaqus_official_version(abaqus_command)
+    try:
+        abaqus_command = _utilities.find_command(args.abaqus_commands)
+    except FileNotFoundError as err:
+        raise RuntimeError(str(err))
     _, abaqus_bin, _ = _utilities.return_abaqus_code_paths(abaqus_command)
     source_directory = pathlib.Path(__file__).parent
     platform_string = "_".join(f"{platform.system()} {platform.release()}".split())
@@ -124,8 +69,8 @@ def main(args: argparse.ArgumentParser) -> None:
     current_env = os.environ.copy()
     if not spade_version.exists():
         # Compile necessary version
-        scons_command = shlex.split(f"scons abaqus_command={abaqus_command} "
-                                    f"abaqus_version={abaqus_version} platform={platform_string} "
+        scons_command = shlex.split(f"scons --abaqus-command={abaqus_command} "
+                                    f"--platform-string={platform_string} "
                                     f"--directory={source_directory.resolve()}",
                                     posix=(os.name == 'posix'))
         sub_process = subprocess.Popen(scons_command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
