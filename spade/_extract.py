@@ -27,10 +27,12 @@ def main(args: argparse.ArgumentParser) -> None:
         raise RuntimeError(str(err))
     _, abaqus_bin, _ = _utilities.return_abaqus_code_paths(abaqus_command)
     source_directory = pathlib.Path(__file__).parent
+    # TODO: Construct spade executable name only once
+    abaqus_version = _utilities.abaqus_official_version(abaqus_command)
     platform_string = "_".join(f"{platform.system()} {platform.release()}".split())
     spade_version = source_directory / f"{_settings._project_name_short}_{abaqus_version}_{platform_string}"
     current_env = os.environ.copy()
-    if not spade_version.exists():
+    if not spade_version.exists() or args.recompile:
         # Compile necessary version
         scons_command = shlex.split(f"scons --abaqus-command={abaqus_command} "
                                     f"--platform-string={platform_string} "

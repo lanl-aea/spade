@@ -40,7 +40,7 @@ abaqus_command = env["abaqus_command"]
 platform_string = env["platform_string"]
 
 # Abaqus and system settings
-abaqus_version = abaqus_official_version(abaqus_command)
+abaqus_version = _utilities.abaqus_official_version(abaqus_command)
 abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_abaqus_code_paths(abaqus_command)
 
 # Compiler options and settings
@@ -67,6 +67,7 @@ build_artifacts.append(f"abaqus_v6.env")
 # Need to remove .o and abaqus_v6.env files so different versions don't get accidentally linked
 
 # Build executable with Abaqus make
+# TODO: Construct spade executable name only once
 target_name = f"{_settings._project_name_short}_{abaqus_version}_{platform_string}"
 abaqus_make_command = f"{abaqus_command} make job={_settings._project_name_cpp}.cpp"
 env.Command(
