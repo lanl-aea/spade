@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-
 import re
 import sys
 import typing
@@ -57,6 +56,30 @@ def return_abaqus_code_paths(abaqus_program, code_directory="code"):
     return abaqus_installation, abaqus_code_bin, abaqus_code_include
 
 
+def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
+    """Return 'official version' string from abaqus_command 'information=version"
+
+    :param str abaqus_command: string value used to call Abaqus via subprocess
+
+    :return: Abaqus official version string
+    """
+    try:
+        abaqus_version_check = subprocess.check_output([abaqus_command, 'information=version']).decode('utf-8')
+
+    except FileNotFoundError:
+        raise RuntimeError(f"Abaqus command not found at: '{abaqus_command}'")
+
+    except OSError:
+        raise RuntimeError(f"Abaqus command failed. Command used: '{abaqus_command}'")
+
+    # TODO: Figure out what exceptions are likely to raise and convert to RuntimeError
+    official_version_regex = r"(?i)official\s+version:\s+abaqus\s+\b(20)\d{2}\b"
+    official_version_match = re.search(official_version_regex, abaqus_version_check)
+    official_version = int(official_version_match[0].split(' ')[-1])
+
+    return official_version
+
+
 # Ripped from Turbo-Turtle. Probably worth keeping a project specific version.
 def character_delimited_list(sequence: typing.Iterable, character: str = " ") -> str:
     """Map a list of non-strings to a character delimited string
@@ -67,3 +90,33 @@ def character_delimited_list(sequence: typing.Iterable, character: str = " ") ->
     :returns: string delimited by specified character
     """
     return character.join(map(str, sequence))
+
+
+# Comes from WAVES internal utilities. Probably worth keeping a project specific version here.
+def search_commands(options: typing.Iterable[str]) -> typing.Optional[str]:
+    """Return the first found command in the list of options. Return None if none are found.
+
+    :param list options: executable path(s) to test
+
+    :returns: command absolute path
+    """
+    command_search = (shutil.which(command) for command in options)
+    command_abspath = next((command for command in command_search if command is not None), None)
+    return command_abspath
+
+
+# Comes from WAVES internal utilities. Probably worth keeping a project specific version here.
+def find_command(options: typing.Iterable[str]) -> str:
+    """Return first found command in list of options.
+
+    :param options: alternate command options
+
+    :returns: command absolute path
+
+    :raises FileNotFoundError: If no matching command is found
+    """
+    command_abspath = search_commands(options)
+    if command_abspath is None:
+        raise FileNotFoundError("Could not find any executable on PATH in: "
+                                f"{_utilities.character_delimited_string(options)}")
+    return command_abspath
