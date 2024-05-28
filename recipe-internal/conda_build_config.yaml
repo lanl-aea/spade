@@ -1,6 +1,9 @@
 libstdcxx:  # [linux]
   - 12      # [linux]
   - 13      # [linux]
+hdf5:
+  - 1.12.2
+  - 1.14.3
 python:
   - 3.10
   - 3.11
