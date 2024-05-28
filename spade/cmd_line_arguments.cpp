@@ -161,17 +161,17 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         if (std::filesystem::exists(file_path)) {
             if (!this->force_overwrite) {
                 cerr << this->command_line_arguments["extracted-file"] << " already exists. Appending time stamp to extracted file.\n";
-                this->command_line_arguments["extracted-file"] = base_file_name + "_" + this->start_time + "." + this->command_line_arguments["extracted-file-type"]; 
+                this->command_line_arguments["extracted-file"] = base_file_name + "_" + this->start_time + "." + this->command_line_arguments["extracted-file-type"];
             } else {
                 if ( remove(this->command_line_arguments["extracted-file"].c_str()) != 0 ) {
                     cerr << "Cannot delete: " << this->command_line_arguments["extracted-file"] << "\n";
                     perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
                 }
             }
-        } 
+        }
         // Create log file name if not provided
         if (this->command_line_arguments["log-file"].empty()) {
-            this->command_line_arguments["log-file"] = base_file_name + ".spade.log"; 
+            this->command_line_arguments["log-file"] = base_file_name + ".spade.log";
         }
         // Check if log file already exists
         std::filesystem::path log_file = this->command_line_arguments["log-file"];
@@ -215,7 +215,7 @@ string CmdLineArguments::verboseArguments () {
     arguments += "\tinput file: " + this->command_line_arguments["odb-file"] + "\n";
     arguments += "\textracted file: " + this->command_line_arguments["extracted-file"] + "\n";
     arguments += "\textracted file type: " + this->command_line_arguments["extracted-file-type"] + "\n";
-    if (this->verbose_output) { arguments += "\tverbose: True\n"; } else { arguments += "\tverbose: False\n"; }   
+    if (this->verbose_output) { arguments += "\tverbose: True\n"; } else { arguments += "\tverbose: False\n"; }
     arguments += "\tstep: " + this->command_line_arguments["step"] + "\n";
     arguments += "\tframe: " + this->command_line_arguments["frame"] + "\n";
     arguments += "\tframe value: " + this->command_line_arguments["frame-value"] + "\n";
