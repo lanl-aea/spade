@@ -57,18 +57,10 @@ def main(args: argparse.ArgumentParser) -> None:
     except KeyError:
         current_env["LD_LIBRARY_PATH"] = f"{abaqus_bin}"
     command_line_arguments = shlex.split(full_command_line_arguments, posix=(os.name == "posix"))
-    sub_process = subprocess.Popen(command_line_arguments, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE, env=current_env)
-    out, error_code = sub_process.communicate()
-    if out:
-        print(out.decode("utf-8"))
-    if error_code:
-        print(error_code.decode("utf-8"), file=sys.stderr)
-    return_code = sub_process.returncode
-
-    # TODO: Sort out which error message return value should be put in the message
-    if return_code != 0:
-        raise RuntimeError(return_code)
+    try:
+        subprocess.run(command_line_arguments, env=current_env, check=True)
+    except subprocess.CalledProcessError as err:
+        raise RuntimeError(str(err))
 
 
 def get_parser() -> argparse.ArgumentParser:
