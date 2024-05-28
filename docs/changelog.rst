@@ -15,6 +15,10 @@ Internal Changes
 - Match c++ CLI usage to implementation (:issue:`24`, :merge:`23`). By `Kyle Brindley`_.
 - Track Abaqus hotfix version (:merge:`24`). By `Kyle Brindley`_.
 
+Enhancements
+============
+- Apply file overwrite option to both extracted H5 file and log file (:issue:`9`, :merge:`25`). By `Kyle Brindley`_.
+
 *******************
 v0.3.0 (2024-05-24)
 *******************
