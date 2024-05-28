@@ -1,5 +1,5 @@
 #if (defined(HP) && (! defined(HKS_HPUXI)))
-#include <iostream.h>                                                           
+#include <iostream.h>
 #else
 #include <iostream>
 
@@ -221,7 +221,7 @@ void SpadeObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArguments 
     }
 
     odb_PartRepository& parts = odb.parts();
-    odb_PartRepositoryIT parts_iter(parts);    
+    odb_PartRepositoryIT parts_iter(parts);
     for (parts_iter.first(); !parts_iter.isDone(); parts_iter.next()) {
         log_file.logVerbose("Starting to read part: " + string(parts_iter.currentKey().CStr()));
         odb_Part part = parts[parts_iter.currentKey()];
@@ -237,7 +237,7 @@ void SpadeObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArguments 
     log_file.logVerbose("Reading steps.");
     odb_StepRepository step_repository = odb.steps();
     odb_StepRepositoryIT step_iter (step_repository);
-    for (step_iter.first(); !step_iter.isDone(); step_iter.next()) 
+    for (step_iter.first(); !step_iter.isDone(); step_iter.next())
     {
         const odb_Step& current_step = step_repository[step_iter.currentKey()];
         process_step(current_step, odb, log_file, command_line_arguments);
@@ -335,7 +335,7 @@ element_type* SpadeObject::process_element(const odb_Element &element, Logging &
     } catch (const std::out_of_range& oor) {
         new_element.type = element.type().CStr();
         int element_connectivity_size;
-        const int* const connectivity = element.connectivity(element_connectivity_size); 
+        const int* const connectivity = element.connectivity(element_connectivity_size);
         for (int i=0; i < element_connectivity_size; i++) {
             new_element.connectivity.push_back(connectivity[i]);
         }
@@ -362,7 +362,7 @@ set_type SpadeObject::process_set (const odb_Set &set, Logging &log_file) {
 
     odb_SequenceString names = set.instanceNames();
     for (int i=0; i<names.size(); i++) {
-        odb_String name = names.constGet(i);        
+        odb_String name = names.constGet(i);
         log_file.logDebug("\t\t\tinstance: " + string(name.CStr()));
         new_set.instanceNames.push_back(name.CStr());
         if (new_set.type == "Node Set") {
@@ -391,7 +391,7 @@ set_type SpadeObject::process_set (const odb_Set &set, Logging &log_file) {
                     new_set.nodes.push_back(process_node(set_nodes.node(n), log_file));
                 }
             }
-	    
+
         } else {
             log_file.logWarning("Unknown set type.");
         }
@@ -451,7 +451,7 @@ void SpadeObject::process_interactions (const odb_InteractionRepository &interac
 
             contact_explicit.useReverseDatumAxis = (ssce.useReverseDatumAxis()) ? "true" : "false";
             contact_explicit.contactControls = ssce.contactControls().CStr();
-  
+
             odb_Set main = ssce.master();
             contact_explicit.main = process_set(main, log_file);
             odb_Set secondary = ssce.slave();
@@ -546,7 +546,7 @@ coupling_type SpadeObject::process_coupling (const odb_Coupling &coupling, Loggi
     {
         new_coupling.surface = process_set(coupling.surface(), log_file);
         new_coupling.refPoint = process_set(coupling.refPoint(), log_file);
-           
+
         new_coupling.couplingType = coupling.couplingType().cStr();
         new_coupling.weightingMethod = coupling.weightingMethod().cStr();
         new_coupling.influenceRadius = coupling.influenceRadius();
@@ -670,7 +670,7 @@ datum_csys_type SpadeObject::process_csys(const odb_DatumCsys &datum_csys, Loggi
 analytic_surface_segment_type SpadeObject::process_segment (const odb_AnalyticSurfaceSegment &segment, Logging &log_file) {
     analytic_surface_segment_type new_segment;
     new_segment.type = segment.type().CStr();
-    /*  
+    /*
     switch(segment.type()) {  // Documentation says these enum types exist, but they are not found in odb_Enum.h and gives compiler error
         case odb_Enum::CIRCLE: new_segment.column_size = 2; break;
         case odb_Enum::PARABOLA: new_segment.column_size = 2; break;
@@ -949,9 +949,9 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
     double* local_coordinate_system_double = 0;
 
     new_field_bulk_data.numberOfElements = 0;
-    new_field_bulk_data.numberOfElements = field_bulk_data.numberOfElements();                
+    new_field_bulk_data.numberOfElements = field_bulk_data.numberOfElements();
     new_field_bulk_data.valuesPerElement = 0;
-    new_field_bulk_data.valuesPerElement = field_bulk_data.valuesPerElement();                
+    new_field_bulk_data.valuesPerElement = field_bulk_data.valuesPerElement();
     int* element_labels = field_bulk_data.elementLabels();
     float* bulk_mises = field_bulk_data.mises();
     new_field_bulk_data.baseElementType = ""; // initializing to empty string
@@ -973,23 +973,23 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
         if (invariants.isMember(odb_Enum::MISES)) {
             new_field_bulk_data.mises.insert(new_field_bulk_data.mises.end(), &bulk_mises[0], &bulk_mises[new_field_bulk_data.length]);
         }
-        if (integration_points) { 
+        if (integration_points) {
             new_field_bulk_data.integrationPoints.insert(new_field_bulk_data.integrationPoints.end(), &integration_points[0], &integration_points[new_field_bulk_data.length]);
         }
-        if (faces) { 
+        if (faces) {
             new_field_bulk_data.emptyFaces = false;
             int current_position = 0;
             for (int element=0; element<new_field_bulk_data.numberOfElements; ++element) {
                 vector<string> current_faces;
                 for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
-                    current_faces.push_back(this->faces_enum_strings[faces[current_position]]); 
+                    current_faces.push_back(this->faces_enum_strings[faces[current_position]]);
                     new_field_bulk_data.emptyFaces = false;
                 }
                 new_field_bulk_data.faces.push_back(current_faces);
             }
         }
     } else {  // Nodes
-        int* node_labels = field_bulk_data.nodeLabels();	
+        int* node_labels = field_bulk_data.nodeLabels();
         new_field_bulk_data.nodeLabels.insert(new_field_bulk_data.nodeLabels.end(), &node_labels[0], &node_labels[new_field_bulk_data.length]);
     }
 
@@ -1078,11 +1078,11 @@ field_output_type SpadeObject::process_field_output (const odb_FieldOutput &fiel
             const odb_FieldValue& field_value = field_values.constGet(i);
             field_value_type new_field_value = process_field_values(field_value, field_output.validInvariants(), log_file, command_line_arguments);
             if (!new_field_value.empty) {
-                if (new_field_value.elementLabel != -1) { 
-                    new_field_output.elementValues[new_field_value.elementLabel] = new_field_value; 
+                if (new_field_value.elementLabel != -1) {
+                    new_field_output.elementValues[new_field_value.elementLabel] = new_field_value;
                     new_field_output.element_values_empty = false;
                 }
-                if (new_field_value.nodeLabel != -1) { 
+                if (new_field_value.nodeLabel != -1) {
                     new_field_output.nodeValues[new_field_value.nodeLabel] = new_field_value;
                     new_field_output.node_values_empty = false;
                 }
@@ -1091,7 +1091,7 @@ field_output_type SpadeObject::process_field_output (const odb_FieldOutput &fiel
     }
     new_field_output.max_length = 0;
     new_field_output.max_width = 0;
-    const odb_SequenceFieldBulkData& field_bulk_values = field_output.bulkDataBlocks();	
+    const odb_SequenceFieldBulkData& field_bulk_values = field_output.bulkDataBlocks();
     new_field_output.isComplex = field_output.isComplex();
     for (int i=0; i<field_bulk_values.size(); i++) {  // There seems to be a "block" per element type and if the element type is the same per section point
                                                       // e.g. In one odb the "E" field values had three "blocks" One for element type B23 (section point 1)
@@ -1140,7 +1140,7 @@ frame_type SpadeObject::process_frame (const odb_Frame &frame, Logging &log_file
     new_frame.max_width = 0;
     int field_output_count = 0;
     for (field_outputs_iterator.first(); !field_outputs_iterator.isDone(); field_outputs_iterator.next()) {
-        const odb_FieldOutput& field = field_outputs[field_outputs_iterator.currentKey()]; 
+        const odb_FieldOutput& field = field_outputs[field_outputs_iterator.currentKey()];
         new_frame.fieldOutputs.push_back(process_field_output(field, log_file, command_line_arguments));
         if (new_frame.fieldOutputs[field_output_count].max_width > new_frame.max_width) {  new_frame.max_width = new_frame.fieldOutputs[field_output_count].max_width; }
         if (new_frame.fieldOutputs[field_output_count].max_length > new_frame.max_length) {  new_frame.max_length = new_frame.fieldOutputs[field_output_count].max_length; }
@@ -1151,7 +1151,7 @@ frame_type SpadeObject::process_frame (const odb_Frame &frame, Logging &log_file
 
 history_point_type SpadeObject::process_history_point (const odb_HistoryPoint history_point, Logging &log_file) {
     history_point_type new_history_point;
-    try { 
+    try {
         new_history_point.element = process_element(history_point.element(), log_file);
         new_history_point.hasElement = true;
     } catch(odb_BaseException& exc) { new_history_point.hasElement = false; }
@@ -1298,7 +1298,7 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, Logging &log_
     const odb_HistoryRegionRepository& history_regions = step.historyRegions();
     odb_HistoryRegionRepositoryIT history_region_iterator (history_regions);
     log_file.logVerbose("Reading history regions.");
-    for (history_region_iterator.first(); !history_region_iterator.isDone(); history_region_iterator.next()) 
+    for (history_region_iterator.first(); !history_region_iterator.isDone(); history_region_iterator.next())
     {
         const odb_HistoryRegion& history_region = history_region_iterator.currentValue();
         if ((command_line_arguments["history-region"] == "all") || (command_line_arguments["history-region"] == history_region.name().CStr())) {
@@ -1321,8 +1321,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
     try {
         h5_file_pointer = new H5::H5File(FILE_NAME, H5F_ACC_TRUNC);
     } catch(const H5::FileIException&) {
-        cerr << "Issue opening file: " << command_line_arguments["extracted-file"] << "\n";
-        perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+        throw std::runtime_error("Issue opening file: " + command_line_arguments["extracted-file"]);
     }
     H5::H5File h5_file = *h5_file_pointer;
 
@@ -2141,7 +2140,7 @@ void SpadeObject::write_integer_2D_data(const H5::Group &group, const string &da
     herr_t status;
     hsize_t dimensions[] = {row_size, column_size};
     hid_t dataset, datatype, dataspace;
-    dataspace = H5Screate_simple(2, dimensions, NULL); 
+    dataspace = H5Screate_simple(2, dimensions, NULL);
 
     datatype = H5Tcopy(H5T_NATIVE_INT);
     status = H5Tset_order(datatype, H5T_ORDER_LE);
@@ -2215,7 +2214,7 @@ void SpadeObject::write_float_2D_data(const H5::Group &group, const string &data
     herr_t status;
     hsize_t dimensions[] = {row_size, column_size};
     hid_t dataset, datatype, dataspace;
-    dataspace = H5Screate_simple(2, dimensions, NULL); 
+    dataspace = H5Screate_simple(2, dimensions, NULL);
 
     datatype = H5Tcopy(H5T_NATIVE_FLOAT);
     status = H5Tset_order(datatype, H5T_ORDER_LE);
@@ -2231,7 +2230,7 @@ void SpadeObject::write_float_3D_data(const H5::Group &group, const string &data
     herr_t status;
     hid_t dataset, datatype, dataspace;
     hsize_t dimensions[] = {aisle_size, row_size, column_size};
-    dataspace = H5Screate_simple(3, dimensions, NULL); 
+    dataspace = H5Screate_simple(3, dimensions, NULL);
 
     datatype = H5Tcopy(H5T_NATIVE_FLOAT);
     status = H5Tset_order(datatype, H5T_ORDER_LE);
@@ -2305,7 +2304,7 @@ void SpadeObject::write_double_2D_data(const H5::Group &group, const string &dat
     herr_t status;
     hsize_t dimensions[] = {row_size, column_size};
     hid_t dataset, datatype, dataspace;
-    dataspace = H5Screate_simple(2, dimensions, NULL); 
+    dataspace = H5Screate_simple(2, dimensions, NULL);
 
     datatype = H5Tcopy(H5T_NATIVE_DOUBLE);
     status = H5Tset_order(datatype, H5T_ORDER_LE);
@@ -2321,7 +2320,7 @@ void SpadeObject::write_double_3D_data(const H5::Group &group, const string &dat
     herr_t status;
     hsize_t dimensions[] = {aisle_size, row_size, column_size};
     hid_t dataset, datatype, dataspace;
-    dataspace = H5Screate_simple(3, dimensions, NULL); 
+    dataspace = H5Screate_simple(3, dimensions, NULL);
 
     datatype = H5Tcopy(H5T_NATIVE_DOUBLE);
     status = H5Tset_order(datatype, H5T_ORDER_LE);

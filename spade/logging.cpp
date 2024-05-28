@@ -15,7 +15,6 @@ Logging::Logging (string const &log_file_name, bool const &log_verbose, bool con
     this->log_file.open(log_file_name.c_str());
     if (!this->log_file.is_open()) {
         cerr << "Couldn't open: " << log_file_name << " Log messages will be printed to stdout." << endl;
-        perror("");
         this->output_stream = &std::cout;
     } else { this->output_stream = &this->log_file; }
     time_t now = time(0); // current date/time based on current system
@@ -26,7 +25,7 @@ Logging::Logging (string const &log_file_name, bool const &log_verbose, bool con
 }
 Logging::~Logging () {
 
-    time_t now = time(0); 
+    time_t now = time(0);
     char* dt = ctime(&now);
     *this->output_stream << "Finished at: " << dt << endl;
     if (this->log_file.is_open()) { this->log_file.close(); }
@@ -39,9 +38,9 @@ void Logging::logDebug (string const &output) { if (this->log_debug) { cout << o
 
 void Logging::logErrorAndExit (string const &output) {
     *this->output_stream << output << endl;
-    time_t now = time(0); 
+    time_t now = time(0);
     char* dt = ctime(&now);
     *this->output_stream << "Exited with error at: " << dt << endl;
     if (this->log_file.is_open()) { this->log_file.close(); }
-    perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+    throw std::runtime_error(output);
 }
