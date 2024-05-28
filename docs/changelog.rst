@@ -12,6 +12,7 @@ Internal Changes
 ================
 - Limit Conda package files (:issue:`26`, :merge:`21`). By `Kyle Brindley`_.
 - Force recompile during system tests (:issue:`25`, :merge:`22`). By `Kyle Brindley`_.
+- Match c++ CLI usage to implementation (:issue:`24`, :merge:`23`). By `Kyle Brindley`_.
 
 *******************
 v0.3.0 (2024-05-24)
