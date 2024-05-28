@@ -88,7 +88,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("-e", "--extracted-file", type=str,
                         help="Name of extracted file. (default: <ODB file name>.h5)")
     parser.add_argument("-l", "--log-file", type=str,
-                        help=f"Name of log file. (default: <ODB file name>.{_settings._project_name_short}.h5)")
+                        help=f"Name of log file. (default: <ODB file name>.{_settings._project_name_short}.log)")
 
     parser.add_argument("--frame", type=str, default="all",
                         help="Get information from the specified frame (default: %(default)s)")
