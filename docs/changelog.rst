@@ -8,6 +8,10 @@ Changelog
 v0.3.1 (unreleased)
 *******************
 
+Bug fixes
+=========
+- Return a non-zero exit code on errors in internal c++ implementation (:issue:`28`, :merge:`26`). By `Kyle Brindley`_.
+
 Internal Changes
 ================
 - Limit Conda package files (:issue:`26`, :merge:`21`). By `Kyle Brindley`_.
