@@ -176,12 +176,17 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         // Check if log file already exists
         std::filesystem::path log_file = this->command_line_arguments["log-file"];
         if (std::filesystem::exists(log_file)) {
-            // TODO: Overwrite log file if ``force_overwrite`` is requested
-            // https://re-git.lanl.gov/aea/python-projects/spade/-/issues/9
-            cerr << this->command_line_arguments["log-file"] << " already exists. Appending time stamp to log file.\n";
-            string log_extension = log_file.extension();
-            string log_base_name = log_file.replace_extension("").generic_string();
-            this->command_line_arguments["log-file"] = log_base_name + "_" + this->start_time + log_extension;
+            if (!this->force_overwrite) {
+                cerr << this->command_line_arguments["log-file"] << " already exists. Appending time stamp to log file.\n";
+                string log_extension = log_file.extension();
+                string log_base_name = log_file.replace_extension("").generic_string();
+                this->command_line_arguments["log-file"] = log_base_name + "_" + this->start_time + log_extension;
+            } else {
+                if ( remove(this->command_line_arguments["log-file"].c_str()) != 0 ) {
+                    cerr << "Cannot delete: " << this->command_line_arguments["log-file"] << "\n";
+                    perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+                }
+            }
         }
 
         // TODO: fix default values
