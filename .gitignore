@@ -29,4 +29,5 @@ ABQ*
 *.jou
 .coverage
 spade/spade_????_*
+spade/spade_????.HF*_*
 *.stdout
