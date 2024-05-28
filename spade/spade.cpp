@@ -28,6 +28,7 @@ using namespace std;
 */
 int ABQmain(int argc, char **argv)
 {
+    perror("SPADE c++ ERROR");
     try {
         CmdLineArguments command_line_arguments(argc, argv);
         if (command_line_arguments.help()) { cout<<command_line_arguments.helpMessage(); return 0; }  // If help option used, print help and exit
@@ -38,7 +39,8 @@ int ABQmain(int argc, char **argv)
         SpadeObject spade_object(command_line_arguments, log_file);
         log_file.logDebug("OdbExtractObject object successfully created.");
         log_file.logVerbose("Successful completion of " + command_line_arguments.commandName());
-    } catch (const std::exception) {
+    } catch (const std::runtime_error &err) {
+        cerr << err.what() << std::endl;
         return EXIT_FAILURE;
     }
 

@@ -131,19 +131,16 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
     this->command_name = std::filesystem::path(this->command_name).filename().generic_string();
 
     if (found_unexpected_args){
-        cerr << "Found unexpected arguments\n";
-        perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+        throw std::runtime_error("Found unexpected arguments");
     }
 
     if (!this->help_command) {
         // Check for odb-file and if it exists
         if (this->command_line_arguments["odb-file"].empty()) {
-            cerr << "ODB file not provided on command line.\n";
-            perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+            throw std::runtime_error("ODB file not provided on command line");
         }
         if (!std::filesystem::exists(std::filesystem::path(this->command_line_arguments["odb-file"]))) {
-            cerr << this->command_line_arguments["odb-file"] << " does not exist.\n";
-            perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+            throw std::runtime_error(this->command_line_arguments["odb-file"] + " does not exist");
         }
 
         // Handle extracted file type
@@ -157,19 +154,17 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         std::filesystem::path file_path = this->command_line_arguments["extracted-file"];
         std::filesystem::perms directory_permissions = std::filesystem::status(file_path.parent_path()).permissions();
         if (std::filesystem::perms::none == (std::filesystem::perms::owner_write & directory_permissions)) {  // If parent path is not writable, exit with error
-            cerr << "Do not have write permission for: " << file_path.parent_path() << '\n';
-            perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+            throw std::runtime_error("Do not have write permission for: " + string(file_path.parent_path()));
         }
 
         // Check if extracted file already exists
         if (std::filesystem::exists(file_path)) {
             if (!this->force_overwrite) {
-                cerr << this->command_line_arguments["extracted-file"] << " already exists. Appending time stamp to extracted file.\n";
+                cerr << this->command_line_arguments["extracted-file"] + " already exists. Appending time stamp to extracted file";
                 this->command_line_arguments["extracted-file"] = base_file_name + "_" + this->start_time + "." + this->command_line_arguments["extracted-file-type"];
             } else {
                 if ( remove(this->command_line_arguments["extracted-file"].c_str()) != 0 ) {
-                    cerr << "Cannot delete: " << this->command_line_arguments["extracted-file"] << "\n";
-                    perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+                    throw std::runtime_error("Cannot delete: " + this->command_line_arguments["extracted-file"]);
                 }
             }
         }
@@ -181,14 +176,13 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         std::filesystem::path log_file = this->command_line_arguments["log-file"];
         if (std::filesystem::exists(log_file)) {
             if (!this->force_overwrite) {
-                cerr << this->command_line_arguments["log-file"] << " already exists. Appending time stamp to log file.\n";
+                cerr << this->command_line_arguments["log-file"] << " already exists. Appending time stamp to log file";
                 string log_extension = log_file.extension();
                 string log_base_name = log_file.replace_extension("").generic_string();
                 this->command_line_arguments["log-file"] = log_base_name + "_" + this->start_time + log_extension;
             } else {
                 if ( remove(this->command_line_arguments["log-file"].c_str()) != 0 ) {
-                    cerr << "Cannot delete: " << this->command_line_arguments["log-file"] << "\n";
-                    perror(""); throw std::exception(); std::terminate(); //print error, throw exception and terminate
+                    throw std::runtime_error("Cannot delete: " + this->command_line_arguments["log-file"]);
                 }
             }
         }
