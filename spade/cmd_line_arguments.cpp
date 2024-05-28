@@ -54,20 +54,20 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
     while (1) {
         int option_index = 0;
         static struct option long_options[] = {
-            {"help",             no_argument,       0,  'h'},
+            {"help",                no_argument,       0,  'h'},
             {"extracted-file",      required_argument, 0,  'o'},
             {"extracted-file-type", required_argument, 0,  't'},
-            {"verbose",          no_argument,       0,  'v'},
-            {"debug",            no_argument,       0,  'd'},
-            {"force-overwrite",  no_argument,       0,  'f'},
-            {"step",             required_argument, 0,  0 },
-            {"frame",            required_argument, 0,  0 },
-            {"frame-value",      required_argument, 0,  0 },
-            {"field",            required_argument, 0,  0 },
-            {"history",          required_argument, 0,  0 },
-            {"history-region",   required_argument, 0,  0 },
-            {"instance",         required_argument, 0,  0 },
-            {"log-file",         required_argument, 0,  0 },
+            {"verbose",             no_argument,       0,  'v'},
+            {"debug",               no_argument,       0,  'd'},
+            {"force-overwrite",     no_argument,       0,  'f'},
+            {"step",                required_argument, 0,  0 },
+            {"frame",               required_argument, 0,  0 },
+            {"frame-value",         required_argument, 0,  0 },
+            {"field",               required_argument, 0,  0 },
+            {"history",             required_argument, 0,  0 },
+            {"history-region",      required_argument, 0,  0 },
+            {"instance",            required_argument, 0,  0 },
+            {"log-file",            required_argument, 0,  0 },
             {0,0,0,0 }
         };
 
