@@ -40,14 +40,21 @@ def main(args: argparse.ArgumentParser) -> None:
                           f"--platform-string={platform_string} "
         if args.recompile:
             project_options += " --recompile"
-        # Compile necessary version
-        scons_command = shlex.split(f"scons {project_options}",
-                                    posix=(os.name == "posix"))
-        sub_process = subprocess.Popen(scons_command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE, env=current_env, cwd=source_directory)
-        out, error_code = sub_process.communicate()
-        if error_code:
-            print(error_code.decode("utf-8"), file=sys.stderr)
+        scons_command = shlex.split(f"scons {project_options}", posix=(os.name == "posix"))
+        if args.debug:
+            scons_stdout = None
+        else:
+            scons_stdout = subprocess.PIPE
+        try:
+            scons_output = subprocess.run(
+                scons_command,
+                env=current_env,
+                cwd=source_directory,
+                check=True,
+                stdout=scons_stdout
+            )
+        except subprocess.CalledProcessError as err:
+            print(str(err), file=sys.stderr)
             raise RuntimeError("Could not compile with specified Abaqus version")
     full_command_line_arguments = str(spade_version) + cpp_wrapper(args)
 
