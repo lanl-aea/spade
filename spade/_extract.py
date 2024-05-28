@@ -33,24 +33,27 @@ def main(args: argparse.ArgumentParser) -> None:
     spade_version = source_directory / f"{_settings._project_name_short}_{abaqus_version}_{platform_string}"
     current_env = os.environ.copy()
     if not spade_version.exists() or args.recompile:
+        scons_options = f"--directory={source_directory.resolve()}"
+        project_options = f"--abaqus-command={abaqus_command} " \
+                          f"--platform-string={platform_string} "
+        if args.recompile:
+            project_options += " --recompile"
         # Compile necessary version
-        scons_command = shlex.split(f"scons --abaqus-command={abaqus_command} "
-                                    f"--platform-string={platform_string} "
-                                    f"--directory={source_directory.resolve()}",
-                                    posix=(os.name == 'posix'))
+        scons_command = shlex.split(f"scons {scons_options} {project_options}",
+                                    posix=(os.name == "posix"))
         sub_process = subprocess.Popen(scons_command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE, env=current_env, cwd=f"{source_directory}")
         out, error_code = sub_process.communicate()
         if error_code:
             print(error_code.decode("utf-8"), file=sys.stderr)
             raise RuntimeError("Could not compile with specified Abaqus version")
-    full_command_line_arguments = str(spade_version) + cli_wrapper(args)
+    full_command_line_arguments = str(spade_version) + cpp_wrapper(args)
 
     try:
-        current_env['LD_LIBRARY_PATH'] = f"{abaqus_bin}:{current_env['LD_LIBRARY_PATH']}"
+        current_env["LD_LIBRARY_PATH"] = f"{abaqus_bin}:{current_env['LD_LIBRARY_PATH']}"
     except KeyError:
-        current_env['LD_LIBRARY_PATH'] = f"{abaqus_bin}"
-    command_line_arguments = shlex.split(full_command_line_arguments, posix=(os.name == 'posix'))
+        current_env["LD_LIBRARY_PATH"] = f"{abaqus_bin}"
+    command_line_arguments = shlex.split(full_command_line_arguments, posix=(os.name == "posix"))
     sub_process = subprocess.Popen(command_line_arguments, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, env=current_env)
     out, error_code = sub_process.communicate()
@@ -76,47 +79,51 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "ODB_FILE",
         type=str,
-        help='ODB file from which to extract data',
-        metavar='ODB_FILE.odb'
+        help="ODB file from which to extract data",
+        metavar="ODB_FILE.odb"
     )
-    parser.add_argument('-e', '--extracted-file', type=str,
-                        help='Name of extracted file. (default: <ODB file name>.h5)')
-    parser.add_argument('-l', '--log-file', type=str,
-                        help=f'Name of log file. (default: <ODB file name>.{_settings._project_name_short}.h5)')
+    parser.add_argument("-e", "--extracted-file", type=str,
+                        help="Name of extracted file. (default: <ODB file name>.h5)")
+    parser.add_argument("-l", "--log-file", type=str,
+                        help=f"Name of log file. (default: <ODB file name>.{_settings._project_name_short}.h5)")
 
-    parser.add_argument('--frame', type=str, default="all",
-                        help='Get information from the specified frame (default: %(default)s)')
-    parser.add_argument('--frame-value', type=str, default="all",
-                        help='Get information from the specified frame value (default: %(default)s)')
-    parser.add_argument('--step', type=str, default="all",
-                        help='Get information from the specified step (default: %(default)s)')
-    parser.add_argument('--field', type=str, default="all",
-                        help='Get information from the specified field (default: %(default)s)')
-    parser.add_argument('--history', type=str, default="all",
-                        help='Get information from the specified history value (default: %(default)s)')
-    parser.add_argument('--history-region', type=str, default="all",
-                        help='Get information from the specified history region (default: %(default)s)')
-    parser.add_argument('--instance', type=str, default="all",
-                        help='Get information from the specified instance (default: %(default)s)')
+    parser.add_argument("--frame", type=str, default="all",
+                        help="Get information from the specified frame (default: %(default)s)")
+    parser.add_argument("--frame-value", type=str, default="all",
+                        help="Get information from the specified frame value (default: %(default)s)")
+    parser.add_argument("--step", type=str, default="all",
+                        help="Get information from the specified step (default: %(default)s)")
+    parser.add_argument("--field", type=str, default="all",
+                        help="Get information from the specified field (default: %(default)s)")
+    parser.add_argument("--history", type=str, default="all",
+                        help="Get information from the specified history value (default: %(default)s)")
+    parser.add_argument("--history-region", type=str, default="all",
+                        help="Get information from the specified history region (default: %(default)s)")
+    parser.add_argument("--instance", type=str, default="all",
+                        help="Get information from the specified instance (default: %(default)s)")
     parser.add_argument(
-        '-a', '--abaqus-commands',
+        "-a", "--abaqus-commands",
         nargs="+",
         type=pathlib.Path,
         default=_settings._default_abaqus_commands,
-        help='Ordered list of Abaqus executable paths. Use first found (default: %(default)s)'
+        help="Ordered list of Abaqus executable paths. Use first found (default: %(default)s)"
     )
 
     # True or false inputs
-    parser.add_argument('-v', '--verbose', action='store_true', default=False,
-                        help='Turn on verbose logging')
-    parser.add_argument('-f', '--force-overwrite', action='store_true', default=False,
-                        help='Force the overwrite of the hdf5 file if it already exists')
-    parser.add_argument('-d', '--debug', action='store_true', default=False, help=argparse.SUPPRESS)
-    parser.add_argument('--recompile', action='store_true', default=False, help=argparse.SUPPRESS)
+    parser.add_argument("-v", "--verbose", action="store_true", default=False,
+                        help="Turn on verbose logging")
+    parser.add_argument("-f", "--force-overwrite", action="store_true", default=False,
+                        help="Force the overwrite of the hdf5 file if it already exists")
+    parser.add_argument("-d", "--debug", action="store_true", default=False, help=argparse.SUPPRESS)
+    parser.add_argument("--recompile", action="store_true", default=False, help=argparse.SUPPRESS)
     return parser
 
 
-def cli_wrapper(args):
+def cpp_wrapper(args) -> str:
+    """Reconstruct the c++ executable CLI from the Python CLI wrapper
+
+    :returns: c++ CLI arguments
+    """
     full_command_line_arguments = ""
 
     # File name inputs
@@ -154,8 +161,8 @@ def cli_wrapper(args):
         full_command_line_arguments += " --force-overwrite"
     if args.debug:
         full_command_line_arguments += " --debug"
-    if args.recompile:
-        full_command_line_arguments += " --recompile"
+
+    return full_command_line_arguments
 
 
 # Limit help() and 'from module import *' behavior to the module's public API

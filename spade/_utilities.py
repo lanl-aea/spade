@@ -118,6 +118,5 @@ def find_command(options: typing.Iterable[str]) -> str:
     """
     command_abspath = search_commands(options)
     if command_abspath is None:
-        raise FileNotFoundError("Could not find any executable on PATH in: "
-                                f"{_utilities.character_delimited_string(options)}")
+        raise FileNotFoundError(f"Could not find any executable on PATH in: {character_delimited_list(options)}")
     return command_abspath
