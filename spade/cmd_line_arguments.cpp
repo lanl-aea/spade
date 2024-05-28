@@ -55,7 +55,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         int option_index = 0;
         static struct option long_options[] = {
             {"help",             no_argument,       0,  'h'},
-            {"extracted-file",      required_argument, 0,  'e'},
+            {"extracted-file",      required_argument, 0,  'o'},
             {"extracted-file-type", required_argument, 0,  't'},
             {"verbose",          no_argument,       0,  'v'},
             {"debug",            no_argument,       0,  'd'},
@@ -239,7 +239,7 @@ string CmdLineArguments::helpMessage () {
     help_message += "\noptional arguments:\n";
     help_message += "\t-h,\t--help\tshow this help message and exit\n";
     help_message += "\t-v,\t--verbose\tturn on verbose logging\n";
-    help_message += "\t-e,\t--extracted-file\tname of extracted file (default: <odb file name>.h5)\n";
+    help_message += "\t-o,\t--extracted-file\tname of extracted file (default: <odb file name>.h5)\n";
     help_message += "\t-t,\t--extracted-file-type\ttype of file to store extracted output (default: h5)\n";
     help_message += "\t-f,\t--force-overwrite\tif extracted file already exists, then over write the file\n";
     help_message += "\t--step\tget information from specified step (default: all)\n";
