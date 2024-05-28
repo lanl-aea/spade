@@ -21,6 +21,7 @@ Internal Changes
 - Exit with an error on bad c++ CLI options. Should not occur during production use because c++ CLI options are
   constructed internally by Python wrapper (:issue:`28`, :merge:`26`). By `Kyle Brindley`_.
 - Common c++ exception handling and exit messages (:issue:`29`, :merge:`27`). By `Kyle Brindley`_.
+- Build, test, and package against multiple versions of hdf5 (:issue:`31`, :merge:`28`). By `Kyle Brindley`_.
 
 Enhancements
 ============
