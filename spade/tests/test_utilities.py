@@ -11,14 +11,33 @@ from spade import _utilities
 def test_find_abaqus_paths():
     expected_paths = [
         pathlib.Path("/install/path/2055"),
-        pathlib.Path("/install/path/2055/bin")
+        pathlib.Path("/install/path/2055/bin"),
+        pathlib.Path("/install/path/2055/notbin"),
     ]
     mock_abaqus_environment = \
         "Abaqus dummy text\nmore text we don't want\n" \
         "Abaqus is located in the directory " + _utilities.character_delimited_list(expected_paths)
     with patch("subprocess.check_output", return_value=mock_abaqus_environment):
         abaqus_paths = _utilities.find_abaqus_paths("/dummy/path/abaqus")
-    assert abaqus_paths
+    assert abaqus_paths == expected_paths
+
+
+def return_abaqus_code_paths():
+    expected_paths = [
+        pathlib.Path("/install/path/2055"),
+        pathlib.Path("/install/path/2055/code/bin"),
+        pathlib.Path("/install/path/2055/code/include"),
+    ]
+    mock_abaqus_environment = \
+        "Abaqus dummy text\nmore text we don't want\n" \
+        "Abaqus is located in the directory " \
+        "/install/path/2055 " \
+        "/install/path/2055/code " \
+        "/install/path/2055/code/bin " \
+        "/install/path/2055/notbin\n"
+    with patch("subprocess.check_output", return_value=mock_abaqus_environment):
+        abaqus_paths = _utilities.find_abaqus_paths("/dummy/path/abaqus")
+    assert abaqus_paths == expected_paths
 
 
 def test_search_commands():
