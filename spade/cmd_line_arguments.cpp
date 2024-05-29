@@ -160,7 +160,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         // Check if extracted file already exists
         if (std::filesystem::exists(file_path)) {
             if (!this->force_overwrite) {
-                cerr << this->command_line_arguments["extracted-file"] + " already exists. Appending time stamp to extracted file";
+                cerr << this->command_line_arguments["extracted-file"] + " already exists. Appending time stamp to extracted file\n";
                 this->command_line_arguments["extracted-file"] = base_file_name + "_" + this->start_time + "." + this->command_line_arguments["extracted-file-type"];
             } else {
                 if ( remove(this->command_line_arguments["extracted-file"].c_str()) != 0 ) {
@@ -176,7 +176,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         std::filesystem::path log_file = this->command_line_arguments["log-file"];
         if (std::filesystem::exists(log_file)) {
             if (!this->force_overwrite) {
-                cerr << this->command_line_arguments["log-file"] << " already exists. Appending time stamp to log file";
+                cerr << this->command_line_arguments["log-file"] << " already exists. Appending time stamp to log file\n";
                 string log_extension = log_file.extension();
                 string log_base_name = log_file.replace_extension("").generic_string();
                 this->command_line_arguments["log-file"] = log_base_name + "_" + this->start_time + log_extension;
