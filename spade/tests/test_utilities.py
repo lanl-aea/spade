@@ -10,9 +10,9 @@ from spade import _utilities
 
 def test_find_abaqus_paths():
     expected_paths = [
-        pathlib.Path("/install/path/2055"),
-        pathlib.Path("/install/path/2055/bin"),
-        pathlib.Path("/install/path/2055/notbin"),
+        pathlib.Path("/install/path/1234"),
+        pathlib.Path("/install/path/1234/bin"),
+        pathlib.Path("/install/path/1234/notbin"),
     ]
     mock_abaqus_environment = \
         "Abaqus dummy text\nmore text we don't want\n" \
@@ -24,24 +24,32 @@ def test_find_abaqus_paths():
 
 def test_return_abaqus_code_paths():
     expected_paths = (
-        pathlib.Path("/install/path/2055"),
-        pathlib.Path("/install/path/2055/code/bin"),
-        pathlib.Path("/install/path/2055/code/include"),
+        pathlib.Path("/install/path/1234"),
+        pathlib.Path("/install/path/1234/code/bin"),
+        pathlib.Path("/install/path/1234/code/include"),
     )
     mock_abaqus_environment = \
         "Abaqus dummy text\nmore text we don't want\n" \
         "Abaqus is located in the directory " \
-        "/install/path/2055 " \
-        "/install/path/2055/code " \
-        "/install/path/2055/code/bin " \
-        "/install/path/2055/notbin\n"
+        "/install/path/1234 " \
+        "/install/path/1234/code " \
+        "/install/path/1234/code/bin " \
+        "/install/path/1234/notbin\n"
     with patch("subprocess.check_output", return_value=mock_abaqus_environment):
         abaqus_paths = _utilities.return_abaqus_code_paths("/dummy/path/abaqus")
     assert abaqus_paths == expected_paths
 
 
 def test_abaqus_official_version():
-    pass
+    expected_version = "1234.HF5"
+    mock_abaqus_version = \
+        "Abaqus dummy text\nMore dummy text\n\n" \
+        f"Official Version: Abaqus {expected_version}\n" \
+        "Internal Version: Abaqus 1.23-4\n\n" \
+        "trailing dummy text\n"
+    with patch("subprocess.check_output", return_value=mock_abaqus_version):
+        abaqus_version = _utilities.abaqus_official_version("/dummy/path/abaqus")
+    assert abaqus_version == expected_version
 
 
 def test_search_commands():

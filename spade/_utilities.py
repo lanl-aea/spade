@@ -65,7 +65,7 @@ def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
     :return: Abaqus official version string
     """
     try:
-        abaqus_version = subprocess.check_output([abaqus_command, 'information=version']).decode('utf-8')
+        abaqus_version = subprocess.check_output([abaqus_command, 'information=version'], text=True)
 
     except FileNotFoundError:
         raise RuntimeError(f"Abaqus command not found at: '{abaqus_command}'")
