@@ -22,12 +22,12 @@ def test_find_abaqus_paths():
     assert abaqus_paths == expected_paths
 
 
-def return_abaqus_code_paths():
-    expected_paths = [
+def test_return_abaqus_code_paths():
+    expected_paths = (
         pathlib.Path("/install/path/2055"),
         pathlib.Path("/install/path/2055/code/bin"),
         pathlib.Path("/install/path/2055/code/include"),
-    ]
+    )
     mock_abaqus_environment = \
         "Abaqus dummy text\nmore text we don't want\n" \
         "Abaqus is located in the directory " \
@@ -36,8 +36,12 @@ def return_abaqus_code_paths():
         "/install/path/2055/code/bin " \
         "/install/path/2055/notbin\n"
     with patch("subprocess.check_output", return_value=mock_abaqus_environment):
-        abaqus_paths = _utilities.find_abaqus_paths("/dummy/path/abaqus")
+        abaqus_paths = _utilities.return_abaqus_code_paths("/dummy/path/abaqus")
     assert abaqus_paths == expected_paths
+
+
+def test_abaqus_official_version():
+    pass
 
 
 def test_search_commands():
