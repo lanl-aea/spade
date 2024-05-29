@@ -12,6 +12,24 @@ Quick Start
    :start-after: user-start-do-not-remove
    :end-before: user-end-do-not-remove
 
+*******
+Example
+*******
+
+1. Fetch an Abaqus tutorial ODB file
+
+   .. code-block::
+
+      $ /apps/abaqus/Commands/abq2023 fetch -job viewer_tutorial.odb
+
+2. Extract to H5 with |PROJECT|
+
+   .. code-block::
+
+      $ spade extract viewer_tutorial.odb
+      $ ls viewer_tutorial*.*
+      viewer_tutorial.h5  viewer_tutorial.odb  viewer_tutorial.spade.log
+
 ************
 Installation
 ************
