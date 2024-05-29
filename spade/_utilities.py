@@ -23,7 +23,7 @@ def compiler_help(env):
 
 def find_abaqus_paths(abaqus_program):
     subprocess_command = [abaqus_program, "information=environment"]
-    abaqus_environment = subprocess.check_output(subprocess_command).decode("utf-8")
+    abaqus_environment = subprocess.check_output(subprocess_command, text=True)
     abaqus_paths_regex = r"Abaqus is located in the directory(.*)"
     abaqus_paths_match = re.search(abaqus_paths_regex, abaqus_environment)
     if abaqus_paths_match:

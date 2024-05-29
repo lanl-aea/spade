@@ -1,10 +1,24 @@
+import pathlib
+import subprocess
 from unittest.mock import patch
 from contextlib import nullcontext as does_not_raise
-import subprocess
 
 import pytest
 
 from spade import _utilities
+
+
+def test_find_abaqus_paths():
+    expected_paths = [
+        pathlib.Path("/install/path/2055"),
+        pathlib.Path("/install/path/2055/bin")
+    ]
+    mock_abaqus_environment = \
+        "Abaqus dummy text\nmore text we don't want\n" \
+        "Abaqus is located in the directory " + _utilities.character_delimited_list(expected_paths)
+    with patch("subprocess.check_output", return_value=mock_abaqus_environment):
+        abaqus_paths = _utilities.find_abaqus_paths("/dummy/path/abaqus")
+    assert abaqus_paths
 
 
 def test_search_commands():
