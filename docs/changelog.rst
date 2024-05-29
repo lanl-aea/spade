@@ -8,6 +8,14 @@ Changelog
 v0.3.2 (unreleased)
 *******************
 
+Documentation
+=============
+- Add minimal user example that mirrors internal system test (:issue:`34`, :merge:`30`). By `Kyle Brindley`_.
+
+Internal Changes
+================
+- Add unit tests for utility functions (:issue:`33`, :merge:`29`). By `Kyle Brindley`_.
+
 *******************
 v0.3.1 (2024-05-28)
 *******************
@@ -26,7 +34,6 @@ Internal Changes
   constructed internally by Python wrapper (:issue:`28`, :merge:`26`). By `Kyle Brindley`_.
 - Common c++ exception handling and exit messages (:issue:`29`, :merge:`27`). By `Kyle Brindley`_.
 - Build, test, and package against multiple versions of hdf5 (:issue:`31`, :merge:`28`). By `Kyle Brindley`_.
-- Add unit tests for utility functions (:issue:`33`, :merge:`29`). By `Kyle Brindley`_.
 
 Enhancements
 ============
