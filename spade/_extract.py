@@ -13,7 +13,7 @@ _exclude_from_namespace = set(globals().keys())
 
 
 # TODO: full API
-def main(args: argparse.ArgumentParser) -> None:
+def main(args: argparse.Namespace) -> None:
     """Main parser behavior when no subcommand is specified
 
     :param args: argument namespace
@@ -30,35 +30,20 @@ def main(args: argparse.ArgumentParser) -> None:
     abaqus_version = _utilities.abaqus_official_version(abaqus_command)
     platform_string = "_".join(f"{platform.system()} {platform.release()}".split())
     build_directory = pathlib.Path(f"build-{abaqus_version}-{platform_string}")
-    spade_executable = _settings._project_root_abspath / build_directory / _settings._project_name_short
     current_env = os.environ.copy()
 
     # Compile c++ executable
-    if not spade_executable.exists() or args.recompile:
-        project_options = f"--build-dir={build_directory} --abaqus-command={abaqus_command} "
-        if args.recompile:
-            project_options += " --recompile"
-        scons_command = shlex.split(f"scons {project_options}", posix=(os.name == "posix"))
-        if args.debug:
-            scons_stdout = None
-        else:
-            scons_stdout = subprocess.PIPE
-        try:
-            scons_output = subprocess.run(
-                scons_command,
-                env=current_env,
-                cwd=source_directory,
-                check=True,
-                stdout=scons_stdout
-            )
-        except subprocess.CalledProcessError as err:
-            message = "Could not compile with specified Abaqus version"
-            if args.debug:
-                message += f": {str(err)}"
-            raise RuntimeError(message)
-    full_command_line_arguments = f"{spade_executable.resolve()}" + cpp_wrapper(args)
+    spade_executable = cpp_compile(
+        build_directory=build_directory,
+        abaqus_command=abaqus_command,
+        environment=current_env,
+        working_directory=source_directory,
+        recompile=args.recompile,
+        debug=args.debug
+    )
 
     # Run c++ executable
+    full_command_line_arguments = f"{spade_executable.resolve()}" + cpp_wrapper(args)
     try:
         current_env["LD_LIBRARY_PATH"] = f"{abaqus_bin}:{current_env['LD_LIBRARY_PATH']}"
     except KeyError:
@@ -122,6 +107,40 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("-d", "--debug", action="store_true", default=False, help=argparse.SUPPRESS)
     parser.add_argument("--recompile", action="store_true", default=False, help=argparse.SUPPRESS)
     return parser
+
+
+def cpp_compile(
+    build_directory: str = "build",
+    abaqus_command: str = "abaqus",
+    environment: dict = dict(),
+    working_directory: pathlib.Path = pathlib.Path("."),
+    recompile: bool = False,
+    debug: bool = False
+) -> pathlib.Path:
+    spade_executable = _settings._project_root_abspath / build_directory / _settings._project_name_short
+    if not spade_executable.exists() or recompile:
+        project_options = f"--build-dir={build_directory} --abaqus-command={abaqus_command} "
+        if recompile:
+            project_options += " --recompile"
+        scons_command = shlex.split(f"scons {project_options}", posix=(os.name == "posix"))
+        if debug:
+            scons_stdout = None
+        else:
+            scons_stdout = subprocess.PIPE
+        try:
+            scons_output = subprocess.run(
+                scons_command,
+                env=environment,
+                cwd=working_directory,
+                check=True,
+                stdout=scons_stdout
+            )
+        except subprocess.CalledProcessError as err:
+            message = "Could not compile with Abaqus command '{abaqus_command}'"
+            if debug:
+                message += f": {str(err)}"
+            raise RuntimeError(message)
+    return spade_executable
 
 
 def cpp_wrapper(args) -> str:
