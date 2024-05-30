@@ -3,6 +3,7 @@ import shlex
 import pathlib
 import argparse
 import platform
+import tempfile
 import subprocess
 
 from spade import _settings
@@ -32,24 +33,28 @@ def main(args: argparse.Namespace) -> None:
     build_directory = _settings._project_root_abspath / f"build-{abaqus_version}-{platform_string}"
     current_env = os.environ.copy()
 
-    # Compile c++ executable
-    spade_executable = cpp_compile(
-        build_directory=build_directory,
-        abaqus_command=abaqus_command,
-        environment=current_env,
-        working_directory=source_directory,
-        recompile=args.recompile,
-        debug=args.debug
-    )
+    with tempfile.TemporaryDirectory() as temporary_directory:
 
-    # Run c++ executable
-    cpp_execute(
-        spade_executable=spade_executable,
-        abaqus_bin=abaqus_bin,
-        args=args,
-        environment=current_env,
-        debug=args.debug
-    )
+        temporary_path = pathlib.Path(temporary_directory)
+
+        # Compile c++ executable
+        spade_executable = cpp_compile(
+            build_directory=temporary_path,
+            abaqus_command=abaqus_command,
+            environment=current_env,
+            working_directory=source_directory,
+            recompile=args.recompile,
+            debug=args.debug
+        )
+
+        # Run c++ executable
+        cpp_execute(
+            spade_executable=spade_executable,
+            abaqus_bin=abaqus_bin,
+            args=args,
+            environment=current_env,
+            debug=args.debug
+        )
 
 def get_parser() -> argparse.ArgumentParser:
     """Return a 'no-help' parser for the extract subcommand
