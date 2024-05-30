@@ -8,8 +8,16 @@ import _settings
 
 # Project command line options
 AddOption(
+    "--build-dir",
+    default="build",
+    nargs=1,
+    type="string",
+    action="store",
+    metavar="DIR",
+    help="SCons build (variant) root directory. Relative or absolute path. (default: '%default')"
+)
+AddOption(
     "--abaqus-command",
-    dest="abaqus_command",
     default="abaqus",
     nargs=1,
     type="string",
@@ -18,7 +26,6 @@ AddOption(
 )
 AddOption(
     "--platform-string",
-    dest="platform_string",
     default="unknown",
     nargs=1,
     type="string",
@@ -27,7 +34,6 @@ AddOption(
 )
 AddOption(
     "--recompile",
-    dest="recompile",
     default=False,
     action="store_true",
     help="Recompile the spade executable. Implemented as an AlwaysBuild when True (default: '%default')"
@@ -39,6 +45,7 @@ env = Environment(
     ENV=user_env,
     CC=user_env["CC"],
     CXX=user_env["CXX"],
+    build_dir=GetOption("build_dir"),
     abaqus_command=GetOption("abaqus_command"),
     platform_string=GetOption("platform_string"),
     recompile=GetOption("recompile"),
@@ -67,7 +74,7 @@ h5_flags = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
 env["SPADEOBJECTCXXFLAGS"] = env.ParseFlags(env["odb_flags"] + h5_flags)
 
 # Configure tasks
-SConscript("SConscript", variant_dir="build", exports="env", duplicate=True)
+SConscript("SConscript", variant_dir=env["build_dir"], exports="env", duplicate=True)
 
 # Add aliases to help message so users know what build target options are available
 # This must come *after* all expected Alias definitions and SConscript files.
