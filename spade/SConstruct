@@ -58,8 +58,6 @@ platform_string = env["platform_string"]
 abaqus_version = _utilities.abaqus_official_version(abaqus_command)
 abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_abaqus_code_paths(abaqus_command)
 env["abaqus_make_command"] = f"{abaqus_command} make job={_settings._project_name_cpp}.cpp"
-# TODO: Construct spade executable name only once
-env["target_name"] = f"{_settings._project_name_short}_{abaqus_version}_{platform_string}"
 
 # Compiler options and settings
 gpp_path = pathlib.Path(env["CXX"]).resolve().parent.parent

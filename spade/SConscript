@@ -30,12 +30,4 @@ env.Command(
     chdir=True
 )
 if env["recompile"]:
-    env.AlwaysBuild(target_name)
-
-env.Command(
-    target=[env["target_name"]],
-    source=[env["project_name_cpp"]],
-    action=[
-        Copy("$TARGET", "$SOURCE"),
-    ]
-)
+    env.AlwaysBuild(env["project_name_cpp"])
