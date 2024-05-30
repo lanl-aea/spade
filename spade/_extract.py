@@ -1,5 +1,4 @@
 import os
-import sys
 import shlex
 import pathlib
 import argparse
@@ -28,7 +27,6 @@ def main(args: argparse.ArgumentParser) -> None:
         raise RuntimeError(str(err))
     _, abaqus_bin, _ = _utilities.return_abaqus_code_paths(abaqus_command)
     source_directory = pathlib.Path(__file__).parent
-    # TODO: Construct spade executable name only once
     abaqus_version = _utilities.abaqus_official_version(abaqus_command)
     platform_string = "_".join(f"{platform.system()} {platform.release()}".split())
     build_directory = pathlib.Path(f"build-{abaqus_version}-{platform_string}")
