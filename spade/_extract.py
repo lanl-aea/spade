@@ -31,13 +31,13 @@ def main(args: argparse.ArgumentParser) -> None:
     # TODO: Construct spade executable name only once
     abaqus_version = _utilities.abaqus_official_version(abaqus_command)
     platform_string = "_".join(f"{platform.system()} {platform.release()}".split())
-    spade_version = source_directory / f"{_settings._project_name_short}_{abaqus_version}_{platform_string}"
+    build_directory = pathlib.Path(f"build-{abaqus_version}-{platform_string}")
+    spade_executable = build_directory / _settings._project_name_short
     current_env = os.environ.copy()
 
     # Compile c++ executable
-    if not spade_version.exists() or args.recompile:
-        project_options = f"--abaqus-command={abaqus_command} " \
-                          f"--platform-string={platform_string} "
+    if not spade_executable.exists() or args.recompile:
+        project_options = f"--build-dir={build_directory} --abaqus-command={abaqus_command} "
         if args.recompile:
             project_options += " --recompile"
         scons_command = shlex.split(f"scons {project_options}", posix=(os.name == "posix"))

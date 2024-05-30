@@ -25,14 +25,6 @@ AddOption(
     help="Abaqus executable relative or absolute path (default: '%default')"
 )
 AddOption(
-    "--platform-string",
-    default="unknown",
-    nargs=1,
-    type="string",
-    action="store",
-    help="Platform string to use in versioned spade executable name (default: '%default')"
-)
-AddOption(
     "--recompile",
     default=False,
     action="store_true",
@@ -47,12 +39,10 @@ env = Environment(
     CXX=user_env["CXX"],
     build_dir=GetOption("build_dir"),
     abaqus_command=GetOption("abaqus_command"),
-    platform_string=GetOption("platform_string"),
     recompile=GetOption("recompile"),
     project_name_cpp=_settings._project_name_cpp
 )
 abaqus_command = env["abaqus_command"]
-platform_string = env["platform_string"]
 
 # Abaqus and system settings
 abaqus_version = _utilities.abaqus_official_version(abaqus_command)
