@@ -35,6 +35,8 @@ Internal Changes
 - Common c++ exception handling and exit messages (:issue:`29`, :merge:`27`). By `Kyle Brindley`_.
 - Build, test, and package against multiple versions of hdf5 (:issue:`31`, :merge:`28`). By `Kyle Brindley`_.
 - Separate spade source and build trees (:issue:`21`, :merge:`31`). By `Kyle Brindley`_.
+- Store the SCons signatures file(s) with the associated build directory (:issue:`36`, :merge:`32`). By `Kyle
+  Brindley`_.
 
 Enhancements
 ============
