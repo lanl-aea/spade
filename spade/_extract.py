@@ -29,7 +29,7 @@ def main(args: argparse.Namespace) -> None:
     source_directory = pathlib.Path(__file__).parent
     abaqus_version = _utilities.abaqus_official_version(abaqus_command)
     platform_string = "_".join(f"{platform.system()} {platform.release()}".split())
-    build_directory = pathlib.Path(f"build-{abaqus_version}-{platform_string}")
+    build_directory = _settings._project_root_abspath / f"build-{abaqus_version}-{platform_string}"
     current_env = os.environ.copy()
 
     # Compile c++ executable
@@ -43,20 +43,13 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # Run c++ executable
-    full_command_line_arguments = f"{spade_executable.resolve()}" + cpp_wrapper(args)
-    try:
-        current_env["LD_LIBRARY_PATH"] = f"{abaqus_bin}:{current_env['LD_LIBRARY_PATH']}"
-    except KeyError:
-        current_env["LD_LIBRARY_PATH"] = f"{abaqus_bin}"
-    command_line_arguments = shlex.split(full_command_line_arguments, posix=(os.name == "posix"))
-    try:
-        subprocess.run(command_line_arguments, env=current_env, check=True)
-    except subprocess.CalledProcessError as err:
-        message = f"{_settings._project_name_short} extract failed in Abaqus ODB application"
-        if args.debug:
-            message += f": {str(err)}"
-        raise RuntimeError(message)
-
+    cpp_execute(
+        spade_executable=spade_executable,
+        abaqus_bin=abaqus_bin,
+        args=args,
+        environment=current_env,
+        debug=args.debug
+    )
 
 def get_parser() -> argparse.ArgumentParser:
     """Return a 'no-help' parser for the extract subcommand
@@ -110,14 +103,28 @@ def get_parser() -> argparse.ArgumentParser:
 
 
 def cpp_compile(
-    build_directory: str = "build",
-    abaqus_command: str = "abaqus",
+    build_directory: pathlib.Path = pathlib.Path("build"),
+    abaqus_command: pathlib.Path = pathlib.Path("abaqus"),
     environment: dict = dict(),
     working_directory: pathlib.Path = pathlib.Path("."),
     recompile: bool = False,
     debug: bool = False
 ) -> pathlib.Path:
-    spade_executable = _settings._project_root_abspath / build_directory / _settings._project_name_short
+    """Compile the SPADE c++ executable
+
+    :param build_directory: Absolute or relative path for the SCons build directory
+    :param abaqus_command: Abaqus executable path
+    :param environment: compilation environment for the ``subprocess.run`` shell call
+    :param working_directory: working directory for the ``subprocess.run`` shell call
+    :param recompile: Force recompile the executable
+    :param debug: Show verbose SCons output
+
+    :returns: spade executable path
+
+    :raises RuntimeError: If the SCons command raises a ``subprocess.CalledProcessError``
+    """
+    spade_executable = build_directory / _settings._project_name_short
+    spade_executable = spade_executable.resolve()
     if not spade_executable.exists() or recompile:
         project_options = f"--build-dir={build_directory} --abaqus-command={abaqus_command} "
         if recompile:
@@ -141,6 +148,38 @@ def cpp_compile(
                 message += f": {str(err)}"
             raise RuntimeError(message)
     return spade_executable
+
+
+def cpp_execute(
+    spade_executable: pathlib.Path,
+    abaqus_bin: pathlib.Path,
+    args: argparse.Namespace,
+    environment: dict = dict(),
+    debug: bool = False
+) -> None:
+    """Run the SPADE c++ executable
+
+    :param spade_executable: Spade c++ executable path
+    :param abaqus_bin: Abaqus bin path
+    :param args: The Spade Python CLI namespace
+    :param environment: compilation environment for the ``subprocess.run`` shell call
+    :param debug: Show verbose SCons output
+
+    :raises RuntimeError: If the spade c++ command raises a ``subprocess.CalledProcessError``
+    """
+    full_command_line_arguments = f"{spade_executable.resolve()}" + cpp_wrapper(args)
+    try:
+        environment["LD_LIBRARY_PATH"] = f"{abaqus_bin}:{environment['LD_LIBRARY_PATH']}"
+    except KeyError:
+        environment["LD_LIBRARY_PATH"] = f"{abaqus_bin}"
+    command_line_arguments = shlex.split(full_command_line_arguments, posix=(os.name == "posix"))
+    try:
+        subprocess.run(command_line_arguments, env=environment, check=True)
+    except subprocess.CalledProcessError as err:
+        message = f"{_settings._project_name_short} extract failed in Abaqus ODB application"
+        if debug:
+            message += f": {str(err)}"
+        raise RuntimeError(message)
 
 
 def cpp_wrapper(args) -> str:
