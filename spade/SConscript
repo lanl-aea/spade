@@ -1,0 +1,33 @@
+#! /usr/bin/env python
+
+# Inherit the parent construction environment
+Import("env")
+
+# Build static objects
+objects = []
+env.MergeFlags("-I.")
+objects.extend(env.Object("cmd_line_arguments.cpp"))
+objects.extend(env.Object("logging.cpp"))
+objects.extend(env.Object("spade_object.cpp", CXXFLAGS=env["h5_flags"] + env["odb_flags"]))
+
+build_artifacts = [_.name for _ in objects]  # Get list of .o files
+build_artifacts.append(f"{env['project_name_cpp']}.o")
+build_artifacts.append(f"abaqus_v6.env")
+# Need to remove .o and abaqus_v6.env files so different versions don't get accidentally linked
+
+# Build executable with Abaqus make
+env.Command(
+    target=[env["target_name"]],
+    source=[f"{env['project_name_cpp']}.cpp"] + objects,
+    action=[env['abaqus_make_command'], Move("$TARGET", env["project_name_cpp"]), Delete(build_artifacts)]
+)
+if env["recompile"]:
+    env.AlwaysBuild(target_name)
+
+# Write build abaqus environment file
+compile_cpp = f"{env['CXX']} {env['odb_flags']}"
+link_exe = f"{env['CXX']} {env['abaqus_link_flags']} " + " ".join([target.name for target in objects])
+env.Substfile(
+    "abaqus_v6.env.in",
+    SUBST_DICT={"@compile_cpp@": compile_cpp, "@link_exe@": link_exe}
+)

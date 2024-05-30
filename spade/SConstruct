@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 import os
 import pathlib
-import platform
 
 import _utilities
 import _settings
@@ -42,58 +41,32 @@ env = Environment(
     CXX=user_env["CXX"],
     abaqus_command=GetOption("abaqus_command"),
     platform_string=GetOption("platform_string"),
-    recompile=GetOption("recompile")
+    recompile=GetOption("recompile"),
+    project_name_cpp=_settings._project_name_cpp
 )
 abaqus_command = env["abaqus_command"]
 platform_string = env["platform_string"]
-recompile = env["recompile"]
 
 # Abaqus and system settings
 abaqus_version = _utilities.abaqus_official_version(abaqus_command)
 abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_abaqus_code_paths(abaqus_command)
+env["abaqus_make_command"] = f"{abaqus_command} make job={_settings._project_name_cpp}.cpp"
+# TODO: Construct spade executable name only once
+env["target_name"] = f"{_settings._project_name_short}_{abaqus_version}_{platform_string}"
 
 # Compiler options and settings
 gpp_path = pathlib.Path(env["CXX"]).resolve().parent.parent
 gpp_lib = gpp_path / "lib"
 gpp_include = gpp_path / "include"
 
-odb_flags = _settings._compiler_flags + f"-I{abaqus_code_include} -I{abaqus_installation} " + \
-            f"-I{gpp_include} -I. -I{gpp_lib}"
-abaqus_link_flags = _settings._link_flags + f"-L{gpp_lib} -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
+env["odb_flags"] = _settings._compiler_flags + f"-I{abaqus_code_include} -I{abaqus_installation} " + \
+                   f"-I{gpp_include} -I. -I{gpp_lib}"
+env["abaqus_link_flags"] = _settings._link_flags + f"-L{gpp_lib} -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
 # TODO: May wish to confirm that h5c++ is definitely in the same place as gpp (lib and include)
-h5_flags = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
+env["h5_flags"] = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
 
-# Build static objects
-objects = []
-env.MergeFlags("-I.")
-objects.extend(env.Object("cmd_line_arguments.cpp"))
-objects.extend(env.Object("logging.cpp"))
-objects.extend(env.Object("spade_object.cpp", CXXFLAGS=h5_flags + odb_flags))
-
-build_artifacts = [_.name for _ in objects]  # Get list of .o files
-build_artifacts.append(f"{_settings._project_name_cpp}.o")
-build_artifacts.append(f"abaqus_v6.env")
-# Need to remove .o and abaqus_v6.env files so different versions don't get accidentally linked
-
-# Build executable with Abaqus make
-# TODO: Construct spade executable name only once
-target_name = f"{_settings._project_name_short}_{abaqus_version}_{platform_string}"
-abaqus_make_command = f"{abaqus_command} make job={_settings._project_name_cpp}.cpp"
-env.Command(
-    target=[target_name],
-    source=[f"{_settings._project_name_cpp}.cpp"] + objects,
-    action=[abaqus_make_command, Move(target_name, _settings._project_name_cpp), Delete(build_artifacts)]
-)
-if recompile:
-    env.AlwaysBuild(target_name)
-
-# Write build abaqus environment file
-compile_cpp = f"{env['CXX']} {odb_flags}"
-link_exe = f"{env['CXX']} {abaqus_link_flags} " + " ".join([target.name for target in objects])
-env.Substfile(
-    "abaqus_v6.env.in",
-    SUBST_DICT={"@compile_cpp@": compile_cpp, "@link_exe@": link_exe}
-)
+# Configure tasks
+SConscript("SConscript", exports="env", duplicate=True)
 
 # Add aliases to help message so users know what build target options are available
 # This must come *after* all expected Alias definitions and SConscript files.
