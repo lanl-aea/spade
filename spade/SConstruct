@@ -62,7 +62,9 @@ h5_flags = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
 env["SPADEOBJECTCXXFLAGS"] = env.ParseFlags(env["odb_flags"] + h5_flags)
 
 # Configure tasks
-SConscript("SConscript", variant_dir=env["build_dir"], exports="env", duplicate=True)
+sconsign_file = pathlib.Path(env["build_dir"]) / ".sconsign.dblite"
+env.SConsignFile(sconsign_file)
+env.SConscript("SConscript", variant_dir=env["build_dir"], exports="env", duplicate=True)
 
 # Add aliases to help message so users know what build target options are available
 # This must come *after* all expected Alias definitions and SConscript files.
