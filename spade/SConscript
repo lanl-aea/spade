@@ -15,19 +15,35 @@ build_artifacts.append(f"{env['project_name_cpp']}.o")
 build_artifacts.append(f"abaqus_v6.env")
 # Need to remove .o and abaqus_v6.env files so different versions don't get accidentally linked
 
-# Build executable with Abaqus make
-env.Command(
-    target=[env["target_name"]],
-    source=[f"{env['project_name_cpp']}.cpp"] + objects,
-    action=[env['abaqus_make_command'], Move("$TARGET", env["project_name_cpp"]), Delete(build_artifacts)]
-)
-if env["recompile"]:
-    env.AlwaysBuild(target_name)
-
 # Write build abaqus environment file
 compile_cpp = f"{env['CXX']} {env['odb_flags']}"
 link_exe = f"{env['CXX']} {env['abaqus_link_flags']} " + " ".join([target.name for target in objects])
 env.Substfile(
     "abaqus_v6.env.in",
     SUBST_DICT={"@compile_cpp@": compile_cpp, "@link_exe@": link_exe}
+)
+
+# Build executable with Abaqus make
+env.Command(
+    target=[env["project_name_cpp"]],
+    source=[f"{env['project_name_cpp']}.cpp"] + objects,
+    action=[env['abaqus_make_command']],
+    # FIXME: If we can use SCons to re-build the compile_cpp string with the SCons controlled arguments we won't have to
+    # change directory. SCons parses ``-I.`` to correct for the build directory, but we're writing odb_flags string
+    # without adjustment to abaqus_v6.env. There's probably an additional complication that abaqus make needs to run
+    # from the abaqus_v6.env directory, too.
+    chdir=True
+)
+if env["recompile"]:
+    env.AlwaysBuild(target_name)
+
+env.Command(
+    target=[env["target_name"]],
+    source=[env["project_name_cpp"]],
+    action=[
+        Copy("$TARGET", "$SOURCE"),
+        # FIXME: Add full source list to all objects for correct dependency tree instead of forced delete of previous
+        # task targets
+        Delete(build_artifacts)
+    ]
 )
