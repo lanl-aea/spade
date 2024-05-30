@@ -10,11 +10,6 @@ objects.extend(env.Object("cmd_line_arguments.cpp"))
 objects.extend(env.Object("logging.cpp"))
 objects.extend(env.Object("spade_object.cpp", parse_flags=env["SPADEOBJECTCXXFLAGS"]))
 
-build_artifacts = [_.name for _ in objects]  # Get list of .o files
-build_artifacts.append(f"{env['project_name_cpp']}.o")
-build_artifacts.append(f"abaqus_v6.env")
-# Need to remove .o and abaqus_v6.env files so different versions don't get accidentally linked
-
 # Write build abaqus environment file
 compile_cpp = f"{env['CXX']} {env['odb_flags']}"
 link_exe = f"{env['CXX']} {env['abaqus_link_flags']} " + " ".join([target.name for target in objects])
@@ -42,8 +37,5 @@ env.Command(
     source=[env["project_name_cpp"]],
     action=[
         Copy("$TARGET", "$SOURCE"),
-        # FIXME: Add full source list to all objects for correct dependency tree instead of forced delete of previous
-        # task targets
-        Delete(build_artifacts)
     ]
 )
