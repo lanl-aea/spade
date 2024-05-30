@@ -56,6 +56,7 @@ def main(args: argparse.Namespace) -> None:
             debug=args.debug
         )
 
+
 def get_parser() -> argparse.ArgumentParser:
     """Return a 'no-help' parser for the extract subcommand
 
