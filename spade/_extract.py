@@ -32,7 +32,7 @@ def main(args: argparse.ArgumentParser) -> None:
     abaqus_version = _utilities.abaqus_official_version(abaqus_command)
     platform_string = "_".join(f"{platform.system()} {platform.release()}".split())
     build_directory = pathlib.Path(f"build-{abaqus_version}-{platform_string}")
-    spade_executable = build_directory / _settings._project_name_short
+    spade_executable = _settings._project_root_abspath / build_directory / _settings._project_name_short
     current_env = os.environ.copy()
 
     # Compile c++ executable
@@ -58,7 +58,7 @@ def main(args: argparse.ArgumentParser) -> None:
             if args.debug:
                 message += f": {str(err)}"
             raise RuntimeError(message)
-    full_command_line_arguments = str(spade_executable) + cpp_wrapper(args)
+    full_command_line_arguments = f"{spade_executable.resolve()}" + cpp_wrapper(args)
 
     # Run c++ executable
     try:
