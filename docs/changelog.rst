@@ -15,6 +15,14 @@ Documentation
 Internal Changes
 ================
 - Add unit tests for utility functions (:issue:`33`, :merge:`29`). By `Kyle Brindley`_.
+- Separate spade source and build trees (:issue:`21`, :merge:`31`). By `Kyle Brindley`_.
+- Store the SCons signatures file(s) with the associated build directory (:issue:`36`, :merge:`32`). By `Kyle
+  Brindley`_.
+
+Enhancements
+============
+- Always compile in a unique, user-writable directory. Has the side effect of always compiling, but this only takes ~20
+  seconds and avoids race conditions during parallel execution (:issue:`37`, :merge:`33`). By `Kyle Brindley`_.
 
 *******************
 v0.3.1 (2024-05-28)
@@ -34,9 +42,6 @@ Internal Changes
   constructed internally by Python wrapper (:issue:`28`, :merge:`26`). By `Kyle Brindley`_.
 - Common c++ exception handling and exit messages (:issue:`29`, :merge:`27`). By `Kyle Brindley`_.
 - Build, test, and package against multiple versions of hdf5 (:issue:`31`, :merge:`28`). By `Kyle Brindley`_.
-- Separate spade source and build trees (:issue:`21`, :merge:`31`). By `Kyle Brindley`_.
-- Store the SCons signatures file(s) with the associated build directory (:issue:`36`, :merge:`32`). By `Kyle
-  Brindley`_.
 
 Enhancements
 ============
