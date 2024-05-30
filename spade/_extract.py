@@ -58,7 +58,7 @@ def main(args: argparse.ArgumentParser) -> None:
             if args.debug:
                 message += f": {str(err)}"
             raise RuntimeError(message)
-    full_command_line_arguments = str(spade_version) + cpp_wrapper(args)
+    full_command_line_arguments = str(spade_executable) + cpp_wrapper(args)
 
     # Run c++ executable
     try:
