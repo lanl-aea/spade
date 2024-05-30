@@ -8,7 +8,7 @@ objects = []
 env.MergeFlags("-I.")
 objects.extend(env.Object("cmd_line_arguments.cpp"))
 objects.extend(env.Object("logging.cpp"))
-objects.extend(env.Object("spade_object.cpp", CXXFLAGS=env["h5_flags"] + env["odb_flags"]))
+objects.extend(env.Object("spade_object.cpp", parse_flags=env["SPADEOBJECTCXXFLAGS"]))
 
 build_artifacts = [_.name for _ in objects]  # Get list of .o files
 build_artifacts.append(f"{env['project_name_cpp']}.o")

@@ -63,7 +63,8 @@ env["odb_flags"] = _settings._compiler_flags + f"-I{abaqus_code_include} -I{abaq
                    f"-I{gpp_include} -I. -I{gpp_lib}"
 env["abaqus_link_flags"] = _settings._link_flags + f"-L{gpp_lib} -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
 # TODO: May wish to confirm that h5c++ is definitely in the same place as gpp (lib and include)
-env["h5_flags"] = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
+h5_flags = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
+env["SPADEOBJECTCXXFLAGS"] = env.ParseFlags(env["odb_flags"] + h5_flags)
 
 # Configure tasks
 SConscript("SConscript", exports="env", duplicate=True)
