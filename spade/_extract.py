@@ -170,7 +170,7 @@ def cpp_execute(
     :param abaqus_bin: Abaqus bin path
     :param args: The Spade Python CLI namespace
     :param environment: compilation environment for the ``subprocess.run`` shell call
-    :param debug: Show verbose SCons output
+    :param debug: Show verbose executable error message
 
     :raises RuntimeError: If the spade c++ command raises a ``subprocess.CalledProcessError``
     """
