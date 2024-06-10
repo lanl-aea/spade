@@ -141,6 +141,8 @@ def cpp_compile(
             scons_stdout = None
         else:
             scons_stdout = subprocess.PIPE
+        if debug:
+            print(f"Compiling {_settings._project_name_short} with command {scons_command}")
         try:
             scons_output = subprocess.run(
                 scons_command,
@@ -180,6 +182,8 @@ def cpp_execute(
     except KeyError:
         environment["LD_LIBRARY_PATH"] = f"{abaqus_bin}"
     command_line_arguments = shlex.split(full_command_line_arguments, posix=(os.name == "posix"))
+    if debug:
+        print(f"Running {_settings._project_name_short} with command {command_line_arguments}")
     try:
         subprocess.run(command_line_arguments, env=environment, check=True)
     except subprocess.CalledProcessError as err:
