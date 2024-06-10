@@ -8,6 +8,10 @@ Changelog
 v0.3.3 (unreleased)
 *******************
 
+Documentation
+=============
+- Do not show Python internal types in CLI help/usage. By `Kyle Brindley`_.
+
 *******************
 v0.3.2 (2024-05-30)
 *******************
