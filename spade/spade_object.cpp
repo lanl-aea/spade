@@ -48,14 +48,13 @@ using namespace H5;
 #include <spade_object.h>
 
 SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log_file) {
-    log_file.logVerbose("Starting to read odb file: " + command_line_arguments.getTimeStamp(false));
+    log_file.logVerbose("Reading file at time:" + command_line_arguments.getTimeStamp(false));
+    log_file.logVerbose("Reading file: " + command_line_arguments["odb-file"]);
     odb_String file_name = command_line_arguments["odb-file"].c_str();
-    log_file.logDebug("Operating on file:" + command_line_arguments["odb-file"]);
 
     if (isUpgradeRequiredForOdb(file_name)) {
-        log_file.logDebug("Upgrade to odb required.");
-        odb_String upgraded_file_name = std::filesystem::path(command_line_arguments["odb-file"]).replace_extension(".upgraded.odb").generic_string().c_str();
         log_file.log("Upgrading file:" + command_line_arguments["odb-file"]);
+        odb_String upgraded_file_name = std::filesystem::path(command_line_arguments["odb-file"]).replace_extension(".upgraded.odb").generic_string().c_str();
         upgradeOdb(file_name, upgraded_file_name);
         file_name = upgraded_file_name;
     }
@@ -106,7 +105,7 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
         odb_Odb& odb = openOdb(file_name, true);  // Open as read only
         process_odb(odb, log_file, command_line_arguments);
         odb.close();
-        log_file.logDebug("Odb Extract object successfully created.");
+        log_file.logVerbose("Odb Extract object successfully created.");
     }
     catch(odb_BaseException& exc) {
         string error_message = exc.UserReport().CStr();
@@ -116,14 +115,10 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
         log_file.logErrorAndExit("Unkown exception when attempting to open odb file.");
     }
 
-
-    log_file.logVerbose("Starting to write extracted file: " + command_line_arguments.getTimeStamp(false));
-
+    log_file.logVerbose("Writing extracted file at time: " + command_line_arguments.getTimeStamp(false));
     if (command_line_arguments["extracted-file-type"] == "h5") this->write_h5(command_line_arguments, log_file);
     else if (command_line_arguments["extracted-file-type"] == "json") this->write_json(command_line_arguments, log_file);
     else if (command_line_arguments["extracted-file-type"] == "yaml") this->write_yaml(command_line_arguments, log_file);
-
-    log_file.logVerbose("Finished writing extracted file: " + command_line_arguments.getTimeStamp(false));
 
 }
 
@@ -223,11 +218,11 @@ void SpadeObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArguments 
     odb_PartRepository& parts = odb.parts();
     odb_PartRepositoryIT parts_iter(parts);
     for (parts_iter.first(); !parts_iter.isDone(); parts_iter.next()) {
-        log_file.logVerbose("Starting to read part: " + string(parts_iter.currentKey().CStr()));
+        log_file.logVerbose("Reading part: " + string(parts_iter.currentKey().CStr()));
         odb_Part part = parts[parts_iter.currentKey()];
-        log_file.logDebug("Part: " + string(part.name().CStr()));
-        log_file.logDebug("\tnodes size: " + to_string(part.nodes().size()));
-        log_file.logDebug("\telements size: " + to_string(part.elements().size()));
+        log_file.logVerbose("Part: " + string(part.name().CStr()));
+        log_file.logVerbose("\tnodes size: " + to_string(part.nodes().size()));
+        log_file.logVerbose("\telements size: " + to_string(part.elements().size()));
         this->parts.push_back(process_part(part, odb, log_file));
     }
 
@@ -346,7 +341,7 @@ element_type* SpadeObject::process_element(const odb_Element &element, Logging &
     }
 }
 
-set_type SpadeObject::process_set (const odb_Set &set, Logging &log_file) {
+set_type SpadeObject::process_set(const odb_Set &set, Logging &log_file) {
     set_type new_set;
     if (set.name().empty()) {
         return new_set;
@@ -358,12 +353,12 @@ set_type SpadeObject::process_set (const odb_Set &set, Logging &log_file) {
         case odb_Enum::ELEMENT_SET: new_set.type = "Element Set"; break;
         case odb_Enum::SURFACE_SET: new_set.type = "Surface Set"; break;
     }
-    log_file.logDebug("\t\tset " + new_set.name + ": " + new_set.type);
+    log_file.logVerbose("\t\tset " + new_set.name + ": " + new_set.type);
 
     odb_SequenceString names = set.instanceNames();
     for (int i=0; i<names.size(); i++) {
         odb_String name = names.constGet(i);
-        log_file.logDebug("\t\t\tinstance: " + string(name.CStr()));
+        log_file.logVerbose("\t\t\tinstance: " + string(name.CStr()));
         new_set.instanceNames.push_back(name.CStr());
         if (new_set.type == "Node Set") {
             const odb_SequenceNode& set_nodes = set.nodes(name);
@@ -735,9 +730,9 @@ instance_type SpadeObject::process_instance (const odb_Instance &instance, odb_O
     new_instance.name = instance.name().CStr();
     new_instance.embeddedSpace = this->dimension_enum_strings[instance.embeddedSpace()];
 
-    log_file.logDebug("Instance: " + new_instance.name);
-    log_file.logDebug("\tnodes size: " + to_string(instance.nodes().size()));
-    log_file.logDebug("\telements size: " + to_string(instance.elements().size()));
+    log_file.logVerbose("Instance: " + new_instance.name);
+    log_file.logVerbose("\tnodes size: " + to_string(instance.nodes().size()));
+    log_file.logVerbose("\telements size: " + to_string(instance.elements().size()));
 
     const odb_SequenceNode& nodes = instance.nodes();
     for (int i=0; i<nodes.size(); i++)  { new_instance.nodes.push_back(process_node(nodes.node(i), log_file)); }
@@ -748,17 +743,17 @@ instance_type SpadeObject::process_instance (const odb_Instance &instance, odb_O
     for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
         new_instance.nodeSets.push_back(process_set(node_iter.currentValue(), log_file));
     }
-    log_file.logDebug("\tnodeSets size: " + to_string(new_instance.nodeSets.size()));
+    log_file.logVerbose("\tnodeSets size: " + to_string(new_instance.nodeSets.size()));
     odb_SetRepositoryIT element_iter(instance.elementSets());
     for (element_iter.first(); !element_iter.isDone(); element_iter.next()) {
         new_instance.elementSets.push_back(process_set(element_iter.currentValue(), log_file));
     }
-    log_file.logDebug("\telementSets size: " + to_string(new_instance.elementSets.size()));
+    log_file.logVerbose("\telementSets size: " + to_string(new_instance.elementSets.size()));
     odb_SetRepositoryIT surface_iter(instance.surfaces());
     for (surface_iter.first(); !surface_iter.isDone(); surface_iter.next()) {
         new_instance.surfaces.push_back(process_set(surface_iter.currentValue(), log_file));
     }
-    log_file.logDebug("\tsurfaces size: " + to_string(new_instance.surfaces.size()));
+    log_file.logVerbose("\tsurfaces size: " + to_string(new_instance.surfaces.size()));
     const odb_SequenceRigidBody& rigid_bodies = instance.rigidBodies();
     for (int i=0; i<rigid_bodies.size(); i++)  { new_instance.rigidBodies.push_back(process_rigid_body(rigid_bodies[i], log_file)); }
     const odb_SequenceSectionAssignment& section_assignments = instance.sectionAssignments();
@@ -802,38 +797,38 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     log_file.logVerbose("Reading assembly data for " + new_assembly.name);
     new_assembly.embeddedSpace = this->dimension_enum_strings[assembly.embeddedSpace()];
 
-    log_file.logDebug("Assembly: " + new_assembly.name);
-    log_file.logDebug("\tnodes size: " + to_string(assembly.nodes().size()));
-    log_file.logDebug("\telements size: " + to_string(assembly.elements().size()));
+    log_file.logVerbose("Assembly: " + new_assembly.name);
+    log_file.logVerbose("\tnodes size: " + to_string(assembly.nodes().size()));
+    log_file.logVerbose("\telements size: " + to_string(assembly.elements().size()));
 
     const odb_SequenceNode& nodes = assembly.nodes();
     for (int i=0; i<nodes.size(); i++)  { new_assembly.nodes.push_back(process_node(nodes.node(i), log_file)); }
     const odb_SequenceElement& elements = assembly.elements();
     for (int i=0; i<elements.size(); i++)  { new_assembly.elements.push_back(process_element(elements.element(i), log_file)); }
 
-    log_file.logDebug("\tnodeSets:");
+    log_file.logVerbose("\tnodeSets:");
     odb_SetRepositoryIT node_iter(assembly.nodeSets());
     for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
         new_assembly.nodeSets.push_back(process_set(node_iter.currentValue(), log_file));
     }
-    log_file.logDebug("\tnodeSets size " + to_string(new_assembly.nodeSets.size()));
-    log_file.logDebug("\telementSets:");
+    log_file.logVerbose("\tnodeSets size " + to_string(new_assembly.nodeSets.size()));
+    log_file.logVerbose("\telementSets:");
     odb_SetRepositoryIT element_iter(assembly.elementSets());
     for (element_iter.first(); !element_iter.isDone(); element_iter.next()) {
         new_assembly.elementSets.push_back(process_set(element_iter.currentValue(), log_file));
     }
-    log_file.logDebug("\telementSets size " + to_string(new_assembly.elementSets.size()));
-    log_file.logDebug("\tsurfaces:");
+    log_file.logVerbose("\telementSets size " + to_string(new_assembly.elementSets.size()));
+    log_file.logVerbose("\tsurfaces:");
     odb_SetRepositoryIT surface_iter(assembly.surfaces());
     for (surface_iter.first(); !surface_iter.isDone(); surface_iter.next()) {
         new_assembly.surfaces.push_back(process_set(surface_iter.currentValue(), log_file));
     }
-    log_file.logDebug("\tsurfaces size " + to_string(new_assembly.surfaces.size()));
+    log_file.logVerbose("\tsurfaces size " + to_string(new_assembly.surfaces.size()));
 
     odb_InstanceRepository instances = assembly.instances();
     odb_InstanceRepositoryIT instance_iter(instances);
     for (instance_iter.first(); !instance_iter.isDone(); instance_iter.next()) {
-        log_file.logVerbose("Starting to read instance: " + string(instance_iter.currentKey().CStr()));
+        log_file.logVerbose("Reading instance: " + string(instance_iter.currentKey().CStr()));
         const odb_Instance& instance = instances[instance_iter.currentKey()];
         if ((command_line_arguments["instance"] != "all") && (command_line_arguments["instance"] != instance.name().CStr())) {
             continue;
@@ -1313,7 +1308,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
 
     // Open file for writing
     std::ifstream hdf5File (command_line_arguments["extracted-file"].c_str());
-    log_file.logDebug("Creating hdf5 file " + command_line_arguments["extracted-file"]);
+    log_file.logVerbose("Creating hdf5 file " + command_line_arguments["extracted-file"]);
     const H5std_string FILE_NAME(command_line_arguments["extracted-file"]);
 
     H5::Exception::dontPrint();
@@ -1363,7 +1358,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
     H5::Group user_data_group = h5_file.createGroup(string("/odb/userData").c_str());
     for (int i=0; i<this->user_xy_data.size(); i++) {
         string user_xy_data_name = "/odb/userData/" + this->user_xy_data[i].name;
-        log_file.logDebug("User data name:" + this->user_xy_data[i].name);
+        log_file.logVerbose("User data name:" + this->user_xy_data[i].name);
         H5::Group user_xy_data_group = h5_file.createGroup(user_xy_data_name.c_str());
         write_string_dataset(user_xy_data_group, "sourceDescription", this->user_xy_data[i].sourceDescription);
         write_string_dataset(user_xy_data_group, "contentDescription", this->user_xy_data[i].contentDescription);
