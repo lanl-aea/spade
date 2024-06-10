@@ -19,7 +19,7 @@ Logging::Logging (string const &log_file_name, bool const &log_verbose, bool con
     } else { this->output_stream = &this->log_file; }
     time_t now = time(0); // current date/time based on current system
     char* dt = ctime(&now); // convert now to string form
-    *this->output_stream << "Started at: " << dt;
+    *this->output_stream << "Started at time: " << dt;
     this->log_debug = log_debug;
     this->log_verbose = log_verbose;
 }
@@ -27,7 +27,7 @@ Logging::~Logging () {
 
     time_t now = time(0);
     char* dt = ctime(&now);
-    *this->output_stream << "Finished at: " << dt << endl;
+    *this->output_stream << "Finished at time: " << dt << endl;
     if (this->log_file.is_open()) { this->log_file.close(); }
 }
 

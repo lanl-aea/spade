@@ -228,9 +228,7 @@ string CmdLineArguments::verboseArguments () {
     arguments += "\thistory: " + this->command_line_arguments["history"] + "\n";
     arguments += "\thistory region: " + this->command_line_arguments["history-region"] + "\n";
     arguments += "\tinstance: " + this->command_line_arguments["instance"] + "\n";
-    arguments += "\tlog file: " + this->command_line_arguments["log-file"] + "\n";
-    // TODO: Add more here
-    arguments += "\n";
+    arguments += "\tlog file: " + this->command_line_arguments["log-file"];
 
     return arguments;
 }
