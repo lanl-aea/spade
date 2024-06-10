@@ -1239,7 +1239,6 @@ history_region_type SpadeObject::process_history_region(const odb_HistoryRegion 
     new_history_region.point = process_history_point(history_region.historyPoint(), log_file);
     const odb_HistoryOutputRepository& history_outputs = history_region.historyOutputs();
     odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
-    log_file.logVerbose("Reading history output.");
     for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
         odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
         if ((command_line_arguments["history"] == "all") || (command_line_arguments["history"] == history_output.name().CStr())) {
@@ -1307,7 +1306,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
 
     // Open file for writing
     std::ifstream hdf5File (command_line_arguments["extracted-file"].c_str());
-    log_file.log("Creating hdf5 file " + command_line_arguments["extracted-file"]);
+    log_file.log("Creating hdf5 file: " + command_line_arguments["extracted-file"]);
     const H5std_string FILE_NAME(command_line_arguments["extracted-file"]);
 
     H5::Exception::dontPrint();
