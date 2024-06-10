@@ -95,7 +95,8 @@ def get_parser() -> argparse.ArgumentParser:
         nargs="+",
         type=pathlib.Path,
         default=_settings._default_abaqus_commands,
-        help="Ordered list of Abaqus executable paths. Use first found (default: %(default)s)"
+        help="Ordered list of Abaqus executable paths. Use first found " \
+             f"(default: {_utilities.character_delimited_list(_settings._default_abaqus_commands)})"
     )
 
     # True or false inputs
