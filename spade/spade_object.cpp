@@ -221,8 +221,8 @@ void SpadeObject::process_odb(odb_Odb &odb, Logging &log_file, CmdLineArguments 
         log_file.logVerbose("Reading part: " + string(parts_iter.currentKey().CStr()));
         odb_Part part = parts[parts_iter.currentKey()];
         log_file.log("Part: " + string(part.name().CStr()));
-        log_file.log("\tnodes size: " + to_string(part.nodes().size()));
-        log_file.log("\telements size: " + to_string(part.elements().size()));
+        log_file.log("\tnode count: " + to_string(part.nodes().size()));
+        log_file.log("\telement count: " + to_string(part.elements().size()));
         this->parts.push_back(process_part(part, odb, log_file));
     }
 
@@ -334,7 +334,7 @@ element_type* SpadeObject::process_element(const odb_Element &element, Logging &
         for (int i=0; i < element_connectivity_size; i++) {
             new_element.connectivity.push_back(connectivity[i]);
         }
-        log_file.logDebug("\t\telement " + to_string(new_element.label) + ": connectivity size: " + to_string(new_element.connectivity.size()) + " instances size:" + to_string(new_element.instanceNames.size()));
+        log_file.logDebug("\t\telement " + to_string(new_element.label) + ": connectivity count: " + to_string(new_element.connectivity.size()) + " instances count:" + to_string(new_element.instanceNames.size()));
         new_element.sectionCategory = process_section_category(element.sectionCategory(), log_file);
         this->elements[element_key] = new_element;
         return &this->elements[element_key];
@@ -730,8 +730,8 @@ instance_type SpadeObject::process_instance (const odb_Instance &instance, odb_O
     new_instance.embeddedSpace = this->dimension_enum_strings[instance.embeddedSpace()];
 
     log_file.log("Instance: " + new_instance.name);
-    log_file.log("\tnodes size: " + to_string(instance.nodes().size()));
-    log_file.log("\telements size: " + to_string(instance.elements().size()));
+    log_file.log("\tnode count: " + to_string(instance.nodes().size()));
+    log_file.log("\telement count: " + to_string(instance.elements().size()));
 
     const odb_SequenceNode& nodes = instance.nodes();
     for (int i=0; i<nodes.size(); i++)  { new_instance.nodes.push_back(process_node(nodes.node(i), log_file)); }
@@ -742,17 +742,17 @@ instance_type SpadeObject::process_instance (const odb_Instance &instance, odb_O
     for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
         new_instance.nodeSets.push_back(process_set(node_iter.currentValue(), log_file));
     }
-    log_file.logVerbose("\tnodeSets size: " + to_string(new_instance.nodeSets.size()));
+    log_file.log("\tnodeSet count: " + to_string(new_instance.nodeSets.size()));
     odb_SetRepositoryIT element_iter(instance.elementSets());
     for (element_iter.first(); !element_iter.isDone(); element_iter.next()) {
         new_instance.elementSets.push_back(process_set(element_iter.currentValue(), log_file));
     }
-    log_file.logVerbose("\telementSets size: " + to_string(new_instance.elementSets.size()));
+    log_file.log("\telementSet count: " + to_string(new_instance.elementSets.size()));
     odb_SetRepositoryIT surface_iter(instance.surfaces());
     for (surface_iter.first(); !surface_iter.isDone(); surface_iter.next()) {
         new_instance.surfaces.push_back(process_set(surface_iter.currentValue(), log_file));
     }
-    log_file.logVerbose("\tsurfaces size: " + to_string(new_instance.surfaces.size()));
+    log_file.log("\tsurface count: " + to_string(new_instance.surfaces.size()));
     const odb_SequenceRigidBody& rigid_bodies = instance.rigidBodies();
     for (int i=0; i<rigid_bodies.size(); i++)  { new_instance.rigidBodies.push_back(process_rigid_body(rigid_bodies[i], log_file)); }
     const odb_SequenceSectionAssignment& section_assignments = instance.sectionAssignments();
@@ -797,8 +797,8 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     new_assembly.embeddedSpace = this->dimension_enum_strings[assembly.embeddedSpace()];
 
     log_file.log("Assembly: " + new_assembly.name);
-    log_file.log("\tnodes size: " + to_string(assembly.nodes().size()));
-    log_file.log("\telements size: " + to_string(assembly.elements().size()));
+    log_file.log("\tnode count: " + to_string(assembly.nodes().size()));
+    log_file.log("\telement count: " + to_string(assembly.elements().size()));
 
     const odb_SequenceNode& nodes = assembly.nodes();
     for (int i=0; i<nodes.size(); i++)  { new_assembly.nodes.push_back(process_node(nodes.node(i), log_file)); }
@@ -810,19 +810,19 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
         new_assembly.nodeSets.push_back(process_set(node_iter.currentValue(), log_file));
     }
-    log_file.log("\tnodeSets size " + to_string(new_assembly.nodeSets.size()));
+    log_file.log("\tnodeSet count: " + to_string(new_assembly.nodeSets.size()));
     log_file.logVerbose("\telementSets:");
     odb_SetRepositoryIT element_iter(assembly.elementSets());
     for (element_iter.first(); !element_iter.isDone(); element_iter.next()) {
         new_assembly.elementSets.push_back(process_set(element_iter.currentValue(), log_file));
     }
-    log_file.log("\telementSets size " + to_string(new_assembly.elementSets.size()));
+    log_file.log("\telementSet count: " + to_string(new_assembly.elementSets.size()));
     log_file.logVerbose("\tsurfaces:");
     odb_SetRepositoryIT surface_iter(assembly.surfaces());
     for (surface_iter.first(); !surface_iter.isDone(); surface_iter.next()) {
         new_assembly.surfaces.push_back(process_set(surface_iter.currentValue(), log_file));
     }
-    log_file.log("\tsurfaces size " + to_string(new_assembly.surfaces.size()));
+    log_file.log("\tsurface count: " + to_string(new_assembly.surfaces.size()));
 
     odb_InstanceRepository instances = assembly.instances();
     odb_InstanceRepositoryIT instance_iter(instances);
