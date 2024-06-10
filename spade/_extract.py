@@ -12,6 +12,7 @@ from spade import _utilities
 _exclude_from_namespace = set(globals().keys())
 
 # TODO: Find a better way to define optional print functions when using API instead of CLI/main function
+# https://re-git.lanl.gov/aea/python-projects/spade/-/issues/40
 print_verbose = lambda *a, **k: None  # noqa: E731
 print_debug = lambda *a, **k: None  # noqa: E731
 
@@ -24,6 +25,11 @@ def main(args: argparse.Namespace) -> None:
 
     :raises RuntimeError: If any subprocess returns a non-zero exit code or an Abaqus ODB file is not provided.
     """
+    if args.debug:
+        args.verbose = True
+
+    # TODO: Find a better way to define optional print functions when using API instead of CLI/main function
+    # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/40
     global print_verbose
     global print_debug
     print_verbose = print if args.verbose else lambda *a, **k: None
