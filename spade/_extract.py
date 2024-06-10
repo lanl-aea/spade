@@ -2,7 +2,6 @@ import os
 import shlex
 import pathlib
 import argparse
-import platform
 import tempfile
 import subprocess
 
@@ -11,6 +10,10 @@ from spade import _utilities
 
 
 _exclude_from_namespace = set(globals().keys())
+
+# TODO: Find a better way to define optional print functions when using API instead of CLI/main function
+print_verbose = lambda *a, **k: None
+print_debug = lambda *a, **k: None
 
 
 # TODO: full API
@@ -21,39 +24,44 @@ def main(args: argparse.Namespace) -> None:
 
     :raises RuntimeError: If any subprocess returns a non-zero exit code or an Abaqus ODB file is not provided.
     """
-    # Setup environment
+    global print_verbose
+    global print_debug
+    print_verbose = print if args.verbose else lambda *a, **k: None
+    print_debug = print if args.debug else lambda *a, **k: None
+    current_env = os.environ.copy()
+
+    # Find Abaqus
     try:
         abaqus_command = _utilities.find_command(args.abaqus_commands)
     except FileNotFoundError as err:
         raise RuntimeError(str(err))
-    _, abaqus_bin, _ = _utilities.return_abaqus_code_paths(abaqus_command)
-    source_directory = pathlib.Path(__file__).parent
+    print_verbose(f"Found Abaqus command: {abaqus_command}")
     abaqus_version = _utilities.abaqus_official_version(abaqus_command)
-    platform_string = "_".join(f"{platform.system()} {platform.release()}".split())
-    build_directory = _settings._project_root_abspath / f"build-{abaqus_version}-{platform_string}"
-    current_env = os.environ.copy()
+    print_verbose(f"Found Abaqus version: {abaqus_version}")
+    _, abaqus_bin, _ = _utilities.return_abaqus_code_paths(abaqus_command)
+    print_verbose(f"Found Abaqus bin: {abaqus_bin}")
 
     with tempfile.TemporaryDirectory() as temporary_directory:
-
         temporary_path = pathlib.Path(temporary_directory)
 
         # Compile c++ executable
+        print_verbose(f"Compiling and linking against Abaqus {abaqus_version}")
         spade_executable = cpp_compile(
             build_directory=temporary_path,
             abaqus_command=abaqus_command,
             environment=current_env,
-            working_directory=source_directory,
+            working_directory=_settings._project_root_abspath,
             recompile=args.recompile,
             debug=args.debug
         )
 
         # Run c++ executable
+        print_verbose(f"Running extract for file: {args.ODB_FILE}")
         cpp_execute(
             spade_executable=spade_executable,
             abaqus_bin=abaqus_bin,
             args=args,
-            environment=current_env,
-            debug=args.debug
+            environment=current_env
         )
 
 
@@ -141,8 +149,7 @@ def cpp_compile(
             scons_stdout = None
         else:
             scons_stdout = subprocess.PIPE
-        if debug:
-            print(f"Compiling {_settings._project_name_short} with command {scons_command}")
+        print_debug(f"Compiling {_settings._project_name_short} with command {scons_command}")
         try:
             scons_output = subprocess.run(
                 scons_command,
@@ -152,9 +159,7 @@ def cpp_compile(
                 stdout=scons_stdout
             )
         except subprocess.CalledProcessError as err:
-            message = "Could not compile with Abaqus command '{abaqus_command}'"
-            if debug:
-                message += f": {str(err)}"
+            message = f"Could not compile with Abaqus command '{abaqus_command}': {str(err)}"
             raise RuntimeError(message)
     return spade_executable
 
@@ -164,7 +169,6 @@ def cpp_execute(
     abaqus_bin: pathlib.Path,
     args: argparse.Namespace,
     environment: dict = dict(),
-    debug: bool = False
 ) -> None:
     """Run the SPADE c++ executable
 
@@ -172,7 +176,6 @@ def cpp_execute(
     :param abaqus_bin: Abaqus bin path
     :param args: The Spade Python CLI namespace
     :param environment: compilation environment for the ``subprocess.run`` shell call
-    :param debug: Show verbose executable error message
 
     :raises RuntimeError: If the spade c++ command raises a ``subprocess.CalledProcessError``
     """
@@ -182,14 +185,11 @@ def cpp_execute(
     except KeyError:
         environment["LD_LIBRARY_PATH"] = f"{abaqus_bin}"
     command_line_arguments = shlex.split(full_command_line_arguments, posix=(os.name == "posix"))
-    if debug:
-        print(f"Running {_settings._project_name_short} with command {command_line_arguments}")
+    print_debug(f"Running {_settings._project_name_short} with command {command_line_arguments}")
     try:
         subprocess.run(command_line_arguments, env=environment, check=True)
     except subprocess.CalledProcessError as err:
-        message = f"{_settings._project_name_short} extract failed in Abaqus ODB application"
-        if debug:
-            message += f": {str(err)}"
+        message = f"{_settings._project_name_short} extract failed in Abaqus ODB application: {str(err)}"
         raise RuntimeError(message)
 
 
