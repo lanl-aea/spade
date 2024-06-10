@@ -11,7 +11,6 @@
 using namespace std;
 
 Logging::Logging (string const &log_file_name, bool const &log_verbose, bool const &log_debug) {
-
     this->log_file.open(log_file_name.c_str());
     if (!this->log_file.is_open()) {
         cerr << "Couldn't open: " << log_file_name << " Log messages will be printed to stdout." << endl;
@@ -23,8 +22,8 @@ Logging::Logging (string const &log_file_name, bool const &log_verbose, bool con
     this->log_debug = log_debug;
     this->log_verbose = log_verbose;
 }
-Logging::~Logging () {
 
+Logging::~Logging () {
     time_t now = time(0);
     char* dt = ctime(&now);
     *this->output_stream << "Finished at time: " << dt << endl;

@@ -738,11 +738,13 @@ instance_type SpadeObject::process_instance (const odb_Instance &instance, odb_O
     odb_SequenceElement elements = instance.elements();
     for (int i=0; i<elements.size(); i++)  { new_instance.elements.push_back(process_element(elements.element(i), log_file)); }
 
+    log_file.logVerbose("\tnodeSets:");
     odb_SetRepositoryIT node_iter(instance.nodeSets());
     for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
         new_instance.nodeSets.push_back(process_set(node_iter.currentValue(), log_file));
     }
     log_file.log("\tnodeSet count: " + to_string(new_instance.nodeSets.size()));
+    log_file.logVerbose("\telementSets:");
     odb_SetRepositoryIT element_iter(instance.elementSets());
     for (element_iter.first(); !element_iter.isDone(); element_iter.next()) {
         new_instance.elementSets.push_back(process_set(element_iter.currentValue(), log_file));
