@@ -34,7 +34,7 @@ Logging::~Logging () {
 void Logging::log (string const &output) { *this->output_stream << output << endl; }
 void Logging::logVerbose (string const &output) { if (this->log_verbose) { *this->output_stream << output << endl; } }
 void Logging::logWarning (string const &output) { *this->output_stream << "WARNING: " << output << endl;  }
-void Logging::logDebug (string const &output) { if (this->log_debug) { cout << output << endl; } }
+void Logging::logDebug (string const &output) { if (this->log_debug) { *this->output_stream << output << endl; } }
 
 void Logging::logErrorAndExit (string const &output) {
     *this->output_stream << output << endl;
