@@ -12,8 +12,8 @@ from spade import _utilities
 _exclude_from_namespace = set(globals().keys())
 
 # TODO: Find a better way to define optional print functions when using API instead of CLI/main function
-print_verbose = lambda *a, **k: None
-print_debug = lambda *a, **k: None
+print_verbose = lambda *a, **k: None  # noqa: E731
+print_debug = lambda *a, **k: None  # noqa: E731
 
 
 # TODO: full API
