@@ -16,6 +16,10 @@ odb_files = [
     "viewer_tutorial.odb",
     "w-reactor_global.odb"
 ]
+inp_files = [
+    "beamgap",
+    "selfcontact_gask",
+]
 
 # If executing in repository, add package to PYTHONPATH
 try:
@@ -43,10 +47,16 @@ system_tests = [
 ]
 # TODO: Move abaqus command to a search in SConstruct
 for odb_file in odb_files:
-    system_tests.append(
-        [f"/apps/abaqus/Commands/abq2023 fetch -job {odb_file}",
-         f"{spade_command} extract {odb_file} --abaqus-commands /apps/abaqus/Commands/abq2023 abq2023 --recompile"]
-    )
+    system_tests.append([
+        f"/apps/abaqus/Commands/abq2023 fetch -job {odb_file}",
+        f"{spade_command} extract {odb_file} --abaqus-commands /apps/abaqus/Commands/abq2023 abq2023 --recompile"
+    ])
+for inp_file in inp_files:
+    system_tests.append([
+        f"/apps/abaqus/Commands/abq2023 fetch -job '{inp_file}*'",
+        f"/apps/abaqus/Commands/abq2023 -job {inp_file}",
+        f"{spade_command} extract {inp_file}.odb --abaqus-commands /apps/abaqus/Commands/abq2023 --recompile"
+    ])
 if installed:
     system_tests.append(
         # The HTML docs path doesn't exist in the repository. Can only system test from an installed package.
