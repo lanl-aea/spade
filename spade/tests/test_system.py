@@ -1,5 +1,6 @@
 import os
 import shlex
+import shutil
 import typing
 import tempfile
 import subprocess
@@ -83,7 +84,10 @@ def test_run_tutorial(number: int, commands: typing.Union[str, typing.Iterable[s
             run_commands(commands, temp_directory)
     else:
         command_directory = build_directory / f"commands{number}"
-        command_directory.mkdir(parents=True, exist_ok=True)
+        command_directory = command_directory.resolve()
+        if command_directory.exists():
+            shutil.rmtree(command_directory)
+        command_directory.mkdir(parents=True)
         run_commands(commands, command_directory)
 
 
