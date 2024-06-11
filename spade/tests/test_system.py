@@ -26,6 +26,9 @@ try:
     version("spade")
     installed = True
 except PackageNotFoundError:
+    # TODO: Recover from the SCons task definition?
+    build_directory = _settings._project_root_abspath.parent / "build" / "systemtests"
+    build_directory.mkdir(parents=True, exist_ok=True)
     installed = False
 
 if not installed:
@@ -54,7 +57,7 @@ for odb_file in odb_files:
 for inp_file in inp_files:
     system_tests.append([
         f"/apps/abaqus/Commands/abq2023 fetch -job '{inp_file}*'",
-        f"/apps/abaqus/Commands/abq2023 -job {inp_file}",
+        f"/apps/abaqus/Commands/abq2023 -job {inp_file} -interactive -ask_delete no",
         f"{spade_command} extract {inp_file}.odb --abaqus-commands /apps/abaqus/Commands/abq2023 --recompile"
     ])
 if installed:
@@ -73,7 +76,16 @@ def test_run_tutorial(commands: typing.Union[str, typing.Iterable[str]]) -> None
     """
     if isinstance(commands, str):
         commands = [commands]
-    with tempfile.TemporaryDirectory() as temp_directory:
-        for command in commands:
-            command = shlex.split(command)
-            subprocess.check_output(command, env=env, cwd=temp_directory).decode("utf-8")
+    if installed:
+        with tempfile.TemporaryDirectory() as temp_directory:
+            run_commands(commands, temp_directory)
+    else:
+        command_directory = build_directory / f"commands{number}"
+        command_directory.mkdir(parents=True, exist_ok=True)
+        run_commands(commands, command_directory)
+
+
+def run_commands(commands, build_directory):
+    for command in commands:
+        command = shlex.split(command)
+        subprocess.check_output(command, env=env, cwd=build_directory).decode('utf-8')
