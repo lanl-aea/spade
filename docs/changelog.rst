@@ -15,6 +15,7 @@ Documentation
 Internal Changes
 ================
 - Re-enable threaded system tests (:issue:`19`, :merge:`36`). By `Kyle Brindley`_.
+- Add more system tests by running Abaqus fetch input files (:issue:`41`, :merge:`38`). By `Kyle Brindley`_.
 
 Enhancements
 ============
