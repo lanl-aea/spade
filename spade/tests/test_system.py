@@ -68,10 +68,11 @@ if installed:
 
 
 @pytest.mark.systemtest
-@pytest.mark.parametrize("commands", system_tests)
-def test_run_tutorial(commands: typing.Union[str, typing.Iterable[str]]) -> None:
+@pytest.mark.parametrize("number, commands", enumerate(system_tests))
+def test_run_tutorial(number: int, commands: typing.Union[str, typing.Iterable[str]]) -> None:
     """Run the system tests in a temporary directory
 
+    :param int number: the command number. Used during local testing to separate command directories.
     :param commands: command string or list of strings for the system test
     """
     if isinstance(commands, str):
