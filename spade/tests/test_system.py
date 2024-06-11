@@ -49,16 +49,17 @@ system_tests = [
     # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/22
 ]
 # TODO: Move abaqus command to a search in SConstruct
+options = "--abaqus-commands /apps/abaqus/Commands/abq2023 --recompile --force-overwrite"
 for odb_file in odb_files:
     system_tests.append([
         f"/apps/abaqus/Commands/abq2023 fetch -job {odb_file}",
-        f"{spade_command} extract {odb_file} --abaqus-commands /apps/abaqus/Commands/abq2023 abq2023 --recompile"
+        f"{spade_command} extract {odb_file} {options}"
     ])
 for inp_file in inp_files:
     system_tests.append([
         f"/apps/abaqus/Commands/abq2023 fetch -job '{inp_file}*'",
         f"/apps/abaqus/Commands/abq2023 -job {inp_file} -interactive -ask_delete no",
-        f"{spade_command} extract {inp_file}.odb --abaqus-commands /apps/abaqus/Commands/abq2023 --recompile"
+        f"{spade_command} extract {inp_file}.odb  {options}"
     ])
 if installed:
     system_tests.append(
