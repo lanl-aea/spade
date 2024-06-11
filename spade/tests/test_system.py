@@ -14,9 +14,7 @@ env = os.environ.copy()
 spade_command = "spade"
 odb_files = [
     "viewer_tutorial.odb",
-# TODO: Chase down possible race condition before re-enabling system tests
-# https://re-git.lanl.gov/aea/python-projects/spade/-/issues/19
-#    "w-reactor_global.odb"
+    "w-reactor_global.odb"
 ]
 
 # If executing in repository, add package to PYTHONPATH

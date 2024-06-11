@@ -12,6 +12,10 @@ Documentation
 =============
 - Do not show Python internal types in CLI help/usage. By `Kyle Brindley`_.
 
+Internal Changes
+================
+- Re-enable threaded system tests (:issue:`19`, :merge:`36`). By `Kyle Brindley`_.
+
 Enhancements
 ============
 - Print minimal program flow when verbose is requested. Unify logging for verbose and debugging output (:issue:`39`,
