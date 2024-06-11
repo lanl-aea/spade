@@ -17,6 +17,8 @@ Internal Changes
 - Re-enable threaded system tests (:issue:`19`, :merge:`36`). By `Kyle Brindley`_.
 - Add more system tests by running simulations for Abaqus fetched input files. Make local system test directories
   persistent for easier debugging (:issue:`41`, :merge:`38`). By `Kyle Brindley`_.
+- Always clean the system test working directories and force overwrite the extracted file to ensure up-to-date test
+  results (:issue:`44`, :merge:`39`). By `Kyle Brindley`_.
 
 Enhancements
 ============
