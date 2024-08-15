@@ -15,7 +15,6 @@ before_script:
   - aea_projects="/projects"
   - if [ $(hostname) == ??-rfe?.lanl.gov ]; then aea_projects="/usr/projects/ea"; fi
   - aea_compute_path="${aea_projects}/aea_compute"
-  - aea_conda_channel="${aea_compute_path}/aea-conda"
   - aea_modulefiles="${aea_compute_path}/modulefiles"
   - module use ${aea_modulefiles}
   - module load texlive
