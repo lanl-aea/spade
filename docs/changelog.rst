@@ -19,6 +19,8 @@ Internal Changes
   persistent for easier debugging (:issue:`41`, :merge:`38`). By `Kyle Brindley`_.
 - Always clean the system test working directories and force overwrite the extracted file to ensure up-to-date test
   results (:issue:`44`, :merge:`39`). By `Kyle Brindley`_.
+- Use a common downstream pipeline to deploy to the internal conda channel (:issue:`733`, :merge:`904`). By `Kyle
+  Brindley`_.
 
 Enhancements
 ============

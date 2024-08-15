@@ -133,31 +133,22 @@ conda-build:
   tags:
     - shell-aea
 
-deploy:
+# https://re-git.lanl.gov/aea/developer-operations/aea-conda
+aea-conda-deploy:
   stage: deploy
-  variables:
-    GIT_STRATEGY: clone
-  dependencies:
-    - conda-build
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - if: $CI_COMMIT_BRANCH == "main"
-    - if: $DEPLOY == "deploy"
-  script:
-    # Override default permissions. Set group to rx with no write permissions.
-    - umask 0022
-    # Build alternate OS packages (assumes original built on linux-64)
-    # TODO: Remove recipe hardcoded linux dependencies before building Windows package
-    # Copy Conda package to AEA Conda Channel
-    - cp ${conda_artifacts_directory}/linux-64/${package_name}-*-*.tar.bz2 ${aea_conda_channel}/linux-64
-    # Change group for access by all W-13 staff and clean up permissions
-    - chgrp w13users ${aea_conda_channel}/*-64/${package_name}-*-*.tar.bz2 || true
-    - chmod go+rx-w ${aea_conda_channel}/*-64/${package_name}-*-*.tar.bz2 || true
-    # Troubleshooting conda channel deploy and index update
-    - conda search --channel file://${aea_conda_channel}/ --override-channels ${package_name}
-  tags:
-    - shell-aea
+  variables:
+    PARENT_CI_PROJECT_PATH: $CI_PROJECT_PATH
+    PARENT_CI_COMMIT_BRANCH: $CI_COMMIT_BRANCH
+    AEA_CONDA_PACKAGE_JOB: conda-build
+    AEA_CONDA_PACKAGE_ARTIFACTS: conda-bld/linux-64/spade-*-*.tar.bz2
+  trigger:
+    project: aea/developer-operations/aea-conda
+    branch: main
+    strategy: depend
 
 # It MUST be called pages
 pages:
