@@ -17,7 +17,7 @@ def main() -> None:
 
     try:
         if args.subcommand == "docs":
-            _docs.main(print_local_path=args.print_local_path)
+            _docs.main(_settings._installed_docs_index, print_local_path=args.print_local_path)
         else:
             _extract.main(args)
     except RuntimeError as err:
