@@ -34,7 +34,7 @@ from spade._settings import _project_name, _project_name_short
 project = _project_name_short
 release = "@version@"
 version = release
-copyright = f"{datetime.date.today().year} Triad National Security, LLC. All Rights Reserved."
+copyright = f"2023-{datetime.date.today().year} Triad National Security, LLC. All Rights Reserved."
 
 # -- General configuration ---------------------------------------------------
 extensions = [
