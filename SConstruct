@@ -9,8 +9,12 @@ import setuptools_scm
 
 warnings.filterwarnings(action="ignore", message="tag", category=UserWarning, module="setuptools_scm")
 
+# Set project meta variables
+project_dir = pathlib.Path(Dir(".").abspath)
+package_source_dir = "spade"
 project_variables = {
-    "project_dir": Dir(".").abspath,
+    "project_dir": project_dir,
+    "package_dir": project_dir / package_source_dir,
     "version": setuptools_scm.get_version(),
 }
 project_variables_substitution = dict()
