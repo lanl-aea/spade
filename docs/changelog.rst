@@ -26,6 +26,8 @@ Enhancements
 ============
 - Print minimal program flow when verbose is requested. Unify logging for verbose and debugging output (:issue:`39`,
   :merge:`35`). By `Kyle Brindley`_.
+- Print more useful output when docs subcommand fails to open a web browser (:issue:`48`, :merge:`43`). By `Kyle
+  Brindley`_.
 
 *******************
 v0.3.2 (2024-05-30)
