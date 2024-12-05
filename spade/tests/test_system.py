@@ -71,8 +71,18 @@ if installed:
 
 @pytest.mark.systemtest
 @pytest.mark.parametrize("number, commands", enumerate(system_tests))
-def test_run_tutorial(number: int, commands: typing.Union[str, typing.Iterable[str]]) -> None:
+def test_run_tutorial(
+    system_test_directory,
+    number: int,
+    commands: typing.Union[str, typing.Iterable[str]]
+) -> None:
     """Run the system tests in a temporary directory
+
+    Accepts a custom pytest CLI option to re-direct the temporary system test root directory away from ``$TMPDIR`` as
+
+    .. code-block::
+
+       pytest --system-test-dir=/my/systemtest/output
 
     :param int number: the command number. Used during local testing to separate command directories.
     :param commands: command string or list of strings for the system test
@@ -80,7 +90,7 @@ def test_run_tutorial(number: int, commands: typing.Union[str, typing.Iterable[s
     if isinstance(commands, str):
         commands = [commands]
     if installed:
-        with tempfile.TemporaryDirectory() as temp_directory:
+        with tempfile.TemporaryDirectory(dir=system_test_directory) as temp_directory:
             run_commands(commands, temp_directory)
     else:
         command_directory = build_directory / f"commands{number}"
