@@ -10,16 +10,14 @@ sys.dont_write_bytecode = True
 
 # -- Project information -----------------------------------------------------
 project_dir = pathlib.Path(r"@project_dir@").resolve()
-authors = [
+author_contact = [
     ('Prabhu S. Khalsa', '<pkhalsa@lanl.gov>'),
     ("Kyle Brindley", "<kbrindley@lanl.gov>"),
 ]
-author_latex = r"\and ".join(author for author, email in authors)
-epub_author = ", ".join(author for author, email in authors)
-author_manpage = ""
-for author, email in authors:
-    author_manpage += f"{author} {email}, "
-author_manpage = author_manpage.rstrip(', ')
+author = " and ".join(author for author, email in author_contact)
+author_latex = r"\and ".join(author for author, email in author_contact)
+epub_author = ", ".join(author for author, email in author_contact)
+author_manpage = ", ".join(f"{author} {email}" for author, email in author_contact)
 
 # Mock modules unavailable in the Conda development environment, e.g. Abaqus Python modules, and large imports not
 # required by the documentation build, e.g. cubit.
