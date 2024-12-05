@@ -40,8 +40,8 @@ requirements:
     - numpy
     - sphinx >=5.1
     - sphinx-argparse
+    - sphinx-book-theme
     - sphinx-copybutton >=0.5.1
-    - sphinx_rtd_theme >=1
     - sphinxcontrib-bibtex
     - setuptools_scm[toml] >=6.2
     - {{ compiler('cxx') }}

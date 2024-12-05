@@ -11,6 +11,7 @@ v0.3.3 (unreleased)
 Documentation
 =============
 - Do not show Python internal types in CLI help/usage. By `Kyle Brindley`_.
+- Convert to sphinx-book-theme (:issue:`50`, :merge:`45`). By `Kyle Brindley`_.
 
 Internal Changes
 ================

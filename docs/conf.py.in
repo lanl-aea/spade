@@ -76,11 +76,23 @@ copybutton_prompt_is_regexp = True
 def setup(app):
     app.add_css_file("custom.css")
 
-html_theme = "sphinx_rtd_theme"
+html_favicon = "_static/favicon.ico"
+html_logo = 'spade_smaller.png'
+html_last_updated_fmt = ""
+html_theme = "sphinx_book_theme"
+html_theme_options = {
+    "logo": {"text": release},
+    "article_header_start": "breadcrumbs",
+    "repository_provider": "gitlab",
+    "repository_url": "https://re-git.lanl.gov/aea/python-projects/spade",
+    "path_to_docs": "docs",
+    "use_source_button": True,
+    "use_repository_button": True,
+    "content_footer_items": ["last-updated"],
+    "show_toc_level": 2,
+}
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
-html_logo = 'spade_smaller.png'
-html_favicon = "_static/favicon.ico"
 
 # -- Options for manual page output ---------------------------------------
 man_pages = [
