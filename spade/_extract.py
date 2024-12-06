@@ -1,4 +1,6 @@
 import os
+import sys
+import errno
 import shlex
 import pathlib
 import argparse
@@ -47,28 +49,37 @@ def main(args: argparse.Namespace) -> None:
     _, abaqus_bin, _ = _utilities.return_abaqus_code_paths(abaqus_command)
     print_verbose(f"Found Abaqus bin: {abaqus_bin}")
 
-    with tempfile.TemporaryDirectory(dir=".") as temporary_directory:
-        temporary_path = pathlib.Path(temporary_directory)
+    try:
+        with tempfile.TemporaryDirectory(dir=".") as temporary_directory:
+            temporary_path = pathlib.Path(temporary_directory)
 
-        # Compile c++ executable
-        print_verbose(f"Compiling and linking against Abaqus {abaqus_version}")
-        spade_executable = cpp_compile(
-            build_directory=temporary_path,
-            abaqus_command=abaqus_command,
-            environment=current_env,
-            working_directory=_settings._project_root_abspath,
-            recompile=args.recompile,
-            debug=args.debug,
-        )
+            # Compile c++ executable
+            print_verbose(f"Compiling and linking against Abaqus {abaqus_version}")
+            spade_executable = cpp_compile(
+                build_directory=temporary_path,
+                abaqus_command=abaqus_command,
+                environment=current_env,
+                working_directory=_settings._project_root_abspath,
+                recompile=args.recompile,
+                debug=args.debug,
+            )
 
-        # Run c++ executable
-        print_verbose(f"Running extract for file: {args.ODB_FILE}")
-        cpp_execute(
-            spade_executable=spade_executable,
-            abaqus_bin=abaqus_bin,
-            args=args,
-            environment=current_env,
-        )
+            # Run c++ executable
+            print_verbose(f"Running extract for file: {args.ODB_FILE}")
+            cpp_execute(
+                spade_executable=spade_executable,
+                abaqus_bin=abaqus_bin,
+                args=args,
+                environment=current_env,
+            )
+    except OSError as err:
+        if err.errno == errno.ENOTEMPTY:
+            print(
+                f"Failed to clean up temporary directory. You can safely remove this directory.\n{err}",
+                file=sys.stderr
+            )
+        else:
+            raise err
 
 
 def get_parser() -> argparse.ArgumentParser:
