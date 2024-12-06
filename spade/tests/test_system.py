@@ -70,10 +70,9 @@ if installed:
 
 
 @pytest.mark.systemtest
-@pytest.mark.parametrize("number, commands", enumerate(system_tests))
+@pytest.mark.parametrize("commands", system_tests)
 def test_run_tutorial(
     system_test_directory,
-    number: int,
     commands: typing.Union[str, typing.Iterable[str]]
 ) -> None:
     """Run the system tests in a temporary directory
@@ -84,24 +83,14 @@ def test_run_tutorial(
 
        pytest --system-test-dir=/my/systemtest/output
 
-    :param int number: the command number. Used during local testing to separate command directories.
     :param commands: command string or list of strings for the system test
     """
+    if system_test_directory is not None:
+        system_test_directory.mkdir(parents=True, exist_ok=True)
+
     if isinstance(commands, str):
         commands = [commands]
-    if installed:
-        with tempfile.TemporaryDirectory(dir=system_test_directory) as temp_directory:
-            run_commands(commands, temp_directory)
-    else:
-        command_directory = build_directory / f"commands{number}"
-        command_directory = command_directory.resolve()
-        if command_directory.exists():
-            shutil.rmtree(command_directory)
-        command_directory.mkdir(parents=True)
-        run_commands(commands, command_directory)
-
-
-def run_commands(commands, build_directory):
-    for command in commands:
-        command = shlex.split(command)
-        subprocess.check_output(command, env=env, cwd=build_directory).decode('utf-8')
+    with tempfile.TemporaryDirectory(dir=system_test_directory) as temp_directory:
+        for command in commands:
+            command = shlex.split(command)
+            subprocess.check_output(command, env=env, cwd=temp_directory).decode('utf-8')
