@@ -74,7 +74,14 @@ fast-test:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
-    - scons regression
+    - |
+        if [[ $CI_PIPELINE_SOURCE == "schedule" ]]; then
+            abaqus_command='--abaqus-command=/apps/abaqus/Commands/abq2023 --abaqus-command=/apps/abaqus/Commands/abq2022'
+        else
+            abaqus_command=''
+        fi
+    - echo ${abaqus_command}
+    - scons regression ${abaqus_command}
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     reports:
