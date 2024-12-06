@@ -50,7 +50,7 @@ def main(args: argparse.Namespace) -> None:
     print_verbose(f"Found Abaqus bin: {abaqus_bin}")
 
     try:
-        with tempfile.TemporaryDirectory(dir=".") as temporary_directory:
+        with tempfile.TemporaryDirectory(dir=".", prefix=f"{_settings.project_name_short}.") as temporary_directory:
             temporary_path = pathlib.Path(temporary_directory)
 
             # Compile c++ executable
