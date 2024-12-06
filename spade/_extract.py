@@ -47,7 +47,7 @@ def main(args: argparse.Namespace) -> None:
     _, abaqus_bin, _ = _utilities.return_abaqus_code_paths(abaqus_command)
     print_verbose(f"Found Abaqus bin: {abaqus_bin}")
 
-    with tempfile.TemporaryDirectory() as temporary_directory:
+    with tempfile.TemporaryDirectory(dir=".") as temporary_directory:
         temporary_path = pathlib.Path(temporary_directory)
 
         # Compile c++ executable
@@ -68,7 +68,6 @@ def main(args: argparse.Namespace) -> None:
             abaqus_bin=abaqus_bin,
             args=args,
             environment=current_env,
-            working_directory=temporary_path,
         )
 
 
