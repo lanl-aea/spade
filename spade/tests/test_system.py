@@ -57,17 +57,17 @@ if installed:
     )
 
 # System tests that require third-party software. These should be marked "pytest.mark.require_third_party".
-# TODO: Pass through abaqus command in pytest CLI
-# https://re-git.lanl.gov/aea/python-projects/spade/-/issues/54
 # TODO: add tutorials
 # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/22
-spade_options = "--abaqus-commands /apps/abaqus/Commands/abq2023 --recompile --force-overwrite"
+spade_options = "--recompile --force-overwrite"
 for odb_file in odb_files:
     system_tests.append(
         pytest.param(
             [
-                f"/apps/abaqus/Commands/abq2023 fetch -job {odb_file}",
-                string.Template(f"${{spade_command}} extract {odb_file} ${{spade_options}}"),
+                string.Template(f"${{abaqus_command}} fetch -job {odb_file}"),
+                string.Template(
+                    f"${{spade_command}} extract {odb_file} --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
+                ),
             ],
             marks=pytest.mark.require_third_party
         )
@@ -76,9 +76,11 @@ for inp_file in inp_files:
     system_tests.append(
         pytest.param(
             [
-                f"/apps/abaqus/Commands/abq2023 fetch -job '{inp_file}*'",
-                f"/apps/abaqus/Commands/abq2023 -job {inp_file} -interactive -ask_delete no",
-                string.Template(f"${{spade_command}} extract {inp_file}.odb  ${{spade_options}}"),
+                string.Template(f"${{abaqus_command}} fetch -job '{inp_file}*'"),
+                string.Template(f"${{abaqus_command}} -job {inp_file} -interactive -ask_delete no"),
+                string.Template(
+                    f"${{spade_command}} extract {inp_file}.odb --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
+                ),
             ],
             marks=pytest.mark.require_third_party
         )
@@ -89,6 +91,7 @@ for inp_file in inp_files:
 @pytest.mark.parametrize("commands", system_tests)
 def test_system(
     system_test_directory,
+    abaqus_command,
     request,
     commands: typing.Iterable[str]
 ) -> None:
@@ -101,6 +104,7 @@ def test_system(
        pytest --system-test-dir=/my/systemtest/output
 
     :param system_test_directory: custom pytest decorator defined in conftest.py
+    :param abaqus_command: custom pytest decorator defined in conftest.py
     :param request: pytest decorator with test case meta data
     :param commands: command string or list of strings for the system test
     """
@@ -122,6 +126,7 @@ def test_system(
     template_substitution = {
         "spade_command": spade_command,
         "spade_options": spade_options,
+        "abaqus_command": abaqus_command,
         "temp_directory": temp_directory,
     }
     try:
