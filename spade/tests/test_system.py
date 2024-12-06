@@ -50,7 +50,8 @@ system_tests = [
     # Tutorials
     # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/22
 ]
-# TODO: Move abaqus command to a search in SConstruct
+# TODO: Pass through abaqus command in pytest CLI
+# https://re-git.lanl.gov/aea/python-projects/spade/-/issues/54
 spade_options = "--abaqus-commands /apps/abaqus/Commands/abq2023 --recompile --force-overwrite"
 for odb_file in odb_files:
     system_tests.append(
