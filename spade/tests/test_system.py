@@ -60,7 +60,7 @@ if installed:
 # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/54
 # TODO: add tutorials
 # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/22
-spade_options = "--abaqus-commands /apps/abaqus/Commands/abq2023 --recompile --force-overwrite --verbose --debug"
+spade_options = "--abaqus-commands /apps/abaqus/Commands/abq2023 --recompile --force-overwrite"
 for odb_file in odb_files:
     system_tests.append(
         pytest.param(
