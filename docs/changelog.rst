@@ -26,6 +26,8 @@ Internal Changes
   :merge:`46`). By `Kyle Brindley`_.
 - Run system tests from a local working directory to avoid failing on no-execute permissions on /tmp (:issue:`51`,
   :merge:`46`). By `Kyle Brindley`_.
+- Pass through Abaqus commands in system tests and test against a matrix of Abaqus versions (:issue:`54`, :merge:`48`).
+  By `Kyle Brindley`_.
 
 
 Enhancements
