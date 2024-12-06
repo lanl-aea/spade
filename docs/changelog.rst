@@ -22,6 +22,11 @@ Internal Changes
   results (:issue:`44`, :merge:`39`). By `Kyle Brindley`_.
 - Use a common downstream pipeline to deploy to the internal conda channel (:issue:`733`, :merge:`904`). By `Kyle
   Brindley`_.
+- Execute spade from the calling working directory as the most likely location for execute permission (:issue:`51`,
+  :merge:`46`). By `Kyle Brindley`_.
+- Run system tests from a local working directory to avoid failing on no-execute permissions on /tmp (:issue:`51`,
+  :merge:`46`). By `Kyle Brindley`_.
+
 
 Enhancements
 ============
