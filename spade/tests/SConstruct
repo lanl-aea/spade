@@ -12,7 +12,7 @@ AddOption(
     type="string",
     action="store",
     metavar="DIR",
-    help="Override for the spade command (default: '%default')"
+    help="Override for the spade command (default: '%default')",
 )
 
 env = Environment(
@@ -20,14 +20,12 @@ env = Environment(
     spade_command=GetOption("spade_command"),
 )
 env["spade"] = env["spade_command"]
-env.Append(BUILDERS={
-    "SpadeExtract": spade.scons_extensions.extract(program=env["spade"])
-})
+env.Append(BUILDERS={"SpadeExtract": spade.scons_extensions.extract(program=env["spade"])})
 env.Command(
     target=["viewer_tutorial.odb"],
     source=["SConstruct"],
     # TODO: Find the abaqus command instead of hardcoding for CI server(s)
-    action=["/apps/abaqus/Commands/abq2023 fetch -job ${TARGET.file}"]
+    action=["/apps/abaqus/Commands/abq2023 fetch -job ${TARGET.file}"],
 )
 env.SpadeExtract(
     target=["viewer_tutorial.h5"],

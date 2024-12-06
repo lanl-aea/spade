@@ -14,9 +14,10 @@ def test_find_abaqus_paths():
         pathlib.Path("/install/path/1234/bin"),
         pathlib.Path("/install/path/1234/notbin"),
     ]
-    mock_abaqus_environment = \
-        "Abaqus dummy text\nmore text we don't want\n" \
+    mock_abaqus_environment = (
+        "Abaqus dummy text\nmore text we don't want\n"
         "Abaqus is located in the directory " + _utilities.character_delimited_list(expected_paths)
+    )
     with patch("subprocess.check_output", return_value=mock_abaqus_environment):
         abaqus_paths = _utilities.find_abaqus_paths("/dummy/path/abaqus")
     assert abaqus_paths == expected_paths
@@ -28,13 +29,14 @@ def test_return_abaqus_code_paths():
         pathlib.Path("/install/path/1234/code/bin"),
         pathlib.Path("/install/path/1234/code/include"),
     )
-    mock_abaqus_environment = \
-        "Abaqus dummy text\nmore text we don't want\n" \
-        "Abaqus is located in the directory " \
-        "/install/path/1234 " \
-        "/install/path/1234/code " \
-        "/install/path/1234/code/bin " \
+    mock_abaqus_environment = (
+        "Abaqus dummy text\nmore text we don't want\n"
+        "Abaqus is located in the directory "
+        "/install/path/1234 "
+        "/install/path/1234/code "
+        "/install/path/1234/code/bin "
         "/install/path/1234/notbin\n"
+    )
     with patch("subprocess.check_output", return_value=mock_abaqus_environment):
         abaqus_paths = _utilities.return_abaqus_code_paths("/dummy/path/abaqus")
     assert abaqus_paths == expected_paths
@@ -42,11 +44,12 @@ def test_return_abaqus_code_paths():
 
 def test_abaqus_official_version():
     expected_version = "1234.HF5"
-    mock_abaqus_version = \
-        "Abaqus dummy text\nMore dummy text\n\n" \
-        f"Official Version: Abaqus {expected_version}\n" \
-        "Internal Version: Abaqus 1.23-4\n\n" \
+    mock_abaqus_version = (
+        "Abaqus dummy text\nMore dummy text\n\n"
+        f"Official Version: Abaqus {expected_version}\n"
+        "Internal Version: Abaqus 1.23-4\n\n"
         "trailing dummy text\n"
+    )
     with patch("subprocess.check_output", return_value=mock_abaqus_version):
         abaqus_version = _utilities.abaqus_official_version("/dummy/path/abaqus")
     assert abaqus_version == expected_version
@@ -64,21 +67,13 @@ def test_search_commands():
 
 
 find_command = {
-    "first": (
-        ["first", "second"], "first", does_not_raise()
-    ),
-    "second": (
-        ["first", "second"], "second", does_not_raise()
-    ),
-    "none": (
-        ["first", "second"], None, pytest.raises(FileNotFoundError)
-    ),
+    "first": (["first", "second"], "first", does_not_raise()),
+    "second": (["first", "second"], "second", does_not_raise()),
+    "none": (["first", "second"], None, pytest.raises(FileNotFoundError)),
 }
 
 
-@pytest.mark.parametrize("options, found, outcome",
-                         find_command.values(),
-                         ids=find_command.keys())
+@pytest.mark.parametrize("options, found, outcome", find_command.values(), ids=find_command.keys())
 def test_find_command(options, found, outcome):
     """Test :meth:`spade._utilities.find_command`"""
     with patch("spade._utilities.search_commands", return_value=found), outcome:
@@ -90,42 +85,24 @@ def test_find_command(options, found, outcome):
 
 
 character_delimited_list = {
-    "int": (
-        [1, 2, 3],
-        " ",
-        "1 2 3"
-    ),
-    "int: comma": (
-        [1, 2, 3],
-        ",",
-        "1,2,3"
-    ),
-    "float": (
-        [1., 2., 3., 4., 5.],
-        " ",
-        "1.0 2.0 3.0 4.0 5.0"
-    ),
+    "int": ([1, 2, 3], " ", "1 2 3"),
+    "int: comma": ([1, 2, 3], ",", "1,2,3"),
+    "float": ([1.0, 2.0, 3.0, 4.0, 5.0], " ", "1.0 2.0 3.0 4.0 5.0"),
     "float: multi-character": (
-        [1., 2., 3., 4., 5.],
+        [1.0, 2.0, 3.0, 4.0, 5.0],
         "\n\t",
-        "1.0\n\t2.0\n\t3.0\n\t4.0\n\t5.0"
+        "1.0\n\t2.0\n\t3.0\n\t4.0\n\t5.0",
     ),
-    "string": (
-        ["one", "two"],
-        " ",
-        "one two"
-    ),
-    "string: one": (
-        ["one"],
-        " ",
-        "one"
-    )
+    "string": (["one", "two"], " ", "one two"),
+    "string: one": (["one"], " ", "one"),
 }
 
 
-@pytest.mark.parametrize("sequence, character, expected",
-                         character_delimited_list.values(),
-                         ids=character_delimited_list.keys())
+@pytest.mark.parametrize(
+    "sequence, character, expected",
+    character_delimited_list.values(),
+    ids=character_delimited_list.keys(),
+)
 def test_character_delimited_list(sequence, character, expected):
     string = _utilities.character_delimited_list(sequence, character=character)
     assert string == expected

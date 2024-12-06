@@ -15,10 +15,7 @@ from spade import _settings
 
 env = os.environ.copy()
 spade_command = "spade"
-odb_files = [
-    "viewer_tutorial.odb",
-    "w-reactor_global.odb"
-]
+odb_files = ["viewer_tutorial.odb", "w-reactor_global.odb"]
 inp_files = [
     "beamgap",
     "selfcontact_gask",
@@ -69,7 +66,7 @@ for odb_file in odb_files:
                     f"${{spade_command}} extract {odb_file} --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
                 ),
             ],
-            marks=pytest.mark.require_third_party
+            marks=pytest.mark.require_third_party,
         )
     )
 for inp_file in inp_files:
@@ -82,7 +79,7 @@ for inp_file in inp_files:
                     f"${{spade_command}} extract {inp_file}.odb --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
                 ),
             ],
-            marks=pytest.mark.require_third_party
+            marks=pytest.mark.require_third_party,
         )
     )
 
@@ -93,7 +90,7 @@ def test_system(
     system_test_directory,
     abaqus_command,
     request,
-    commands: typing.Iterable[str]
+    commands: typing.Iterable[str],
 ) -> None:
     """Run the system tests in a temporary directory
 
@@ -134,7 +131,7 @@ def test_system(
             if isinstance(command, string.Template):
                 command = command.substitute(template_substitution)
             command = shlex.split(command)
-            subprocess.check_output(command, env=env, cwd=temp_path).decode('utf-8')
+            subprocess.check_output(command, env=env, cwd=temp_path).decode("utf-8")
     except Exception as err:
         raise Exception
     else:

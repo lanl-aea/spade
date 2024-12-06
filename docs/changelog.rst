@@ -28,6 +28,7 @@ Internal Changes
   :merge:`46`). By `Kyle Brindley`_.
 - Pass through Abaqus commands in system tests and test against a matrix of Abaqus versions (:issue:`54`, :merge:`48`).
   By `Kyle Brindley`_.
+- Check style guide against both flake8 and black autoformatter (:issue:`52`, :merge:`49`). By `Kyle Brindley`_.
 
 
 Enhancements

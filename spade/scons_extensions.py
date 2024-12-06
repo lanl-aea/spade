@@ -4,6 +4,7 @@
    The CLI design is in flux, so the SCons extensions API is also in flux. The API is subject to change without warning.
    Treat as experimental.
 """
+
 import typing
 import pathlib
 import argparse
@@ -25,7 +26,7 @@ def _first_target_emitter(
     env,
     suffixes: typing.Iterable[str] = [],
     appending_suffixes: typing.Iterable[str] = [],
-    stdout_extension: str = _settings._stdout_extension
+    stdout_extension: str = _settings._stdout_extension,
 ) -> typing.Tuple[list, list]:
     """Appends the target list with the builder managed targets
 
@@ -53,8 +54,10 @@ def _first_target_emitter(
     first_target = pathlib.Path(string_targets[0])
 
     # Search for a user specified stdout file. Fall back to first target with appended stdout extension
-    stdout_target = next((target_file for target_file in string_targets if target_file.endswith(stdout_extension)),
-                         f"{first_target}{stdout_extension}")
+    stdout_target = next(
+        (target_file for target_file in string_targets if target_file.endswith(stdout_extension)),
+        f"{first_target}{stdout_extension}",
+    )
 
     replacing_targets = [str(first_target.with_suffix(suffix)) for suffix in suffixes]
     appending_targets = [f"{first_target}{suffix}" for suffix in appending_suffixes]
@@ -134,9 +137,11 @@ def cli_builder(
 
     :returns: SCons SPADE CLI builder
     """  # noqa: E501
-    action = ["${cd_action_prefix} ${program} ${subcommand} ${required} ${options} " \
-                  "--abaqus-commands ${abaqus_commands} " \
-                  "${redirect_action_postfix}"]
+    action = [
+        "${cd_action_prefix} ${program} ${subcommand} ${required} ${options} "
+        "--abaqus-commands ${abaqus_commands} "
+        "${redirect_action_postfix}"
+    ]
     builder = SCons.Builder.Builder(
         action=action,
         emitter=_first_target_emitter,
@@ -146,7 +151,7 @@ def cli_builder(
         subcommand=subcommand,
         required=required,
         options=options,
-        abaqus_commands=_utilities.character_delimited_list(abaqus_commands)
+        abaqus_commands=_utilities.character_delimited_list(abaqus_commands),
     )
     return builder
 
@@ -212,8 +217,13 @@ def extract(
 
     :returns: SCons SPADE extract CLI builder
     """  # noqa: E501
-    return cli_builder(program=program, subcommand=subcommand, required=required, options=options,
-                       abaqus_commands=abaqus_commands)
+    return cli_builder(
+        program=program,
+        subcommand=subcommand,
+        required=required,
+        options=options,
+        abaqus_commands=abaqus_commands,
+    )
 
 
 _module_objects = set(globals().keys()) - _exclude_from_namespace

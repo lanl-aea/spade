@@ -86,7 +86,7 @@ fast-test:
   tags:
     - shell-aea
 
-flake8:
+style:
   stage: test
   variables:
     GIT_STRATEGY: clone
@@ -94,7 +94,7 @@ flake8:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
-    - scons flake8
+    - scons flake8 black-check
   tags:
     - shell-aea
 

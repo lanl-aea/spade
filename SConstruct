@@ -2,6 +2,7 @@
 
 import os
 import pathlib
+import platform
 import warnings
 
 import setuptools_scm
@@ -29,7 +30,7 @@ AddOption(
     type="string",
     action="store",
     metavar="DIR",
-    help="SCons build (variant) root directory. Relative or absolute path. (default: '%default')"
+    help="SCons build (variant) root directory. Relative or absolute path. (default: '%default')",
 )
 default_abaqus_command = "/apps/abaqus/Commands/abq2023"
 AddOption(
@@ -52,6 +53,13 @@ for key, value in project_variables.items():
 env["abaqus_command"] = env["abaqus_command"] if env["abaqus_command"] is not None else [default_abaqus_command]
 env["ENV"]["PYTHONDONTWRITEBYTECODE"] = 1
 
+# Handle OS-aware tee output
+system = platform.system().lower()
+if system == "windows":  # Assume PowerShell
+    env["tee_suffix"] = "$(| Tee-Object -FilePath ${TARGETS[-1].abspath}$)"
+else:  # *Nix style tee
+    env["tee_suffix"] = "$(2>&1 | tee ${TARGETS[-1].abspath}$)"
+
 # Find third-party software
 abaqus_environments = dict()
 for command in env["abaqus_command"]:
@@ -67,10 +75,14 @@ for command in env["abaqus_command"]:
 
 variant_dir_base = pathlib.Path(env["variant_dir_base"])
 build_dir = variant_dir_base / "docs"
-SConscript(dirs="docs", variant_dir=pathlib.Path(build_dir), exports=["env", "project_variables_substitution"])
+SConscript(
+    dirs="docs",
+    variant_dir=pathlib.Path(build_dir),
+    exports=["env", "project_variables_substitution"],
+)
 
 # Add pytests, style checks, and static type checking
-workflow_configurations = ["pytest", "flake8"]
+workflow_configurations = ["pytest", "style"]
 for workflow in workflow_configurations:
     build_dir = variant_dir_base / workflow
     SConscript(
@@ -83,6 +95,7 @@ for workflow in workflow_configurations:
 # Add aliases to help message so users know what build target options are available
 # This must come *after* all expected Alias definitions and SConscript files.
 from SCons.Node.Alias import default_ans
+
 alias_help = "\nTarget Aliases:\n"
 for alias in default_ans:
     alias_help += f"    {alias}\n"

@@ -54,3 +54,10 @@ markers = [
     "require_third_party: marks system tests that require third-party software command line calls",
 ]
 addopts = "--tb=long --showlocals --failed-first --strict-markers -m 'not systemtest'"
+
+[tool.black]
+target-version = ["py39", "py310", "py311", "py312", "py313"]
+extend-exclude = ".txt|.toml|.yaml|.csv"
+force-exclude = "build*/"
+line-length = 120
+include = "SConstruct|SConscript|.py"
