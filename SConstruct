@@ -61,8 +61,9 @@ for command in env["abaqus_command"]:
     conf = abaqus_environments[version].Configure()
     found_command = conf.CheckProg(command)
     conf.Finish()
+    abaqus_environments[version]["abaqus"] = found_command
     if found_command is not None:
-        env.AppendENVPath("PATH", found_command, delete_existing=False)
+        abaqus_environments[version].AppendENVPath("PATH", pathlib.Path(found_command).parent, delete_existing=False)
 
 variant_dir_base = pathlib.Path(env["variant_dir_base"])
 build_dir = variant_dir_base / "docs"

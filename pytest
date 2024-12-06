@@ -38,21 +38,23 @@ matrix = (
 for extra_markers, alias_suffix, environments in matrix:
     for name, environment in environments.items():
         source = pytest_source_list + [env["package_dir"] / "tests/test_system.py"]
-        systemtest_node = env.Command(
+        systemtest_node = environment.Command(
             target=[f"systemtest_{name}_results.xml"],
             source=source,
             action=[
                 (
                     "${pytest_command} -v --no-showlocals -m 'systemtest ${extra_markers}' --tb=short --cache-clear "
-                    "--system-test-dir=${system_test_directory} --junitxml=${TARGETS[0].abspath}"
+                    "--cov --cov-report=xml:${TARGET.abspath} "
+                    "--system-test-dir=${system_test_directory} --abaqus-command=${abaqus_command}"
                 ),
             ],
             pytest_command=pytest_command,
             extra_markers=extra_markers,
             system_test_directory=build_directory / name,
+            abaqus_command=environment["abaqus"] if "abaqus" in environment else None,
         )
-        env.Alias("systemtest", systemtest_node)
-        env.Alias(f"systemtest_{alias_suffix}", systemtest_node)
-        env.Clean(systemtest_node, [Dir(build_directory)])
-        env.Alias("regression", systemtest_node)
-        env.AlwaysBuild(systemtest_node)
+        environment.Alias("systemtest", systemtest_node)
+        environment.Alias(f"systemtest_{alias_suffix}", systemtest_node)
+        environment.Clean(systemtest_node, [Dir(build_directory)])
+        environment.Alias("regression", systemtest_node)
+        environment.AlwaysBuild(systemtest_node)
