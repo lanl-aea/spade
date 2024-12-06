@@ -85,12 +85,17 @@ def test_run_tutorial(
 
     :param commands: command string or list of strings for the system test
     """
+    if isinstance(commands, str):
+        commands = [commands]
+
     if system_test_directory is not None:
         system_test_directory.mkdir(parents=True, exist_ok=True)
 
-    if isinstance(commands, str):
-        commands = [commands]
-    with tempfile.TemporaryDirectory(dir=system_test_directory) as temp_directory:
+    kwargs = {}
+    temporary_directory_arguments = inspect.getfullargspec(tempfile.TemporaryDirectory).args
+    if "ignore_cleanup_errors" in temporary_directory_arguments and system_test_directory is not None:
+        kwargs.update({"ignore_cleanup_errors": True})
+    with tempfile.TemporaryDirectory(dir=system_test_directory, **kwargs) as temp_directory:
         for command in commands:
             command = shlex.split(command)
             subprocess.check_output(command, env=env, cwd=temp_directory).decode('utf-8')
