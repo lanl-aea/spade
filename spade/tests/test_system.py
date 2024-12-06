@@ -3,6 +3,7 @@ import shlex
 import string
 import typing
 import inspect
+import pathlib
 import tempfile
 import subprocess
 from importlib.metadata import version, PackageNotFoundError
@@ -115,14 +116,21 @@ def test_system(
     temporary_directory_arguments = inspect.getfullargspec(tempfile.TemporaryDirectory).args
     if "ignore_cleanup_errors" in temporary_directory_arguments and system_test_directory is not None:
         kwargs.update({"ignore_cleanup_errors": True})
-    with tempfile.TemporaryDirectory(dir=system_test_directory, prefix=test_prefix, **kwargs) as temp_directory:
-        template_substitution = {
-            "spade_command": spade_command,
-            "spade_options": spade_options,
-            "temp_directory": temp_directory,
-        }
+    temp_directory = tempfile.TemporaryDirectory(dir=system_test_directory, prefix=test_prefix, **kwargs)
+    temp_path = pathlib.Path(temp_directory.name)
+    temp_path.mkdir(parents=True, exist_ok=True)
+    template_substitution = {
+        "spade_command": spade_command,
+        "spade_options": spade_options,
+        "temp_directory": temp_directory,
+    }
+    try:
         for command in commands:
             if isinstance(command, string.Template):
                 command = command.substitute(template_substitution)
             command = shlex.split(command)
-            subprocess.check_output(command, env=env, cwd=temp_directory).decode('utf-8')
+            subprocess.check_output(command, env=env, cwd=temp_path).decode('utf-8')
+    except Exception as err:
+        raise Exception
+    else:
+        temp_directory.cleanup()
