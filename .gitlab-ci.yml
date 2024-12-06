@@ -107,7 +107,7 @@ conda-build:
     - if: $CI_COMMIT_BRANCH == "main"
   script:
     # Only build one compiler variant during merge request testing
-    - python_version="3.11"
+    - python_version="3.12"
     - variants=""
     - if [[ $CI_PIPELINE_SOURCE == "merge_request_event" ]]; then variants="--variants {'python':['${python_version}']}"; fi
     - echo $variants
