@@ -5,7 +5,11 @@ Changelog
 #########
 
 *******************
-v0.3.3 (unreleased)
+v0.3.4 (unreleased)
+*******************
+
+*******************
+v0.3.3 (2024-12-06)
 *******************
 
 Documentation
@@ -29,7 +33,6 @@ Internal Changes
 - Pass through Abaqus commands in system tests and test against a matrix of Abaqus versions (:issue:`54`, :merge:`48`).
   By `Kyle Brindley`_.
 - Check style guide against both flake8 and black autoformatter (:issue:`52`, :merge:`49`). By `Kyle Brindley`_.
-
 
 Enhancements
 ============
