@@ -2,6 +2,7 @@ import os
 import shlex
 import shutil
 import typing
+import inspect
 import tempfile
 import subprocess
 from importlib.metadata import version, PackageNotFoundError
