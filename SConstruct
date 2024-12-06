@@ -38,6 +38,7 @@ env = Environment(
 )
 for key, value in project_variables.items():
     env[key] = value
+env["ENV"]["PYTHONDONTWRITEBYTECODE"] = 1
 
 # Hardcoded from WAVES find_program/add_program
 conf = env.Configure()

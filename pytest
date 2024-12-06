@@ -5,42 +5,48 @@ import pathlib
 # Inherit the parent construction environment
 Import("env")
 
-# Limit list of source files to allow Conda build-test to test off the installed package
+build_directory = pathlib.Path(Dir(".").abspath)
+
 pytest_source_list = [
     "pyproject.toml",
 ]
 
-pytest_command = "PYTHONDONTWRITEBYTECODE=1 pytest --junitxml=${TARGET.abspath}"
-coverage_command = "coverage xml -o ${TARGETS[1].abspath}"
-target = ["test_results.xml", "coverage.xml"]
+# Common task options
+pytest_command = "cd ${package_dir} && pytest"
 
-targets = env.Command(
-    target=target,
+# Unit tests
+pytest_node = env.Command(
+    target=["coverage.xml", Dir("./coverage")],
     source=pytest_source_list,
     action=[
-        "${pytest_command} -vvv -n 4 -m 'not systemtest' --cov",
-        "${coverage_command}"
+        '${pytest_command} -vvv -m "not systemtest" ${coverage}',
     ],
     pytest_command=pytest_command,
-    coverage_command=coverage_command
+    coverage="--cov --cov-report=term --cov-report=xml:${TARGETS[0].abspath} --cov-report=html:${TARGETS[1].abspath}",
 )
-env.Alias("pytest", targets)
-env.Alias("unittests", targets)
-env.Alias("regression", targets)
+env.Alias("pytest", pytest_node)
+env.Clean("pytest", Dir("./coverage"))
+env.Alias("unittests", pytest_node)
 # Always run pytests in place of a complete source list
-env.AlwaysBuild(targets)
+env.AlwaysBuild(pytest_node)
 
-target = ["systemtest_results.xml"]
-source = pytest_source_list + [str(pathlib.Path("spade/tests/test_system.py"))]
-targets = env.Command(
-    target=target,
+# System tests
+source = pytest_source_list + [env["package_dir"] / "tests/test_system.py"]
+systemtest_node = env.Command(
+    target=["systemtest_results.xml"],
     source=source,
     action=[
-        "${pytest_command} -v --no-showlocals -n 4 -m systemtest --tb=short --cache-clear"
+        (
+            "${pytest_command} -v --no-showlocals -m systemtest --tb=short --cache-clear "
+            "--system-test-dir=${system_test_directory} --junitxml=${TARGETS[0].abspath}"
+        ),
     ],
-    pytest_command=pytest_command
+    pytest_command=pytest_command,
+    system_test_directory=build_directory,
 )
-env.Alias("systemtest", targets)
-env.Alias("regression", targets)
-# Always run pytests in place of a complete source list
-env.AlwaysBuild(targets)
+env.Alias("systemtest", systemtest_node)
+env.AlwaysBuild(systemtest_node)
+env.Clean(systemtest_node, [Dir(build_directory)])
+
+# Collector alias to build all regression tasks
+env.Alias("regression", pytest_node + systemtest_node)
