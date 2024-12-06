@@ -31,23 +31,38 @@ AddOption(
     metavar="DIR",
     help="SCons build (variant) root directory. Relative or absolute path. (default: '%default')"
 )
+default_abaqus_command = "/apps/abaqus/Commands/abq2024"
+AddOption(
+    "--abaqus-command",
+    dest="abaqus_command",
+    nargs=1,
+    type="string",
+    action="append",
+    metavar="COMMAND",
+    help=f"Override for the Abaqus command. Repeat to specify more than one (default: '[{default_abaqus_command}]')",
+)
 
 env = Environment(
     ENV=os.environ.copy(),
-    variant_dir_base=GetOption("variant_dir_base")
+    variant_dir_base=GetOption("variant_dir_base"),
+    abaqus_command=GetOption("abaqus_command"),
 )
 for key, value in project_variables.items():
     env[key] = value
+env["abaqus_command"] = env["abaqus_command"] if env["abaqus_command"] is not None else [default_abaqus_command]
 env["ENV"]["PYTHONDONTWRITEBYTECODE"] = 1
 
-# Hardcoded from WAVES find_program/add_program
-conf = env.Configure()
-abaqus_paths = ["/apps/abaqus/Commands/abq2023", "abq2023"]
-program_paths = [conf.CheckProg(name) for name in abaqus_paths]
-conf.Finish()
-first_found_path = next((path for path in program_paths if path is not None), None)
-if first_found_path:
-    env.AppendENVPath("PATH", first_found_path, delete_existing=False)
+# Find third-party software
+abaqus_environments = dict()
+for command in env["abaqus_command"]:
+    # TODO: more robust version/name recovery without CI server assumptions
+    version = pathlib.Path(command).name
+    abaqus_environment = env.Clone()
+    conf = abaqus_environment.Configure()
+    found_command = conf.CheckProg(command)
+    conf.Finish()
+    if found_command is not None:
+        env.AppendENVPath("PATH", found_command, delete_existing=False)
 
 variant_dir_base = pathlib.Path(env["variant_dir_base"])
 build_dir = variant_dir_base / "docs"
@@ -57,7 +72,12 @@ SConscript(dirs="docs", variant_dir=pathlib.Path(build_dir), exports=["env", "pr
 workflow_configurations = ["pytest", "flake8"]
 for workflow in workflow_configurations:
     build_dir = variant_dir_base / workflow
-    SConscript(build_dir.name, variant_dir=build_dir, exports='env', duplicate=False)
+    SConscript(
+        build_dir.name,
+        variant_dir=build_dir,
+        exports={"env": env, "abaqus_environments": abaqus_environments},
+        duplicate=False,
+    )
 
 # Add aliases to help message so users know what build target options are available
 # This must come *after* all expected Alias definitions and SConscript files.

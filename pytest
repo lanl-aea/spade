@@ -3,7 +3,7 @@
 import pathlib
 
 # Inherit the parent construction environment
-Import("env")
+Import("env", "abaqus_environments")
 
 build_directory = pathlib.Path(Dir(".").abspath)
 
@@ -19,34 +19,39 @@ pytest_node = env.Command(
     target=["coverage.xml", Dir("./coverage")],
     source=pytest_source_list,
     action=[
-        '${pytest_command} -vvv -m "not systemtest" ${coverage}',
+        "${pytest_command} -vvv -m 'not systemtest' ${coverage}",
     ],
     pytest_command=pytest_command,
     coverage="--cov --cov-report=term --cov-report=xml:${TARGETS[0].abspath} --cov-report=html:${TARGETS[1].abspath}",
 )
 env.Alias("pytest", pytest_node)
 env.Clean("pytest", Dir("./coverage"))
-env.Alias("unittests", pytest_node)
+env.Alias("regression", pytest_node)
 # Always run pytests in place of a complete source list
 env.AlwaysBuild(pytest_node)
 
 # System tests
-source = pytest_source_list + [env["package_dir"] / "tests/test_system.py"]
-systemtest_node = env.Command(
-    target=["systemtest_results.xml"],
-    source=source,
-    action=[
-        (
-            "${pytest_command} -v --no-showlocals -m systemtest --tb=short --cache-clear "
-            "--system-test-dir=${system_test_directory} --junitxml=${TARGETS[0].abspath}"
-        ),
-    ],
-    pytest_command=pytest_command,
-    system_test_directory=build_directory,
+matrix = (
+    ("and not require_third_party", "python3", {"python3": env}),
+    ("and abaqus", "abaqus", abaqus_environments),
 )
-env.Alias("systemtest", systemtest_node)
-env.AlwaysBuild(systemtest_node)
-env.Clean(systemtest_node, [Dir(build_directory)])
-
-# Collector alias to build all regression tasks
-env.Alias("regression", pytest_node + systemtest_node)
+for extra_markers, alias_suffix, environments in matrix:
+    for name, environment in environments.items():
+        source = pytest_source_list + [env["package_dir"] / "tests/test_system.py"]
+        systemtest_node = env.Command(
+            target=[f"systemtest_{name}_results.xml"],
+            source=source,
+            action=[
+                (
+                    "${pytest_command} -v --no-showlocals -m systemtest --tb=short --cache-clear "
+                    "--system-test-dir=${system_test_directory} --junitxml=${TARGETS[0].abspath}"
+                ),
+            ],
+            pytest_command=pytest_command,
+            system_test_directory=build_directory / name,
+        )
+        env.Alias("systemtest", systemtest_node)
+        env.Alias(f"systemtest_{alias_suffix}", systemtest_node)
+        env.Clean(systemtest_node, [Dir(build_directory)])
+        env.Alias("regression", systemtest_node)
+        env.AlwaysBuild(systemtest_node)
