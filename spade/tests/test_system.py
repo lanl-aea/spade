@@ -78,6 +78,7 @@ if installed:
 @pytest.mark.parametrize("commands", system_tests)
 def test_run_tutorial(
     system_test_directory,
+    request,
     commands: typing.Iterable[str]
 ) -> None:
     """Run the system tests in a temporary directory
@@ -90,6 +91,10 @@ def test_run_tutorial(
 
     :param commands: command string or list of strings for the system test
     """
+    # Attempt to construct a valid directory prefix from the test ID string printed by pytest
+    test_id = request.node.callspec.id
+    test_prefix = f"{test_id}." if " " not in test_id else None
+
     if system_test_directory is not None:
         system_test_directory.mkdir(parents=True, exist_ok=True)
 
@@ -97,7 +102,7 @@ def test_run_tutorial(
     temporary_directory_arguments = inspect.getfullargspec(tempfile.TemporaryDirectory).args
     if "ignore_cleanup_errors" in temporary_directory_arguments and system_test_directory is not None:
         kwargs.update({"ignore_cleanup_errors": True})
-    with tempfile.TemporaryDirectory(dir=system_test_directory, **kwargs) as temp_directory:
+    with tempfile.TemporaryDirectory(dir=system_test_directory, prefix=test_prefix, **kwargs) as temp_directory:
         template_substitution = {
             "spade_command": spade_command,
             "spade_options": spade_options,
