@@ -51,7 +51,7 @@ def main(args: argparse.Namespace) -> None:
 
     try:
         with tempfile.TemporaryDirectory(dir=".", prefix=f"{_settings._project_name_short}.") as temporary_directory:
-            temporary_path = pathlib.Path(temporary_directory)
+            temporary_path = pathlib.Path(temporary_directory).resolve()
 
             # Compile c++ executable
             print_verbose(f"Compiling and linking against Abaqus {abaqus_version}")
