@@ -1,6 +1,6 @@
 import os
 import shlex
-import shutil
+import string
 import typing
 import inspect
 import tempfile
@@ -44,29 +44,33 @@ if not installed:
 
 system_tests = [
     # CLI sign-of-life and help/usage
-    f"{spade_command} --help",
-    f"{spade_command} docs --help",
-    f"{spade_command} extract --help",
+    [string.Template("${spade_command} --help")],
+    [string.Template("${spade_command} docs --help")],
+    [string.Template("${spade_command} extract --help")],
     # Tutorials
     # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/22
 ]
 # TODO: Move abaqus command to a search in SConstruct
-options = "--abaqus-commands /apps/abaqus/Commands/abq2023 --recompile --force-overwrite"
+spade_options = "--abaqus-commands /apps/abaqus/Commands/abq2023 --recompile --force-overwrite"
 for odb_file in odb_files:
-    system_tests.append([
-        f"/apps/abaqus/Commands/abq2023 fetch -job {odb_file}",
-        f"{spade_command} extract {odb_file} {options}"
-    ])
+    system_tests.append(
+        [
+            f"/apps/abaqus/Commands/abq2023 fetch -job {odb_file}",
+            string.Template(f"${{spade_command}} extract {odb_file} ${{spade_options}}"),
+        ]
+    )
 for inp_file in inp_files:
-    system_tests.append([
-        f"/apps/abaqus/Commands/abq2023 fetch -job '{inp_file}*'",
-        f"/apps/abaqus/Commands/abq2023 -job {inp_file} -interactive -ask_delete no",
-        f"{spade_command} extract {inp_file}.odb  {options}"
-    ])
+    system_tests.append(
+        [
+            f"/apps/abaqus/Commands/abq2023 fetch -job '{inp_file}*'",
+            f"/apps/abaqus/Commands/abq2023 -job {inp_file} -interactive -ask_delete no",
+            string.Template(f"${{spade_command}} extract {inp_file}.odb  ${{spade_options}}"),
+        ]
+    )
 if installed:
     system_tests.append(
         # The HTML docs path doesn't exist in the repository. Can only system test from an installed package.
-        f"{spade_command} docs --print-local-path"
+        [string.Template("${spade_command} docs --print-local-path")]
     )
 
 
@@ -74,7 +78,7 @@ if installed:
 @pytest.mark.parametrize("commands", system_tests)
 def test_run_tutorial(
     system_test_directory,
-    commands: typing.Union[str, typing.Iterable[str]]
+    commands: typing.Iterable[str]
 ) -> None:
     """Run the system tests in a temporary directory
 
@@ -86,9 +90,6 @@ def test_run_tutorial(
 
     :param commands: command string or list of strings for the system test
     """
-    if isinstance(commands, str):
-        commands = [commands]
-
     if system_test_directory is not None:
         system_test_directory.mkdir(parents=True, exist_ok=True)
 
@@ -97,6 +98,13 @@ def test_run_tutorial(
     if "ignore_cleanup_errors" in temporary_directory_arguments and system_test_directory is not None:
         kwargs.update({"ignore_cleanup_errors": True})
     with tempfile.TemporaryDirectory(dir=system_test_directory, **kwargs) as temp_directory:
+        template_substitution = {
+            "spade_command": spade_command,
+            "spade_options": spade_options,
+            "temp_directory": temp_directory,
+        }
         for command in commands:
+            if isinstance(command, string.Template):
+                command = command.substitute(template_substitution)
             command = shlex.split(command)
             subprocess.check_output(command, env=env, cwd=temp_directory).decode('utf-8')
