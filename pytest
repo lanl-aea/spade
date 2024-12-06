@@ -12,7 +12,7 @@ pytest_source_list = [
 ]
 
 # Common task options
-pytest_command = "cd ${package_dir} && pytest"
+pytest_command = "cd ${package_dir} && pytest -n 4"
 
 # Unit tests
 pytest_node = env.Command(
