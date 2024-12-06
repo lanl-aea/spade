@@ -58,7 +58,7 @@ def main(args: argparse.Namespace) -> None:
             environment=current_env,
             working_directory=_settings._project_root_abspath,
             recompile=args.recompile,
-            debug=args.debug
+            debug=args.debug,
         )
 
         # Run c++ executable
@@ -67,7 +67,8 @@ def main(args: argparse.Namespace) -> None:
             spade_executable=spade_executable,
             abaqus_bin=abaqus_bin,
             args=args,
-            environment=current_env
+            environment=current_env,
+            working_directory=temporary_path,
         )
 
 
@@ -175,6 +176,7 @@ def cpp_execute(
     abaqus_bin: pathlib.Path,
     args: argparse.Namespace,
     environment: dict = dict(),
+    working_directory: pathlib.Path = pathlib.Path("."),
 ) -> None:
     """Run the SPADE c++ executable
 
@@ -193,7 +195,7 @@ def cpp_execute(
     command_line_arguments = shlex.split(full_command_line_arguments, posix=(os.name == "posix"))
     print_debug(f"Running {_settings._project_name_short} with command {command_line_arguments}")
     try:
-        subprocess.run(command_line_arguments, env=environment, check=True)
+        subprocess.run(command_line_arguments, env=environment, cwd=working_directory, check=True)
     except subprocess.CalledProcessError as err:
         message = f"{_settings._project_name_short} extract failed in Abaqus ODB application: {str(err)}"
         raise RuntimeError(message)
