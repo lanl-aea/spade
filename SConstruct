@@ -57,8 +57,8 @@ abaqus_environments = dict()
 for command in env["abaqus_command"]:
     # TODO: more robust version/name recovery without CI server assumptions
     version = pathlib.Path(command).name
-    abaqus_environment = env.Clone()
-    conf = abaqus_environment.Configure()
+    abaqus_environments[version] = env.Clone()
+    conf = abaqus_environments[version].Configure()
     found_command = conf.CheckProg(command)
     conf.Finish()
     if found_command is not None:

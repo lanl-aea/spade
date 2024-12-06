@@ -33,7 +33,7 @@ env.AlwaysBuild(pytest_node)
 # System tests
 matrix = (
     ("and not require_third_party", "python3", {"python3": env}),
-    ("and abaqus", "abaqus", abaqus_environments),
+    ("and require_third_party", "abaqus", abaqus_environments),
 )
 for extra_markers, alias_suffix, environments in matrix:
     for name, environment in environments.items():
@@ -43,11 +43,12 @@ for extra_markers, alias_suffix, environments in matrix:
             source=source,
             action=[
                 (
-                    "${pytest_command} -v --no-showlocals -m systemtest --tb=short --cache-clear "
+                    "${pytest_command} -v --no-showlocals -m 'systemtest ${extra_markers}' --tb=short --cache-clear "
                     "--system-test-dir=${system_test_directory} --junitxml=${TARGETS[0].abspath}"
                 ),
             ],
             pytest_command=pytest_command,
+            extra_markers=extra_markers,
             system_test_directory=build_directory / name,
         )
         env.Alias("systemtest", systemtest_node)
