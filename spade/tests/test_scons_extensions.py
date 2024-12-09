@@ -39,24 +39,46 @@ def check_nodes(nodes, post_action, node_count, action_count, expected_string, e
 # TODO: Figure out how to cleanly reset the construction environment between parameter sets
 test_cli_builder = {
     "cli_builder": (
-        "cli_builder", {}, 1, 1, ["cli_builder.txt"], ["cli_builder.txt.stdout"],
-        {"program": "spade", "subcommand": "", "abaqus_commands": _settings._default_abaqus_commands}
+        "cli_builder",
+        {},
+        1,
+        1,
+        ["cli_builder.txt"],
+        ["cli_builder.txt.stdout"],
+        {
+            "program": "spade",
+            "subcommand": "",
+            "abaqus_commands": _settings._default_abaqus_commands,
+        },
     ),
     "cli_builder": (
-        "cli_builder", {"subcommand": "subcommand"}, 1, 1, ["cli_builder.txt"], ["cli_builder.txt.stdout"],
-        {"program": "spade", "subcommand": "subcommand", "abaqus_commands": _settings._default_abaqus_commands}
+        "cli_builder",
+        {"subcommand": "subcommand"},
+        1,
+        1,
+        ["cli_builder.txt"],
+        ["cli_builder.txt.stdout"],
+        {
+            "program": "spade",
+            "subcommand": "subcommand",
+            "abaqus_commands": _settings._default_abaqus_commands,
+        },
     ),
 }
 
 
-@pytest.mark.parametrize("builder, kwargs, node_count, action_count, source_list, target_list, env",
-                         test_cli_builder.values(),
-                         ids=test_cli_builder.keys())
+@pytest.mark.parametrize(
+    "builder, kwargs, node_count, action_count, source_list, target_list, env",
+    test_cli_builder.values(),
+    ids=test_cli_builder.keys(),
+)
 def test_cli_builder(builder, kwargs, node_count, action_count, source_list, target_list, env):
     env = SCons.Environment.Environment()
-    expected_string = "${cd_action_prefix} ${program} ${subcommand} ${required} ${options} " \
-                      "--abaqus-commands ${abaqus_commands} " \
-                      "${redirect_action_postfix}"
+    expected_string = (
+        "${cd_action_prefix} ${program} ${subcommand} ${required} ${options} "
+        "--abaqus-commands ${abaqus_commands} "
+        "${redirect_action_postfix}"
+    )
 
     env.Append(BUILDERS={builder: scons_extensions.cli_builder(**kwargs)})
     nodes = env["BUILDERS"][builder](env, target=target_list, source=source_list)
@@ -65,21 +87,34 @@ def test_cli_builder(builder, kwargs, node_count, action_count, source_list, tar
 
 test_builders = {
     "extract": (
-        "extract", {}, 1, 1, ["target.odb"], ["target.odb.stdout"],
-        {"program": "spade", "subcommand": "extract", "abaqus_commands": _settings._default_abaqus_commands,
-         "required": "${SOURCE.abspath} --extracted-file ${TARGET.abspath} --force-overwrite"}
+        "extract",
+        {},
+        1,
+        1,
+        ["target.odb"],
+        ["target.odb.stdout"],
+        {
+            "program": "spade",
+            "subcommand": "extract",
+            "abaqus_commands": _settings._default_abaqus_commands,
+            "required": "${SOURCE.abspath} --extracted-file ${TARGET.abspath} --force-overwrite",
+        },
     ),
 }
 
 
-@pytest.mark.parametrize("builder, kwargs, node_count, action_count, source_list, target_list, env",
-                         test_builders.values(),
-                         ids=test_builders.keys())
+@pytest.mark.parametrize(
+    "builder, kwargs, node_count, action_count, source_list, target_list, env",
+    test_builders.values(),
+    ids=test_builders.keys(),
+)
 def test_builders(builder, kwargs, node_count, action_count, source_list, target_list, env):
     env = SCons.Environment.Environment()
-    expected_string = "${cd_action_prefix} ${program} ${subcommand} ${required} ${options} " \
-                      "--abaqus-commands ${abaqus_commands} " \
-                      "${redirect_action_postfix}"
+    expected_string = (
+        "${cd_action_prefix} ${program} ${subcommand} ${required} ${options} "
+        "--abaqus-commands ${abaqus_commands} "
+        "${redirect_action_postfix}"
+    )
 
     builder_function = getattr(scons_extensions, builder)
     env.Append(BUILDERS={builder: builder_function(**kwargs)})

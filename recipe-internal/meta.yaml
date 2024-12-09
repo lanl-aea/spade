@@ -40,8 +40,8 @@ requirements:
     - numpy
     - sphinx >=5.1
     - sphinx-argparse
+    - sphinx-book-theme
     - sphinx-copybutton >=0.5.1
-    - sphinx_rtd_theme >=1
     - sphinxcontrib-bibtex
     - setuptools_scm[toml] >=6.2
     - {{ compiler('cxx') }}
@@ -78,6 +78,7 @@ test:
     - spade
   commands:
     # Test as-installed project unit tests
+    - working_directory=${PWD}
     - cd $SP_DIR/$PKG_NAME
-    - pytest -vvv -n 4 -m "not systemtest"
-    - pytest -v -n 4 -m "systemtest" --tb=short
+    - pytest -n 4 -vvv -m "not require_third_party"
+    - pytest -n 4 -v --no-showlocals -m "systemtest and require_third_party" --tb=short --system-test-dir=${working_directory} --abaqus-command=/apps/abaqus/Commands/abq2023

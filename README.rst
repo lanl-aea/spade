@@ -175,7 +175,7 @@ There is also a separate style guide check run as
 
 .. code-block::
 
-    $ scons flake8
+    $ scons flake8 black-check
 
 The full list of available aliases can be found as ``scons -h``.
 

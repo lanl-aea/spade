@@ -5,12 +5,21 @@ Changelog
 #########
 
 *******************
-v0.3.3 (unreleased)
+v0.3.4 (unreleased)
+*******************
+
+Internal Changes
+================
+- Removed Proxy Settings (:issue:`53`, :merge:`47`). By `Sergio Cordova`_.
+
+*******************
+v0.3.3 (2024-12-06)
 *******************
 
 Documentation
 =============
 - Do not show Python internal types in CLI help/usage. By `Kyle Brindley`_.
+- Convert to sphinx-book-theme (:issue:`50`, :merge:`45`). By `Kyle Brindley`_.
 
 Internal Changes
 ================
@@ -21,12 +30,20 @@ Internal Changes
   results (:issue:`44`, :merge:`39`). By `Kyle Brindley`_.
 - Use a common downstream pipeline to deploy to the internal conda channel (:issue:`733`, :merge:`904`). By `Kyle
   Brindley`_.
-- Removed Proxy Settings (:issue:`53`, :merge:`47`). By `Sergio Cordova`_.
+- Execute spade from the calling working directory as the most likely location for execute permission (:issue:`51`,
+  :merge:`46`). By `Kyle Brindley`_.
+- Run system tests from a local working directory to avoid failing on no-execute permissions on /tmp (:issue:`51`,
+  :merge:`46`). By `Kyle Brindley`_.
+- Pass through Abaqus commands in system tests and test against a matrix of Abaqus versions (:issue:`54`, :merge:`48`).
+  By `Kyle Brindley`_.
+- Check style guide against both flake8 and black autoformatter (:issue:`52`, :merge:`49`). By `Kyle Brindley`_.
 
 Enhancements
 ============
 - Print minimal program flow when verbose is requested. Unify logging for verbose and debugging output (:issue:`39`,
   :merge:`35`). By `Kyle Brindley`_.
+- Print more useful output when docs subcommand fails to open a web browser (:issue:`48`, :merge:`43`). By `Kyle
+  Brindley`_.
 
 *******************
 v0.3.2 (2024-05-30)

@@ -1,4 +1,6 @@
 import os
+import sys
+import errno
 import shlex
 import pathlib
 import argparse
@@ -47,28 +49,37 @@ def main(args: argparse.Namespace) -> None:
     _, abaqus_bin, _ = _utilities.return_abaqus_code_paths(abaqus_command)
     print_verbose(f"Found Abaqus bin: {abaqus_bin}")
 
-    with tempfile.TemporaryDirectory() as temporary_directory:
-        temporary_path = pathlib.Path(temporary_directory)
+    try:
+        with tempfile.TemporaryDirectory(dir=".", prefix=f"{_settings._project_name_short}.") as temporary_directory:
+            temporary_path = pathlib.Path(temporary_directory).resolve()
 
-        # Compile c++ executable
-        print_verbose(f"Compiling and linking against Abaqus {abaqus_version}")
-        spade_executable = cpp_compile(
-            build_directory=temporary_path,
-            abaqus_command=abaqus_command,
-            environment=current_env,
-            working_directory=_settings._project_root_abspath,
-            recompile=args.recompile,
-            debug=args.debug
-        )
+            # Compile c++ executable
+            print_verbose(f"Compiling and linking against Abaqus {abaqus_version}")
+            spade_executable = cpp_compile(
+                build_directory=temporary_path,
+                abaqus_command=abaqus_command,
+                environment=current_env,
+                working_directory=_settings._project_root_abspath,
+                recompile=args.recompile,
+                debug=args.debug,
+            )
 
-        # Run c++ executable
-        print_verbose(f"Running extract for file: {args.ODB_FILE}")
-        cpp_execute(
-            spade_executable=spade_executable,
-            abaqus_bin=abaqus_bin,
-            args=args,
-            environment=current_env
-        )
+            # Run c++ executable
+            print_verbose(f"Running extract for file: {args.ODB_FILE}")
+            cpp_execute(
+                spade_executable=spade_executable,
+                abaqus_bin=abaqus_bin,
+                args=args,
+                environment=current_env,
+            )
+    except OSError as err:
+        if err.errno == errno.ENOTEMPTY:
+            print(
+                f"Failed to clean up temporary directory. You can safely remove this directory.\n{err}",
+                file=sys.stderr,
+            )
+        else:
+            raise err
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -83,43 +94,103 @@ def get_parser() -> argparse.ArgumentParser:
         "ODB_FILE",
         type=str,
         help="ODB file from which to extract data",
-        metavar="ODB_FILE.odb"
+        metavar="ODB_FILE.odb",
     )
-    parser.add_argument("-e", "--extracted-file", type=str,
-                        help="Name of extracted file. (default: <ODB file name>.h5)")
-    parser.add_argument("-l", "--log-file", type=str,
-                        help=f"Name of log file. (default: <ODB file name>.{_settings._project_name_short}.log)")
-
-    parser.add_argument("--frame", type=str, default="all",
-                        help="Get information from the specified frame (default: %(default)s)")
-    parser.add_argument("--frame-value", type=str, default="all",
-                        help="Get information from the specified frame value (default: %(default)s)")
-    parser.add_argument("--step", type=str, default="all",
-                        help="Get information from the specified step (default: %(default)s)")
-    parser.add_argument("--field", type=str, default="all",
-                        help="Get information from the specified field (default: %(default)s)")
-    parser.add_argument("--history", type=str, default="all",
-                        help="Get information from the specified history value (default: %(default)s)")
-    parser.add_argument("--history-region", type=str, default="all",
-                        help="Get information from the specified history region (default: %(default)s)")
-    parser.add_argument("--instance", type=str, default="all",
-                        help="Get information from the specified instance (default: %(default)s)")
     parser.add_argument(
-        "-a", "--abaqus-commands",
+        "-e",
+        "--extracted-file",
+        type=str,
+        help="Name of extracted file. (default: <ODB file name>.h5)",
+    )
+    parser.add_argument(
+        "-l",
+        "--log-file",
+        type=str,
+        help=f"Name of log file. (default: <ODB file name>.{_settings._project_name_short}.log)",
+    )
+
+    parser.add_argument(
+        "--frame",
+        type=str,
+        default="all",
+        help="Get information from the specified frame (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--frame-value",
+        type=str,
+        default="all",
+        help="Get information from the specified frame value (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--step",
+        type=str,
+        default="all",
+        help="Get information from the specified step (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--field",
+        type=str,
+        default="all",
+        help="Get information from the specified field (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--history",
+        type=str,
+        default="all",
+        help="Get information from the specified history value (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--history-region",
+        type=str,
+        default="all",
+        help="Get information from the specified history region (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--instance",
+        type=str,
+        default="all",
+        help="Get information from the specified instance (default: %(default)s)",
+    )
+    parser.add_argument(
+        "-a",
+        "--abaqus-commands",
         nargs="+",
         type=pathlib.Path,
         default=_settings._default_abaqus_commands,
-        help="Ordered list of Abaqus executable paths. Use first found " \
-             f"(default: {_utilities.character_delimited_list(_settings._default_abaqus_commands)})"
+        # fmt: off
+        help="Ordered list of Abaqus executable paths. Use first found "
+             f"(default: {_utilities.character_delimited_list(_settings._default_abaqus_commands)})",
+        # fmt: on
     )
 
     # True or false inputs
-    parser.add_argument("-v", "--verbose", action="store_true", default=False,
-                        help="Turn on verbose logging")
-    parser.add_argument("-f", "--force-overwrite", action="store_true", default=False,
-                        help="Overwrite the extracted and log file(s)")
-    parser.add_argument("-d", "--debug", action="store_true", default=False, help=argparse.SUPPRESS)
-    parser.add_argument("--recompile", action="store_true", default=False, help=argparse.SUPPRESS)
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="Turn on verbose logging",
+    )
+    parser.add_argument(
+        "-f",
+        "--force-overwrite",
+        action="store_true",
+        default=False,
+        help="Overwrite the extracted and log file(s)",
+    )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        action="store_true",
+        default=False,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--recompile",
+        action="store_true",
+        default=False,
+        help=argparse.SUPPRESS,
+    )
     return parser
 
 
@@ -129,7 +200,7 @@ def cpp_compile(
     environment: dict = dict(),
     working_directory: pathlib.Path = pathlib.Path("."),
     recompile: bool = False,
-    debug: bool = False
+    debug: bool = False,
 ) -> pathlib.Path:
     """Compile the SPADE c++ executable
 
@@ -162,7 +233,7 @@ def cpp_compile(
                 env=environment,
                 cwd=working_directory,
                 check=True,
-                stdout=scons_stdout
+                stdout=scons_stdout,
             )
         except subprocess.CalledProcessError as err:
             message = f"Could not compile with Abaqus command '{abaqus_command}': {str(err)}"
@@ -175,6 +246,7 @@ def cpp_execute(
     abaqus_bin: pathlib.Path,
     args: argparse.Namespace,
     environment: dict = dict(),
+    working_directory: pathlib.Path = pathlib.Path("."),
 ) -> None:
     """Run the SPADE c++ executable
 
@@ -193,7 +265,7 @@ def cpp_execute(
     command_line_arguments = shlex.split(full_command_line_arguments, posix=(os.name == "posix"))
     print_debug(f"Running {_settings._project_name_short} with command {command_line_arguments}")
     try:
-        subprocess.run(command_line_arguments, env=environment, check=True)
+        subprocess.run(command_line_arguments, env=environment, cwd=working_directory, check=True)
     except subprocess.CalledProcessError as err:
         message = f"{_settings._project_name_short} extract failed in Abaqus ODB application: {str(err)}"
         raise RuntimeError(message)

@@ -10,21 +10,18 @@ sys.dont_write_bytecode = True
 
 # -- Project information -----------------------------------------------------
 project_dir = pathlib.Path(r"@project_dir@").resolve()
-authors = [
-    ('Prabhu S. Khalsa', '<pkhalsa@lanl.gov>'),
+author_contact = [
+    ("Prabhu S. Khalsa", "<pkhalsa@lanl.gov>"),
     ("Kyle Brindley", "<kbrindley@lanl.gov>"),
 ]
-author_latex = r"\and ".join(author for author, email in authors)
-epub_author = ", ".join(author for author, email in authors)
-author_manpage = ""
-for author, email in authors:
-    author_manpage += f"{author} {email}, "
-author_manpage = author_manpage.rstrip(', ')
+author = " and ".join(author for author, email in author_contact)
+author_latex = r"\and ".join(author for author, email in author_contact)
+epub_author = ", ".join(author for author, email in author_contact)
+author_manpage = ", ".join(f"{author} {email}" for author, email in author_contact)
 
 # Mock modules unavailable in the Conda development environment, e.g. Abaqus Python modules, and large imports not
 # required by the documentation build, e.g. cubit.
-mock_modules = [
-]
+mock_modules = []
 for mod_name in mock_modules:
     sys.modules[mod_name] = unittest.mock.Mock()
 
@@ -36,7 +33,7 @@ from spade._settings import _project_name, _project_name_short
 project = _project_name_short
 release = "@version@"
 version = release
-copyright = f"{datetime.date.today().year} Triad National Security, LLC. All Rights Reserved."
+copyright = f"2023-{datetime.date.today().year} Triad National Security, LLC. All Rights Reserved."
 
 # -- General configuration ---------------------------------------------------
 extensions = [
@@ -45,23 +42,25 @@ extensions = [
     "sphinx_copybutton",
     "sphinx.ext.extlinks",
     "sphinxcontrib.bibtex",
-    "sphinxarg.ext"
+    "sphinxarg.ext",
 ]
 bibtex_bibfiles = ["references.bib"]
 
 extlinks = {
-     "merge": ("https://re-git.lanl.gov/aea/python-projects/spade/-/merge_requests/%s", "MERGE-%s"),
-     "issue": ("https://re-git.lanl.gov/aea/python-projects/spade/-/issues/%s", "ISSUE-%s"),
+    "merge": ("https://re-git.lanl.gov/aea/python-projects/spade/-/merge_requests/%s", "MERGE-%s"),
+    "issue": ("https://re-git.lanl.gov/aea/python-projects/spade/-/issues/%s", "ISSUE-%s"),
 }
 templates_path = ["_templates"]
 source_suffix = [".rst"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-rst_prolog = f".. |project| replace:: {project.lower()}\n" \
-             f".. |PROJECT| replace:: {_project_name}\n" \
-             f".. include:: targets.txt"
+rst_prolog = (
+    f".. |project| replace:: {project.lower()}\n"
+    f".. |PROJECT| replace:: {_project_name}\n"
+    f".. include:: targets.txt"
+)
 
 if tags.has("man"):
-    master_doc="man_index"
+    master_doc = "man_index"
     include_patterns = [f"{master_doc}.rst"]
 else:
     master_doc = "index"
@@ -71,22 +70,33 @@ else:
 copybutton_prompt_text = r">>> |> |\.\.\. |\$ |\+(?!\+)"
 copybutton_prompt_is_regexp = True
 
+
 # -- Options for HTML output -------------------------------------------------
 # Add custom style sheet to make the html docs wider
 def setup(app):
     app.add_css_file("custom.css")
 
-html_theme = "sphinx_rtd_theme"
+
+html_favicon = "_static/favicon.ico"
+html_logo = "spade_smaller.png"
+html_last_updated_fmt = ""
+html_theme = "sphinx_book_theme"
+html_theme_options = {
+    "logo": {"text": release},
+    "article_header_start": "breadcrumbs",
+    "repository_provider": "gitlab",
+    "repository_url": "https://re-git.lanl.gov/aea/python-projects/spade",
+    "path_to_docs": "docs",
+    "use_source_button": True,
+    "use_repository_button": True,
+    "content_footer_items": ["last-updated"],
+    "show_toc_level": 2,
+}
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
-html_logo = 'spade_smaller.png'
-html_favicon = "_static/favicon.ico"
 
 # -- Options for manual page output ---------------------------------------
-man_pages = [
-    (master_doc, project.lower(), _project_name,
-     [author_manpage], 1)
-]
+man_pages = [(master_doc, project.lower(), _project_name, [author_manpage], 1)]
 
 # -- Options for LaTeX output ---------------------------------------------
 latex_logo = html_logo
@@ -107,7 +117,7 @@ preamble = """
 """
 
 # Sphinx LaTeX build does not correctly escape underscores in the project name, which we use as the title.
-latex_project = project.replace('_', '-')
+latex_project = project.replace("_", "-")
 latex_basename = f"{latex_project.lower()}-{version}.tex"
 
 maketitle = f"""
@@ -133,10 +143,7 @@ maketitle = f"""
 \\end{{titlepage}}
 """
 
-latex_elements = {
-    'preamble': preamble,
-    'maketitle': maketitle
-}
+latex_elements = {"preamble": preamble, "maketitle": maketitle}
 latex_documents = [
-    (master_doc, latex_basename, latex_project.upper(), author_latex, 'manual'),
+    (master_doc, latex_basename, latex_project.upper(), author_latex, "manual"),
 ]

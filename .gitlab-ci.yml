@@ -59,10 +59,6 @@ environment:
     - chmod -R 755 ${environment_path}
     # place the common modulefiles in an accessible location
     - cp ${PWD}/modulefiles/* ${aea_modulefiles}
-    # Link SCons man pages to the expected MANPATH location
-    - ln ${environment_path}/scons.1 ${environment_path}/man/man1/scons.1
-    - ln ${environment_path}/sconsign.1 ${environment_path}/man/man1/sconsign.1
-    - ln ${environment_path}/scons-time.1 ${environment_path}/man/man1/scons-time.1
   tags:
     - shell-aea
 
@@ -74,7 +70,9 @@ fast-test:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
-    - scons regression
+    - abaqus_command='--abaqus-command=/apps/abaqus/Commands/abq2023 --abaqus-command=/apps/abaqus/Commands/abq2022'
+    - echo ${abaqus_command}
+    - scons regression ${abaqus_command}
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     reports:
@@ -84,7 +82,7 @@ fast-test:
   tags:
     - shell-aea
 
-flake8:
+style:
   stage: test
   variables:
     GIT_STRATEGY: clone
@@ -92,7 +90,7 @@ flake8:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
-    - scons flake8
+    - scons flake8 black-check
   tags:
     - shell-aea
 
@@ -107,7 +105,7 @@ conda-build:
     - if: $CI_COMMIT_BRANCH == "main"
   script:
     # Only build one compiler variant during merge request testing
-    - python_version="3.11"
+    - python_version="3.12"
     - variants=""
     - if [[ $CI_PIPELINE_SOURCE == "merge_request_event" ]]; then variants="--variants {'python':['${python_version}']}"; fi
     - echo $variants

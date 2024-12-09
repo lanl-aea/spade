@@ -17,7 +17,7 @@ def main() -> None:
 
     try:
         if args.subcommand == "docs":
-            _docs.main(print_local_path=args.print_local_path)
+            _docs.main(_settings._installed_docs_index, print_local_path=args.print_local_path)
         else:
             _extract.main(args)
     except RuntimeError as err:
@@ -32,32 +32,32 @@ def get_parser():
     """
     main_parser = argparse.ArgumentParser(
         description=_settings._project_description,
-        prog=f"{_settings._project_name_short}"
+        prog=f"{_settings._project_name_short}",
     )
 
     main_parser.add_argument(
-        '-V', '--version',
-        action='version',
-        version=f'{_settings._project_name_short} {__version__}'
+        "-V",
+        "--version",
+        action="version",
+        version=f"{_settings._project_name_short} {__version__}",
     )
 
-    subparsers = main_parser.add_subparsers(
-        title="subcommands",
-        metavar="{subcommand}",
-        dest="subcommand")
+    subparsers = main_parser.add_subparsers(title="subcommands", metavar="{subcommand}", dest="subcommand")
 
     subparsers.add_parser(
         "docs",
         help=f"Open the {_settings._project_name_short.upper()} HTML documentation",
-        description=f"Open the packaged {_settings._project_name_short.upper()} HTML documentation in the  " \
-                     "system default web browser",
-        parents=[_docs.get_parser()]
+        # fmt: off
+        description=f"Open the packaged {_settings._project_name_short.upper()} HTML documentation in the  "
+                    "system default web browser",
+        # fmt: on
+        parents=[_docs.get_parser()],
     )
 
     subparsers.add_parser(
         "extract",
         help="Extract ODB file to H5",
-        parents=[_extract.get_parser()]
+        parents=[_extract.get_parser()],
     )
 
     return main_parser

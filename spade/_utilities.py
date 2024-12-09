@@ -10,10 +10,28 @@ import subprocess
 def compiler_help(env):
     compiler_help_message = "\nEnvironment:\n"
     keys = [
-        "CC", "CCVERSION", "CCFLAGS", "SHCCFLAGS", "CPPFLAGS", "CPPPATH", "CCCOM", "SHCCOM",
-        "CXX", "CXXVERSION", "CXXFLAGS", "SHCXXFLAGS", "CXXCOM", "SHCXXCOM",
-        "LINKFLAGS", "SHLINKFLAGS", "LIBPREFIX", "SHLIBSUFFIX", "LIBPATH", "SHOBJSUFFIX", "LIBS",
-        "STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME"
+        "CC",
+        "CCVERSION",
+        "CCFLAGS",
+        "SHCCFLAGS",
+        "CPPFLAGS",
+        "CPPPATH",
+        "CCCOM",
+        "SHCCOM",
+        "CXX",
+        "CXXVERSION",
+        "CXXFLAGS",
+        "SHCXXFLAGS",
+        "CXXCOM",
+        "SHCXXCOM",
+        "LINKFLAGS",
+        "SHLINKFLAGS",
+        "LIBPREFIX",
+        "SHLIBSUFFIX",
+        "LIBPATH",
+        "SHOBJSUFFIX",
+        "LIBS",
+        "STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME",
     ]
     for key in keys:
         if key in env:
@@ -65,7 +83,7 @@ def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
     :return: Abaqus official version string
     """
     try:
-        abaqus_version = subprocess.check_output([abaqus_command, 'information=version'], text=True)
+        abaqus_version = subprocess.check_output([abaqus_command, "information=version"], text=True)
 
     except FileNotFoundError:
         raise RuntimeError(f"Abaqus command not found at: '{abaqus_command}'")

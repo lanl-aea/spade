@@ -14,7 +14,7 @@ AddOption(
     type="string",
     action="store",
     metavar="DIR",
-    help="SCons build (variant) root directory. Relative or absolute path. (default: '%default')"
+    help="SCons build (variant) root directory. Relative or absolute path. (default: '%default')",
 )
 AddOption(
     "--abaqus-command",
@@ -22,13 +22,13 @@ AddOption(
     nargs=1,
     type="string",
     action="store",
-    help="Abaqus executable relative or absolute path (default: '%default')"
+    help="Abaqus executable relative or absolute path (default: '%default')",
 )
 AddOption(
     "--recompile",
     default=False,
     action="store_true",
-    help="Recompile the spade executable. Implemented as an AlwaysBuild when True (default: '%default')"
+    help="Recompile the spade executable. Implemented as an AlwaysBuild when True (default: '%default')",
 )
 
 # Project environment
@@ -40,7 +40,7 @@ env = Environment(
     build_dir=GetOption("build_dir"),
     abaqus_command=GetOption("abaqus_command"),
     recompile=GetOption("recompile"),
-    project_name_cpp=_settings._project_name_cpp
+    project_name_cpp=_settings._project_name_cpp,
 )
 abaqus_command = env["abaqus_command"]
 
@@ -54,8 +54,9 @@ gpp_path = pathlib.Path(env["CXX"]).resolve().parent.parent
 gpp_lib = gpp_path / "lib"
 gpp_include = gpp_path / "include"
 
-env["odb_flags"] = _settings._compiler_flags + f"-I{abaqus_code_include} -I{abaqus_installation} " + \
-                   f"-I{gpp_include} -I. -I{gpp_lib}"
+env["odb_flags"] = (
+    _settings._compiler_flags + f"-I{abaqus_code_include} -I{abaqus_installation} " + f"-I{gpp_include} -I. -I{gpp_lib}"
+)
 env["abaqus_link_flags"] = _settings._link_flags + f"-L{gpp_lib} -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
 # TODO: May wish to confirm that h5c++ is definitely in the same place as gpp (lib and include)
 h5_flags = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
@@ -69,6 +70,7 @@ env.SConscript("SConscript", variant_dir=env["build_dir"], exports="env", duplic
 # Add aliases to help message so users know what build target options are available
 # This must come *after* all expected Alias definitions and SConscript files.
 from SCons.Node.Alias import default_ans
+
 alias_help = "\nTarget Aliases:\n"
 for alias in default_ans:
     alias_help += f"    {alias}\n"

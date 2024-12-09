@@ -12,13 +12,18 @@ Import(["env", "project_variables_substitution"])
 
 # VVV Sphinx Builder prototype
 # TODO: Use WAVES from conda-forge as a build-time (NOT runtime) dependency
-def sphinx_build(program="sphinx-build", options="", builder="html", tags=""):
+def sphinx_build(
+    program="sphinx-build",
+    options="",
+    builder="html",
+    tags="",
+):
     sphinx_builder = Builder(
         action=["${program} ${sphinx_options} -b ${builder} ${TARGET.dir.dir.abspath} ${TARGET.dir.abspath} ${tags}"],
         program=program,
         sphinx_options=options,
         builder=builder,
-        tags=tags
+        tags=tags,
     )
     return sphinx_builder
 
@@ -26,7 +31,7 @@ def sphinx_build(program="sphinx-build", options="", builder="html", tags=""):
 def _custom_scanner(
     pattern: str,
     suffixes: typing.Iterable[str],
-    flags: typing.Optional[int] = None
+    flags: typing.Optional[int] = None,
 ) -> SCons.Scanner.Scanner:
     """Custom Scons scanner
 
@@ -54,7 +59,11 @@ def _custom_scanner(
         """
         return [node for node in node_list if node.path.endswith(tuple(suffixes))]
 
-    def regex_scan(node: SCons.Node.FS, env: SCons.Environment.Environment, path: str) -> list:
+    def regex_scan(
+        node: SCons.Node.FS,
+        env: SCons.Environment.Environment,
+        path: str,
+    ) -> list:
         """Scan function for extracting dependencies from the content of a file based on the given regular expression.
 
         The interface of the scan function is fixed by SCons. It must include ``node``, ``env`` and ``path``. It may
@@ -90,7 +99,12 @@ def sphinx_scanner() -> SCons.Scanner.Scanner:
     :return: Abaqus input file dependency Scanner
     :rtype: SCons.Scanner.Scanner
     """
-    return _custom_scanner(r'^\s*\.\. (?:include|literalinclude|image|figure|bibliography)::\s*(.+)$', ['.rst', '.txt'])
+    return _custom_scanner(
+        r"^\s*\.\. (?:include|literalinclude|image|figure|bibliography)::\s*(.+)$",
+        [".rst", ".txt"],
+    )
+
+
 # ^^^ Sphinx Builder prototype
 
 
@@ -108,7 +122,7 @@ for target, source in copy_files:
     Command(
         target=target,
         source=source,
-        action=Copy("$TARGET", "$SOURCE")
+        action=Copy("$TARGET", "$SOURCE"),
     )
 
 # Things required for Sphinx configuration or missed by scanning *.rst and *.txt files
@@ -118,7 +132,7 @@ sphinx_configuration_files = [
     "targets.txt",  # Found in conf.py, which is not currently scanned
     "spade_smaller.png",
     "_static/custom.css",
-    "_static/favicon.ico"
+    "_static/favicon.ico",
 ]
 
 sphinx_source_files = [
@@ -135,7 +149,7 @@ sphinx_source_files = [
     "license.rst",
     "release_philosophy.rst",
     "user.rst",
-    "zreferences.rst"
+    "zreferences.rst",
 ]
 
 targets = [f"html/{pathlib.Path(source).with_suffix('.html')}" for source in sphinx_source_files if ".rst" in source]
@@ -143,7 +157,7 @@ sources = sphinx_configuration_files + sphinx_source_files
 html = env.SphinxBuild(
     target=targets,
     source=sources,
-    builder="html"
+    builder="html",
 )
 env.Clean(html, [Dir("html")] + sources)
 env.Alias("html", html)
@@ -154,7 +168,7 @@ man = env.SphinxBuild(
     target=targets,
     source=sources,
     builder="man",
-    tags="-t man"
+    tags="-t man",
 )
 env.Clean(man, [Dir("man")] + sources)
 env.Alias("man", man)
@@ -166,7 +180,7 @@ latexpdf = env.Command(
     source=sources,
     action="${program} -M latexpdf ${TARGET.dir.dir.abspath} ${TARGET.dir.dir.abspath} ${tags} ${sphinx_options}",
     program="sphinx-build",
-    sphinx_options="-W"
+    sphinx_options="-W",
 )
 env.Clean(latexpdf, [Dir("latex")] + sources)
 env.Alias("latexpdf", latexpdf)

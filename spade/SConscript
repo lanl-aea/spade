@@ -15,19 +15,19 @@ compile_cpp = f"{env['CXX']} {env['odb_flags']}"
 link_exe = f"{env['CXX']} {env['abaqus_link_flags']} " + " ".join([target.name for target in objects])
 env.Substfile(
     "abaqus_v6.env.in",
-    SUBST_DICT={"@compile_cpp@": compile_cpp, "@link_exe@": link_exe}
+    SUBST_DICT={"@compile_cpp@": compile_cpp, "@link_exe@": link_exe},
 )
 
 # Build executable with Abaqus make
 env.Command(
     target=[env["project_name_cpp"]],
     source=[f"{env['project_name_cpp']}.cpp"] + objects,
-    action=[env['abaqus_make_command']],
+    action=[env["abaqus_make_command"]],
     # FIXME: If we can use SCons to re-build the compile_cpp string with the SCons controlled arguments we won't have to
     # change directory. SCons parses ``-I.`` to correct for the build directory, but we're writing odb_flags string
     # without adjustment to abaqus_v6.env. There's probably an additional complication that abaqus make needs to run
     # from the abaqus_v6.env directory, too.
-    chdir=True
+    chdir=True,
 )
 if env["recompile"]:
     env.AlwaysBuild(env["project_name_cpp"])

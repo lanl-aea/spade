@@ -1,7 +1,9 @@
 import os
 import shlex
-import shutil
+import string
 import typing
+import inspect
+import pathlib
 import tempfile
 import subprocess
 from importlib.metadata import version, PackageNotFoundError
@@ -13,10 +15,7 @@ from spade import _settings
 
 env = os.environ.copy()
 spade_command = "spade"
-odb_files = [
-    "viewer_tutorial.odb",
-    "w-reactor_global.odb"
-]
+odb_files = ["viewer_tutorial.odb", "w-reactor_global.odb"]
 inp_files = [
     "beamgap",
     "selfcontact_gask",
@@ -41,57 +40,99 @@ if not installed:
     else:
         env[key] = f"{package_parent_path}"
 
+# System tests that only require current project package
 system_tests = [
     # CLI sign-of-life and help/usage
-    f"{spade_command} --help",
-    f"{spade_command} docs --help",
-    f"{spade_command} extract --help",
-    # Tutorials
-    # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/22
+    [string.Template("${spade_command} --help")],
+    [string.Template("${spade_command} docs --help")],
+    [string.Template("${spade_command} extract --help")],
 ]
-# TODO: Move abaqus command to a search in SConstruct
-options = "--abaqus-commands /apps/abaqus/Commands/abq2023 --recompile --force-overwrite"
-for odb_file in odb_files:
-    system_tests.append([
-        f"/apps/abaqus/Commands/abq2023 fetch -job {odb_file}",
-        f"{spade_command} extract {odb_file} {options}"
-    ])
-for inp_file in inp_files:
-    system_tests.append([
-        f"/apps/abaqus/Commands/abq2023 fetch -job '{inp_file}*'",
-        f"/apps/abaqus/Commands/abq2023 -job {inp_file} -interactive -ask_delete no",
-        f"{spade_command} extract {inp_file}.odb  {options}"
-    ])
 if installed:
     system_tests.append(
         # The HTML docs path doesn't exist in the repository. Can only system test from an installed package.
-        f"{spade_command} docs --print-local-path"
+        [string.Template("${spade_command} docs --print-local-path")]
+    )
+
+# System tests that require third-party software. These should be marked "pytest.mark.require_third_party".
+# TODO: add tutorials
+# https://re-git.lanl.gov/aea/python-projects/spade/-/issues/22
+spade_options = "--recompile --force-overwrite"
+for odb_file in odb_files:
+    system_tests.append(
+        pytest.param(
+            [
+                string.Template(f"${{abaqus_command}} fetch -job {odb_file}"),
+                string.Template(
+                    f"${{spade_command}} extract {odb_file} --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
+                ),
+            ],
+            marks=pytest.mark.require_third_party,
+        )
+    )
+for inp_file in inp_files:
+    system_tests.append(
+        pytest.param(
+            [
+                string.Template(f"${{abaqus_command}} fetch -job '{inp_file}*'"),
+                string.Template(f"${{abaqus_command}} -job {inp_file} -interactive -ask_delete no"),
+                string.Template(
+                    f"${{spade_command}} extract {inp_file}.odb --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
+                ),
+            ],
+            marks=pytest.mark.require_third_party,
+        )
     )
 
 
 @pytest.mark.systemtest
-@pytest.mark.parametrize("number, commands", enumerate(system_tests))
-def test_run_tutorial(number: int, commands: typing.Union[str, typing.Iterable[str]]) -> None:
+@pytest.mark.parametrize("commands", system_tests)
+def test_system(
+    system_test_directory,
+    abaqus_command,
+    request,
+    commands: typing.Iterable[str],
+) -> None:
     """Run the system tests in a temporary directory
 
-    :param int number: the command number. Used during local testing to separate command directories.
+    Accepts a custom pytest CLI option to re-direct the temporary system test root directory away from ``$TMPDIR`` as
+
+    .. code-block::
+
+       pytest --system-test-dir=/my/systemtest/output
+
+    :param system_test_directory: custom pytest decorator defined in conftest.py
+    :param abaqus_command: custom pytest decorator defined in conftest.py
+    :param request: pytest decorator with test case meta data
     :param commands: command string or list of strings for the system test
     """
-    if isinstance(commands, str):
-        commands = [commands]
-    if installed:
-        with tempfile.TemporaryDirectory() as temp_directory:
-            run_commands(commands, temp_directory)
+    # Attempt to construct a valid directory prefix from the test ID string printed by pytest
+    # Works best if there is only one test function in this module so there are no duplicate ids
+    test_id = request.node.callspec.id
+    test_prefix = f"{test_id}." if " " not in test_id else None
+
+    if system_test_directory is not None:
+        system_test_directory.mkdir(parents=True, exist_ok=True)
+
+    kwargs = {}
+    temporary_directory_arguments = inspect.getfullargspec(tempfile.TemporaryDirectory).args
+    if "ignore_cleanup_errors" in temporary_directory_arguments and system_test_directory is not None:
+        kwargs.update({"ignore_cleanup_errors": True})
+    temp_directory = tempfile.TemporaryDirectory(dir=system_test_directory, prefix=test_prefix, **kwargs)
+    temp_path = pathlib.Path(temp_directory.name)
+    temp_path.mkdir(parents=True, exist_ok=True)
+    template_substitution = {
+        "spade_command": spade_command,
+        "spade_options": spade_options,
+        "abaqus_command": abaqus_command,
+        "temp_directory": temp_directory,
+    }
+    try:
+        for command in commands:
+            if isinstance(command, string.Template):
+                command = command.substitute(template_substitution)
+            command = shlex.split(command)
+            subprocess.check_output(command, env=env, cwd=temp_path).decode("utf-8")
+    except Exception as err:
+        raise Exception
     else:
-        command_directory = build_directory / f"commands{number}"
-        command_directory = command_directory.resolve()
-        if command_directory.exists():
-            shutil.rmtree(command_directory)
-        command_directory.mkdir(parents=True)
-        run_commands(commands, command_directory)
-
-
-def run_commands(commands, build_directory):
-    for command in commands:
-        command = shlex.split(command)
-        subprocess.check_output(command, env=env, cwd=build_directory).decode('utf-8')
+        temp_directory.cleanup()
