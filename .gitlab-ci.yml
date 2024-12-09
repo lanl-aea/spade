@@ -111,7 +111,6 @@ conda-build:
     - variants=""
     - if [[ $CI_PIPELINE_SOURCE == "merge_request_event" ]]; then variants="--variants {'python':['${python_version}']}"; fi
     - echo $variants
-    # Set the LANL internal proxies
     # Override default permissions. Set group to rx with no write permissions.
     - umask 0022
     - mkdir ${conda_artifacts_directory}

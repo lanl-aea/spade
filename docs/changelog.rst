@@ -21,6 +21,7 @@ Internal Changes
   results (:issue:`44`, :merge:`39`). By `Kyle Brindley`_.
 - Use a common downstream pipeline to deploy to the internal conda channel (:issue:`733`, :merge:`904`). By `Kyle
   Brindley`_.
+- Removed Proxy Settings (:issue:`53`, :merge:`47`). By `Sergio Cordova`_.
 
 Enhancements
 ============

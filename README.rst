@@ -12,6 +12,7 @@
 
 .. _`Prabhu Khalsa`: pkhalsa@lanl.gov
 .. _`Kyle Brindley`: kbrindley@lanl.gov
+.. _`Sergio Cordova`: sergioc@lanl.gov
 
 .. target-end-do-not-remove
 
