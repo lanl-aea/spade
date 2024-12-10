@@ -32,7 +32,7 @@ AddOption(
     metavar="DIR",
     help="SCons build (variant) root directory. Relative or absolute path. (default: '%default')",
 )
-default_abaqus_command = "/apps/abaqus/Commands/abq2023"
+default_abaqus_command = "/apps/abaqus/Commands/abq2024"
 AddOption(
     "--abaqus-command",
     dest="abaqus_command",
