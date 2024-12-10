@@ -5,7 +5,11 @@ Changelog
 #########
 
 *******************
-v0.3.4 (unreleased)
+v0.3.5 (unreleased)
+*******************
+
+*******************
+v0.3.4 (2024-12-10)
 *******************
 
 Internal Changes
@@ -14,7 +18,11 @@ Internal Changes
 - Update CI environment glibc (sysroot) version for Abaqus 2024 requirements (:issue:`59`, :merge:`51`). By `Kyle
   Brindley`_.
 - Update minimum glibc/sysroot version runtime requirement for Abaqus 2024. Add Abaqus 2024 to the system test matrix
-  (:issue:`57`, :merge:`57`). By `Kyle Brindley`_.
+  (:issue:`57`, :merge:`52`). By `Kyle Brindley`_.
+
+Enhancements
+============
+- Provide Abaqus 2024 support (:issue:`57`, :merge:`52`). By `Kyle Brindley`_.
 
 *******************
 v0.3.3 (2024-12-06)
