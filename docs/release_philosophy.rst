@@ -15,7 +15,7 @@ three component ("major.minor.micro") scheme. The production version numbers
 correspond to Git tags in the project `repository`_ which point to a static
 release of the |PROJECT| project.
 
-The developer (a.k.a. dev or aea-beta) version number follows the production release
+The developer (a.k.a. dev or aea-nightly) version number follows the production release
 number with an anticipated micro version bump ("major.minor.micro+1") and the
 appended ".dev" local version number. Because the developer version is
 constantly updated against development work, the version number found in the

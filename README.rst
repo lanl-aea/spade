@@ -66,7 +66,7 @@ Currently, this project is only available on the `AEA Conda channel`_ and in an 
    .. code-block::
 
       $ module use /projects/aea_compute/aea-conda
-      $ module load aea-beta
+      $ module load aea-nightly
 
 2. View the CLI usage
 

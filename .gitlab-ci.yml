@@ -20,7 +20,7 @@ before_script:
   - module load texlive
   # Start with an AEA environment to put Conda on PATH
   - project_environment='spade-env'
-  - environment_choices="aea-beta aea-quarterly aea-release"
+  - environment_choices="aea-nightly aea-quarterly aea-release"
   - for env in ${environment_choices}; do if [[ -d "${aea_compute_path}/${env}" ]]; then environment=${env}; break; fi; done
   - echo ${environment}
   - module load ${environment}
