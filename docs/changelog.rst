@@ -12,6 +12,11 @@ v0.3.5 (unreleased)
 v0.3.4 (2024-12-10)
 *******************
 
+Bug fixes
+=========
+- Check to see if string dataset already exists in write_element before attempting to write to it (:issue:`60`,
+  :merge:`54`). By `Prabhu Khalsa`_.
+
 Internal Changes
 ================
 - Removed Proxy Settings (:issue:`53`, :merge:`47`). By `Sergio Cordova`_.
