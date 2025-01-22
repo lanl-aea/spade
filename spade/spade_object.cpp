@@ -1911,19 +1911,22 @@ void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const str
     string element_link;
     string newGroupName = group_name + "/" + to_string(element.label);
     string element_key;
+    string element_label = to_string(element.label);
     for (int i=0; i < element.instanceNames.size(); i++) {
         element_key += element.instanceNames[i];
     }
-    element_key = to_string(element.label) + element_key;
+    element_key = element_label + element_key;
     try {
         element_link = this->element_links.at(element_key);
-        write_string_dataset(group, to_string(element.label), element_link);
+        if (H5Lexists(group.getId(), element_label.c_str(), H5P_DEFAULT) <= 0) { // if dataset doesn't exist
+            write_string_dataset(group, element_label, element_link);
+        }
     } catch (const std::out_of_range& oor) {
-        H5::Group element_group = h5_file.createGroup((group_name + "/" + to_string(element.label)).c_str());
+        H5::Group element_group = h5_file.createGroup((group_name + "/" + element_label).c_str());
         write_string_dataset(element_group, "type", element.type);
         write_integer_vector_dataset(element_group, "connectivity", element.connectivity);
-        H5::Group section_category_group = h5_file.createGroup((group_name + "/" + to_string(element.label) + "/sectionCategory").c_str());
-        write_section_category(h5_file, section_category_group, group_name + "/" + to_string(element.label) + "/sectionCategory", element.sectionCategory);
+        H5::Group section_category_group = h5_file.createGroup((group_name + "/" + element_label + "/sectionCategory").c_str());
+        write_section_category(h5_file, section_category_group, group_name + "/" + element_label + "/sectionCategory", element.sectionCategory);
         write_string_vector_dataset(element_group, "instanceNames", element.instanceNames);
 
         this->element_links[element_key] = newGroupName;  // Store link for later
