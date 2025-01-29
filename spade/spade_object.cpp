@@ -1918,9 +1918,14 @@ void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const str
     element_key = element_label + element_key;
     try {
         element_link = this->element_links.at(element_key);
+        if (H5Lexists(h5_file.getId(), newGroupName, H5P_DEFAULT) <= 0) {  // If link doesn't exist
+            h5_file.link(H5L_TYPE_HARD, element_link, newGroupName);
+        }
+        /*
         if (H5Lexists(group.getId(), element_label.c_str(), H5P_DEFAULT) <= 0) { // if dataset doesn't exist
             write_string_dataset(group, element_label, element_link);
         }
+        */
     } catch (const std::out_of_range& oor) {
         H5::Group element_group = h5_file.createGroup((group_name + "/" + element_label).c_str());
         write_string_dataset(element_group, "type", element.type);
