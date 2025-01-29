@@ -1919,9 +1919,9 @@ void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const str
     element_key = element_label + element_key;
     try {
         element_link = this->element_links.at(element_key);
-        if (H5Lexists(file_id, newGroupName, H5P_DEFAULT) <= 0) {  // If link doesn't exist
+        if (H5Lexists(file_id, newGroupName.c_str(), H5P_DEFAULT) <= 0) {  // If link doesn't exist
 //            h5_file.link(H5L_TYPE_HARD, element_link, newGroupName);
-            herr_t status = H5Lcreate_hard(file_id, element_link, file_id, newGroupName, H5P_DEFAULT, H5P_DEFAULT);
+            herr_t status = H5Lcreate_hard(file_id, element_link.c_str(), file_id, newGroupName.c_str(), H5P_DEFAULT, H5P_DEFAULT);
         }
         /*
         if (H5Lexists(group.getId(), element_label.c_str(), H5P_DEFAULT) <= 0) { // if dataset doesn't exist
