@@ -1912,14 +1912,16 @@ void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const str
     string newGroupName = group_name + "/" + to_string(element.label);
     string element_key;
     string element_label = to_string(element.label);
+    hid_t file_id = h5_file.getId();
     for (int i=0; i < element.instanceNames.size(); i++) {
         element_key += element.instanceNames[i];
     }
     element_key = element_label + element_key;
     try {
         element_link = this->element_links.at(element_key);
-        if (H5Lexists(h5_file.getId(), newGroupName, H5P_DEFAULT) <= 0) {  // If link doesn't exist
-            h5_file.link(H5L_TYPE_HARD, element_link, newGroupName);
+        if (H5Lexists(file_id, newGroupName, H5P_DEFAULT) <= 0) {  // If link doesn't exist
+//            h5_file.link(H5L_TYPE_HARD, element_link, newGroupName);
+            herr_t status = H5Lcreate_hard(file_id, element_link, file_id, newGroupName, H5P_DEFAULT, H5P_DEFAULT);
         }
         /*
         if (H5Lexists(group.getId(), element_label.c_str(), H5P_DEFAULT) <= 0) { // if dataset doesn't exist
