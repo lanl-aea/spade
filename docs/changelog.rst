@@ -8,14 +8,18 @@ Changelog
 v0.3.5 (unreleased)
 *******************
 
-*******************
-v0.3.4 (2024-12-10)
-*******************
-
 Bug fixes
 =========
 - Check to see if string dataset already exists in write_element before attempting to write to it (:issue:`60`,
   :merge:`54`). By `Prabhu Khalsa`_.
+
+Enhancements
+============
+- Use hard links instead of string dataset for elements (:issue:`61`, :merge:`55`). By `Prabhu Khalsa`_.
+
+*******************
+v0.3.4 (2024-12-10)
+*******************
 
 Internal Changes
 ================
