@@ -1337,14 +1337,14 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
     write_string_vector_dataset(job_data_group, "productAddOns", this->job_data.productAddOns);
     write_string_dataset(job_data_group, "version", this->job_data.version);
 
-    log_file.logVerbose("Writing sector definition.");
+    log_file.logVerbose("Writing sector definition at time: " + command_line_arguments.getTimeStamp(false));
     H5::Group sector_definition_group = h5_file.createGroup(string("/odb/sectorDefinition").c_str());
     write_integer_dataset(sector_definition_group, "numSectors", this->sector_definition.numSectors);
     H5::Group symmetry_axis_group = h5_file.createGroup(string("/odb/sectorDefinition/symmetryAxis").c_str());
     write_string_dataset(symmetry_axis_group, "StartPoint", this->sector_definition.start_point);
     write_string_dataset(symmetry_axis_group, "EndPoint", this->sector_definition.end_point);
 
-    log_file.logVerbose("Writing section categories.");
+    log_file.logVerbose("Writing section categories at time: " + command_line_arguments.getTimeStamp(false));
     H5::Group section_categories_group = h5_file.createGroup(string("/odb/sectionCategories").c_str());
     for (int i=0; i<this->section_categories.size(); i++) {
         string category_group_name = "/odb/sectionCategories/" + this->section_categories[i].name;
@@ -1352,7 +1352,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
         write_section_category(h5_file, section_category_group, category_group_name, this->section_categories[i]);
     }
 
-    log_file.logVerbose("Writing user data.");
+    log_file.logVerbose("Writing user data at time: " + command_line_arguments.getTimeStamp(false));
     H5::Group user_data_group = h5_file.createGroup(string("/odb/userData").c_str());
     for (int i=0; i<this->user_xy_data.size(); i++) {
         string user_xy_data_name = "/odb/userData/" + this->user_xy_data[i].name;
@@ -1368,17 +1368,17 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
         write_float_2D_data(user_xy_data_group, "data", this->user_xy_data[i].row_size, 2, this->user_xy_data[i].data);  // x-y data has two columns: x and y
     }
 
-    log_file.logVerbose("Writing constraints data.");
+    log_file.logVerbose("Writing constraints data at time: " + command_line_arguments.getTimeStamp(false));
     H5::Group contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
     write_constraints(h5_file, "odb/constraints");
-    log_file.logVerbose("Writing interactions data.");
+    log_file.logVerbose("Writing interactions data at time: " + command_line_arguments.getTimeStamp(false));
     write_interactions(h5_file, "odb");
     H5::Group parts_group = h5_file.createGroup(string("odb/parts").c_str());
-    log_file.logVerbose("Writing parts data.");
+    log_file.logVerbose("Writing parts data at time: " + command_line_arguments.getTimeStamp(false));
     write_parts(h5_file, "odb/parts");
-    log_file.logVerbose("Writing assembly data.");
+    log_file.logVerbose("Writing assembly data at time: " + command_line_arguments.getTimeStamp(false));
     write_assembly(h5_file, "odb/rootAssembly");
-    log_file.logVerbose("Writing steps data.");
+    log_file.logVerbose("Writing steps data at time: " + command_line_arguments.getTimeStamp(false));
     write_steps(h5_file, log_file, "odb");
 
     h5_file.close();  // Close the hdf5 file
@@ -1920,14 +1920,8 @@ void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const str
     try {
         element_link = this->element_links.at(element_key);
         if (H5Lexists(file_id, newGroupName.c_str(), H5P_DEFAULT) <= 0) {  // If link doesn't exist
-//            h5_file.link(H5L_TYPE_HARD, element_link, newGroupName);
-            herr_t status = H5Lcreate_hard(file_id, element_link.c_str(), file_id, newGroupName.c_str(), H5P_DEFAULT, H5P_DEFAULT);
+            h5_file.link(H5L_TYPE_HARD, element_link, newGroupName);
         }
-        /*
-        if (H5Lexists(group.getId(), element_label.c_str(), H5P_DEFAULT) <= 0) { // if dataset doesn't exist
-            write_string_dataset(group, element_label, element_link);
-        }
-        */
     } catch (const std::out_of_range& oor) {
         H5::Group element_group = h5_file.createGroup((group_name + "/" + element_label).c_str());
         write_string_dataset(element_group, "type", element.type);
