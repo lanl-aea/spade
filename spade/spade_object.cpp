@@ -1385,7 +1385,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
     log_file.log("Closing hdf5 file.");
 }
 
-void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name) {
+void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
     for (auto part : this->parts) {
         string part_group_name = group_name + "/" + part.name;
         H5::Group part_group = h5_file.createGroup(part_group_name.c_str());
@@ -1398,7 +1398,7 @@ void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name) {
     }
 }
 
-void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name) {
+void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
     string root_assembly_group_name = "/odb/rootAssembly " + this->root_assembly.name;
     H5::Group root_assembly_group = h5_file.createGroup(root_assembly_group_name.c_str());
     write_instances(h5_file, root_assembly_group_name);
@@ -1423,7 +1423,7 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name) 
     }
 }
 
-void SpadeObject::write_field_value(H5::H5File &h5_file, const string &group_name, field_value_type &field_value) {
+void SpadeObject::write_field_value(H5::H5File &h5_file, const string &group_name, field_value_type &field_value, Logging &log_file) {
     H5::Group value_group = h5_file.createGroup(group_name.c_str());
     if (field_value.elementLabel != -1) {
         write_integer_dataset(value_group, "elementLabel", field_value.elementLabel);
@@ -1605,7 +1605,7 @@ void SpadeObject::write_frames(H5::H5File &h5_file, Logging &log_file, const str
         write_attribute(frame_group, "max_length", to_string(frame.max_length));
     }
 }
-void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_name, history_point_type &history_point) {
+void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_name, history_point_type &history_point, Logging &log_file) {
     string history_point_group_name = group_name + "/point";
     H5::Group history_point_group = h5_file.createGroup(history_point_group_name.c_str());
     write_string_dataset(history_point_group, "face", history_point.face);
@@ -1630,7 +1630,7 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
 
 }
 
-void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_name, history_output_type &history_output) {
+void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_name, history_output_type &history_output, Logging &log_file) {
     H5::Group history_output_group = h5_file.createGroup(group_name.c_str());
     write_string_dataset(history_output_group, "name", history_output.name);
     write_string_dataset(history_output_group, "description", history_output.description);
@@ -1639,7 +1639,7 @@ void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_
     write_float_2D_data(history_output_group, "conjugateData", history_output.row_size_conjugate, 2, history_output.conjugateData);
 }
 
-void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions) {
+void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions, Logging &log_file) {
     string history_regions_group_name = group_name + "/historyRegions";
     H5::Group history_regions_group = h5_file.createGroup(history_regions_group_name.c_str());
     for (auto history_region : history_regions) {
@@ -1686,7 +1686,7 @@ void SpadeObject::write_steps(H5::H5File &h5_file, Logging &log_file, const stri
     }
 }
 
-void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name) {
+void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
     string instances_group_name = group_name + "/instances";
     H5::Group instances_group = h5_file.createGroup(instances_group_name.c_str());
     for (auto instance : this->root_assembly.instances) {
@@ -1739,7 +1739,7 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name)
     }
 }
 
-void SpadeObject::write_analytic_surface(H5::H5File &h5_file, const string &group_name, analytic_surface_type &analytic_surface) {
+void SpadeObject::write_analytic_surface(H5::H5File &h5_file, const string &group_name, analytic_surface_type &analytic_surface, Logging &log_file) {
     string analytic_surface_group_name = group_name + "/analyticSurface";
     H5::Group surface_group = h5_file.createGroup(analytic_surface_group_name.c_str());
     write_string_dataset(surface_group, "name", analytic_surface.name);
@@ -1755,7 +1755,7 @@ void SpadeObject::write_analytic_surface(H5::H5File &h5_file, const string &grou
     write_float_2D_vector(surface_group, "localCoordData", analytic_surface.max_column_size, analytic_surface.localCoordData);
 }
 
-void SpadeObject::write_datum_csys(H5::H5File &h5_file, const string &group_name, const datum_csys_type &datum_csys) {
+void SpadeObject::write_datum_csys(H5::H5File &h5_file, const string &group_name, const datum_csys_type &datum_csys, Logging &log_file) {
     string datum_group_name = group_name + "/csys";
     H5::Group datum_group = h5_file.createGroup(datum_group_name.c_str());
     write_string_dataset(datum_group, "name", datum_csys.name);
@@ -1766,7 +1766,7 @@ void SpadeObject::write_datum_csys(H5::H5File &h5_file, const string &group_name
     write_float_array_dataset(datum_group, "origin", 3, datum_csys.origin);
 }
 
-void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_name) {
+void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
     if (!this->constraints.ties.empty()) {
         H5::Group ties_group = h5_file.createGroup((group_name + "/tie").c_str());
         for (int i=0; i<this->constraints.ties.size(); i++) {
@@ -1844,7 +1844,7 @@ void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_nam
     }
 }
 
-void SpadeObject::write_tangential_behavior(H5::H5File &h5_file, const string &group_name, tangential_behavior_type& tangential_behavior) {
+void SpadeObject::write_tangential_behavior(H5::H5File &h5_file, const string &group_name, tangential_behavior_type& tangential_behavior, Logging &log_file) {
     H5::Group tangential_behavior_group = h5_file.createGroup((group_name + "/tangentialBehavior").c_str());
     write_string_dataset(tangential_behavior_group, "formulation", tangential_behavior.formulation);
     write_string_dataset(tangential_behavior_group, "directionality", tangential_behavior.directionality);
@@ -1863,7 +1863,7 @@ void SpadeObject::write_tangential_behavior(H5::H5File &h5_file, const string &g
     write_double_2D_vector(tangential_behavior_group, "table", tangential_behavior.max_column_size, tangential_behavior.table);
 }
 
-void SpadeObject::write_interactions(H5::H5File &h5_file, const string &group_name) {
+void SpadeObject::write_interactions(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
     H5::Group interactions_group = h5_file.createGroup((group_name + "/interactions").c_str());
     if (!this->standard_interactions.empty()) {
         H5::Group interactions_group = h5_file.createGroup((group_name + "/interactions/standard").c_str());
@@ -1907,7 +1907,7 @@ void SpadeObject::write_interactions(H5::H5File &h5_file, const string &group_na
     }
 }
 
-void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const string &group_name, const element_type &element) {
+void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const string &group_name, const element_type &element, Logging &log_file) {
     string element_link;
     string newGroupName = group_name + "/" + to_string(element.label);
     string element_key;
@@ -1935,14 +1935,14 @@ void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const str
 
 }
 
-void SpadeObject::write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type*> &elements) {
+void SpadeObject::write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type*> &elements, Logging &log_file) {
     if (!elements.empty()) {
         H5::Group elements_group = h5_file.createGroup((group_name + "/elements").c_str());
         for (auto element : elements) { write_element(h5_file, elements_group, group_name + "/elements", *element); }
     }
 }
 
-void SpadeObject::write_node(H5::H5File &h5_file, H5::Group &group, const string &group_name, const node_type &node) {
+void SpadeObject::write_node(H5::H5File &h5_file, H5::Group &group, const string &group_name, const node_type &node, Logging &log_file) {
     string node_link;
     string newGroupName = group_name + "/" + to_string(node.label);
     std::stringstream floatS;
@@ -1972,21 +1972,21 @@ void SpadeObject::write_node(H5::H5File &h5_file, H5::Group &group, const string
     }
 }
 
-void SpadeObject::write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type*> &nodes) {
+void SpadeObject::write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type*> &nodes, Logging &log_file) {
     if (!nodes.empty()) {
         H5::Group nodes_group = h5_file.createGroup((group_name + "/nodes").c_str());
         for (auto node : nodes) { write_node(h5_file, nodes_group, group_name + "/nodes", *node); }
     }
 }
 
-void SpadeObject::write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets) {
+void SpadeObject::write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets, Logging &log_file) {
     if (!sets.empty()) {
         H5::Group sets_group = h5_file.createGroup(group_name.c_str());
         for (auto set : sets) { write_set(h5_file, group_name, set); }
     }
 }
 
-void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const set_type &set) {
+void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const set_type &set, Logging &log_file) {
     if (!set.name.empty()) {
         string set_group_name = group_name + "/" + set.name;
         H5::Group set_group = h5_file.createGroup(set_group_name.c_str());
@@ -2010,7 +2010,7 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
     }
 }
 
-void SpadeObject::write_section_category(H5::H5File &h5_file, const H5::Group &group, const string &group_name, const section_category_type &section_category) {
+void SpadeObject::write_section_category(H5::H5File &h5_file, const H5::Group &group, const string &group_name, const section_category_type &section_category, Logging &log_file) {
     write_string_dataset(group, "description", section_category.description);
     for (int j=0; j<section_category.sectionPoints.size(); j++) {
         string point_group_name = group_name + "/" + section_category.sectionPoints[j].number;
@@ -2019,7 +2019,7 @@ void SpadeObject::write_section_category(H5::H5File &h5_file, const H5::Group &g
     }
 }
 
-void SpadeObject::write_attribute(const H5::Group& group, const string & attribute_name, const string & string_value) {
+void SpadeObject::write_attribute(const H5::Group& group, const string & attribute_name, const string & string_value, Logging &log_file) {
     if (string_value.empty()) { return; }
     H5::DataSpace attribute_space(H5S_SCALAR);
     int string_size = string_value.size();
@@ -2030,7 +2030,7 @@ void SpadeObject::write_attribute(const H5::Group& group, const string & attribu
     attribute_space.close();
 }
 
-void SpadeObject::write_string_dataset(const H5::Group& group, const string & dataset_name, const string & string_value) {
+void SpadeObject::write_string_dataset(const H5::Group& group, const string & dataset_name, const string & string_value, Logging &log_file) {
     if (string_value.empty()) { return; }
     H5::DataSpace attribute_space(H5S_SCALAR);
     hsize_t dimensions[] = {1};
@@ -2044,7 +2044,7 @@ void SpadeObject::write_string_dataset(const H5::Group& group, const string & da
     dataspace.close();
 }
 
-void SpadeObject::write_string_vector_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values) {
+void SpadeObject::write_string_vector_dataset(const H5::Group& group, const string & dataset_name, const vector<string> & string_values, Logging &log_file) {
     if (string_values.empty()) { return; }
     std::vector<const char*> c_string_array;
     for (int i = 0; i < string_values.size(); ++i) {
@@ -2059,7 +2059,7 @@ void SpadeObject::write_string_vector_dataset(const H5::Group& group, const stri
     dataspace.close();
 }
 
-void SpadeObject::write_string_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, string *string_array) {
+void SpadeObject::write_string_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, string *string_array, Logging &log_file) {
     if (!string_array) { return; }
     hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
@@ -2069,7 +2069,7 @@ void SpadeObject::write_string_2D_array(const H5::Group& group, const string & d
     dataspace.close();
 }
 
-void SpadeObject::write_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<string>> & string_data) {
+void SpadeObject::write_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<string>> & string_data, Logging &log_file) {
     if (string_data.empty()) { return; }
     hsize_t dimensions[] = {string_data.size(), max_column_size};
     H5::DataSpace  dataspace(2, dimensions);
@@ -2092,7 +2092,7 @@ void SpadeObject::write_string_2D_vector(const H5::Group& group, const string & 
     dataspace.close();
 }
 
-void SpadeObject::write_integer_dataset(const H5::Group& group, const string & dataset_name, const int & int_value) {
+void SpadeObject::write_integer_dataset(const H5::Group& group, const string & dataset_name, const int & int_value, Logging &log_file) {
     if (!int_value) { return; }
     hsize_t dimensions[] = {1};
     H5::DataSpace dataspace(1, dimensions);  // Just one integer
@@ -2102,7 +2102,7 @@ void SpadeObject::write_integer_dataset(const H5::Group& group, const string & d
     dataspace.close();
 }
 
-void SpadeObject::write_integer_array_dataset(const H5::Group& group, const string & dataset_name, const int array_size, const int* int_array) {
+void SpadeObject::write_integer_array_dataset(const H5::Group& group, const string & dataset_name, const int array_size, const int* int_array, Logging &log_file) {
     if (!int_array) { return; }
     hsize_t dimensions[] = {array_size};
     H5::DataSpace dataspace(1, dimensions);
@@ -2112,7 +2112,7 @@ void SpadeObject::write_integer_array_dataset(const H5::Group& group, const stri
     dataspace.close();
 }
 
-void SpadeObject::write_integer_vector_dataset(const H5::Group& group, const string & dataset_name, const vector<int> & int_data) {
+void SpadeObject::write_integer_vector_dataset(const H5::Group& group, const string & dataset_name, const vector<int> & int_data, Logging &log_file) {
     if (int_data.empty()) { return; }
     hsize_t dimensions[] = {int_data.size()};
     H5::DataSpace dataspace(1, dimensions);
@@ -2122,7 +2122,7 @@ void SpadeObject::write_integer_vector_dataset(const H5::Group& group, const str
     dataspace.close();
 }
 
-void SpadeObject::write_integer_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, int *integer_array) {
+void SpadeObject::write_integer_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, int *integer_array, Logging &log_file) {
     if (!integer_array) { return; }
     hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
@@ -2132,7 +2132,7 @@ void SpadeObject::write_integer_2D_array(const H5::Group& group, const string & 
     dataspace.close();
 }
 
-void SpadeObject::write_integer_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<int> &integer_data) {
+void SpadeObject::write_integer_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<int> &integer_data, Logging &log_file) {
     if (integer_data.empty()) { return; }
     herr_t status;
     hsize_t dimensions[] = {row_size, column_size};
@@ -2148,7 +2148,7 @@ void SpadeObject::write_integer_2D_data(const H5::Group &group, const string &da
     H5Dclose(dataset);
 }
 
-void SpadeObject::write_integer_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<int>> & integer_data) {
+void SpadeObject::write_integer_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<int>> & integer_data, Logging &log_file) {
     if (integer_data.empty()) { return; }
     hsize_t dimensions(integer_data.size());
     H5::DataSpace dataspace(1, &dimensions);
@@ -2166,7 +2166,7 @@ void SpadeObject::write_integer_2D_vector(const H5::Group& group, const string &
     dataset.close();
 }
 
-void SpadeObject::write_float_dataset(const H5::Group &group, const string &dataset_name, const float &float_value) {
+void SpadeObject::write_float_dataset(const H5::Group &group, const string &dataset_name, const float &float_value, Logging &log_file) {
     if (!float_value) { return; }
     hsize_t dimensions[] = {1};
     H5::DataSpace dataspace(1, dimensions);  // Just one integer
@@ -2176,7 +2176,7 @@ void SpadeObject::write_float_dataset(const H5::Group &group, const string &data
     dataspace.close();
 }
 
-void SpadeObject::write_float_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const float* float_array) {
+void SpadeObject::write_float_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const float* float_array, Logging &log_file) {
     if (!float_array) { return; }
     hsize_t dimensions[] = {array_size};
     H5::DataSpace dataspace(1, dimensions);
@@ -2186,7 +2186,7 @@ void SpadeObject::write_float_array_dataset(const H5::Group &group, const string
     dataspace.close();
 }
 
-void SpadeObject::write_float_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<float> &float_data) {
+void SpadeObject::write_float_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<float> &float_data, Logging &log_file) {
     if (float_data.empty()) { return; }
     hsize_t dimensions[] = {float_data.size()};
     H5::DataSpace dataspace(1, dimensions);
@@ -2196,7 +2196,7 @@ void SpadeObject::write_float_vector_dataset(const H5::Group &group, const strin
     dataspace.close();
 }
 
-void SpadeObject::write_float_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, float *float_array) {
+void SpadeObject::write_float_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, float *float_array, Logging &log_file) {
     if (!float_array) { return; }
     hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
@@ -2206,7 +2206,7 @@ void SpadeObject::write_float_2D_array(const H5::Group& group, const string & da
     dataspace.close();
 }
 
-void SpadeObject::write_float_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<float> &float_data) {
+void SpadeObject::write_float_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<float> &float_data, Logging &log_file) {
     if (float_data.empty()) { return; }
     herr_t status;
     hsize_t dimensions[] = {row_size, column_size};
@@ -2222,7 +2222,7 @@ void SpadeObject::write_float_2D_data(const H5::Group &group, const string &data
     H5Dclose(dataset);
 }
 
-void SpadeObject::write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<float> &float_data) {
+void SpadeObject::write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<float> &float_data, Logging &log_file) {
     if (float_data.empty()) { return; }
     herr_t status;
     hid_t dataset, datatype, dataspace;
@@ -2238,7 +2238,7 @@ void SpadeObject::write_float_3D_data(const H5::Group &group, const string &data
     H5Dclose(dataset);
 }
 
-void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<float>> &float_data) {
+void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<float>> &float_data, Logging &log_file) {
     if (float_data.empty()) { return; }
     hsize_t dimensions(float_data.size());
     H5::DataSpace dataspace(1, &dimensions);
@@ -2256,7 +2256,7 @@ void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & d
     dataset.close();
 }
 
-void SpadeObject::write_double_dataset(const H5::Group &group, const string &dataset_name, const double &double_value) {
+void SpadeObject::write_double_dataset(const H5::Group &group, const string &dataset_name, const double &double_value, Logging &log_file) {
     if (!double_value) { return; }
     hsize_t dimensions[] = {1};
     H5::DataSpace dataspace(1, dimensions);  // Just one integer
@@ -2266,7 +2266,7 @@ void SpadeObject::write_double_dataset(const H5::Group &group, const string &dat
     dataspace.close();
 }
 
-void SpadeObject::write_double_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const double* double_array) {
+void SpadeObject::write_double_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const double* double_array, Logging &log_file) {
     if (!double_array) { return; }
     hsize_t dimensions[] = {array_size};
     H5::DataSpace dataspace(1, dimensions);
@@ -2276,7 +2276,7 @@ void SpadeObject::write_double_array_dataset(const H5::Group &group, const strin
     dataspace.close();
 }
 
-void SpadeObject::write_double_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<double> &double_data) {
+void SpadeObject::write_double_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<double> &double_data, Logging &log_file) {
     if (double_data.empty()) { return; }
     hsize_t dimensions[] = {double_data.size()};
     H5::DataSpace dataspace(1, dimensions);
@@ -2286,7 +2286,7 @@ void SpadeObject::write_double_vector_dataset(const H5::Group &group, const stri
     dataspace.close();
 }
 
-void SpadeObject::write_double_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, double *double_array) {
+void SpadeObject::write_double_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, double *double_array, Logging &log_file) {
     if (!double_array) { return; }
     hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
@@ -2296,7 +2296,7 @@ void SpadeObject::write_double_2D_array(const H5::Group& group, const string & d
     dataspace.close();
 }
 
-void SpadeObject::write_double_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<double> &double_data) {
+void SpadeObject::write_double_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<double> &double_data, Logging &log_file) {
     if (double_data.empty()) { return; }
     herr_t status;
     hsize_t dimensions[] = {row_size, column_size};
@@ -2312,7 +2312,7 @@ void SpadeObject::write_double_2D_data(const H5::Group &group, const string &dat
     H5Dclose(dataset);
 }
 
-void SpadeObject::write_double_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<double> &double_data) {
+void SpadeObject::write_double_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<double> &double_data, Logging &log_file) {
     if (double_data.empty()) { return; }
     herr_t status;
     hsize_t dimensions[] = {aisle_size, row_size, column_size};
@@ -2328,7 +2328,7 @@ void SpadeObject::write_double_3D_data(const H5::Group &group, const string &dat
     H5Dclose(dataset);
 }
 
-void SpadeObject::write_double_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<double>> & double_data) {
+void SpadeObject::write_double_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<double>> & double_data, Logging &log_file) {
     if (double_data.empty()) { return; }
      // Convert to 2D array
     hsize_t dimensions(double_data.size());
