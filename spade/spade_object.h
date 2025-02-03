@@ -797,15 +797,17 @@ class SpadeObject {
           Write parts data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_parts(H5::H5File &h5_file, const string &group_name);
+        void write_parts(H5::H5File &h5_file, const string &group_name Logging &log_file);
         //! Write assembly data to an HDF5 file
         /*!
           Write assembly data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_assembly(H5::H5File &h5_file, const string &group_name);
+        void write_assembly(H5::H5File &h5_file, const string &group_name, Logging &log_file);
         //! Write field bulk data to an HDF5 file
         /*!
           Write field bulk data into an HDF5 file
@@ -822,8 +824,9 @@ class SpadeObject {
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
           \param field_value Data to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_field_value(H5::H5File &h5_file, const string &group_name, field_value_type &field_value);
+        void write_field_value(H5::H5File &h5_file, const string &group_name, field_value_type &field_value, Logging &log_file);
         //! Write field output data to an HDF5 file
         /*!
           Write field output data into an HDF5 file
@@ -848,24 +851,27 @@ class SpadeObject {
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
           \param history_point Data to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_history_point(H5::H5File &h5_file, const string &group_name, history_point_type &history_point);
+        void write_history_point(H5::H5File &h5_file, const string &group_name, history_point_type &history_point, Logging &log_file);
         //! Write history output data to an HDF5 file
         /*!
           Write history output data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
           \param history_output Data to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_history_output(H5::H5File &h5_file, const string &group_name, history_output_type &history_output);
+        void write_history_output(H5::H5File &h5_file, const string &group_name, history_output_type &history_output, Logging &log_file);
         //! Write history regions data to an HDF5 file
         /*!
           Write history regions data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
           \param history_regions Data to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions);
+        void write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions, Logging &log_file);
         //! Write steps data to an HDF5 file
         /*!
           Write steps data into an HDF5 file
@@ -879,46 +885,52 @@ class SpadeObject {
           Write instances data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_instances(H5::H5File &h5_file, const string &group_name);
+        void write_instances(H5::H5File &h5_file, const string &group_name, Logging &log_file);
         //! Write Analytic Surface data to an HDF5 file
         /*!
           Write Analytic Surface data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
           \param analytic_surface Data to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_analytic_surface(H5::H5File &h5_file, const string &group_name, analytic_surface_type &analytic_surface);
+        void write_analytic_surface(H5::H5File &h5_file, const string &group_name, analytic_surface_type &analytic_surface, Logging &log_file);
         //! Write Datum Csys data to an HDF5 file
         /*!
           Write Datum Csys data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
           \param datum_csys Data to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_datum_csys(H5::H5File &h5_file, const string &group_name, const datum_csys_type &datum_csys);
+        void write_datum_csys(H5::H5File &h5_file, const string &group_name, const datum_csys_type &datum_csys, Logging &log_file);
         //! Write constraints data to an HDF5 file
         /*!
           Write different types of constraint data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_constraints(H5::H5File &h5_file, const string &group_name);
+        void write_constraints(H5::H5File &h5_file, const string &group_name, Logging &log_file);
         //! Write tangential behavior data to an HDF5 file
         /*!
           Write tangential behavior data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
           \param tangential_behavior Data to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_tangential_behavior(H5::H5File &h5_file, const string &group_name, tangential_behavior_type& tangential_behavior);
+        void write_tangential_behavior(H5::H5File &h5_file, const string &group_name, tangential_behavior_type& tangential_behavior, Logging &log_file);
         //! Write interactions data to an HDF5 file
         /*!
           Write standard and or explicit interaction data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_interactions(H5::H5File &h5_file, const string &group_name);
+        void write_interactions(H5::H5File &h5_file, const string &group_name, Logging &log_file);
         //! Write element data to an HDF5 file
         /*!
           Write data from element type into an HDF5 file
@@ -926,48 +938,54 @@ class SpadeObject {
           \param group Name of HDF5 group in which to write the new data
           \param group_name Name of the group where data is to be written
           \param element Element data to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_element(H5::H5File &h5_file, H5::Group &group, const string &group_name, const element_type &element);
+        void write_element(H5::H5File &h5_file, H5::Group &group, const string &group_name, const element_type &element, Logging &log_file);
         //! Write elements data to an HDF5 file
         /*!
           Write vector of element data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
           \param elements Vector of element data to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type*> &elements);
+        void write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type*> &elements, Logging &log_file);
         //! Write node data to an HDF5 file
         /*!
           Write data from node type into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
           \param node Node data to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_node(H5::H5File &h5_file, H5::Group &group, const string &group_name, const node_type &node);
+        void write_node(H5::H5File &h5_file, H5::Group &group, const string &group_name, const node_type &node, Logging &log_file);
         //! Write nodes data to an HDF5 file
         /*!
           Write vector of node data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
           \param nodes Vector of node data to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type*> &nodes);
+        void write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type*> &nodes, Logging &log_file);
         //! Write sets data to an HDF5 file
         /*!
           Write vector of set data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
-          \param nodes Vector of set data to be written
+          \param sets Vector of set data to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets);
+        void write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets, Logging &log_file);
         //! Write set data to an HDF5 file
         /*!
           Write data from a set type into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
           \param set Set data to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_set(H5::H5File &h5_file, const string &group_name, const set_type &set);
+        void write_set(H5::H5File &h5_file, const string &group_name, const set_type &set, Logging &log_file);
         //! Write a section category type to an HDF5 file
         /*!
           Write data from section category type into an HDF5 file
@@ -975,8 +993,9 @@ class SpadeObject {
           \param group Name of HDF5 group in which to write the new data
           \param group_name Name of the group where data is to be written
           \param section_category The section category data to be written
+          \param log_file Logging object for writing log messages
         */
-        void write_section_category(H5::H5File &h5_file, const H5::Group &group, const string &group_name, const section_category_type &section_category);
+        void write_section_category(H5::H5File &h5_file, const H5::Group &group, const string &group_name, const section_category_type &section_category, Logging &log_file);
         //! Write a string as an attribute
         /*!
           Create an attribute with a string using the passed-in values
@@ -984,33 +1003,37 @@ class SpadeObject {
           \param group Name of HDF5 group in which to write the new attribute
           \param attribute_name Name of the new attribute where a string is to be written
           \param string_value The string that should be written in the new attribute
+          \param log_file Logging object for writing log messages
         */
-        void write_attribute(const H5::Group &group, const string &attribute_name, const string &string_value);
+        void write_attribute(const H5::Group &group, const string &attribute_name, const string &string_value, Logging &log_file);
         //! Write a string as a dataset
         /*!
           Create a dataset with a single string using the passed-in values
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where a string is to be written
           \param string_value The string that should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_string_dataset(const H5::Group &group, const string &dataset_name, const string &string_value);
+        void write_string_dataset(const H5::Group &group, const string &dataset_name, const string &string_value, Logging &log_file);
         //! Write a vector of strings as a dataset
         /*!
           Create a dataset with an array of strings using the passed-in values
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where an array of strings is to be written
           \param string_values The vector of strings that should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_string_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<string> &string_values);
+        void write_string_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<string> &string_values, Logging &log_file);
         //! Write an integer as a dataset
         /*!
           Create a dataset with an integer using the passed-in value
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where an integer is to be written
           \param int_value The integer that should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
         //! Write an array of arrays of integers as a dataset
-        void write_integer_dataset(const H5::Group &group, const string &dataset_name, const int &int_value);
+        void write_integer_dataset(const H5::Group &group, const string &dataset_name, const int &int_value, Logging &log_file);
         /*!
           Create a dataset with a two-dimensional array of strings using the passed-in values
           \param group Name of HDF5 group in which to write the new dataset
@@ -1018,18 +1041,20 @@ class SpadeObject {
           \param max_row_size Integer indicating the row dimension
           \param max_column_size Integer indicating the column dimension
           \param string_array A pointer to the array of arrays of strings that should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_string_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, string *string_array);
+        void write_string_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, string *string_array, Logging &log_file);
         //! Write a vector of vectors of strings as a dataset
         /*!
           Create a dataset with a two-dimensional array of strings using the passed-in values
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where a two-dimensional array is to be written
           \param max_column_size Integer indicating the column dimension, row dimension is determined by size of data_array
-          \param data_array The vector of vectors of strings that should be written in the new dataset
+          \param string_data The vector of vectors of strings that should be written in the new dataset
+          \param log_file Logging object for writing log messages
           \sa write_string_2D_array()
         */
-        void write_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<string>> & string_data);
+        void write_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<string>> & string_data, Logging &log_file);
         //! Write an integer array as a dataset
         /*!
           Create a dataset with an array of integers using the passed-in value
@@ -1037,17 +1062,19 @@ class SpadeObject {
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where the data is to be written
           \param int_array The integer array that should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_integer_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const int* int_array);
+        void write_integer_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const int* int_array, Logging &log_file);
         //! Write an integer vector as a dataset
         /*!
           Create an integer array from an integer vector and call write_integer_array_dataset
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where the data is to be written
           \param int_data The integer data that should be written in the new dataset
+          \param log_file Logging object for writing log messages
           \sa write_integer_array_dataset()
         */
-        void write_integer_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<int> &int_data);
+        void write_integer_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<int> &int_data, Logging &log_file);
         //! Write an array of arrays of integers as a dataset
         /*!
           Create a dataset with a two-dimensional array of integers using the passed-in values
@@ -1055,9 +1082,10 @@ class SpadeObject {
           \param dataset_name Name of the new dataset where a two-dimensional array is to be written
           \param max_row_size Integer indicating the row dimension
           \param max_column_size Integer indicating the column dimension
-          \param float_array A pointer to the array of arrays of integers that should be written in the new dataset
+          \param integer_array A pointer to the array of arrays of integers that should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_integer_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, int *integer_array);
+        void write_integer_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, int *integer_array, Logging &log_file);
         //! Write an arrays of arrays of integers as a dataset
         /*!
           Create a dataset with a two-dimensional array of integers using the passed-in values
@@ -1066,43 +1094,48 @@ class SpadeObject {
           \param row_size Integer indicating the row dimension
           \param column_size Integer indicating the column dimension
           \param integer_array A vector of integers should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_integer_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<int> &integer_data);
+        void write_integer_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<int> &integer_data, Logging &log_file);
         //! Write a vector of vectors of integers as a dataset
         /*!
           Create a dataset with a two-dimensional array of integers using the passed-in values
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where a two-dimensional array is to be written
           \param max_column_size Integer indicating the column dimension, row dimension is determined by size of data_array
-          \param data_array The vector of vectors of integers that should be written in the new dataset
+          \param integer_array The vector of vectors of integers that should be written in the new dataset
+          \param log_file Logging object for writing log messages
           \sa write_integer_2D_array()
         */
-        void write_integer_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<int>> & integer_data);
+        void write_integer_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<int>> & integer_data, Logging &log_file);
         //! Write an float as a dataset
         /*!
           Create a dataset with a float using the passed-in value
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where a float is to be written
           \param float_value The float that should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_float_dataset(const H5::Group &group, const string &dataset_name, const float &float_value);
+        void write_float_dataset(const H5::Group &group, const string &dataset_name, const float &float_value, Logging &log_file);
         //! Write a float array as a dataset
         /*!
           Create a dataset with an array of floats using the passed-in value
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where the data is to be written
           \param float_array The float array that should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_float_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const float* float_array);
+        void write_float_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const float* float_array, Logging &log_file);
         //! Write an float vector as a dataset
         /*!
           Create a float array from a float vector and call write_float_array_dataset
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where the data is to be written
           \param float_data The float data that should be written in the new dataset
+          \param log_file Logging object for writing log messages
           \sa write_float_array_dataset()
         */
-        void write_float_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<float> &float_data);
+        void write_float_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<float> &float_data, Logging &log_file);
         //! Write an array of arrays of floats as a dataset
         /*!
           Create a dataset with a two-dimensional array of floats using the passed-in values
@@ -1111,8 +1144,9 @@ class SpadeObject {
           \param row_size Integer indicating the row dimension
           \param column_size Integer indicating the column dimension
           \param float_array A pointer to the array of arrays of floats that should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_float_2D_array(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, float *float_array);
+        void write_float_2D_array(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, float *float_array, Logging &log_file);
         //! Write an arrays of arrays of floats as a dataset
         /*!
           Create a dataset with a two-dimensional array of floats using the passed-in values
@@ -1121,8 +1155,9 @@ class SpadeObject {
           \param row_size Integer indicating the row dimension
           \param column_size Integer indicating the column dimension
           \param float_array A vector of floats should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_float_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<float> &float_data);
+        void write_float_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<float> &float_data, Logging &log_file);
         //! Write an array of arrays of arrays of floats as a dataset
         /*!
           Create a dataset with a three-dimensional array of floats using the passed-in values
@@ -1132,8 +1167,9 @@ class SpadeObject {
           \param row_size Integer indicating the row dimension
           \param column_size Integer indicating the column dimension
           \param float_array A vector of floats should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<float> &float_data);
+        void write_float_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<float> &float_data, Logging &log_file);
         //! Write a vector of vectors of floats as a dataset
         /*!
           Create a dataset with a two-dimensional array of floats using the passed-in values
@@ -1141,34 +1177,38 @@ class SpadeObject {
           \param dataset_name Name of the new dataset where a two-dimensional array is to be written
           \param max_column_size Integer indicating the column dimension, row dimension is determined by size of data_array
           \param data_array The vector of vectors of floats that should be written in the new dataset
+          \param log_file Logging object for writing log messages
           \sa write_float_2D_array()
         */
-        void write_float_2D_vector(const H5::Group &group, const string &dataset_name, const int &max_column_size, vector<vector<float>> &data_array);
+        void write_float_2D_vector(const H5::Group &group, const string &dataset_name, const int &max_column_size, vector<vector<float>> &data_array, Logging &log_file);
         //! Write an double as a dataset
         /*!
           Create a dataset with a double using the passed-in value
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where a double is to be written
           \param double_value The double that should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_double_dataset(const H5::Group &group, const string &dataset_name, const double &double_value);
+        void write_double_dataset(const H5::Group &group, const string &dataset_name, const double &double_value, Logging &log_file);
         //! Write a double array as a dataset
         /*!
           Create a dataset with an array of doubles using the passed-in value
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where the data is to be written
           \param double_array The double array that should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_double_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const double* double_array);
+        void write_double_array_dataset(const H5::Group &group, const string &dataset_name, const int array_size, const double* double_array, Logging &log_file);
         //! Write a double vector as a dataset
         /*!
           Create a double array from a double vector and call write_double_array_dataset
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where the data is to be written
           \param double_data The double data that should be written in the new dataset
+          \param log_file Logging object for writing log messages
           \sa write_double_array_dataset()
         */
-        void write_double_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<double> &double_data);
+        void write_double_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<double> &double_data, Logging &log_file);
         //! Write an array of arrays of doubles as a dataset
         /*!
           Create a dataset with a two-dimensional array of doubles using the passed-in values
@@ -1177,8 +1217,9 @@ class SpadeObject {
           \param row_size Integer indicating the row dimension
           \param column_size Integer indicating the column dimension
           \param double_array A pointer to the array of arrays of doubles that should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_double_2D_array(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, double *double_array);
+        void write_double_2D_array(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, double *double_array, Logging &log_file);
         //! Write an array of arrays of doubles as a dataset
         /*!
           Create a dataset with a two-dimensional array of doubles using the passed-in values
@@ -1187,8 +1228,9 @@ class SpadeObject {
           \param row_size Integer indicating the row dimension
           \param column_size Integer indicating the column dimension
           \param double_array A vector of doubles that should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_double_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<double> &double_data);
+        void write_double_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<double> &double_data, Logging &log_file);
         //! Write an array of arrays of arrays of doubles as a dataset
         /*!
           Create a dataset with a three-dimensional array of doubles using the passed-in values
@@ -1198,8 +1240,9 @@ class SpadeObject {
           \param row_size Integer indicating the row dimension
           \param column_size Integer indicating the column dimension
           \param double_array A vector of doubles that should be written in the new dataset
+          \param log_file Logging object for writing log messages
         */
-        void write_double_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<double> &double_data);
+        void write_double_3D_data(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, const vector<double> &double_data, Logging &log_file);
         //! Write a vector of vectors of doubles as a dataset
         /*!
           Create a dataset with a two-dimensional array of doubles using the passed-in values
@@ -1207,9 +1250,10 @@ class SpadeObject {
           \param dataset_name Name of the new dataset where a two-dimensional array is to be written
           \param max_column_size Integer indicating the column dimension, row dimension is determined by size of data_array
           \param data_array The vector of vectors of doubles that should be written in the new dataset
+          \param log_file Logging object for writing log messages
           \sa write_double_2D_array()
         */
-        void write_double_2D_vector(const H5::Group &group, const string &dataset_name, const int &max_column_size, vector<vector<double>> &data_array);
+        void write_double_2D_vector(const H5::Group &group, const string &dataset_name, const int &max_column_size, vector<vector<double>> &data_array, Logging &log_file);
 
 
     private:
