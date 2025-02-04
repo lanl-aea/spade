@@ -1956,7 +1956,7 @@ void SpadeObject::write_node(H5::H5File &h5_file, H5::Group &group, const string
         H5::DataSpace dataspace(1, dimensions);
         try {
             Exception::dontPrint();
-            h5_file.link(H5L_TYPE_SOFT, node_link, newGroupName);
+            h5_file.link(H5L_TYPE_HARD, node_link, newGroupName);
         } catch (FileIException error) {
 //            cout << error.getDetailMsg() << endl; // "creating link failed"
 //            log_file.warning(error.getDetailMsg());
