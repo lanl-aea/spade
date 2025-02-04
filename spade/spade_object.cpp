@@ -1919,12 +1919,11 @@ void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const str
     element_key = element_label + element_key;
     try {
         element_link = this->element_links.at(element_key);
-        if (H5Lexists(file_id, newGroupName.c_str(), H5P_DEFAULT) <= 0) {  // If link doesn't exist
-            try {
-                h5_file.link(H5L_TYPE_HARD, element_link, newGroupName);
-            } catch (FileIException error) {
-                log_file.logWarning(error.getDetailMsg());
-            }
+        try {
+            Exception::dontPrint();
+            h5_file.link(H5L_TYPE_HARD, element_link, newGroupName);
+        } catch (FileIException error) {
+            log_file.logWarning("Could not create link at " + newGroupName);
         }
     } catch (const std::out_of_range& oor) {
         H5::Group element_group = h5_file.createGroup((group_name + "/" + element_label).c_str());
@@ -1962,7 +1961,8 @@ void SpadeObject::write_node(H5::H5File &h5_file, H5::Group &group, const string
             Exception::dontPrint();
             h5_file.link(H5L_TYPE_HARD, node_link, newGroupName);
         } catch (FileIException error) {
-            log_file.logWarning(error.getDetailMsg());  // "creating link failed"
+//            log_file.logWarning(error.getDetailMsg());  // "creating link failed"
+            log_file.logWarning("Could not create link at " + newGroupName);
         }
     } catch (const std::out_of_range& oor) {  // If node.label is not found in the node_links map
         hsize_t dimensions[] = {3};
