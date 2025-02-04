@@ -799,7 +799,7 @@ class SpadeObject {
           \param group_name Name of the group where data is to be written
           \param log_file Logging object for writing log messages
         */
-        void write_parts(H5::H5File &h5_file, const string &group_name Logging &log_file);
+        void write_parts(H5::H5File &h5_file, const string &group_name, Logging &log_file);
         //! Write assembly data to an HDF5 file
         /*!
           Write assembly data into an HDF5 file

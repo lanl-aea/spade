@@ -1408,7 +1408,7 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name, 
     write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets, log_file);
     write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets, log_file);
     write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces, log_file);
-    H5::Group connector_orientations_group = h5_file.createGroup((root_assembly_group_name + "/connectorOrientations").c_str(), log_file);
+    H5::Group connector_orientations_group = h5_file.createGroup((root_assembly_group_name + "/connectorOrientations").c_str());
     for (int i=0; i<this->root_assembly.connectorOrientations.size(); i++) {
         string connector_orientation_group_name = root_assembly_group_name + "/connectorOrientations/" + to_string(i);
         H5::Group connector_orientation_group = h5_file.createGroup(connector_orientation_group_name.c_str());
