@@ -11,6 +11,7 @@ v0.3.6 (unreleased)
 Internal Changes
 ================
 - Pass log file to all internal write functions (:issue:`63`, :merge:`58`). By `Prabhu Khalsa`_.
+- Change soft links for node data to hard links (:issue:`64`, :merge:`59`). By `Prabhu Khalsa`_.
 
 *******************
 v0.3.5 (2025-01-31)
