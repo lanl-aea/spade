@@ -1923,7 +1923,7 @@ void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const str
             try {
                 h5_file.link(H5L_TYPE_HARD, element_link, newGroupName);
             } catch (FileIException error) {
-                log_file.warning(error.getDetailMsg());
+                log_file.logWarning(error.getDetailMsg());
             }
         }
     } catch (const std::out_of_range& oor) {
@@ -1962,7 +1962,7 @@ void SpadeObject::write_node(H5::H5File &h5_file, H5::Group &group, const string
             Exception::dontPrint();
             h5_file.link(H5L_TYPE_HARD, node_link, newGroupName);
         } catch (FileIException error) {
-            log_file.warning(error.getDetailMsg());  // "creating link failed"
+            log_file.logWarning(error.getDetailMsg());  // "creating link failed"
         }
     } catch (const std::out_of_range& oor) {  // If node.label is not found in the node_links map
         hsize_t dimensions[] = {3};
