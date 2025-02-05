@@ -1544,7 +1544,7 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, con
         write_string_dataset(location_group, "position", field_output.locations[i].position, log_file);
         H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint", log_file);
         for (int j=0; j<field_output.locations[i].sectionPoint.size(); j++) {
-            H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint" + field_output.locations[i].sectionPoint[j].number, log_file);
+            H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint/" + field_output.locations[i].sectionPoint[j].number, log_file);
             write_string_dataset(section_point_group, "description", field_output.locations[i].sectionPoint[j].description, log_file);
         }
     }
@@ -1697,7 +1697,7 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name,
             write_set(h5_file, section_assignment_group_name, instance.sectionAssignments[i].region, log_file);
             write_string_dataset(section_assignment_group, "sectionName", instance.sectionAssignments[i].sectionName, log_file);
         }
-        H5::Group rigid_bodies_group = create_group(h5_file, instance_group_name  + "/rigidBodies", log_file);
+        H5::Group rigid_bodies_group = create_group(h5_file, instance_group_name + "/rigidBodies", log_file);
         for (int i=0; i<instance.rigidBodies.size(); i++) {
             string rigid_body_group_name = instance_group_name + "/rigidBodies/" + to_string(i);
             H5::Group rigid_body_group = create_group(h5_file, rigid_body_group_name, log_file);
@@ -1709,7 +1709,7 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name,
             write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].pinNodes, log_file);
             write_analytic_surface(h5_file, rigid_body_group_name, instance.rigidBodies[i].analyticSurface, log_file);
         }
-        H5::Group beam_orientations_group = create_group(h5_file, instance_group_name  + "/beamOrientations", log_file);
+        H5::Group beam_orientations_group = create_group(h5_file, instance_group_name + "/beamOrientations", log_file);
         for (int i=0; i<instance.beamOrientations.size(); i++) {
             string beam_orientation_group_name = instance_group_name + "/beamOrientations/" + to_string(i);
             H5::Group beam_orientation_group = create_group(h5_file, beam_orientation_group_name, log_file);
@@ -1759,7 +1759,7 @@ void SpadeObject::write_datum_csys(H5::H5File &h5_file, const string &group_name
 
 void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
     if (!this->constraints.ties.empty()) {
-        H5::Group ties_group = create_group(h5_file, group_name  + "/tie", log_file);
+        H5::Group ties_group = create_group(h5_file, group_name + "/tie", log_file);
         for (int i=0; i<this->constraints.ties.size(); i++) {
             string tie_group_name = group_name + "/tie/" + to_string(i);
             H5::Group tie_group = create_group(h5_file, tie_group_name, log_file);
@@ -1790,7 +1790,7 @@ void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_nam
         }
     }
     if (!this->constraints.couplings.empty()) {
-        H5::Group couplings_group = create_group(h5_file, group_name  + "/coupling", log_file);
+        H5::Group couplings_group = create_group(h5_file, group_name + "/coupling", log_file);
         for (int i=0; i<this->constraints.couplings.size(); i++) {
             string coupling_group_name = group_name + "/coupling/" + to_string(i);
             H5::Group coupling_group = create_group(h5_file, coupling_group_name, log_file);
@@ -1809,7 +1809,7 @@ void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_nam
         }
     }
     if (!this->constraints.mpc.empty()) {
-        H5::Group mpcs_group = create_group(h5_file, group_name  + "/mpc", log_file);
+        H5::Group mpcs_group = create_group(h5_file, group_name + "/mpc", log_file);
         for (int i=0; i<this->constraints.mpc.size(); i++) {
             string mpc_group_name = group_name + "/mpc/" + to_string(i);
             H5::Group mpc_group = create_group(h5_file, mpc_group_name, log_file);
