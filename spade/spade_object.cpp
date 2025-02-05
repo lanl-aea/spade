@@ -1319,7 +1319,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
     H5::H5File h5_file = *h5_file_pointer;
 
     log_file.logVerbose("Writing top level data to odb group.");
-    H5::Group odb_group = h5_file.createGroup(string("/odb").c_str());
+    H5::Group odb_group = create_group(h5_file, "/odb", log_file);
     write_string_dataset(odb_group, "name", this->name, log_file);
     write_string_dataset(odb_group, "analysisTitle", this->analysisTitle, log_file);
     write_string_dataset(odb_group, "description", this->description, log_file);
@@ -2350,7 +2350,7 @@ void SpadeObject::write_double_2D_vector(const H5::Group& group, const string & 
     dataset.close();
 }
 
-H5::Group create_group(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
+H5::Group SpadeObject::create_group(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
     H5::Exception::dontPrint();
     try {
         return h5_file.createGroup(group_name.c_str());
