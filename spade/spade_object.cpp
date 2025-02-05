@@ -2350,6 +2350,21 @@ void SpadeObject::write_double_2D_vector(const H5::Group& group, const string & 
     dataset.close();
 }
 
+H5::Group create_group(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
+    H5::Exception::dontPrint();
+    try {
+        return h5_file.createGroup(group_name.c_str());
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create group " + group_name + ". " + e.getDetailMsg());
+        try {
+            return h5_file.openGroup(group_name.c_str());
+        } catch(H5::Exception& e) {
+            log_file.logErrorAndExit("Unable to create or open group " + group_name + ". " + e.getDetailMsg());
+        }
+    }
+
+}
+
 
 void SpadeObject::write_yaml (CmdLineArguments &command_line_arguments, Logging &log_file) {
 }

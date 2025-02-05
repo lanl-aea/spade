@@ -1254,6 +1254,14 @@ class SpadeObject {
           \sa write_double_2D_array()
         */
         void write_double_2D_vector(const H5::Group &group, const string &dataset_name, const int &max_column_size, vector<vector<double>> &data_array, Logging &log_file);
+        //! Create a group in the hdf5 file, log warning if not possible
+        /*!
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param log_file Logging object for writing log messages
+          \return group that's been created
+        */
+        H5::Group create_group(H5::H5File &h5_file, const string &group_name, Logging &log_file);
 
 
     private:
