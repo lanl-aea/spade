@@ -1588,7 +1588,7 @@ void SpadeObject::write_frames(H5::H5File &h5_file, Logging &log_file, const str
         log_file.logVerbose("Writing field output for " + frame_group_name + ".");
         for (int i=0; i<frame.fieldOutputs.size(); i++) {
             string clean_name = frame.fieldOutputs[i].name;
-            std::replace( clean_name.begin(), clean_name.end(), '/', '|');   // Can't have a slash in an index name for hdf5
+            std::replace( clean_name.begin(), clean_name.end(), '/', '|');   // Can't have a slash in a group name for hdf5
             string field_output_group_name = frame_group_name + "/fieldOutputs/" + clean_name;
             write_field_output(h5_file, log_file, field_output_group_name, frame.fieldOutputs[i]);
         }
@@ -1642,7 +1642,9 @@ void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group
         write_history_point(h5_file, history_region_group_name, history_region.point, log_file);
         H5::Group history_outputs_group = create_group(h5_file, history_region_group_name + "/historyOutputs", log_file);
         for (int i=0; i<history_region.historyOutputs.size(); i++) {
-            string history_output_group_name = history_region_group_name + "/historyOutputs/" + history_region.historyOutputs[i].name;
+            string clean_name = history_region.historyOutputs[i].name;
+            std::replace( clean_name.begin(), clean_name.end(), '/', '|');   // Can't have a slash in an group name for hdf5
+            string history_output_group_name = history_region_group_name + "/historyOutputs/" + clean_name;
             write_history_output(h5_file, history_output_group_name, history_region.historyOutputs[i], log_file);
         }
         vector<history_output_type>().swap(history_region.historyOutputs);  // Swap vector with empty vector (freeing/clearing memory of vector)
