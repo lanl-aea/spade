@@ -8,6 +8,10 @@ Changelog
 v0.3.7 (unreleased)
 *******************
 
+Bug fixes
+=========
+- Replace forward slash with vertical bar in history output names (:issue:`65`, :merge:`61`). By `Prabhu Khalsa`_.
+
 *******************
 v0.3.6 (2025-02-05)
 *******************
