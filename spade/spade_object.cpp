@@ -1958,10 +1958,14 @@ void SpadeObject::write_node(H5::H5File &h5_file, H5::Group &group, const string
     } catch (const std::out_of_range& oor) {  // If node.label is not found in the node_links map
         hsize_t dimensions[] = {3};
         H5::DataSpace dataspace(1, dimensions);
-        H5::DataSet dataset = group.createDataSet(newGroupName, H5::PredType::NATIVE_FLOAT, dataspace);
-        dataset.write(node.coordinates, H5::PredType::NATIVE_FLOAT);
-        this->node_links[node_key] = newGroupName;  // Store link for later
-        dataset.close();
+        try {
+            H5::DataSet dataset = group.createDataSet(newGroupName, H5::PredType::NATIVE_FLOAT, dataspace);
+            dataset.write(node.coordinates, H5::PredType::NATIVE_FLOAT);
+            dataset.close();
+            this->node_links[node_key] = newGroupName;  // Store link for later
+        } catch(H5::Exception& e) {
+            log_file.logWarning("Unable to create dataset " + newGroupName + ". " + e.getDetailMsg());
+        }
         dataspace.close();
     }
 }
@@ -2032,9 +2036,13 @@ void SpadeObject::write_string_dataset(const H5::Group& group, const string & da
     int string_size = string_value.size();
     if (string_size == 0) { string_size++; }  // If the string is empty, make the string size equal to one, as StrType must have a positive size
     H5::StrType string_type (0, string_size);
-    H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
-    dataset.write(&string_value[0], string_type);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
+        dataset.write(&string_value[0], string_type);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2047,9 +2055,13 @@ void SpadeObject::write_string_vector_dataset(const H5::Group& group, const stri
     hsize_t dimensions[1] {c_string_array.size()};
     H5::DataSpace  dataspace(1, dimensions);
     H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
-    H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
-    dataset.write(c_string_array.data(), string_type);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
+        dataset.write(c_string_array.data(), string_type);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2057,9 +2069,13 @@ void SpadeObject::write_string_2D_array(const H5::Group& group, const string & d
     if (!string_array) { return; }
     hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::C_S1, dataspace);
-    dataset.write(string_array, H5::PredType::C_S1);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::C_S1, dataspace);
+        dataset.write(string_array, H5::PredType::C_S1);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2068,7 +2084,15 @@ void SpadeObject::write_string_2D_vector(const H5::Group& group, const string & 
     hsize_t dimensions[] = {string_data.size(), max_column_size};
     H5::DataSpace  dataspace(2, dimensions);
     H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
-    H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
+    H5::DataSet dataset;
+    try {
+        dataset = group.createDataSet(dataset_name, string_type, dataspace);
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+        dataset.close();
+        dataspace.close();
+        return;
+    }
 
     const char* c_array[string_data.size()][max_column_size];
     string blank = "";
@@ -2090,9 +2114,13 @@ void SpadeObject::write_integer_dataset(const H5::Group& group, const string & d
     if (!int_value) { return; }
     hsize_t dimensions[] = {1};
     H5::DataSpace dataspace(1, dimensions);  // Just one integer
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
-    dataset.write(&int_value, H5::PredType::NATIVE_INT);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
+        dataset.write(&int_value, H5::PredType::NATIVE_INT);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2100,9 +2128,13 @@ void SpadeObject::write_integer_array_dataset(const H5::Group& group, const stri
     if (!int_array) { return; }
     hsize_t dimensions[] = {array_size};
     H5::DataSpace dataspace(1, dimensions);
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
-    dataset.write(int_array, H5::PredType::NATIVE_INT);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
+        dataset.write(int_array, H5::PredType::NATIVE_INT);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2110,9 +2142,13 @@ void SpadeObject::write_integer_vector_dataset(const H5::Group& group, const str
     if (int_data.empty()) { return; }
     hsize_t dimensions[] = {int_data.size()};
     H5::DataSpace dataspace(1, dimensions);
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
-    dataset.write(int_data.data(), H5::PredType::NATIVE_INT);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
+        dataset.write(int_data.data(), H5::PredType::NATIVE_INT);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2120,9 +2156,13 @@ void SpadeObject::write_integer_2D_array(const H5::Group& group, const string & 
     if (!integer_array) { return; }
     hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
-    dataset.write(integer_array, H5::PredType::NATIVE_INT);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_INT, dataspace);
+        dataset.write(integer_array, H5::PredType::NATIVE_INT);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2147,26 +2187,36 @@ void SpadeObject::write_integer_2D_vector(const H5::Group& group, const string &
     hsize_t dimensions(integer_data.size());
     H5::DataSpace dataspace(1, &dimensions);
     H5::VarLenType datatype(H5::PredType::NATIVE_INT);
-    H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
-    hvl_t variable_length[dimensions];
-    for (hsize_t i = 0; i < dimensions; ++i)
-    {
-        variable_length[i].len = integer_data[i].size();
-        variable_length[i].p = &integer_data[i][0];
+    try {
+        H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
+        hvl_t variable_length[dimensions];
+        for (hsize_t i = 0; i < dimensions; ++i)
+        {
+            variable_length[i].len = integer_data[i].size();
+            variable_length[i].p = &integer_data[i][0];
+        }
+        dataset.write(variable_length, datatype);
+        dataspace.close();
+        datatype.close();
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+        dataspace.close();
+        datatype.close();
     }
-    dataset.write(variable_length, datatype);
-    dataspace.close();
-    datatype.close();
-    dataset.close();
 }
 
 void SpadeObject::write_float_dataset(const H5::Group &group, const string &dataset_name, const float &float_value, Logging &log_file) {
     if (!float_value) { return; }
     hsize_t dimensions[] = {1};
     H5::DataSpace dataspace(1, dimensions);  // Just one integer
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
-    dataset.write(&float_value, H5::PredType::NATIVE_FLOAT);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
+        dataset.write(&float_value, H5::PredType::NATIVE_FLOAT);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2174,9 +2224,13 @@ void SpadeObject::write_float_array_dataset(const H5::Group &group, const string
     if (!float_array) { return; }
     hsize_t dimensions[] = {array_size};
     H5::DataSpace dataspace(1, dimensions);
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
-    dataset.write(float_array, H5::PredType::NATIVE_FLOAT);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
+        dataset.write(float_array, H5::PredType::NATIVE_FLOAT);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2184,9 +2238,13 @@ void SpadeObject::write_float_vector_dataset(const H5::Group &group, const strin
     if (float_data.empty()) { return; }
     hsize_t dimensions[] = {float_data.size()};
     H5::DataSpace dataspace(1, dimensions);
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
-    dataset.write(float_data.data(), H5::PredType::NATIVE_FLOAT);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
+        dataset.write(float_data.data(), H5::PredType::NATIVE_FLOAT);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2194,9 +2252,13 @@ void SpadeObject::write_float_2D_array(const H5::Group& group, const string & da
     if (!float_array) { return; }
     hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
-    dataset.write(float_array, H5::PredType::NATIVE_FLOAT);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
+        dataset.write(float_array, H5::PredType::NATIVE_FLOAT);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2237,26 +2299,36 @@ void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & d
     hsize_t dimensions(float_data.size());
     H5::DataSpace dataspace(1, &dimensions);
     H5::VarLenType datatype(H5::PredType::NATIVE_FLOAT);
-    H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
-    hvl_t variable_length[dimensions];
-    for (hsize_t i = 0; i < dimensions; ++i)
-    {
-        variable_length[i].len = float_data[i].size();
-        variable_length[i].p = &float_data[i][0];
+    try {
+        H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
+        hvl_t variable_length[dimensions];
+        for (hsize_t i = 0; i < dimensions; ++i)
+        {
+            variable_length[i].len = float_data[i].size();
+            variable_length[i].p = &float_data[i][0];
+        }
+        dataset.write(variable_length, datatype);
+        dataspace.close();
+        datatype.close();
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+        dataspace.close();
+        datatype.close();
     }
-    dataset.write(variable_length, datatype);
-    dataspace.close();
-    datatype.close();
-    dataset.close();
 }
 
 void SpadeObject::write_double_dataset(const H5::Group &group, const string &dataset_name, const double &double_value, Logging &log_file) {
     if (!double_value) { return; }
     hsize_t dimensions[] = {1};
     H5::DataSpace dataspace(1, dimensions);  // Just one integer
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
-    dataset.write(&double_value, H5::PredType::NATIVE_DOUBLE);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
+        dataset.write(&double_value, H5::PredType::NATIVE_DOUBLE);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2264,9 +2336,13 @@ void SpadeObject::write_double_array_dataset(const H5::Group &group, const strin
     if (!double_array) { return; }
     hsize_t dimensions[] = {array_size};
     H5::DataSpace dataspace(1, dimensions);
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
-    dataset.write(double_array, H5::PredType::NATIVE_DOUBLE);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
+        dataset.write(double_array, H5::PredType::NATIVE_DOUBLE);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2274,9 +2350,13 @@ void SpadeObject::write_double_vector_dataset(const H5::Group &group, const stri
     if (double_data.empty()) { return; }
     hsize_t dimensions[] = {double_data.size()};
     H5::DataSpace dataspace(1, dimensions);
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
-    dataset.write(double_data.data(), H5::PredType::NATIVE_DOUBLE);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
+        dataset.write(double_data.data(), H5::PredType::NATIVE_DOUBLE);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2284,9 +2364,13 @@ void SpadeObject::write_double_2D_array(const H5::Group& group, const string & d
     if (!double_array) { return; }
     hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
-    H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
-    dataset.write(double_array, H5::PredType::NATIVE_DOUBLE);
-    dataset.close();
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
+        dataset.write(double_array, H5::PredType::NATIVE_DOUBLE);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
     dataspace.close();
 }
 
@@ -2328,17 +2412,23 @@ void SpadeObject::write_double_2D_vector(const H5::Group& group, const string & 
     hsize_t dimensions(double_data.size());
     H5::DataSpace dataspace(1, &dimensions);
     H5::VarLenType datatype(H5::PredType::NATIVE_DOUBLE);
-    H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
-    hvl_t variable_length[dimensions];
-    for (hsize_t i = 0; i < dimensions; ++i)
-    {
-        variable_length[i].len = double_data[i].size();
-        variable_length[i].p = &double_data[i][0];
+    try {
+        H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
+        hvl_t variable_length[dimensions];
+        for (hsize_t i = 0; i < dimensions; ++i)
+        {
+            variable_length[i].len = double_data[i].size();
+            variable_length[i].p = &double_data[i][0];
+        }
+        dataset.write(variable_length, datatype);
+        dataspace.close();
+        datatype.close();
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+        dataspace.close();
+        datatype.close();
     }
-    dataset.write(variable_length, datatype);
-    dataspace.close();
-    datatype.close();
-    dataset.close();
 }
 
 H5::Group SpadeObject::create_group(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
