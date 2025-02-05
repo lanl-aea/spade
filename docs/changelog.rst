@@ -8,9 +8,16 @@ Changelog
 v0.3.6 (unreleased)
 *******************
 
+Bug fixes
+=========
+- Wrapped all create functions used for h5 file with try/catch (:issue:`62`, :merge:`57`). By `Prabhu Khalsa`_.
+
 Internal Changes
 ================
 - Pass log file to all internal write functions (:issue:`63`, :merge:`58`). By `Prabhu Khalsa`_.
+
+Enhancements
+============
 - Change soft links for node data to hard links (:issue:`64`, :merge:`59`). By `Prabhu Khalsa`_.
 
 *******************
