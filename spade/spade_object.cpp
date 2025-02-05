@@ -1327,7 +1327,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
     write_string_dataset(odb_group, "isReadOnly", this->isReadOnly, log_file);
 
     log_file.logVerbose("Writing jobData.");
-    H5::Group job_data_group = h5_file.createGroup(string("/odb/jobData").c_str());
+    H5::Group job_data_group = create_group(h5_file, "/odb/jobData", log_file);
     write_string_dataset(job_data_group, "analysisCode", this->job_data.analysisCode, log_file);
     write_string_dataset(job_data_group, "creationTime", this->job_data.creationTime, log_file);
     write_string_dataset(job_data_group, "machineName", this->job_data.machineName, log_file);
@@ -1338,26 +1338,26 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
     write_string_dataset(job_data_group, "version", this->job_data.version, log_file);
 
     log_file.logVerbose("Writing sector definition at time: " + command_line_arguments.getTimeStamp(false));
-    H5::Group sector_definition_group = h5_file.createGroup(string("/odb/sectorDefinition").c_str());
+    H5::Group sector_definition_group = create_group(h5_file, "/odb/sectorDefinition", log_file);
     write_integer_dataset(sector_definition_group, "numSectors", this->sector_definition.numSectors, log_file);
-    H5::Group symmetry_axis_group = h5_file.createGroup(string("/odb/sectorDefinition/symmetryAxis").c_str());
+    H5::Group symmetry_axis_group = create_group(h5_file, "/odb/sectorDefinition/symmetryAxis", log_file);
     write_string_dataset(symmetry_axis_group, "StartPoint", this->sector_definition.start_point, log_file);
     write_string_dataset(symmetry_axis_group, "EndPoint", this->sector_definition.end_point, log_file);
 
     log_file.logVerbose("Writing section categories at time: " + command_line_arguments.getTimeStamp(false));
-    H5::Group section_categories_group = h5_file.createGroup(string("/odb/sectionCategories").c_str());
+    H5::Group section_categories_group = create_group(h5_file, "/odb/sectionCategories", log_file);
     for (int i=0; i<this->section_categories.size(); i++) {
         string category_group_name = "/odb/sectionCategories/" + this->section_categories[i].name;
-        H5::Group section_category_group = h5_file.createGroup(category_group_name.c_str());
+        H5::Group section_category_group = create_group(h5_file, category_group_name, log_file);
         write_section_category(h5_file, section_category_group, category_group_name, this->section_categories[i], log_file);
     }
 
     log_file.logVerbose("Writing user data at time: " + command_line_arguments.getTimeStamp(false));
-    H5::Group user_data_group = h5_file.createGroup(string("/odb/userData").c_str());
+    H5::Group user_data_group = create_group(h5_file, "/odb/userData", log_file);
     for (int i=0; i<this->user_xy_data.size(); i++) {
         string user_xy_data_name = "/odb/userData/" + this->user_xy_data[i].name;
         log_file.logVerbose("User data name:" + this->user_xy_data[i].name);
-        H5::Group user_xy_data_group = h5_file.createGroup(user_xy_data_name.c_str());
+        H5::Group user_xy_data_group = create_group(h5_file, user_xy_data_name, log_file);
         write_string_dataset(user_xy_data_group, "sourceDescription", this->user_xy_data[i].sourceDescription, log_file);
         write_string_dataset(user_xy_data_group, "contentDescription", this->user_xy_data[i].contentDescription, log_file);
         write_string_dataset(user_xy_data_group, "positionDescription", this->user_xy_data[i].positionDescription, log_file);
@@ -1369,11 +1369,11 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
     }
 
     log_file.logVerbose("Writing constraints data at time: " + command_line_arguments.getTimeStamp(false));
-    H5::Group contraints_group = h5_file.createGroup(string("/odb/constraints").c_str());
+    H5::Group contraints_group = create_group(h5_file, "/odb/constraints", log_file);
     write_constraints(h5_file, "odb/constraints", log_file);
     log_file.logVerbose("Writing interactions data at time: " + command_line_arguments.getTimeStamp(false));
     write_interactions(h5_file, "odb", log_file);
-    H5::Group parts_group = h5_file.createGroup(string("odb/parts").c_str());
+    H5::Group parts_group = create_group(h5_file, "/odb/parts", log_file);
     log_file.logVerbose("Writing parts data at time: " + command_line_arguments.getTimeStamp(false));
     write_parts(h5_file, "odb/parts", log_file);
     log_file.logVerbose("Writing assembly data at time: " + command_line_arguments.getTimeStamp(false));
@@ -1388,7 +1388,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
 void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
     for (auto part : this->parts) {
         string part_group_name = group_name + "/" + part.name;
-        H5::Group part_group = h5_file.createGroup(part_group_name.c_str());
+        H5::Group part_group = create_group(h5_file, part_group_name, log_file);
         write_string_dataset(part_group, "embeddedSpace", part.embeddedSpace, log_file);
         write_nodes(h5_file, part_group_name, part.nodes, log_file);
         write_elements(h5_file, part_group_name, part.elements, log_file);
@@ -1400,7 +1400,7 @@ void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name, Log
 
 void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
     string root_assembly_group_name = "/odb/rootAssembly " + this->root_assembly.name;
-    H5::Group root_assembly_group = h5_file.createGroup(root_assembly_group_name.c_str());
+    H5::Group root_assembly_group = create_group(h5_file, root_assembly_group_name, log_file);
     write_instances(h5_file, root_assembly_group_name, log_file);
     write_string_dataset(root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace, log_file);
     write_nodes(h5_file, root_assembly_group_name, this->root_assembly.nodes, log_file);
@@ -1408,10 +1408,10 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name, 
     write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets, log_file);
     write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets, log_file);
     write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces, log_file);
-    H5::Group connector_orientations_group = h5_file.createGroup((root_assembly_group_name + "/connectorOrientations").c_str());
+    H5::Group connector_orientations_group = create_group(h5_file, root_assembly_group_name + "/connectorOrientations", log_file);
     for (int i=0; i<this->root_assembly.connectorOrientations.size(); i++) {
         string connector_orientation_group_name = root_assembly_group_name + "/connectorOrientations/" + to_string(i);
-        H5::Group connector_orientation_group = h5_file.createGroup(connector_orientation_group_name.c_str());
+        H5::Group connector_orientation_group = create_group(h5_file, connector_orientation_group_name, log_file);
         write_set(h5_file, connector_orientation_group_name, this->root_assembly.connectorOrientations[i].region, log_file);
         write_string_dataset(connector_orientation_group, "orient2sameAs1", this->root_assembly.connectorOrientations[i].orient2sameAs1, log_file);
         write_float_dataset(connector_orientation_group, "angle1", this->root_assembly.connectorOrientations[i].angle1, log_file);
@@ -1424,7 +1424,7 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name, 
 }
 
 void SpadeObject::write_field_value(H5::H5File &h5_file, const string &group_name, field_value_type &field_value, Logging &log_file) {
-    H5::Group value_group = h5_file.createGroup(group_name.c_str());
+    H5::Group value_group = create_group(h5_file, group_name, log_file);
     if (field_value.elementLabel != -1) {
         write_integer_dataset(value_group, "elementLabel", field_value.elementLabel, log_file);
     }
@@ -1465,7 +1465,7 @@ void SpadeObject::write_field_value(H5::H5File &h5_file, const string &group_nam
         write_float_dataset(value_group, "outOfPlanePrincipal", field_value.outOfPlanePrincipal, log_file);
     }
     if (field_value.sectionPoint.number != "-1") {
-        H5::Group section_point_group = h5_file.createGroup((group_name + "/sectionPoint").c_str());
+        H5::Group section_point_group = create_group(h5_file, group_name + "/sectionPoint", log_file);
         write_string_dataset(section_point_group, "number", field_value.sectionPoint.number, log_file);
         write_string_dataset(section_point_group, "description", field_value.sectionPoint.description, log_file);
     }
@@ -1473,16 +1473,7 @@ void SpadeObject::write_field_value(H5::H5File &h5_file, const string &group_nam
 }
 
 void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, const string &group_name, field_bulk_type &field_bulk_data, bool complex_data) {
-    H5::Group bulk_group;
-    /*
-    H5::Exception::dontPrint();
-    try {
-        bulk_group = h5_file.openGroup(group_name.c_str());
-    } catch (...) {
-        bulk_group = h5_file.createGroup(group_name.c_str());
-    }
-    */
-    bulk_group = h5_file.createGroup(group_name.c_str());
+    H5::Group bulk_group = create_group(h5_file, group_name, log_file);
     write_string_dataset(bulk_group, "position", field_bulk_data.position, log_file);
     write_string_dataset(bulk_group, "instance", field_bulk_data.instance, log_file);
 //    write_string_dataset(bulk_group, "precision", field_bulk_data.precision, log_file);
@@ -1536,7 +1527,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, Logging &log_file, 
 }
 
 void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, const string &group_name, field_output_type &field_output) {
-    H5::Group field_output_group = h5_file.createGroup(group_name.c_str());
+    H5::Group field_output_group = create_group(h5_file, group_name, log_file);
     write_string_dataset(field_output_group, "name", field_output.name, log_file);
     write_string_dataset(field_output_group, "description", field_output.description, log_file);
     write_string_dataset(field_output_group, "type", field_output.type, log_file);
@@ -1546,27 +1537,27 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, con
     write_string_vector_dataset(field_output_group, "componentLabels", field_output.componentLabels, log_file);
     write_string_vector_dataset(field_output_group, "validInvariants", field_output.validInvariants, log_file);
 
-    H5::Group locations_group = h5_file.createGroup((group_name + "/locations").c_str());
+    H5::Group locations_group = create_group(h5_file, group_name + "/locations", log_file);
     for (int i=0; i<field_output.locations.size(); i++) {
         string location_group_name = group_name + "/locations/" + to_string(i);
-        H5::Group location_group = h5_file.createGroup(location_group_name.c_str());
+        H5::Group location_group = create_group(h5_file, location_group_name, log_file);
         write_string_dataset(location_group, "position", field_output.locations[i].position, log_file);
-        H5::Group section_points_group = h5_file.createGroup((location_group_name + "/sectionPoint").c_str());
+        H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint", log_file);
         for (int j=0; j<field_output.locations[i].sectionPoint.size(); j++) {
-            H5::Group section_point_group = h5_file.createGroup((location_group_name + "/sectionPoint/" + field_output.locations[i].sectionPoint[j].number).c_str());
+            H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint" + field_output.locations[i].sectionPoint[j].number, log_file);
             write_string_dataset(section_point_group, "description", field_output.locations[i].sectionPoint[j].description, log_file);
         }
     }
-    H5::Group values_group = h5_file.createGroup((group_name + "/values").c_str());
+    H5::Group values_group = create_group(h5_file, group_name + "/values", log_file);
     if (!field_output.node_values_empty) {
-        H5::Group node_values_group = h5_file.createGroup((group_name + "/values/nodes").c_str());
+        H5::Group node_values_group = create_group(h5_file, group_name + "/values/nodes", log_file);
         for (auto [node_number, field_output_value] : field_output.nodeValues) {
             string value_group_name = group_name + "/values/nodes/" + to_string(node_number);
             write_field_value(h5_file, value_group_name, field_output_value, log_file);
         }
     }
     if (!field_output.element_values_empty) {
-        H5::Group element_values_group = h5_file.createGroup((group_name + "/values/elements").c_str());
+        H5::Group element_values_group = create_group(h5_file, group_name + "/values/elements", log_file);
         for (auto [element_number, field_output_value] : field_output.elementValues) {
             string value_group_name = group_name + "/values/elements/" + to_string(element_number);
             write_field_value(h5_file, value_group_name, field_output_value, log_file);
@@ -1582,10 +1573,10 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, Logging &log_file, con
 
 void SpadeObject::write_frames(H5::H5File &h5_file, Logging &log_file, const string &group_name, vector<frame_type> &frames) {
     string frames_group_name = group_name + "/frames";
-    H5::Group frames_group = h5_file.createGroup(frames_group_name.c_str());
+    H5::Group frames_group = create_group(h5_file, frames_group_name, log_file);
     for (auto frame : frames) {
         string frame_group_name = frames_group_name + "/" + to_string(frame.incrementNumber);
-        H5::Group frame_group = h5_file.createGroup(frame_group_name.c_str());
+        H5::Group frame_group = create_group(h5_file, frame_group_name, log_file);
         write_integer_dataset(frame_group, "cyclicModeNumber", frame.cyclicModeNumber, log_file);
         write_integer_dataset(frame_group, "mode", frame.mode, log_file);
         write_string_dataset(frame_group, "description", frame.description, log_file);
@@ -1593,7 +1584,7 @@ void SpadeObject::write_frames(H5::H5File &h5_file, Logging &log_file, const str
         write_string_dataset(frame_group, "loadCase", frame.loadCase, log_file);
         write_float_dataset(frame_group, "frameValue", frame.frameValue, log_file);
         write_float_dataset(frame_group, "frequency", frame.frequency, log_file);
-        H5::Group field_outputs_group = h5_file.createGroup((frame_group_name + "/fieldOutputs").c_str());
+        H5::Group field_outputs_group = create_group(h5_file, frame_group_name + "/fieldOutputs", log_file);
         log_file.logVerbose("Writing field output for " + frame_group_name + ".");
         for (int i=0; i<frame.fieldOutputs.size(); i++) {
             string clean_name = frame.fieldOutputs[i].name;
@@ -1607,31 +1598,31 @@ void SpadeObject::write_frames(H5::H5File &h5_file, Logging &log_file, const str
 }
 void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_name, history_point_type &history_point, Logging &log_file) {
     string history_point_group_name = group_name + "/point";
-    H5::Group history_point_group = h5_file.createGroup(history_point_group_name.c_str());
+    H5::Group history_point_group = create_group(h5_file, history_point_group_name, log_file);
     write_string_dataset(history_point_group, "face", history_point.face, log_file);
     write_string_dataset(history_point_group, "position", history_point.position, log_file);
     if (history_point.hasElement) {
         string element_group_name = history_point_group_name + "/element";
-        H5::Group element_group = h5_file.createGroup(element_group_name.c_str());
+        H5::Group element_group = create_group(h5_file, element_group_name, log_file);
         write_element(h5_file, element_group, element_group_name, *history_point.element, log_file);
     }
     if (history_point.hasNode) {
         string node_group_name = history_point_group_name + "/node";
-        H5::Group node_group = h5_file.createGroup(node_group_name.c_str());
+        H5::Group node_group = create_group(h5_file, node_group_name, log_file);
         write_node(h5_file, node_group, node_group_name, *history_point.node, log_file);
     }
     write_set(h5_file, history_point_group_name, history_point.region, log_file);
     write_string_dataset(history_point_group, "assembly", history_point.assemblyName, log_file);
     write_string_dataset(history_point_group, "instance", history_point.instanceName, log_file);
     write_integer_dataset(history_point_group, "ipNumber", history_point.ipNumber, log_file);
-    H5::Group section_point_group = h5_file.createGroup((history_point_group_name + "/sectionPoint").c_str());
+    H5::Group section_point_group = create_group(h5_file, history_point_group_name + "/sectionPoint", log_file);
     write_string_dataset(section_point_group, "number", history_point.sectionPoint.number, log_file);
     write_string_dataset(section_point_group, "description", history_point.sectionPoint.description, log_file);
 
 }
 
 void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_name, history_output_type &history_output, Logging &log_file) {
-    H5::Group history_output_group = h5_file.createGroup(group_name.c_str());
+    H5::Group history_output_group = create_group(h5_file, group_name, log_file);
     write_string_dataset(history_output_group, "name", history_output.name, log_file);
     write_string_dataset(history_output_group, "description", history_output.description, log_file);
     write_string_dataset(history_output_group, "type", history_output.type, log_file);
@@ -1641,15 +1632,15 @@ void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_
 
 void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions, Logging &log_file) {
     string history_regions_group_name = group_name + "/historyRegions";
-    H5::Group history_regions_group = h5_file.createGroup(history_regions_group_name.c_str());
+    H5::Group history_regions_group = create_group(h5_file, history_regions_group_name, log_file);
     for (auto history_region : history_regions) {
         string history_region_group_name = history_regions_group_name + "/" + history_region.name;
-        H5::Group history_region_group = h5_file.createGroup(history_region_group_name.c_str());
+        H5::Group history_region_group = create_group(h5_file, history_region_group_name, log_file);
         write_string_dataset(history_region_group, "description", history_region.description, log_file);
         write_string_dataset(history_region_group, "position", history_region.position, log_file);
         write_string_dataset(history_region_group, "loadCase", history_region.loadCase, log_file);
         write_history_point(h5_file, history_region_group_name, history_region.point, log_file);
-        H5::Group history_outputs_group = h5_file.createGroup((history_region_group_name + "/historyOutputs").c_str());
+        H5::Group history_outputs_group = create_group(h5_file, history_region_group_name + "/historyOutputs", log_file);
         for (int i=0; i<history_region.historyOutputs.size(); i++) {
             string history_output_group_name = history_region_group_name + "/historyOutputs/" + history_region.historyOutputs[i].name;
             write_history_output(h5_file, history_output_group_name, history_region.historyOutputs[i], log_file);
@@ -1660,10 +1651,10 @@ void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group
 
 void SpadeObject::write_steps(H5::H5File &h5_file, Logging &log_file, const string &group_name) {
     string steps_group_name = group_name + "/steps";
-    H5::Group steps_group = h5_file.createGroup(steps_group_name.c_str());
+    H5::Group steps_group = create_group(h5_file, steps_group_name, log_file);
     for (auto step : this->steps) {
         string step_group_name = steps_group_name + "/" + step.name;
-        H5::Group step_group = h5_file.createGroup(step_group_name.c_str());
+        H5::Group step_group = create_group(h5_file, step_group_name, log_file);
         write_string_dataset(step_group, "description", step.description, log_file);
         write_string_dataset(step_group, "domain", step.domain, log_file);
         write_string_dataset(step_group, "previousStepName", step.previousStepName, log_file);
@@ -1688,10 +1679,10 @@ void SpadeObject::write_steps(H5::H5File &h5_file, Logging &log_file, const stri
 
 void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
     string instances_group_name = group_name + "/instances";
-    H5::Group instances_group = h5_file.createGroup(instances_group_name.c_str());
+    H5::Group instances_group = create_group(h5_file, instances_group_name, log_file);
     for (auto instance : this->root_assembly.instances) {
         string instance_group_name = instances_group_name + "/" + instance.name;
-        H5::Group instance_group = h5_file.createGroup(instance_group_name.c_str());
+        H5::Group instance_group = create_group(h5_file, instance_group_name, log_file);
         write_string_dataset(instance_group, "embeddedSpace", instance.embeddedSpace, log_file);
         write_nodes(h5_file, instance_group_name, instance.nodes, log_file);
         write_elements(h5_file, instance_group_name, instance.elements, log_file);
@@ -1699,17 +1690,17 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name,
         write_sets(h5_file, instance_group_name + "/elementSets", instance.elementSets, log_file);
         write_sets(h5_file, instance_group_name + "/surfaces", instance.surfaces, log_file);
         this->instance_links[instance.name] = instance_group_name;
-        H5::Group section_assignments_group = h5_file.createGroup((instance_group_name + "/sectionAssignments").c_str());
+        H5::Group section_assignments_group = create_group(h5_file, instance_group_name + "/sectionAssignments", log_file);
         for (int i=0; i<instance.sectionAssignments.size(); i++) {
             string section_assignment_group_name = instance_group_name + "/sectionAssignments/" + to_string(i);
-            H5::Group section_assignment_group = h5_file.createGroup(section_assignment_group_name.c_str());
+            H5::Group section_assignment_group = create_group(h5_file, section_assignment_group_name, log_file);
             write_set(h5_file, section_assignment_group_name, instance.sectionAssignments[i].region, log_file);
             write_string_dataset(section_assignment_group, "sectionName", instance.sectionAssignments[i].sectionName, log_file);
         }
-        H5::Group rigid_bodies_group = h5_file.createGroup((instance_group_name + "/rigidBodies").c_str());
+        H5::Group rigid_bodies_group = create_group(h5_file, instance_group_name  + "/rigidBodies", log_file);
         for (int i=0; i<instance.rigidBodies.size(); i++) {
             string rigid_body_group_name = instance_group_name + "/rigidBodies/" + to_string(i);
-            H5::Group rigid_body_group = h5_file.createGroup(rigid_body_group_name.c_str());
+            H5::Group rigid_body_group = create_group(h5_file, rigid_body_group_name, log_file);
             write_string_dataset(rigid_body_group, "position", instance.rigidBodies[i].position, log_file);
             write_string_dataset(rigid_body_group, "isothermal", instance.rigidBodies[i].isothermal, log_file);
             write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].referenceNode, log_file);
@@ -1718,18 +1709,18 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name,
             write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].pinNodes, log_file);
             write_analytic_surface(h5_file, rigid_body_group_name, instance.rigidBodies[i].analyticSurface, log_file);
         }
-        H5::Group beam_orientations_group = h5_file.createGroup((instance_group_name + "/beamOrientations").c_str());
+        H5::Group beam_orientations_group = create_group(h5_file, instance_group_name  + "/beamOrientations", log_file);
         for (int i=0; i<instance.beamOrientations.size(); i++) {
             string beam_orientation_group_name = instance_group_name + "/beamOrientations/" + to_string(i);
-            H5::Group beam_orientation_group = h5_file.createGroup(beam_orientation_group_name.c_str());
+            H5::Group beam_orientation_group = create_group(h5_file, beam_orientation_group_name, log_file);
             write_set(h5_file, beam_orientation_group_name, instance.beamOrientations[i].region, log_file);
             write_string_dataset(beam_orientation_group, "method", instance.beamOrientations[i].method, log_file);
             write_float_vector_dataset(beam_orientation_group, "vector", instance.beamOrientations[i].beam_vector, log_file);
         }
-        H5::Group rebar_orientations_group = h5_file.createGroup((instance_group_name + "/rebarOrientations").c_str());
+        H5::Group rebar_orientations_group = create_group(h5_file, instance_group_name  + "/rebarOrientations", log_file);
         for (int i=0; i<instance.rebarOrientations.size(); i++) {
             string rebar_orientation_group_name = instance_group_name + "/rebarOrientations/" + to_string(i);
-            H5::Group rebar_orientation_group = h5_file.createGroup(rebar_orientation_group_name.c_str());
+            H5::Group rebar_orientation_group = create_group(h5_file, rebar_orientation_group_name, log_file);
             write_string_dataset(rebar_orientation_group, "axis", instance.rebarOrientations[i].axis, log_file);
             write_float_dataset(rebar_orientation_group, "angle", instance.rebarOrientations[i].angle, log_file);
             write_set(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].region, log_file);
@@ -1741,14 +1732,14 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name,
 
 void SpadeObject::write_analytic_surface(H5::H5File &h5_file, const string &group_name, analytic_surface_type &analytic_surface, Logging &log_file) {
     string analytic_surface_group_name = group_name + "/analyticSurface";
-    H5::Group surface_group = h5_file.createGroup(analytic_surface_group_name.c_str());
+    H5::Group surface_group = create_group(h5_file, analytic_surface_group_name, log_file);
     write_string_dataset(surface_group, "name", analytic_surface.name, log_file);
     write_string_dataset(surface_group, "type", analytic_surface.type, log_file);
     write_double_dataset(surface_group, "filletRadius", analytic_surface.filletRadius, log_file);
-    H5::Group segments_group = h5_file.createGroup((analytic_surface_group_name + "/segments").c_str());
+    H5::Group segments_group = create_group(h5_file, analytic_surface_group_name + "/segments", log_file);
     for (int i=0; i<analytic_surface.segments.size(); i++) {
         string segment_group_name = analytic_surface_group_name + "/segments/" + to_string(i);
-        H5::Group segment_group = h5_file.createGroup(segment_group_name.c_str());
+        H5::Group segment_group = create_group(h5_file, segment_group_name, log_file);
         write_string_dataset(segment_group, "type", analytic_surface.segments[i].type, log_file);
         write_float_2D_data(segment_group, "data", analytic_surface.segments[i].row_size, analytic_surface.segments[i].column_size, analytic_surface.segments[i].data, log_file);
     }
@@ -1757,7 +1748,7 @@ void SpadeObject::write_analytic_surface(H5::H5File &h5_file, const string &grou
 
 void SpadeObject::write_datum_csys(H5::H5File &h5_file, const string &group_name, const datum_csys_type &datum_csys, Logging &log_file) {
     string datum_group_name = group_name + "/csys";
-    H5::Group datum_group = h5_file.createGroup(datum_group_name.c_str());
+    H5::Group datum_group = create_group(h5_file, datum_group_name, log_file);
     write_string_dataset(datum_group, "name", datum_csys.name, log_file);
     write_string_dataset(datum_group, "type", datum_csys.type, log_file);
     write_float_array_dataset(datum_group, "xAxis", 3, datum_csys.x_axis, log_file);
@@ -1768,10 +1759,10 @@ void SpadeObject::write_datum_csys(H5::H5File &h5_file, const string &group_name
 
 void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
     if (!this->constraints.ties.empty()) {
-        H5::Group ties_group = h5_file.createGroup((group_name + "/tie").c_str());
+        H5::Group ties_group = create_group(h5_file, group_name  + "/tie", log_file);
         for (int i=0; i<this->constraints.ties.size(); i++) {
             string tie_group_name = group_name + "/tie/" + to_string(i);
-            H5::Group tie_group = h5_file.createGroup(tie_group_name.c_str());
+            H5::Group tie_group = create_group(h5_file, tie_group_name, log_file);
             write_set(h5_file, tie_group_name, this->constraints.ties[i].main, log_file);
             write_set(h5_file, tie_group_name, this->constraints.ties[i].secondary, log_file);
             write_string_dataset(tie_group, "adjust", this->constraints.ties[i].adjust, log_file);
@@ -1785,10 +1776,10 @@ void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_nam
         }
     }
     if (!this->constraints.display_bodies.empty()) {
-        H5::Group display_bodies_group = h5_file.createGroup((group_name + "/displayBody").c_str());
+        H5::Group display_bodies_group = create_group(h5_file, group_name + "/displayBody", log_file);
         for (int i=0; i<this->constraints.display_bodies.size(); i++) {
             string display_body_group_name = group_name + "/displayBody/" + to_string(i);
-            H5::Group display_body_group = h5_file.createGroup(display_body_group_name.c_str());
+            H5::Group display_body_group = create_group(h5_file, display_body_group_name, log_file);
             write_string_dataset(display_body_group, "instanceName", this->constraints.display_bodies[i].instanceName, log_file);
             write_string_dataset(display_body_group, "referenceNode1InstanceName", this->constraints.display_bodies[i].referenceNode1InstanceName, log_file);
             write_string_dataset(display_body_group, "referenceNode1Label", this->constraints.display_bodies[i].referenceNode1Label, log_file);
@@ -1799,10 +1790,10 @@ void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_nam
         }
     }
     if (!this->constraints.couplings.empty()) {
-        H5::Group couplings_group = h5_file.createGroup((group_name + "/coupling").c_str());
+        H5::Group couplings_group = create_group(h5_file, group_name  + "/coupling", log_file);
         for (int i=0; i<this->constraints.couplings.size(); i++) {
             string coupling_group_name = group_name + "/coupling/" + to_string(i);
-            H5::Group coupling_group = h5_file.createGroup(coupling_group_name.c_str());
+            H5::Group coupling_group = create_group(h5_file, coupling_group_name, log_file);
             write_set(h5_file, coupling_group_name, this->constraints.couplings[i].surface, log_file);
             write_set(h5_file, coupling_group_name, this->constraints.couplings[i].refPoint, log_file);
             write_set(h5_file, coupling_group_name, this->constraints.couplings[i].nodes, log_file);
@@ -1818,10 +1809,10 @@ void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_nam
         }
     }
     if (!this->constraints.mpc.empty()) {
-        H5::Group mpcs_group = h5_file.createGroup((group_name + "/mpc").c_str());
+        H5::Group mpcs_group = create_group(h5_file, group_name  + "/mpc", log_file);
         for (int i=0; i<this->constraints.mpc.size(); i++) {
             string mpc_group_name = group_name + "/mpc/" + to_string(i);
-            H5::Group mpc_group = h5_file.createGroup(mpc_group_name.c_str());
+            H5::Group mpc_group = create_group(h5_file, mpc_group_name, log_file);
             write_set(h5_file, mpc_group_name, this->constraints.mpc[i].surface, log_file);
             write_set(h5_file, mpc_group_name, this->constraints.mpc[i].refPoint, log_file);
             write_string_dataset(mpc_group, "mpcType", this->constraints.mpc[i].mpcType, log_file);
@@ -1830,10 +1821,10 @@ void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_nam
         }
     }
     if (!this->constraints.shell_solid_couplings.empty()) {
-        H5::Group shell_solid_couplings_group = h5_file.createGroup((group_name + "/shellSolidCoupling").c_str());
+        H5::Group shell_solid_couplings_group = create_group(h5_file, group_name + "/shellSolidCoupling", log_file);
         for (int i=0; i<this->constraints.shell_solid_couplings.size(); i++) {
             string shell_solid_coupling_group_name = group_name + "/shellSolidCoupling/" + to_string(i);
-            H5::Group shell_solid_coupling_group = h5_file.createGroup(shell_solid_coupling_group_name.c_str());
+            H5::Group shell_solid_coupling_group = create_group(h5_file, shell_solid_coupling_group_name, log_file);
             write_set(h5_file, shell_solid_coupling_group_name, this->constraints.shell_solid_couplings[i].shellEdge, log_file);
             write_set(h5_file, shell_solid_coupling_group_name, this->constraints.shell_solid_couplings[i].solidFace, log_file);
             write_string_dataset(shell_solid_coupling_group, "positionToleranceMethod", this->constraints.shell_solid_couplings[i].positionToleranceMethod, log_file);
@@ -1845,7 +1836,7 @@ void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_nam
 }
 
 void SpadeObject::write_tangential_behavior(H5::H5File &h5_file, const string &group_name, tangential_behavior_type& tangential_behavior, Logging &log_file) {
-    H5::Group tangential_behavior_group = h5_file.createGroup((group_name + "/tangentialBehavior").c_str());
+    H5::Group tangential_behavior_group = create_group(h5_file, group_name + "/tangentialBehavior", log_file);
     write_string_dataset(tangential_behavior_group, "formulation", tangential_behavior.formulation, log_file);
     write_string_dataset(tangential_behavior_group, "directionality", tangential_behavior.directionality, log_file);
     write_string_dataset(tangential_behavior_group, "slipRateDependency", tangential_behavior.slipRateDependency, log_file);
@@ -1864,12 +1855,12 @@ void SpadeObject::write_tangential_behavior(H5::H5File &h5_file, const string &g
 }
 
 void SpadeObject::write_interactions(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
-    H5::Group interactions_group = h5_file.createGroup((group_name + "/interactions").c_str());
+    H5::Group interactions_group = create_group(h5_file, group_name + "/interactions", log_file);
     if (!this->standard_interactions.empty()) {
-        H5::Group interactions_group = h5_file.createGroup((group_name + "/interactions/standard").c_str());
+        H5::Group interactions_group = create_group(h5_file, group_name + "/interactions/standard", log_file);
         for (int i=0; i<this->standard_interactions.size(); i++) {
             string standard_group_name = group_name + "/interactions/standard/" + to_string(i);
-            H5::Group standards_group = h5_file.createGroup(standard_group_name.c_str());
+            H5::Group standards_group = create_group(h5_file, standard_group_name, log_file);
             write_string_dataset(standards_group, "sliding", this->standard_interactions[i].sliding, log_file);
             write_string_dataset(standards_group, "limitSlideDistance", this->standard_interactions[i].limitSlideDistance, log_file);
             write_string_dataset(standards_group, "adjustMethod", this->standard_interactions[i].adjustMethod, log_file);
@@ -1887,10 +1878,10 @@ void SpadeObject::write_interactions(H5::H5File &h5_file, const string &group_na
         }
     }
     if (!this->explicit_interactions.empty()) {
-        H5::Group interactions_group = h5_file.createGroup((group_name + "/interactions/explicit").c_str());
+        H5::Group interactions_group = create_group(h5_file, group_name + "/interactions/explicit", log_file);
         for (int i=0; i<this->explicit_interactions.size(); i++) {
             string explicit_group_name = group_name + "/interactions/explicit/" + to_string(i);
-            H5::Group explicit_group = h5_file.createGroup(explicit_group_name.c_str());
+            H5::Group explicit_group = create_group(h5_file, explicit_group_name, log_file);
             write_string_dataset(explicit_group, "sliding", this->explicit_interactions[i].sliding, log_file);
             write_string_dataset(explicit_group, "mainNoThick", this->explicit_interactions[i].mainNoThick, log_file);
             write_string_dataset(explicit_group, "secondaryNoThick", this->explicit_interactions[i].secondaryNoThick, log_file);
@@ -1926,10 +1917,10 @@ void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const str
             log_file.logWarning("Could not create link at " + newGroupName);
         }
     } catch (const std::out_of_range& oor) {
-        H5::Group element_group = h5_file.createGroup((group_name + "/" + element_label).c_str());
+        H5::Group element_group = create_group(h5_file, group_name + "/" + element_label, log_file);
         write_string_dataset(element_group, "type", element.type, log_file);
         write_integer_vector_dataset(element_group, "connectivity", element.connectivity, log_file);
-        H5::Group section_category_group = h5_file.createGroup((group_name + "/" + element_label + "/sectionCategory").c_str());
+        H5::Group section_category_group = create_group(h5_file, group_name + "/" + element_label + "/sectionCategory", log_file);
         write_section_category(h5_file, section_category_group, group_name + "/" + element_label + "/sectionCategory", element.sectionCategory, log_file);
         write_string_vector_dataset(element_group, "instanceNames", element.instanceNames, log_file);
 
@@ -1940,7 +1931,7 @@ void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const str
 
 void SpadeObject::write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type*> &elements, Logging &log_file) {
     if (!elements.empty()) {
-        H5::Group elements_group = h5_file.createGroup((group_name + "/elements").c_str());
+        H5::Group elements_group = create_group(h5_file, group_name + "/elements", log_file);
         for (auto element : elements) { write_element(h5_file, elements_group, group_name + "/elements", *element, log_file); }
     }
 }
@@ -1977,14 +1968,14 @@ void SpadeObject::write_node(H5::H5File &h5_file, H5::Group &group, const string
 
 void SpadeObject::write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type*> &nodes, Logging &log_file) {
     if (!nodes.empty()) {
-        H5::Group nodes_group = h5_file.createGroup((group_name + "/nodes").c_str());
+        H5::Group nodes_group = create_group(h5_file, group_name + "/nodes", log_file);
         for (auto node : nodes) { write_node(h5_file, nodes_group, group_name + "/nodes", *node, log_file); }
     }
 }
 
 void SpadeObject::write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets, Logging &log_file) {
     if (!sets.empty()) {
-        H5::Group sets_group = h5_file.createGroup(group_name.c_str());
+        H5::Group sets_group = create_group(h5_file, group_name, log_file);
         for (auto set : sets) { write_set(h5_file, group_name, set, log_file); }
     }
 }
@@ -1992,7 +1983,7 @@ void SpadeObject::write_sets(H5::H5File &h5_file, const string &group_name, cons
 void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const set_type &set, Logging &log_file) {
     if (!set.name.empty()) {
         string set_group_name = group_name + "/" + set.name;
-        H5::Group set_group = h5_file.createGroup(set_group_name.c_str());
+        H5::Group set_group = create_group(h5_file, set_group_name, log_file);
         write_attribute(set_group, "type", set.type, log_file);
         write_string_vector_dataset(set_group, "instanceNames", set.instanceNames, log_file);
         if (set.type == "Node Set") {
@@ -2017,7 +2008,7 @@ void SpadeObject::write_section_category(H5::H5File &h5_file, const H5::Group &g
     write_string_dataset(group, "description", section_category.description, log_file);
     for (int j=0; j<section_category.sectionPoints.size(); j++) {
         string point_group_name = group_name + "/" + section_category.sectionPoints[j].number;
-        H5::Group section_point_group = h5_file.createGroup(point_group_name.c_str());
+        H5::Group section_point_group = create_group(h5_file, point_group_name, log_file);
         write_string_dataset(section_point_group, "description", section_category.sectionPoints[j].description, log_file);
     }
 }
