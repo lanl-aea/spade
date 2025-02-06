@@ -1262,6 +1262,12 @@ class SpadeObject {
           \return group that's been created
         */
         H5::Group create_group(H5::H5File &h5_file, const string &group_name, Logging &log_file);
+        //! Replace forward slashes '/' with vertical bars '|' from strings that will be used in group name paths
+        /*!
+          \param name String with potential slashes to be replaced
+          \return string that's had forward slashes replaced
+        */
+        string replace_slashes(const string &name);
 
 
     private:

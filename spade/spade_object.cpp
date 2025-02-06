@@ -1347,7 +1347,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
     log_file.logVerbose("Writing section categories at time: " + command_line_arguments.getTimeStamp(false));
     H5::Group section_categories_group = create_group(h5_file, "/odb/sectionCategories", log_file);
     for (int i=0; i<this->section_categories.size(); i++) {
-        string category_group_name = "/odb/sectionCategories/" + this->section_categories[i].name;
+        string category_group_name = "/odb/sectionCategories/" + replace_slashes(this->section_categories[i].name);
         H5::Group section_category_group = create_group(h5_file, category_group_name, log_file);
         write_section_category(h5_file, section_category_group, category_group_name, this->section_categories[i], log_file);
     }
@@ -1591,9 +1591,7 @@ void SpadeObject::write_frames(H5::H5File &h5_file, Logging &log_file, const str
         H5::Group field_outputs_group = create_group(h5_file, frame_group_name + "/fieldOutputs", log_file);
         log_file.logVerbose("Writing field output for " + frame_group_name + ".");
         for (int i=0; i<frame.fieldOutputs.size(); i++) {
-            string clean_name = frame.fieldOutputs[i].name;
-            std::replace( clean_name.begin(), clean_name.end(), '/', '|');   // Can't have a slash in a group name for hdf5
-            string field_output_group_name = frame_group_name + "/fieldOutputs/" + clean_name;
+            string field_output_group_name = frame_group_name + "/fieldOutputs/" + replace_slashes(frame.fieldOutputs[i].name);
             write_field_output(h5_file, log_file, field_output_group_name, frame.fieldOutputs[i]);
         }
         write_attribute(frame_group, "max_width", to_string(frame.max_width), log_file);
@@ -1646,9 +1644,7 @@ void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group
         write_history_point(h5_file, history_region_group_name, history_region.point, log_file);
         H5::Group history_outputs_group = create_group(h5_file, history_region_group_name + "/historyOutputs", log_file);
         for (int i=0; i<history_region.historyOutputs.size(); i++) {
-            string clean_name = history_region.historyOutputs[i].name;
-            std::replace( clean_name.begin(), clean_name.end(), '/', '|');   // Can't have a slash in an group name for hdf5
-            string history_output_group_name = history_region_group_name + "/historyOutputs/" + clean_name;
+            string history_output_group_name = history_region_group_name + "/historyOutputs/" + replace_slashes(history_region.historyOutputs[i].name);
             write_history_output(h5_file, history_output_group_name, history_region.historyOutputs[i], log_file);
         }
         vector<history_output_type>().swap(history_region.historyOutputs);  // Swap vector with empty vector (freeing/clearing memory of vector)
@@ -2462,6 +2458,12 @@ H5::Group SpadeObject::create_group(H5::H5File &h5_file, const string &group_nam
         }
     }
 
+}
+
+string SpadeObject::replace_slashes(const string &name) {
+    string clean_name = name;
+    std::replace(clean_name.begin(), clean_name.end(), '/', '|');   // Can't have a slash in a group name for hdf5 files
+    return clean_name;
 }
 
 
