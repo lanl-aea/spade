@@ -1355,7 +1355,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
     log_file.logVerbose("Writing user data at time: " + command_line_arguments.getTimeStamp(false));
     H5::Group user_data_group = create_group(h5_file, "/odb/userData", log_file);
     for (int i=0; i<this->user_xy_data.size(); i++) {
-        string user_xy_data_name = "/odb/userData/" + this->user_xy_data[i].name;
+        string user_xy_data_name = "/odb/userData/" + replace_slashes(this->user_xy_data[i].name);
         log_file.logVerbose("User data name:" + this->user_xy_data[i].name);
         H5::Group user_xy_data_group = create_group(h5_file, user_xy_data_name, log_file);
         write_string_dataset(user_xy_data_group, "sourceDescription", this->user_xy_data[i].sourceDescription, log_file);
@@ -1389,7 +1389,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
 
 void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
     for (auto part : this->parts) {
-        string part_group_name = group_name + "/" + part.name;
+        string part_group_name = group_name + "/" + replace_slashes(part.name);
         H5::Group part_group = create_group(h5_file, part_group_name, log_file);
         write_string_dataset(part_group, "embeddedSpace", part.embeddedSpace, log_file);
         write_nodes(h5_file, part_group_name, part.nodes, log_file);
@@ -1401,7 +1401,7 @@ void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name, Log
 }
 
 void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name, Logging &log_file) {
-    string root_assembly_group_name = "/odb/rootAssembly " + this->root_assembly.name;
+    string root_assembly_group_name = "/odb/rootAssembly " + replace_slashes(this->root_assembly.name);
     H5::Group root_assembly_group = create_group(h5_file, root_assembly_group_name, log_file);
     write_instances(h5_file, root_assembly_group_name, log_file);
     write_string_dataset(root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace, log_file);
@@ -1636,7 +1636,7 @@ void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group
     string history_regions_group_name = group_name + "/historyRegions";
     H5::Group history_regions_group = create_group(h5_file, history_regions_group_name, log_file);
     for (auto history_region : history_regions) {
-        string history_region_group_name = history_regions_group_name + "/" + history_region.name;
+        string history_region_group_name = history_regions_group_name + "/" + replace_slashes(history_region.name);
         H5::Group history_region_group = create_group(h5_file, history_region_group_name, log_file);
         write_string_dataset(history_region_group, "description", history_region.description, log_file);
         write_string_dataset(history_region_group, "position", history_region.position, log_file);
@@ -1655,7 +1655,7 @@ void SpadeObject::write_steps(H5::H5File &h5_file, Logging &log_file, const stri
     string steps_group_name = group_name + "/steps";
     H5::Group steps_group = create_group(h5_file, steps_group_name, log_file);
     for (auto step : this->steps) {
-        string step_group_name = steps_group_name + "/" + step.name;
+        string step_group_name = steps_group_name + "/" + replace_slashes(step.name);
         H5::Group step_group = create_group(h5_file, step_group_name, log_file);
         write_string_dataset(step_group, "description", step.description, log_file);
         write_string_dataset(step_group, "domain", step.domain, log_file);
@@ -1693,7 +1693,7 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name,
             }
             */
         }
-        string instance_group_name = instances_group_name + "/" + instance.name;
+        string instance_group_name = instances_group_name + "/" + replace_slashes(instance.name);
         H5::Group instance_group = create_group(h5_file, instance_group_name, log_file);
         write_string_dataset(instance_group, "embeddedSpace", instance.embeddedSpace, log_file);
         write_nodes(h5_file, instance_group_name, instance.nodes, log_file);
@@ -1998,7 +1998,7 @@ void SpadeObject::write_sets(H5::H5File &h5_file, const string &group_name, cons
 
 void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const set_type &set, Logging &log_file) {
     if (!set.name.empty()) {
-        string set_group_name = group_name + "/" + set.name;
+        string set_group_name = group_name + "/" + replace_slashes(set.name);
         H5::Group set_group = create_group(h5_file, set_group_name, log_file);
         write_attribute(set_group, "type", set.type, log_file);
         write_string_vector_dataset(set_group, "instanceNames", set.instanceNames, log_file);
