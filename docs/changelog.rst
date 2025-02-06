@@ -12,6 +12,11 @@ Bug fixes
 =========
 - Replace forward slash with vertical bar in history output names (:issue:`65`, :merge:`61`). By `Prabhu Khalsa`_.
 
+Internal Changes
+================
+- Create replace_slashes function and call it where ever it seems possible for a slash to be in a group name 
+  (:issue:`66`, :merge:`62`). By `Prabhu Khalsa`_.
+
 *******************
 v0.3.6 (2025-02-05)
 *******************
