@@ -1368,6 +1368,8 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments, Logging &l
         write_float_2D_data(user_xy_data_group, "data", this->user_xy_data[i].row_size, 2, this->user_xy_data[i].data, log_file);  // x-y data has two columns: x and y
     }
 
+    if (command_line_arguments.odbformat()) {  // Mimic the organization of data in an odb - though inefficient
+    }
     log_file.logVerbose("Writing constraints data at time: " + command_line_arguments.getTimeStamp(false));
     H5::Group contraints_group = create_group(h5_file, "/odb/constraints", log_file);
     write_constraints(h5_file, "odb/constraints", log_file);

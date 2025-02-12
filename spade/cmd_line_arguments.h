@@ -95,6 +95,12 @@ class CmdLineArguments {
           \return boolean indicating whether the force option is used
         */
         bool force() const;
+        //! Return the value of the odb-format flag.
+        /*!
+          If the user requests an odb format, a flag is set, this function returns the value of that flag. This is a getter method.
+          \return boolean indicating whether the odb-format option is used
+        */
+        bool odbformat() const;
         bool debug() const; // docstring not given, more for developer use
 
     private:
@@ -108,6 +114,7 @@ class CmdLineArguments {
         bool verbose_output;
         bool debug_output;
         bool force_overwrite;
+        bool odb_format;
 
 };
 #endif // __CMD_LINE_ARGUMENTS_H_INCLUDED__
