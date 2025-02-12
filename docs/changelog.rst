@@ -8,6 +8,10 @@ Changelog
 v0.3.8 (unreleased)
 *******************
 
+Internal Changes
+================
+- Create top level instance groups in hdf5 file (:issue:`68`, :merge:`65`). By `Prabhu Khalsa`_.
+
 Enhancements
 ============
 - Add command line option to specify odb format (:issue:`67`, :merge:`64`). By `Prabhu Khalsa`_.
