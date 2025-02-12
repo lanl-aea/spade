@@ -191,6 +191,12 @@ def get_parser() -> argparse.ArgumentParser:
         default=False,
         help=argparse.SUPPRESS,
     )
+    parser.add_argument(
+        "--odb-format",
+        action="store_true",
+        default=False,
+        help='Extracted file is in a format resembling data structures in an odb file',
+    )
     return parser
 
 
@@ -313,6 +319,8 @@ def cpp_wrapper(args) -> str:
         full_command_line_arguments += " --force-overwrite"
     if args.debug:
         full_command_line_arguments += " --debug"
+    if args.odb_format:
+        full_command_line_arguments += " --odb-format"
 
     return full_command_line_arguments
 
