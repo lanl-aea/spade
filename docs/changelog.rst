@@ -8,6 +8,10 @@ Changelog
 v0.3.8 (unreleased)
 *******************
 
+Enhancements
+============
+- Add command line option to specify odb format (:issue:`67`, :merge:`64`). By `Prabhu Khalsa`_.
+
 *******************
 v0.3.7 (2025-02-06)
 *******************
