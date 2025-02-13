@@ -1,6 +1,7 @@
 //! An object for holding the data from the odb
 
 #include <vector>
+#include <array>
 
 #include "H5Cpp.h"
 using namespace H5;
@@ -86,6 +87,12 @@ struct element_type {
 struct node_type {
     int label;
     float coordinates[3];
+};
+
+struct extract_node_type {
+  vector<int> nodes;
+  vector<array<float, 3>> coordinates;  // https://stackoverflow.com/questions/33711878/c-vector-of-float-arrays
+  vector<set<string>> node_sets;
 };
 
 struct set_type {
@@ -1286,6 +1293,7 @@ class SpadeObject {
         constraint_type constraints;
         assembly_type root_assembly;
         map<string, node_type> nodes;
+        map<string, map<int, extract_node_type> instance_nodes;
         map<string, element_type> elements;
         map<string, string> node_links;
         map<string, string> element_links;

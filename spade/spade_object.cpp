@@ -27,6 +27,7 @@ using namespace std;
 #include <cctype>
 #include <locale>
 #include <vector>
+#include <array>
 #include <iterator>
 #include <regex>
 #include <stdlib.h>
