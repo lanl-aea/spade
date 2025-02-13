@@ -297,8 +297,17 @@ tangential_behavior_type SpadeObject::process_interaction_property (const odb_In
     return interaction;
 }
 
-node_type* SpadeObject::process_node(const odb_Node &node, Logging &log_file) {
+node_type* SpadeObject::process_node (const odb_Node &node, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, Logging &log_file) {
     std::stringstream floatS;
+    string name = instance_name;
+    if (!part_name.empty()) { 
+    }
+    if (name.empty()) { 
+        name = assembly_name;
+        if (name.empty()) { 
+            name = "ALL"; 
+        }
+    }
     floatS << std::noshowpos << std::setprecision(7) << node.label() << "_" << node.coordinates()[0] << "_" << node.coordinates()[0] << "_" << node.coordinates()[0];
     string node_key(floatS.str());  // Needed to set the maximum precision of a float (7) to make sure the string is unique
     try {  // If the node has been stored in nodes, just return the address to it
@@ -362,7 +371,7 @@ set_type SpadeObject::process_set(const odb_Set &set, Logging &log_file) {
         new_set.instanceNames.push_back(name.CStr());
         if (new_set.type == "Node Set") {
             const odb_SequenceNode& set_nodes = set.nodes(name);
-            for (int n=0; n < set_nodes.size(); n++) { new_set.nodes.push_back(process_node(set_nodes.node(n), log_file)); }
+            for (int n=0; n < set_nodes.size(); n++) { new_set.nodes.push_back(process_node(set_nodes.node(n), name.CStr(), "", new_set.name, "", log_file)); }
         } else if (new_set.type == "Element Set") {
             const odb_SequenceElement& set_elements = set.elements(name);
             for (int n=0; n < set_elements.size(); n++) { new_set.elements.push_back(process_element(set_elements.element(n), log_file)); }
@@ -383,7 +392,7 @@ set_type SpadeObject::process_set(const odb_Set &set, Logging &log_file) {
                 }
             } else {
                 for (int n=0; n < set_nodes.size(); n++)  {
-                    new_set.nodes.push_back(process_node(set_nodes.node(n), log_file));
+                    new_set.nodes.push_back(process_node(set_nodes.node(n), name.CStr(), "", new_set.name, "", log_file));
                 }
             }
 
@@ -588,7 +597,7 @@ part_type SpadeObject::process_part (const odb_Part &part, odb_Odb &odb, Logging
     new_part.embeddedSpace = this->dimension_enum_strings[part.embeddedSpace()];
 
     const odb_SequenceNode& nodes = part.nodes();
-    for (int i=0; i<nodes.size(); i++)  { new_part.nodes.push_back(process_node(nodes.node(i), log_file)); }
+    for (int i=0; i<nodes.size(); i++)  { new_part.nodes.push_back(process_node(nodes.node(i), "", "", "", new_part.name, log_file)); }
     odb_SequenceElement elements = part.elements();
     for (int i=0; i<elements.size(); i++)  { new_part.elements.push_back(process_element(elements.element(i), log_file)); }
 
@@ -735,7 +744,7 @@ instance_type SpadeObject::process_instance (const odb_Instance &instance, odb_O
     log_file.log("\telement count: " + to_string(instance.elements().size()));
 
     const odb_SequenceNode& nodes = instance.nodes();
-    for (int i=0; i<nodes.size(); i++)  { new_instance.nodes.push_back(process_node(nodes.node(i), log_file)); }
+    for (int i=0; i<nodes.size(); i++)  { new_instance.nodes.push_back(process_node(nodes.node(i), new_instance.name, "", "", "", log_file)); }
     odb_SequenceElement elements = instance.elements();
     for (int i=0; i<elements.size(); i++)  { new_instance.elements.push_back(process_element(elements.element(i), log_file)); }
 
@@ -804,7 +813,7 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     log_file.log("\telement count: " + to_string(assembly.elements().size()));
 
     const odb_SequenceNode& nodes = assembly.nodes();
-    for (int i=0; i<nodes.size(); i++)  { new_assembly.nodes.push_back(process_node(nodes.node(i), log_file)); }
+    for (int i=0; i<nodes.size(); i++)  { new_assembly.nodes.push_back(process_node(nodes.node(i), "", new_assembly.name, "", "", log_file)); }
     const odb_SequenceElement& elements = assembly.elements();
     for (int i=0; i<elements.size(); i++)  { new_assembly.elements.push_back(process_element(elements.element(i), log_file)); }
 
@@ -1148,11 +1157,13 @@ frame_type SpadeObject::process_frame (const odb_Frame &frame, Logging &log_file
 
 history_point_type SpadeObject::process_history_point (const odb_HistoryPoint history_point, Logging &log_file) {
     history_point_type new_history_point;
+    new_history_point.instanceName = history_point.instance().name().CStr();
+    new_history_point.assemblyName = history_point.assembly().name().CStr();
     try {
         new_history_point.element = process_element(history_point.element(), log_file);
         new_history_point.hasElement = true;
     } catch(odb_BaseException& exc) { new_history_point.hasElement = false; }
-    new_history_point.node = process_node(history_point.node(), log_file);
+    new_history_point.node = process_node(history_point.node(), new_history_point.instanceName, new_history_point.assemblyName, "", "", log_file);
     if (history_point.node().label() < 0) {
         new_history_point.hasNode = false;
     } else {
@@ -1162,8 +1173,6 @@ history_point_type SpadeObject::process_history_point (const odb_HistoryPoint hi
     new_history_point.sectionPoint.number = to_string(history_point.sectionPoint().number());
     new_history_point.sectionPoint.description = history_point.sectionPoint().description().CStr();
     new_history_point.region = process_set(history_point.region(), log_file);
-    new_history_point.instanceName = history_point.instance().name().CStr();
-    new_history_point.assemblyName = history_point.assembly().name().CStr();
     switch(history_point.face()) {
         case odb_Enum::FACE_UNKNOWN: new_history_point.face = "Face Unknown"; break;
         case odb_Enum::FACE1: new_history_point.face = "Face 1"; break;

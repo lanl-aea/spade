@@ -90,9 +90,10 @@ struct node_type {
 };
 
 struct extract_node_type {
-  vector<int> nodes;
-  vector<array<float, 3>> coordinates;  // https://stackoverflow.com/questions/33711878/c-vector-of-float-arrays
-  vector<set<string>> node_sets;
+    vector<int> nodes;
+    vector<array<float, 3>> coordinates;  // https://stackoverflow.com/questions/33711878/c-vector-of-float-arrays
+    vector<set<string>> node_sets;
+    map<int, int> node_index;  // Maps the node number to the index in the above vectors
 };
 
 struct set_type {
@@ -504,11 +505,15 @@ class SpadeObject {
         /*!
           Process odb_Node object, potentially save node data in data map, return pointer to location in map
           \param node An odb_Node object in the odb
+          \param instance_name An instance name where this node might be found
+          \param assembly_name An assembly name where this node might be found
+          \param set_name A set name where this node might be found
+          \param part_name A part name where this node might be found
           \param log_file Logging object for writing log messages
           \return node_type pointer to map that stores node data
           \sa process_odb()
         */
-        node_type* process_node (const odb_Node &node, Logging &log_file);
+        node_type* process_node (const odb_Node &node, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, Logging &log_file);
         //! Process odb_Element object from the odb file
         /*!
           Process odb_Element object, potentially save element data in data map, return pointer to location in map
@@ -1293,7 +1298,7 @@ class SpadeObject {
         constraint_type constraints;
         assembly_type root_assembly;
         map<string, node_type> nodes;
-        map<string, map<int, extract_node_type> instance_nodes;
+        map<string, map<int, extract_node_type>> instance_nodes;
         map<string, element_type> elements;
         map<string, string> node_links;
         map<string, string> element_links;
