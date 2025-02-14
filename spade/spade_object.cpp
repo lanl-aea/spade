@@ -300,6 +300,7 @@ tangential_behavior_type SpadeObject::process_interaction_property (const odb_In
 //node_type* SpadeObject::process_node (const odb_Node &node, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, Logging &log_file) {
 nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, Logging &log_file) {
     nodes_type new_nodes;
+    string name;
     if (!part_name.empty()) { 
         try {  // If the node has been stored in nodes, just return the address to it
             new_nodes = this->part_nodes.at(part_name);  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
@@ -307,7 +308,7 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             log_file.logDebug("New part nodes for part: " + part_name);
         }
     } else {
-        string name = instance_name;
+        name = instance_name;
         if (name.empty()) { 
             name = assembly_name;
             if (name.empty()) { name = "ALL"; }
@@ -331,8 +332,6 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             new_nodes.node_index[node_label] = index;
             new_nodes.nodes.push_back(node_label);
             new_nodes.coordinates.push_back({node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]});
-//            float coordinates[3] = {node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]};
-//            new_nodes.coordinates.push_back(coordinates);
             set<string> node_set;
             node_set.insert(set_name);
             new_nodes.node_sets.push_back(node_set);
@@ -343,7 +342,7 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             return &this->part_nodes[part_name];
     } else {
             this->instance_nodes[name] = new_nodes;
-            return &this->part_nodes[name];
+            return &this->instance_nodes[name];
     }
     /*
     std::stringstream floatS;
@@ -1210,6 +1209,9 @@ history_point_type SpadeObject::process_history_point (const odb_HistoryPoint hi
     } catch(odb_BaseException& exc) { new_history_point.hasElement = false; }
 //    new_history_point.node = process_node(history_point.node(), new_history_point.instanceName, new_history_point.assemblyName, "", "", log_file);
     new_history_point.node_label = history_point.node().label();
+    new_history_point.node_coordinates[0] = history_point.node().coordinates()[0];
+    new_history_point.node_coordinates[1] = history_point.node().coordinates()[1];
+    new_history_point.node_coordinates[2] = history_point.node().coordinates()[2];
     if (history_point.node().label() < 0) {
         new_history_point.hasNode = false;
     } else {
@@ -1448,7 +1450,7 @@ void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name, Log
         string part_group_name = group_name + "/" + replace_slashes(part.name);
         H5::Group part_group = create_group(h5_file, part_group_name, log_file);
         write_string_dataset(part_group, "embeddedSpace", part.embeddedSpace, log_file);
-        write_nodes(h5_file, part_group_name, part.nodes, log_file);
+        write_nodes(h5_file, part_group, part.nodes, log_file);
         write_elements(h5_file, part_group_name, part.elements, log_file);
         write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets, log_file);
         write_sets(h5_file, part_group_name + "/elementSets", part.elementSets, log_file);
@@ -1462,7 +1464,7 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name, 
     write_instances(h5_file, root_assembly_group_name, log_file);
     write_string_dataset(root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace, log_file);
 //    if (this->command_line_arguments->odbformat()) {
-        write_nodes(h5_file, root_assembly_group_name, this->root_assembly.nodes, log_file);
+        write_nodes(h5_file, root_assembly_group, this->root_assembly.nodes, log_file);
         write_elements(h5_file, root_assembly_group_name, this->root_assembly.elements, log_file);
         write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets, log_file);
         write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets, log_file);
@@ -1667,6 +1669,8 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
     if (history_point.hasNode) {
         string node_group_name = history_point_group_name + "/node";
         H5::Group node_group = create_group(h5_file, node_group_name, log_file);
+        write_integer_dataset(history_point_group, "node", history_point.node_label, log_file);
+        write_float_array_dataset(history_point_group, "nodeCoordinates", 3, history_point.node_coordinates, log_file);
 //        write_node(h5_file, node_group, node_group_name, *history_point.node, log_file);
     }
     write_set(h5_file, history_point_group_name, history_point.region, log_file);
@@ -1752,7 +1756,7 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name,
         string instance_group_name = instances_group_name + "/" + replace_slashes(instance.name);
         H5::Group instance_group = create_group(h5_file, instance_group_name, log_file);
         write_string_dataset(instance_group, "embeddedSpace", instance.embeddedSpace, log_file);
-        write_nodes(h5_file, instance_group_name, instance.nodes, log_file);
+        write_nodes(h5_file, instance_group, instance.nodes, log_file);
         write_elements(h5_file, instance_group_name, instance.elements, log_file);
         write_sets(h5_file, instance_group_name + "/nodeSets", instance.nodeSets, log_file);
         write_sets(h5_file, instance_group_name + "/elementSets", instance.elementSets, log_file);
@@ -2041,13 +2045,26 @@ void SpadeObject::write_node(H5::H5File &h5_file, H5::Group &group, const string
     */
 
 //void SpadeObject::write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type*> &nodes, Logging &log_file) {
-void SpadeObject::write_nodes(H5::H5File &h5_file, const string &group_name, const nodes_type* nodes, Logging &log_file) {
-    /*
-    if (!nodes.empty()) {
-        H5::Group nodes_group = create_group(h5_file, group_name + "/nodes", log_file);
-        for (auto node : nodes) { write_node(h5_file, nodes_group, group_name + "/nodes", *node, log_file); }
+void SpadeObject::write_nodes(H5::H5File &h5_file, H5::Group &group, const nodes_type* nodes, Logging &log_file) {
+    nodes_type all_nodes = *nodes;
+    if (!all_nodes.nodes.empty()) {
+        write_integer_vector_dataset(group, "nodes", all_nodes.nodes, log_file);
+        write_node_coordinates_dataset(group, all_nodes.coordinates, log_file);
     }
-    */
+}
+
+void SpadeObject::write_node_coordinates_dataset(const H5::Group &group, const vector<array<float, 3>> &node_coordinates, Logging &log_file) {
+    if (node_coordinates.empty()) { return; }
+    hsize_t dimensions[] = {3, node_coordinates.size()};
+    H5::DataSpace dataspace(2, dimensions);  // two dimensional data
+    try {
+        H5::DataSet dataset = group.createDataSet("node_coordinates", H5::PredType::NATIVE_FLOAT, dataspace);
+        dataset.write(node_coordinates.data(), H5::PredType::NATIVE_FLOAT);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        log_file.logWarning("Unable to create dataset node_coordinates. " + e.getDetailMsg());
+    }
+    dataspace.close();
 }
 
 void SpadeObject::write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets, Logging &log_file) {
@@ -2065,7 +2082,7 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
         write_string_vector_dataset(set_group, "instanceNames", set.instanceNames, log_file);
 //        if (this->command_line_arguments->odbformat()) {
             if (set.type == "Node Set") {
-                write_nodes(h5_file, set_group_name, set.nodes, log_file);
+                write_nodes(h5_file, set_group, set.nodes, log_file);
             } else if (set.type == "Element Set") {
                 write_elements(h5_file, set_group_name, set.elements, log_file);
             } else if (set.type == "Surface Set") {
@@ -2076,7 +2093,7 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
                 } else if(!set.elements.empty()) {
                     write_elements(h5_file, set_group_name, set.elements, log_file);
                 } else {
-                    write_nodes(h5_file, set_group_name, set.nodes, log_file);
+                    write_nodes(h5_file, set_group, set.nodes, log_file);
                 }
             }
 //        }

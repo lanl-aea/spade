@@ -423,6 +423,7 @@ struct history_point_type {
     string position;
 //    node_type* node;
     int node_label;
+    float node_coordinates[3];
     set_type region;
     string assemblyName;  // Just going to store the name not the entire assembly
     string instanceName;  // Just going to store the name not the entire instance
@@ -957,7 +958,7 @@ class SpadeObject {
         /*!
           Write data from element type into an HDF5 file
           \param h5_file Open h5_file object for writing
-          \param group Name of HDF5 group in which to write the new data
+          \param group HDF5 group in which to write the new data
           \param group_name Name of the group where data is to be written
           \param element Element data to be written
           \param log_file Logging object for writing log messages
@@ -985,12 +986,20 @@ class SpadeObject {
         /*!
           Write vector of node data into an HDF5 file
           \param h5_file Open h5_file object for writing
-          \param group_name Name of the group where data is to be written
+          \param group HDF5 group in which to write the new data
           \param nodes Vector of node data to be written
           \param log_file Logging object for writing log messages
         */
 //        void write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type*> &nodes, Logging &log_file);
-        void write_nodes(H5::H5File &h5_file, const string &group_name, const nodes_type* nodes, Logging &log_file);
+        void write_nodes(H5::H5File &h5_file, H5::Group &group, const nodes_type* nodes, Logging &log_file);
+        //! Write a dataset for node coordinates which are stored as a vector of arrays of size 3
+        /*!
+          \param group Name of HDF5 group in which to write the new dataset
+          \param node_coordinates The float data that should be written in the new dataset
+          \param log_file Logging object for writing log messages
+          \sa write_float_array_dataset()
+        */
+        void write_node_coordinates_dataset(const H5::Group &group, const vector<array<float, 3>> &node_coordinates, Logging &log_file);
         //! Write sets data to an HDF5 file
         /*!
           Write vector of set data into an HDF5 file
