@@ -279,16 +279,12 @@ string CmdLineArguments::getTimeStamp(bool for_file) {
     return time_buffer.str();
 }
 
-// Getter
+// Getter as [] operators
 string CmdLineArguments::operator[](string const &str) const {
-    string blank = "";
-    map<string, string>::const_iterator iter;
-    iter = command_line_arguments.find(str);
-    if (iter != command_line_arguments.end()) { return iter->second; }
-    else { return blank; }
+    return get(str);
 }
 
-// Another Getter
+// Getter
 string CmdLineArguments::get(string const &str) const {
     string blank = "";
     map<string, string>::const_iterator iter;
