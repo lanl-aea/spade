@@ -59,6 +59,14 @@ class CmdLineArguments {
           \sa CmdLineArguments()
         */
         string operator[](string const &str) const;
+        //! Getter if operator can't be used
+        /*!
+          This function returns a command line option corresponding to the provided string.
+          \param str string containing the command line option
+          \return value of command line option
+          \sa CmdLineArguments()
+        */
+        string get(string const &str) const;
         //! Return string with complete command line given.
         /*!
           Return the complete command line used by user. This is a getter method.

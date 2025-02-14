@@ -476,9 +476,8 @@ class SpadeObject {
         /*!
           After the odb has been opened this function will do the parsing, including calling of other functions needed for parsing
           \param odb An open odb object
-          \param command_line_arguments CmdLineArguments object storing command line arguments
         */
-        void process_odb (odb_Odb &odb, CmdLineArguments &command_line_arguments);
+        void process_odb (odb_Odb &odb);
         //! Process odb_SectionCategory object from the odb file
         /*!
           Process odb_SectionCategory object and return the values in a section_category_type
@@ -612,7 +611,6 @@ class SpadeObject {
           Process an instance and store the results
           \param instance An odb instance object
           \param odb An open odb object
-          \param command_line_arguments CmdLineArguments object storing command line arguments
           \return instance_type with data stored from the odb
           \sa process_odb()
         */
@@ -630,50 +628,45 @@ class SpadeObject {
           Process  an assembly and store the results
           \param assembly An odb assembly object
           \param odb An open odb object
-          \param command_line_arguments CmdLineArguments object storing command line arguments
           \return assembly_type with data stored from the odb
           \sa process_odb()
         */
-        assembly_type process_assembly (odb_Assembly &assembly, odb_Odb &odb, CmdLineArguments &command_line_arguments);
+        assembly_type process_assembly (odb_Assembly &assembly, odb_Odb &odb);
         //! Process field value from the odb file
         /*!
           Process a field value object and store the results
           \param field_value An odb field value object
           \param invariants An odb sequence invariant object
-          \param command_line_arguments CmdLineArguments object storing command line arguments
           \return field_value_type with data stored from the odb
           \sa process_odb()
         */
-        field_value_type process_field_values(const odb_FieldValue &field_value, const odb_SequenceInvariant& invariants, CmdLineArguments &command_line_arguments);
+        field_value_type process_field_values(const odb_FieldValue &field_value, const odb_SequenceInvariant& invariants);
         //! Process field bulk data from the odb file
         /*!
           Process a field bulk data object and store the results
           \param field_bulk_data An odb field bulk data object
           \param invariants An odb sequence invariant object
           \param complex_data Boolean indicating if the data is complex
-          \param command_line_arguments CmdLineArguments object storing command line arguments
           \return field_bulk_type with data stored from the odb
           \sa process_odb()
         */
-        field_bulk_type process_field_bulk_data(const odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data, CmdLineArguments &command_line_arguments);
+        field_bulk_type process_field_bulk_data(const odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data);
         //! Process field output from the odb file
         /*!
           Process a field output object and store the results
           \param field_output An odb field output object
-          \param command_line_arguments CmdLineArguments object storing command line arguments
           \return field_output_type with data stored from the odb
           \sa process_odb()
         */
-        field_output_type process_field_output (const odb_FieldOutput &field_output, CmdLineArguments &command_line_arguments);
+        field_output_type process_field_output (const odb_FieldOutput &field_output);
         //! Process a frame from the odb file
         /*!
           Process a frame object and store the results
           \param frame An odb frame object
-          \param command_line_arguments CmdLineArguments object storing command line arguments
           \return frame_type with data stored from the odb
           \sa process_odb()
         */
-        frame_type process_frame (const odb_Frame &frame, CmdLineArguments &command_line_arguments);
+        frame_type process_frame (const odb_Frame &frame);
         //! Process a history point from the odb file
         /*!
           Process a history region point and store the results
@@ -686,29 +679,26 @@ class SpadeObject {
         /*!
           Process a history output object and store the results
           \param history_output An odb history output object
-          \param command_line_arguments CmdLineArguments object storing command line arguments
           \return history_output_type with data stored from the odb
           \sa process_odb()
         */
-        history_output_type process_history_output (const odb_HistoryOutput &history_region, CmdLineArguments &command_line_arguments);
+        history_output_type process_history_output (const odb_HistoryOutput &history_region);
         //! Process a history region from the odb file
         /*!
           Process a history region object and store the results
           \param history_region An odb history region object
-          \param command_line_arguments CmdLineArguments object storing command line arguments
           \return history_region_type with data stored from the odb
           \sa process_odb()
         */
-        history_region_type process_history_region (const odb_HistoryRegion &history_region, CmdLineArguments &command_line_arguments);
+        history_region_type process_history_region (const odb_HistoryRegion &history_region);
         //! Process a step from the odb file
         /*!
           Process a step object and store the results
           \param step An odb step object
           \param odb An open odb object
-          \param command_line_arguments CmdLineArguments object storing command line arguments
           \sa process_odb()
         */
-        void process_step (const odb_Step &step, odb_Odb &odb, CmdLineArguments &command_line_arguments);
+        void process_step (const odb_Step &step, odb_Odb &odb);
         //! Process a tie constraint from the odb file
         /*!
           Process a Tie object and store the results
@@ -751,24 +741,21 @@ class SpadeObject {
         //! Write output to a YAML file.
         /*!
           Write the parsed odb data to a YAML formatted file
-          \param command_line_arguments CmdLineArguments object storing command line arguments
           \sa SpadeObject()
         */
-        void write_yaml (CmdLineArguments &command_line_arguments);
+        void write_yaml ();
         //! Write output to a JSON file.
         /*!
           Write the parsed odb data to a JSON formatted file
-          \param command_line_arguments CmdLineArguments object storing command line arguments
           \sa SpadeObject()
         */
-        void write_json (CmdLineArguments &command_line_arguments);
+        void write_json ();
         //! Write output to an HDF5 file.
         /*!
           Write the parsed odb data to an HDF5 formatted file
-          \param command_line_arguments CmdLineArguments object storing command line arguments
           \sa SpadeObject()
         */
-        void write_h5 (CmdLineArguments &command_line_arguments);
+        void write_h5 ();
         //! Write parts data to an HDF5 file
         /*!
           Write parts data into an HDF5 file

@@ -288,6 +288,16 @@ string CmdLineArguments::operator[](string const &str) const {
     else { return blank; }
 }
 
+// Another Getter
+string CmdLineArguments::get(string const &str) const {
+    string blank = "";
+    map<string, string>::const_iterator iter;
+    iter = command_line_arguments.find(str);
+    if (iter != command_line_arguments.end()) { return iter->second; }
+    else { return blank; }
+}
+
+
 const string& CmdLineArguments::commandLine() const { return this->command_line; }
 const string& CmdLineArguments::commandName() const { return this->command_name; }
 const string& CmdLineArguments::startTime() const { return this->start_time; }

@@ -105,7 +105,7 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
     this->log_file = &log_file;
     try {  // Since the odb object isn't recognized outside the scope of the try/except, block the processing has to be done within the try block
         odb_Odb& odb = openOdb(file_name, true);  // Open as read only
-        process_odb(odb, command_line_arguments);
+        process_odb(odb);
         odb.close();
         log_file.log("Odb Extract object successfully created.");
     }
@@ -118,13 +118,13 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
     }
 
     log_file.log("Writing extracted file at time: " + command_line_arguments.getTimeStamp(false));
-    if (command_line_arguments["extracted-file-type"] == "h5") this->write_h5(command_line_arguments);
-    else if (command_line_arguments["extracted-file-type"] == "json") this->write_json(command_line_arguments);
-    else if (command_line_arguments["extracted-file-type"] == "yaml") this->write_yaml(command_line_arguments);
+    if (command_line_arguments["extracted-file-type"] == "h5") this->write_h5();
+    else if (command_line_arguments["extracted-file-type"] == "json") this->write_json();
+    else if (command_line_arguments["extracted-file-type"] == "yaml") this->write_yaml();
 
 }
 
-void SpadeObject::process_odb(odb_Odb &odb, CmdLineArguments &command_line_arguments) {
+void SpadeObject::process_odb(odb_Odb &odb) {
 
     this->log_file->logVerbose("Reading top level attributes of odb.");
     this->name = odb.name().CStr();
@@ -229,7 +229,7 @@ void SpadeObject::process_odb(odb_Odb &odb, CmdLineArguments &command_line_argum
     }
 
     this->log_file->logVerbose("Reading root assembly.");
-    this->root_assembly = process_assembly(odb.rootAssembly(), odb, command_line_arguments);
+    this->root_assembly = process_assembly(odb.rootAssembly(), odb);
 
     this->log_file->logVerbose("Reading steps.");
     odb_StepRepository step_repository = odb.steps();
@@ -237,7 +237,7 @@ void SpadeObject::process_odb(odb_Odb &odb, CmdLineArguments &command_line_argum
     for (step_iter.first(); !step_iter.isDone(); step_iter.next())
     {
         const odb_Step& current_step = step_repository[step_iter.currentKey()];
-        process_step(current_step, odb, command_line_arguments);
+        process_step(current_step, odb);
     }
 
 }
@@ -819,7 +819,7 @@ connector_orientation_type SpadeObject::process_connector_orientation (const odb
     return new_connector_orientation;
 }
 
-assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &odb, CmdLineArguments &command_line_arguments) {
+assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &odb) {
     assembly_type new_assembly;
     new_assembly.name = assembly.name().CStr();
     this->log_file->logVerbose("Reading assembly data for " + new_assembly.name);
@@ -858,7 +858,7 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     for (instance_iter.first(); !instance_iter.isDone(); instance_iter.next()) {
         this->log_file->logVerbose("Reading instance: " + string(instance_iter.currentKey().CStr()));
         const odb_Instance& instance = instances[instance_iter.currentKey()];
-        if ((command_line_arguments["instance"] != "all") && (command_line_arguments["instance"] != instance.name().CStr())) {
+        if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance.name().CStr())) {
             continue;
         }
         new_assembly.instances.push_back(process_instance(instance, odb));
@@ -876,7 +876,7 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     return new_assembly;
 }
 
-field_value_type SpadeObject::process_field_values(const odb_FieldValue &field_value, const odb_SequenceInvariant& invariants, CmdLineArguments &command_line_arguments) {
+field_value_type SpadeObject::process_field_values(const odb_FieldValue &field_value, const odb_SequenceInvariant& invariants) {
     field_value_type new_field_value;
     new_field_value.empty = true;
     new_field_value.elementLabel = field_value.elementLabel();
@@ -948,7 +948,7 @@ field_value_type SpadeObject::process_field_values(const odb_FieldValue &field_v
     return new_field_value;
 }
 
-field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data, CmdLineArguments &command_line_arguments) {
+field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data) {
     field_bulk_type new_field_bulk_data;
     new_field_bulk_data.emptyFaces = true;
     switch(field_bulk_data.position()) {
@@ -1045,7 +1045,7 @@ field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &fi
     return new_field_bulk_data;
 }
 
-field_output_type SpadeObject::process_field_output (const odb_FieldOutput &field_output, CmdLineArguments &command_line_arguments) {
+field_output_type SpadeObject::process_field_output (const odb_FieldOutput &field_output) {
     field_output_type new_field_output;
     new_field_output.name = field_output.name().CStr();
     new_field_output.description = field_output.description().CStr();
@@ -1099,7 +1099,7 @@ field_output_type SpadeObject::process_field_output (const odb_FieldOutput &fiel
     if (field_output.validInvariants().size() > 0) {
         for (int i=0; i<field_values.size(); i++) {
             const odb_FieldValue& field_value = field_values.constGet(i);
-            field_value_type new_field_value = process_field_values(field_value, field_output.validInvariants(), command_line_arguments);
+            field_value_type new_field_value = process_field_values(field_value, field_output.validInvariants());
             if (!new_field_value.empty) {
                 if (new_field_value.elementLabel != -1) {
                     new_field_output.elementValues[new_field_value.elementLabel] = new_field_value;
@@ -1120,17 +1120,17 @@ field_output_type SpadeObject::process_field_output (const odb_FieldOutput &fiel
                                                       // e.g. In one odb the "E" field values had three "blocks" One for element type B23 (section point 1)
                                                       // one for element type B23 (section point 5), and one for element type GAPUNI
         const odb_FieldBulkData& field_bulk_value = field_bulk_values[i];
-        if ((command_line_arguments["instance"] != "all") && (command_line_arguments["instance"] != field_bulk_value.instance().name().CStr())) {
+        if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != field_bulk_value.instance().name().CStr())) {
             continue;
         }
-        new_field_output.dataValues.push_back(process_field_bulk_data(field_bulk_value, field_output.validInvariants(), field_output.isComplex(), command_line_arguments));
+        new_field_output.dataValues.push_back(process_field_bulk_data(field_bulk_value, field_output.validInvariants(), field_output.isComplex()));
         if (new_field_output.dataValues[i].width > new_field_output.max_width) {  new_field_output.max_width = new_field_output.dataValues[i].width; }
         if (new_field_output.dataValues[i].length > new_field_output.max_length) {  new_field_output.max_length = new_field_output.dataValues[i].length; }
     }
     return new_field_output;
 }
 
-frame_type SpadeObject::process_frame (const odb_Frame &frame, CmdLineArguments &command_line_arguments) {
+frame_type SpadeObject::process_frame (const odb_Frame &frame) {
     frame_type new_frame;
     new_frame.skip = false;
     new_frame.description = frame.description().CStr();
@@ -1141,7 +1141,7 @@ frame_type SpadeObject::process_frame (const odb_Frame &frame, CmdLineArguments 
         case odb_Enum::MODAL: new_frame.domain = "Modal"; break;
     }
     new_frame.incrementNumber = frame.incrementNumber();
-    if ((command_line_arguments["frame"] != "all") && (command_line_arguments["frame"] != to_string(new_frame.incrementNumber))) {
+    if ((this->command_line_arguments->get("frame") != "all") && (this->command_line_arguments->get("frame") != to_string(new_frame.incrementNumber))) {
         new_frame.skip = true;
         return new_frame;
     }
@@ -1149,8 +1149,8 @@ frame_type SpadeObject::process_frame (const odb_Frame &frame, CmdLineArguments 
     new_frame.mode = frame.mode();
     new_frame.frameValue = frame.frameValue();
     new_frame.frequency = frame.frequency();
-    if (command_line_arguments["frame-value"] != "all") {
-        if (to_string(new_frame.frameValue).find(command_line_arguments["frame-value"]) == std::string::npos) {
+    if (this->command_line_arguments->get("frame-value") != "all") {
+        if (to_string(new_frame.frameValue).find(this->command_line_arguments->get("frame-value")) == std::string::npos) {
             new_frame.skip = true;
             return new_frame;
         }
@@ -1164,7 +1164,7 @@ frame_type SpadeObject::process_frame (const odb_Frame &frame, CmdLineArguments 
     int field_output_count = 0;
     for (field_outputs_iterator.first(); !field_outputs_iterator.isDone(); field_outputs_iterator.next()) {
         const odb_FieldOutput& field = field_outputs[field_outputs_iterator.currentKey()];
-        new_frame.fieldOutputs.push_back(process_field_output(field, command_line_arguments));
+        new_frame.fieldOutputs.push_back(process_field_output(field));
         if (new_frame.fieldOutputs[field_output_count].max_width > new_frame.max_width) {  new_frame.max_width = new_frame.fieldOutputs[field_output_count].max_width; }
         if (new_frame.fieldOutputs[field_output_count].max_length > new_frame.max_length) {  new_frame.max_length = new_frame.fieldOutputs[field_output_count].max_length; }
         field_output_count++;
@@ -1222,7 +1222,7 @@ history_point_type SpadeObject::process_history_point (const odb_HistoryPoint hi
     return new_history_point;
 }
 
-history_output_type SpadeObject::process_history_output(const odb_HistoryOutput &history_output, CmdLineArguments &command_line_arguments) {
+history_output_type SpadeObject::process_history_output(const odb_HistoryOutput &history_output) {
     history_output_type new_history_output;
     new_history_output.name = history_output.name().CStr();
     new_history_output.description = history_output.description().CStr();
@@ -1254,7 +1254,7 @@ history_output_type SpadeObject::process_history_output(const odb_HistoryOutput 
 
 }
 
-history_region_type SpadeObject::process_history_region(const odb_HistoryRegion &history_region, CmdLineArguments &command_line_arguments) {
+history_region_type SpadeObject::process_history_region(const odb_HistoryRegion &history_region) {
     history_region_type new_history_region;
     new_history_region.name = history_region.name().CStr();
     new_history_region.description = history_region.description().CStr();
@@ -1271,17 +1271,17 @@ history_region_type SpadeObject::process_history_region(const odb_HistoryRegion 
     odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
     for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
         odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
-        if ((command_line_arguments["history"] == "all") || (command_line_arguments["history"] == history_output.name().CStr())) {
-            new_history_region.historyOutputs.push_back(process_history_output(history_output, command_line_arguments));
+        if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output.name().CStr())) {
+            new_history_region.historyOutputs.push_back(process_history_output(history_output));
         }
     }
     return new_history_region;
 }
 
-void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, CmdLineArguments &command_line_arguments) {
+void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb) {
     step_type new_step;
     new_step.name = step.name().CStr();
-    if ((command_line_arguments["step"] != "all") && (command_line_arguments["step"] != new_step.name)) {
+    if ((this->command_line_arguments->get("step") != "all") && (this->command_line_arguments->get("step") != new_step.name)) {
         return;
     }
     new_step.description = step.description().CStr();
@@ -1313,7 +1313,7 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, CmdLineArgume
     this->log_file->logVerbose("Reading frames.");
     for (int f=0; f<frames.size(); f++) {
         const odb_Frame& frame = frames.constGet(f);
-        frame_type new_frame = process_frame(frame, command_line_arguments);
+        frame_type new_frame = process_frame(frame);
         if (!new_frame.skip) {
             new_step.frames.push_back(new_frame);
         }
@@ -1324,27 +1324,27 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb, CmdLineArgume
     for (history_region_iterator.first(); !history_region_iterator.isDone(); history_region_iterator.next())
     {
         const odb_HistoryRegion& history_region = history_region_iterator.currentValue();
-        if ((command_line_arguments["history-region"] == "all") || (command_line_arguments["history-region"] == history_region.name().CStr())) {
-            new_step.historyRegions.push_back(process_history_region(history_region, command_line_arguments));
+        if ((this->command_line_arguments->get("history-region") == "all") || (this->command_line_arguments->get("history-region") == history_region.name().CStr())) {
+            new_step.historyRegions.push_back(process_history_region(history_region));
         }
     }
     this->steps.push_back(new_step);
 }
 
-void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments) {
+void SpadeObject::write_h5 () {
 // Write out data to hdf5 file
 
     // Open file for writing
-    std::ifstream hdf5File (command_line_arguments["extracted-file"].c_str());
-    this->log_file->log("Creating hdf5 file: " + command_line_arguments["extracted-file"]);
-    const H5std_string FILE_NAME(command_line_arguments["extracted-file"]);
+    std::ifstream hdf5File (this->command_line_arguments->get("extracted-file").c_str());
+    this->log_file->log("Creating hdf5 file: " + this->command_line_arguments->get("extracted-file"));
+    const H5std_string FILE_NAME(this->command_line_arguments->get("extracted-file"));
 
     H5::Exception::dontPrint();
     H5::H5File* h5_file_pointer = 0;
     try {
         h5_file_pointer = new H5::H5File(FILE_NAME, H5F_ACC_TRUNC);
     } catch(const H5::FileIException&) {
-        throw std::runtime_error("Issue opening file: " + command_line_arguments["extracted-file"]);
+        throw std::runtime_error("Issue opening file: " + this->command_line_arguments->get("extracted-file"));
     }
     H5::H5File h5_file = *h5_file_pointer;
 
@@ -1367,14 +1367,14 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments) {
     write_string_vector_dataset(job_data_group, "productAddOns", this->job_data.productAddOns);
     write_string_dataset(job_data_group, "version", this->job_data.version);
 
-    this->log_file->logVerbose("Writing sector definition at time: " + command_line_arguments.getTimeStamp(false));
+    this->log_file->logVerbose("Writing sector definition at time: " + this->command_line_arguments->getTimeStamp(false));
     H5::Group sector_definition_group = create_group(h5_file, "/odb/sectorDefinition");
     write_integer_dataset(sector_definition_group, "numSectors", this->sector_definition.numSectors);
     H5::Group symmetry_axis_group = create_group(h5_file, "/odb/sectorDefinition/symmetryAxis");
     write_string_dataset(symmetry_axis_group, "StartPoint", this->sector_definition.start_point);
     write_string_dataset(symmetry_axis_group, "EndPoint", this->sector_definition.end_point);
 
-    this->log_file->logVerbose("Writing section categories at time: " + command_line_arguments.getTimeStamp(false));
+    this->log_file->logVerbose("Writing section categories at time: " + this->command_line_arguments->getTimeStamp(false));
     H5::Group section_categories_group = create_group(h5_file, "/odb/sectionCategories");
     for (int i=0; i<this->section_categories.size(); i++) {
         string category_group_name = "/odb/sectionCategories/" + replace_slashes(this->section_categories[i].name);
@@ -1382,7 +1382,7 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments) {
         write_section_category(h5_file, section_category_group, category_group_name, this->section_categories[i]);
     }
 
-    this->log_file->logVerbose("Writing user data at time: " + command_line_arguments.getTimeStamp(false));
+    this->log_file->logVerbose("Writing user data at time: " + this->command_line_arguments->getTimeStamp(false));
     H5::Group user_data_group = create_group(h5_file, "/odb/userData");
     for (int i=0; i<this->user_xy_data.size(); i++) {
         string user_xy_data_name = "/odb/userData/" + replace_slashes(this->user_xy_data[i].name);
@@ -1398,19 +1398,19 @@ void SpadeObject::write_h5 (CmdLineArguments &command_line_arguments) {
         write_float_2D_data(user_xy_data_group, "data", this->user_xy_data[i].row_size, 2, this->user_xy_data[i].data);  // x-y data has two columns: x and y
     }
 
-    if (command_line_arguments.odbformat()) {  // Mimic the organization of data in an odb - though inefficient
+    if (this->command_line_arguments->odbformat()) {  // Mimic the organization of data in an odb - though inefficient
     }
-    this->log_file->logVerbose("Writing constraints data at time: " + command_line_arguments.getTimeStamp(false));
+    this->log_file->logVerbose("Writing constraints data at time: " + this->command_line_arguments->getTimeStamp(false));
     H5::Group contraints_group = create_group(h5_file, "/odb/constraints");
     write_constraints(h5_file, "odb/constraints");
-    this->log_file->logVerbose("Writing interactions data at time: " + command_line_arguments.getTimeStamp(false));
+    this->log_file->logVerbose("Writing interactions data at time: " + this->command_line_arguments->getTimeStamp(false));
     write_interactions(h5_file, "odb");
     H5::Group parts_group = create_group(h5_file, "/odb/parts");
-    this->log_file->logVerbose("Writing parts data at time: " + command_line_arguments.getTimeStamp(false));
+    this->log_file->logVerbose("Writing parts data at time: " + this->command_line_arguments->getTimeStamp(false));
     write_parts(h5_file, "odb/parts");
-    this->log_file->logVerbose("Writing assembly data at time: " + command_line_arguments.getTimeStamp(false));
+    this->log_file->logVerbose("Writing assembly data at time: " + this->command_line_arguments->getTimeStamp(false));
     write_assembly(h5_file, "odb/rootAssembly");
-    this->log_file->logVerbose("Writing steps data at time: " + command_line_arguments.getTimeStamp(false));
+    this->log_file->logVerbose("Writing steps data at time: " + this->command_line_arguments->getTimeStamp(false));
     write_steps(h5_file, "odb");
 
     h5_file.close();  // Close the hdf5 file
@@ -2499,8 +2499,8 @@ string SpadeObject::replace_slashes(const string &name) {
 }
 
 
-void SpadeObject::write_yaml (CmdLineArguments &command_line_arguments) {
+void SpadeObject::write_yaml () {
 }
 
-void SpadeObject::write_json (CmdLineArguments &command_line_arguments) {
+void SpadeObject::write_json () {
 }
