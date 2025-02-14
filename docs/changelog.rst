@@ -15,6 +15,7 @@ Internal Changes
 - Stop passing around log_file and command_line_options in favor of class member (:issue:`71`, :merge:`68`). 
   By `Prabhu Khalsa`_.
 - Rename variables named 'set' since it's a reserved word (:issue:`72`, :merge:`69`). By `Prabhu Khalsa`_.
+- Remove duplicate code in command line options class (:issue:`73`, :merge:`70`). By `Prabhu Khalsa`_.
 
 Enhancements
 ============
