@@ -84,14 +84,17 @@ struct element_type {
     vector<string> instanceNames;
 };
 
+/*
 struct node_type {
     int label;
     float coordinates[3];
 };
+*/
 
-struct extract_node_type {
+struct nodes_type {
     vector<int> nodes;
-    vector<array<float, 3>> coordinates;  // https://stackoverflow.com/questions/33711878/c-vector-of-float-arrays
+    vector<array<float, 3>> coordinates;
+//    vector<float[3]> coordinates;
     vector<set<string>> node_sets;
     map<int, int> node_index;  // Maps the node number to the index in the above vectors
 };
@@ -101,7 +104,8 @@ struct set_type {
     string type;  // Enum [NODE_SET, ELEMENT_SET, SURFACE_SET]
     int size;
     vector<string> instanceNames;
-    vector<node_type*> nodes;
+//    vector<node_type*> nodes;
+    nodes_type* nodes;
     vector<element_type*> elements;
     vector<string> faces;
 };
@@ -220,7 +224,8 @@ struct constraint_type {
 struct part_type {
     string name;
     string embeddedSpace;
-    vector<node_type*> nodes;
+//    vector<node_type*> nodes;
+    nodes_type* nodes;
     vector<element_type*> elements;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
@@ -274,7 +279,8 @@ struct rigid_body_type {
 struct instance_type {
     string name;
     string embeddedSpace;
-    vector<node_type*> nodes;
+//    vector<node_type*> nodes;
+    nodes_type* nodes;
     vector<element_type*> elements;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
@@ -300,7 +306,8 @@ struct connector_orientation_type {
 struct assembly_type {
     string name;
     string embeddedSpace;
-    vector<node_type*> nodes;
+//    vector<node_type*> nodes;
+    nodes_type* nodes;
     vector<element_type*> elements;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
@@ -414,7 +421,8 @@ struct history_point_type {
     section_point_type sectionPoint;
     string face;
     string position;
-    node_type* node;
+//    node_type* node;
+    int node_label;
     set_type region;
     string assemblyName;  // Just going to store the name not the entire assembly
     string instanceName;  // Just going to store the name not the entire instance
@@ -501,19 +509,21 @@ class SpadeObject {
           \sa process_odb()
         */
         tangential_behavior_type process_interaction_property (const odb_InteractionProperty &interaction_property, Logging &log_file);
-        //! Process odb_Node object from the odb file
+        //! Process odb_Node objects from the odb file
         /*!
-          Process odb_Node object, potentially save node data in data map, return pointer to location in map
-          \param node An odb_Node object in the odb
+          Process odb_Node objects, save node data in multiple vectors inside a map, return pointer to location in map
+//          \param node An odb_Node object in the odb
+          \param nodes An odb_SequenceNode object in the odb
           \param instance_name An instance name where this node might be found
           \param assembly_name An assembly name where this node might be found
           \param set_name A set name where this node might be found
           \param part_name A part name where this node might be found
           \param log_file Logging object for writing log messages
-          \return node_type pointer to map that stores node data
+          \return nodes_type pointer to map that stores node data
           \sa process_odb()
         */
-        node_type* process_node (const odb_Node &node, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, Logging &log_file);
+//        node_type* process_node (const odb_Node &node, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, Logging &log_file);
+        nodes_type* process_nodes (const odb_SequenceNode &nodes, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, Logging &log_file);
         //! Process odb_Element object from the odb file
         /*!
           Process odb_Element object, potentially save element data in data map, return pointer to location in map
@@ -970,7 +980,7 @@ class SpadeObject {
           \param node Node data to be written
           \param log_file Logging object for writing log messages
         */
-        void write_node(H5::H5File &h5_file, H5::Group &group, const string &group_name, const node_type &node, Logging &log_file);
+//        void write_node(H5::H5File &h5_file, H5::Group &group, const string &group_name, const node_type &node, Logging &log_file);
         //! Write nodes data to an HDF5 file
         /*!
           Write vector of node data into an HDF5 file
@@ -979,7 +989,8 @@ class SpadeObject {
           \param nodes Vector of node data to be written
           \param log_file Logging object for writing log messages
         */
-        void write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type*> &nodes, Logging &log_file);
+//        void write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type*> &nodes, Logging &log_file);
+        void write_nodes(H5::H5File &h5_file, const string &group_name, const nodes_type* nodes, Logging &log_file);
         //! Write sets data to an HDF5 file
         /*!
           Write vector of set data into an HDF5 file
@@ -1297,8 +1308,9 @@ class SpadeObject {
         vector<contact_explicit_type> explicit_interactions;
         constraint_type constraints;
         assembly_type root_assembly;
-        map<string, node_type> nodes;
-        map<string, map<int, extract_node_type>> instance_nodes;
+//        map<string, node_type> nodes;
+        map<string, nodes_type> instance_nodes;
+        map<string, nodes_type> part_nodes;
         map<string, element_type> elements;
         map<string, string> node_links;
         map<string, string> element_links;

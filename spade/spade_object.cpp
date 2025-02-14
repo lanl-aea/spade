@@ -297,17 +297,56 @@ tangential_behavior_type SpadeObject::process_interaction_property (const odb_In
     return interaction;
 }
 
-node_type* SpadeObject::process_node (const odb_Node &node, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, Logging &log_file) {
-    std::stringstream floatS;
-    string name = instance_name;
+//node_type* SpadeObject::process_node (const odb_Node &node, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, Logging &log_file) {
+nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, Logging &log_file) {
+    nodes_type new_nodes;
     if (!part_name.empty()) { 
-    }
-    if (name.empty()) { 
-        name = assembly_name;
+        try {  // If the node has been stored in nodes, just return the address to it
+            new_nodes = this->part_nodes.at(part_name);  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+        } catch (const std::out_of_range& oor) {
+            log_file.logDebug("New part nodes for part: " + part_name);
+        }
+    } else {
+        string name = instance_name;
         if (name.empty()) { 
-            name = "ALL"; 
+            name = assembly_name;
+            if (name.empty()) { name = "ALL"; }
+        }
+        try {
+            new_nodes = this->instance_nodes.at(name);  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+        } catch (const std::out_of_range& oor) {
+            log_file.logDebug("New nodes for: " + name);
         }
     }
+    for (int i=0; i < nodes.size(); i++) { 
+        odb_Node node = nodes.node(i);
+        int node_label = node.label();
+        int index;
+        try {
+            index = new_nodes.node_index.at(node_label);
+            new_nodes.node_sets[index].insert(set_name);
+            continue;
+        } catch (const std::out_of_range& oor) {
+            index = new_nodes.nodes.size();
+            new_nodes.node_index[node_label] = index;
+            new_nodes.nodes.push_back(node_label);
+            new_nodes.coordinates.push_back({node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]});
+//            float coordinates[3] = {node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]};
+//            new_nodes.coordinates.push_back(coordinates);
+            set<string> node_set;
+            node_set.insert(set_name);
+            new_nodes.node_sets.push_back(node_set);
+        }
+    }
+    if (!part_name.empty()) { 
+            this->part_nodes[part_name] = new_nodes;
+            return &this->part_nodes[part_name];
+    } else {
+            this->instance_nodes[name] = new_nodes;
+            return &this->part_nodes[name];
+    }
+    /*
+    std::stringstream floatS;
     floatS << std::noshowpos << std::setprecision(7) << node.label() << "_" << node.coordinates()[0] << "_" << node.coordinates()[0] << "_" << node.coordinates()[0];
     string node_key(floatS.str());  // Needed to set the maximum precision of a float (7) to make sure the string is unique
     try {  // If the node has been stored in nodes, just return the address to it
@@ -322,6 +361,7 @@ node_type* SpadeObject::process_node (const odb_Node &node, const string &instan
         this->nodes[node_key] = new_node;
         return &this->nodes[node_key];
     }
+    */
 }
 
 element_type* SpadeObject::process_element(const odb_Element &element, Logging &log_file) {
@@ -371,7 +411,8 @@ set_type SpadeObject::process_set(const odb_Set &set, Logging &log_file) {
         new_set.instanceNames.push_back(name.CStr());
         if (new_set.type == "Node Set") {
             const odb_SequenceNode& set_nodes = set.nodes(name);
-            for (int n=0; n < set_nodes.size(); n++) { new_set.nodes.push_back(process_node(set_nodes.node(n), name.CStr(), "", new_set.name, "", log_file)); }
+//            for (int n=0; n < set_nodes.size(); n++) { new_set.nodes.push_back(process_node(set_nodes.node(n), name.CStr(), "", new_set.name, "", log_file)); }
+            new_set.nodes = process_nodes(set_nodes, name.CStr(), "", new_set.name, "", log_file);
         } else if (new_set.type == "Element Set") {
             const odb_SequenceElement& set_elements = set.elements(name);
             for (int n=0; n < set_elements.size(); n++) { new_set.elements.push_back(process_element(set_elements.element(n), log_file)); }
@@ -391,9 +432,10 @@ set_type SpadeObject::process_set(const odb_Set &set, Logging &log_file) {
                     new_set.elements.push_back(process_element(set_elements.element(n), log_file));
                 }
             } else {
-                for (int n=0; n < set_nodes.size(); n++)  {
-                    new_set.nodes.push_back(process_node(set_nodes.node(n), name.CStr(), "", new_set.name, "", log_file));
-                }
+//                for (int n=0; n < set_nodes.size(); n++)  {
+//                    new_set.nodes.push_back(process_node(set_nodes.node(n), name.CStr(), "", new_set.name, "", log_file));
+//                }
+                new_set.nodes = process_nodes(set_nodes, name.CStr(), "", new_set.name, "", log_file);
             }
 
         } else {
@@ -597,7 +639,8 @@ part_type SpadeObject::process_part (const odb_Part &part, odb_Odb &odb, Logging
     new_part.embeddedSpace = this->dimension_enum_strings[part.embeddedSpace()];
 
     const odb_SequenceNode& nodes = part.nodes();
-    for (int i=0; i<nodes.size(); i++)  { new_part.nodes.push_back(process_node(nodes.node(i), "", "", "", new_part.name, log_file)); }
+//    for (int i=0; i<nodes.size(); i++)  { new_part.nodes.push_back(process_node(nodes.node(i), "", "", "", new_part.name, log_file)); }
+    new_part.nodes = process_nodes(nodes, "", "", "", new_part.name, log_file);
     odb_SequenceElement elements = part.elements();
     for (int i=0; i<elements.size(); i++)  { new_part.elements.push_back(process_element(elements.element(i), log_file)); }
 
@@ -744,7 +787,8 @@ instance_type SpadeObject::process_instance (const odb_Instance &instance, odb_O
     log_file.log("\telement count: " + to_string(instance.elements().size()));
 
     const odb_SequenceNode& nodes = instance.nodes();
-    for (int i=0; i<nodes.size(); i++)  { new_instance.nodes.push_back(process_node(nodes.node(i), new_instance.name, "", "", "", log_file)); }
+//    for (int i=0; i<nodes.size(); i++)  { new_instance.nodes.push_back(process_node(nodes.node(i), new_instance.name, "", "", "", log_file)); }
+    new_instance.nodes = process_nodes(nodes, new_instance.name, "", "", "", log_file);
     odb_SequenceElement elements = instance.elements();
     for (int i=0; i<elements.size(); i++)  { new_instance.elements.push_back(process_element(elements.element(i), log_file)); }
 
@@ -813,7 +857,8 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     log_file.log("\telement count: " + to_string(assembly.elements().size()));
 
     const odb_SequenceNode& nodes = assembly.nodes();
-    for (int i=0; i<nodes.size(); i++)  { new_assembly.nodes.push_back(process_node(nodes.node(i), "", new_assembly.name, "", "", log_file)); }
+//    for (int i=0; i<nodes.size(); i++)  { new_assembly.nodes.push_back(process_node(nodes.node(i), "", new_assembly.name, "", "", log_file)); }
+    new_assembly.nodes = process_nodes(nodes, "", new_assembly.name, "", "", log_file);
     const odb_SequenceElement& elements = assembly.elements();
     for (int i=0; i<elements.size(); i++)  { new_assembly.elements.push_back(process_element(elements.element(i), log_file)); }
 
@@ -1163,7 +1208,8 @@ history_point_type SpadeObject::process_history_point (const odb_HistoryPoint hi
         new_history_point.element = process_element(history_point.element(), log_file);
         new_history_point.hasElement = true;
     } catch(odb_BaseException& exc) { new_history_point.hasElement = false; }
-    new_history_point.node = process_node(history_point.node(), new_history_point.instanceName, new_history_point.assemblyName, "", "", log_file);
+//    new_history_point.node = process_node(history_point.node(), new_history_point.instanceName, new_history_point.assemblyName, "", "", log_file);
+    new_history_point.node_label = history_point.node().label();
     if (history_point.node().label() < 0) {
         new_history_point.hasNode = false;
     } else {
@@ -1621,7 +1667,7 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
     if (history_point.hasNode) {
         string node_group_name = history_point_group_name + "/node";
         H5::Group node_group = create_group(h5_file, node_group_name, log_file);
-        write_node(h5_file, node_group, node_group_name, *history_point.node, log_file);
+//        write_node(h5_file, node_group, node_group_name, *history_point.node, log_file);
     }
     write_set(h5_file, history_point_group_name, history_point.region, log_file);
     write_string_dataset(history_point_group, "assembly", history_point.assemblyName, log_file);
@@ -1958,6 +2004,7 @@ void SpadeObject::write_elements(H5::H5File &h5_file, const string &group_name, 
     }
 }
 
+    /*
 void SpadeObject::write_node(H5::H5File &h5_file, H5::Group &group, const string &group_name, const node_type &node, Logging &log_file) {
     string node_link;
     string newGroupName = group_name + "/" + to_string(node.label);
@@ -1991,12 +2038,16 @@ void SpadeObject::write_node(H5::H5File &h5_file, H5::Group &group, const string
         dataspace.close();
     }
 }
+    */
 
-void SpadeObject::write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type*> &nodes, Logging &log_file) {
+//void SpadeObject::write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type*> &nodes, Logging &log_file) {
+void SpadeObject::write_nodes(H5::H5File &h5_file, const string &group_name, const nodes_type* nodes, Logging &log_file) {
+    /*
     if (!nodes.empty()) {
         H5::Group nodes_group = create_group(h5_file, group_name + "/nodes", log_file);
         for (auto node : nodes) { write_node(h5_file, nodes_group, group_name + "/nodes", *node, log_file); }
     }
+    */
 }
 
 void SpadeObject::write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets, Logging &log_file) {
