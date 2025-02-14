@@ -84,19 +84,14 @@ struct element_type {
     vector<string> instanceNames;
 };
 
-/*
 struct node_type {
-    int label;
-    float coordinates[3];
+    array<float, 3> coordinates;
+    set<string> sets;
 };
-*/
 
 struct nodes_type {
-    vector<int> nodes;
-    vector<array<float, 3>> coordinates;
-//    vector<float[3]> coordinates;
-    vector<set<string>> node_sets;
-    map<int, int> node_index;  // Maps the node number to the index in the above vectors
+    map<int, node_type> nodes;
+    map <string, set<int>> node_sets;
 };
 
 struct set_type {
@@ -104,7 +99,6 @@ struct set_type {
     string type;  // Enum [NODE_SET, ELEMENT_SET, SURFACE_SET]
     int size;
     vector<string> instanceNames;
-//    vector<node_type*> nodes;
     nodes_type* nodes;
     vector<element_type*> elements;
     vector<string> faces;
@@ -224,7 +218,6 @@ struct constraint_type {
 struct part_type {
     string name;
     string embeddedSpace;
-//    vector<node_type*> nodes;
     nodes_type* nodes;
     vector<element_type*> elements;
     vector<set_type> nodeSets;
@@ -279,7 +272,6 @@ struct rigid_body_type {
 struct instance_type {
     string name;
     string embeddedSpace;
-//    vector<node_type*> nodes;
     nodes_type* nodes;
     vector<element_type*> elements;
     vector<set_type> nodeSets;
@@ -306,7 +298,6 @@ struct connector_orientation_type {
 struct assembly_type {
     string name;
     string embeddedSpace;
-//    vector<node_type*> nodes;
     nodes_type* nodes;
     vector<element_type*> elements;
     vector<set_type> nodeSets;
@@ -421,7 +412,6 @@ struct history_point_type {
     section_point_type sectionPoint;
     string face;
     string position;
-//    node_type* node;
     int node_label;
     float node_coordinates[3];
     set_type region;
@@ -523,7 +513,6 @@ class SpadeObject {
           \return nodes_type pointer to map that stores node data
           \sa process_odb()
         */
-//        node_type* process_node (const odb_Node &node, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, Logging &log_file);
         nodes_type* process_nodes (const odb_SequenceNode &nodes, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, Logging &log_file);
         //! Process odb_Element object from the odb file
         /*!
@@ -974,24 +963,16 @@ class SpadeObject {
         */
         void write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type*> &elements, Logging &log_file);
         //! Write node data to an HDF5 file
-        /*!
-          Write data from node type into an HDF5 file
-          \param h5_file Open h5_file object for writing
-          \param group_name Name of the group where data is to be written
-          \param node Node data to be written
-          \param log_file Logging object for writing log messages
-        */
-//        void write_node(H5::H5File &h5_file, H5::Group &group, const string &group_name, const node_type &node, Logging &log_file);
         //! Write nodes data to an HDF5 file
         /*!
           Write vector of node data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group HDF5 group in which to write the new data
           \param nodes Vector of node data to be written
+          \param set_name String with the name of the set if given
           \param log_file Logging object for writing log messages
         */
-//        void write_nodes(H5::H5File &h5_file, const string &group_name, const vector<node_type*> &nodes, Logging &log_file);
-        void write_nodes(H5::H5File &h5_file, H5::Group &group, const nodes_type* nodes, Logging &log_file);
+        void write_nodes(H5::H5File &h5_file, H5::Group &group, const nodes_type* nodes, const string &set_name, Logging &log_file);
         //! Write a dataset for node coordinates which are stored as a vector of arrays of size 3
         /*!
           \param group Name of HDF5 group in which to write the new dataset
@@ -1317,7 +1298,6 @@ class SpadeObject {
         vector<contact_explicit_type> explicit_interactions;
         constraint_type constraints;
         assembly_type root_assembly;
-//        map<string, node_type> nodes;
         map<string, nodes_type> instance_nodes;
         map<string, nodes_type> part_nodes;
         map<string, element_type> elements;
