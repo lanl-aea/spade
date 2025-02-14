@@ -370,34 +370,34 @@ element_type* SpadeObject::process_element(const odb_Element &element) {
     }
 }
 
-set_type SpadeObject::process_set(const odb_Set &set) {
+set_type SpadeObject::process_set(const odb_Set &odb_set) {
     set_type new_set;
-    if (set.name().empty()) {
+    if (odb_set.name().empty()) {
         return new_set;
     }
 
-    new_set.name = set.name().CStr();
-    switch(set.type()) {
+    new_set.name = odb_set.name().CStr();
+    switch(odb_set.type()) {
         case odb_Enum::NODE_SET: new_set.type = "Node Set"; break;
         case odb_Enum::ELEMENT_SET: new_set.type = "Element Set"; break;
         case odb_Enum::SURFACE_SET: new_set.type = "Surface Set"; break;
     }
     this->log_file->logVerbose("\t\t" + new_set.name + ": " + new_set.type);
 
-    odb_SequenceString names = set.instanceNames();
+    odb_SequenceString names = odb_set.instanceNames();
     for (int i=0; i<names.size(); i++) {
         odb_String name = names.constGet(i);
         new_set.instanceNames.push_back(name.CStr());
         if (new_set.type == "Node Set") {
-            const odb_SequenceNode& set_nodes = set.nodes(name);
+            const odb_SequenceNode& set_nodes = odb_set.nodes(name);
             new_set.nodes = process_nodes(set_nodes, name.CStr(), "", new_set.name, "");
         } else if (new_set.type == "Element Set") {
-            const odb_SequenceElement& set_elements = set.elements(name);
+            const odb_SequenceElement& set_elements = odb_set.elements(name);
             for (int n=0; n < set_elements.size(); n++) { new_set.elements.push_back(process_element(set_elements.element(n))); }
         } else if (new_set.type == "Surface Set") {
-            const odb_SequenceElement& set_elements = set.elements(name);
-            const odb_SequenceElementFace& set_faces = set.faces(name);
-            const odb_SequenceNode& set_nodes = set.nodes(name);
+            const odb_SequenceElement& set_elements = odb_set.elements(name);
+            const odb_SequenceElementFace& set_faces = odb_set.faces(name);
+            const odb_SequenceNode& set_nodes = odb_set.nodes(name);
 
             if(set_elements.size() && set_faces.size())
             {
@@ -2021,33 +2021,33 @@ void SpadeObject::write_node_coordinates_dataset(const H5::Group &group, const v
 void SpadeObject::write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets) {
     if (!sets.empty()) {
         H5::Group sets_group = create_group(h5_file, group_name);
-        for (auto set : sets) { write_set(h5_file, group_name, set); }
+        for (auto odb_set : sets) { write_set(h5_file, group_name, odb_set); }
     }
 }
 
-void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const set_type &set) {
+void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const set_type &odb_set) {
     std::regex nodes_pattern("\\s*ALL\\s*NODES\\s*");
     std::regex elements_pattern("\\s*ALL\\s*ELEMENTS\\s*");
-    if ((!set.name.empty()) && (!regex_match(set.name, nodes_pattern)) && (!regex_match(set.name, elements_pattern))) {
+    if ((!odb_set.name.empty()) && (!regex_match(odb_set.name, nodes_pattern)) && (!regex_match(odb_set.name, elements_pattern))) {
         // There is no reason to write a set named ' ALL NODES' when all the nodes can be found under the 'nodes' heading
-        string set_group_name = group_name + "/" + replace_slashes(set.name);
+        string set_group_name = group_name + "/" + replace_slashes(odb_set.name);
         H5::Group set_group = create_group(h5_file, set_group_name);
-        write_attribute(set_group, "type", set.type);
-        write_string_vector_dataset(set_group, "instanceNames", set.instanceNames);
+        write_attribute(set_group, "type", odb_set.type);
+        write_string_vector_dataset(set_group, "instanceNames", odb_set.instanceNames);
 //        if (this->command_line_arguments->odbformat()) {
-            if (set.type == "Node Set") {
-                write_nodes(h5_file, set_group, set.nodes, set.name);
-            } else if (set.type == "Element Set") {
-                write_elements(h5_file, set_group_name, set.elements);
-            } else if (set.type == "Surface Set") {
-                if(!set.elements.empty() && !set.faces.empty())
+            if (odb_set.type == "Node Set") {
+                write_nodes(h5_file, set_group, odb_set.nodes, odb_set.name);
+            } else if (odb_set.type == "Element Set") {
+                write_elements(h5_file, set_group_name, odb_set.elements);
+            } else if (odb_set.type == "Surface Set") {
+                if(!odb_set.elements.empty() && !odb_set.faces.empty())
                 {
-                    write_elements(h5_file, set_group_name, set.elements);
-                    write_string_vector_dataset(set_group, "faces", set.faces);
-                } else if(!set.elements.empty()) {
-                    write_elements(h5_file, set_group_name, set.elements);
+                    write_elements(h5_file, set_group_name, odb_set.elements);
+                    write_string_vector_dataset(set_group, "faces", odb_set.faces);
+                } else if(!odb_set.elements.empty()) {
+                    write_elements(h5_file, set_group_name, odb_set.elements);
                 } else {
-                    write_nodes(h5_file, set_group, set.nodes, set.name);
+                    write_nodes(h5_file, set_group, odb_set.nodes, odb_set.name);
                 }
             }
 //        }

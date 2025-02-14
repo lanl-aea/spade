@@ -520,11 +520,11 @@ class SpadeObject {
         //! Process odb set object from the odb file
         /*!
           Process odb set object and return the values in an set_type
-          \param set An odb_Set object in the odb
+          \param odb_set An odb_Set object in the odb
           \return set_type with data stored from the odb
           \sa process_odb()
         */
-        set_type process_set (const odb_Set &set);
+        set_type process_set (const odb_Set &odb_set);
         //! Process interactions from the odb file
         /*!
           Process interactions and store the results
@@ -926,9 +926,9 @@ class SpadeObject {
           Write data from a set type into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
-          \param set Set data to be written
+          \param odb_set Set data to be written
         */
-        void write_set(H5::H5File &h5_file, const string &group_name, const set_type &set);
+        void write_set(H5::H5File &h5_file, const string &group_name, const set_type &odb_set);
         //! Write a section category type to an HDF5 file
         /*!
           Write data from section category type into an HDF5 file
