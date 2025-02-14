@@ -11,6 +11,7 @@ v0.3.8 (unreleased)
 Internal Changes
 ================
 - Create top level instance groups in hdf5 file (:issue:`68`, :merge:`65`). By `Prabhu Khalsa`_.
+- Refactor how nodes are stored for new extract format (:issue:`70`, :merge:`67`). By `Prabhu Khalsa`_.
 
 Enhancements
 ============
