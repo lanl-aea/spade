@@ -60,7 +60,9 @@ environment:
     # place the common modulefiles in an accessible location
     - cp ${PWD}/modulefiles/* ${aea_modulefiles}
   tags:
-    - shell-aea
+    - shell
+    - aea
+    - linux
 
 fast-test:
   stage: test
@@ -80,7 +82,9 @@ fast-test:
         coverage_format: cobertura
         path: build/pytest/coverage.xml
   tags:
-    - shell-aea
+    - shell
+    - aea
+    - linux
 
 style:
   stage: test
@@ -92,7 +96,9 @@ style:
   script:
     - scons flake8 black-check
   tags:
-    - shell-aea
+    - shell
+    - aea
+    - linux
 
 conda-build:
   stage: test
@@ -120,7 +126,9 @@ conda-build:
     paths:
       - conda-bld/linux-64/spade-*-*.tar.bz2
   tags:
-    - shell-aea
+    - shell
+    - aea
+    - linux
 
 # https://re-git.lanl.gov/aea/developer-operations/aea-conda
 aea-conda-deploy:
@@ -161,4 +169,6 @@ pages:
       # It MUST be called public
       - public
   tags:
-    - shell-aea
+    - shell
+    - aea
+    - linux
