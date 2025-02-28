@@ -947,6 +947,15 @@ class SpadeObject {
           \param string_value The string that should be written in the new attribute
         */
         void write_attribute(const H5::Group &group, const string &attribute_name, const string &string_value);
+        //! Write a vector of strings as an attribute
+        /*!
+          Create an attribute with a vector of strings using the passed-in values
+          \param h5_file Open h5_file object for writing
+          \param group Name of HDF5 group in which to write the new attribute
+          \param attribute_name Name of the new attribute where a string is to be written
+          \param string_values The strings that should be written in the new attribute
+        */
+        void write_vector_attribute(const H5::Group &group, const string &attribute_name, const vector<string> &string_values);
         //! Write a string as a dataset
         /*!
           Create a dataset with a single string using the passed-in values

@@ -1364,7 +1364,7 @@ void SpadeObject::write_h5 () {
     write_attribute(job_data_group, "modificationTime", this->job_data.modificationTime);
     write_attribute(job_data_group, "name", this->job_data.name);
     write_attribute(job_data_group, "precision", this->job_data.precision);
-    write_string_vector_dataset(job_data_group, "productAddOns", this->job_data.productAddOns);
+    write_vector_attribute(job_data_group, "productAddOns", this->job_data.productAddOns);
     write_attribute(job_data_group, "version", this->job_data.version);
 
     this->log_file->logVerbose("Writing sector definition at time: " + this->command_line_arguments->getTimeStamp(false));
@@ -2071,6 +2071,27 @@ void SpadeObject::write_attribute(const H5::Group& group, const string & attribu
     H5::StrType string_type (0, string_size);  // Use the length of the string or 1 if string is blank
     H5::Attribute attribute = group.createAttribute(attribute_name, string_type, attribute_space);
     attribute.write(string_type, string_value);
+    attribute_space.close();
+}
+
+void SpadeObject::write_vector_attribute(const H5::Group &group, const string &attribute_name, const vector<string> &string_values) {
+    if (string_values.empty()) { return; }
+    // Convert the vector of strings to a C-style array of c-strings
+    const char** c_string_array = new const char*[string_values.size()];
+    for (size_t i = 0; i < string_values.size(); ++i) {
+        c_string_array[i] = string_values[i].c_str();
+    }
+    hsize_t dimensions[1] {string_values.size()};
+    H5::DataSpace  attribute_space(1, dimensions);
+    H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
+    try {
+        H5::Attribute attribute = group.createAttribute(attribute_name, string_type, attribute_space);
+        attribute.write(string_type, c_string_array);
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Unable to create attribute " + attribute_name + ". " + e.getDetailMsg());
+    }
+    // Clean up
+    delete[] c_string_array;
     attribute_space.close();
 }
 
