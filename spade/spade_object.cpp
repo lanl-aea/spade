@@ -2069,8 +2069,12 @@ void SpadeObject::write_attribute(const H5::Group& group, const string & attribu
     int string_size = string_value.size();
     if (string_size == 0) { string_size++; }  // If the string is empty, make the string size equal to one, as StrType must have a positive size
     H5::StrType string_type (0, string_size);  // Use the length of the string or 1 if string is blank
-    H5::Attribute attribute = group.createAttribute(attribute_name, string_type, attribute_space);
-    attribute.write(string_type, string_value);
+    try {
+        H5::Attribute attribute = group.createAttribute(attribute_name, string_type, attribute_space);
+        attribute.write(string_type, string_value);
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Unable to create attribute " + attribute_name + ". " + e.getDetailMsg());
+    }
     attribute_space.close();
 }
 
