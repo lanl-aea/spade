@@ -20,6 +20,7 @@ Internal Changes
 Enhancements
 ============
 - Add command line option to specify odb format (:issue:`67`, :merge:`64`). By `Prabhu Khalsa`_.
+- Write odb and jobData as hdf5 attributes instead of datasets (:issue:`76`, :merge:`74`). By `Prabhu Khalsa`_.
 
 *******************
 v0.3.7 (2025-02-06)
