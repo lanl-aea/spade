@@ -1350,22 +1350,22 @@ void SpadeObject::write_h5 () {
 
     this->log_file->logVerbose("Writing top level data to odb group.");
     H5::Group odb_group = create_group(h5_file, "/odb");
-    write_string_dataset(odb_group, "name", this->name);
-    write_string_dataset(odb_group, "analysisTitle", this->analysisTitle);
-    write_string_dataset(odb_group, "description", this->description);
-    write_string_dataset(odb_group, "path", this->path);
-    write_string_dataset(odb_group, "isReadOnly", this->isReadOnly);
+    write_attribute(odb_group, "name", this->name);
+    write_attribute(odb_group, "analysisTitle", this->analysisTitle);
+    write_attribute(odb_group, "description", this->description);
+    write_attribute(odb_group, "path", this->path);
+    write_attribute(odb_group, "isReadOnly", this->isReadOnly);
 
     this->log_file->logVerbose("Writing jobData.");
     H5::Group job_data_group = create_group(h5_file, "/odb/jobData");
-    write_string_dataset(job_data_group, "analysisCode", this->job_data.analysisCode);
-    write_string_dataset(job_data_group, "creationTime", this->job_data.creationTime);
-    write_string_dataset(job_data_group, "machineName", this->job_data.machineName);
-    write_string_dataset(job_data_group, "modificationTime", this->job_data.modificationTime);
-    write_string_dataset(job_data_group, "name", this->job_data.name);
-    write_string_dataset(job_data_group, "precision", this->job_data.precision);
+    write_attribute(job_data_group, "analysisCode", this->job_data.analysisCode);
+    write_attribute(job_data_group, "creationTime", this->job_data.creationTime);
+    write_attribute(job_data_group, "machineName", this->job_data.machineName);
+    write_attribute(job_data_group, "modificationTime", this->job_data.modificationTime);
+    write_attribute(job_data_group, "name", this->job_data.name);
+    write_attribute(job_data_group, "precision", this->job_data.precision);
     write_string_vector_dataset(job_data_group, "productAddOns", this->job_data.productAddOns);
-    write_string_dataset(job_data_group, "version", this->job_data.version);
+    write_attribute(job_data_group, "version", this->job_data.version);
 
     this->log_file->logVerbose("Writing sector definition at time: " + this->command_line_arguments->getTimeStamp(false));
     H5::Group sector_definition_group = create_group(h5_file, "/odb/sectorDefinition");
