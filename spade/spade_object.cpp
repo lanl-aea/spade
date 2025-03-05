@@ -2029,39 +2029,6 @@ void SpadeObject::write_interactions(H5::H5File &h5_file, const string &group_na
     }
 }
 
-/*
-void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const string &group_name, const element_type &element) {
-    string element_link;
-    string newGroupName = group_name + "/" + to_string(element.label);
-    string element_key;
-    string element_label = to_string(element.label);
-    hid_t file_id = h5_file.getId();
-    for (int i=0; i < element.instanceNames.size(); i++) {
-        element_key += element.instanceNames[i];
-    }
-    element_key = element_label + element_key;
-    try {
-        element_link = this->element_links.at(element_key);
-        try {
-            Exception::dontPrint();
-            h5_file.link(H5L_TYPE_HARD, element_link, newGroupName);
-        } catch (FileIException error) {
-            this->log_file->logWarning("Could not create link at " + newGroupName);
-        }
-    } catch (const std::out_of_range& oor) {
-        H5::Group element_group = create_group(h5_file, group_name + "/" + element_label);
-        write_string_dataset(element_group, "type", element.type);
-        write_integer_vector_dataset(element_group, "connectivity", element.connectivity);
-        H5::Group section_category_group = create_group(h5_file, group_name + "/" + element_label + "/sectionCategory");
-        write_section_category(h5_file, section_category_group, group_name + "/" + element_label + "/sectionCategory", element.sectionCategory);
-        write_string_vector_dataset(element_group, "instanceNames", element.instanceNames);
-
-        this->element_links[element_key] = newGroupName;  // Store link for later
-    }
-
-}
-*/
-
 void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const string &group_name, const elements_type* elements, const string &set_name) {
     elements_type all_elements = *elements;
     if (!all_elements.elements.empty()) {
