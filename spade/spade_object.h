@@ -84,6 +84,11 @@ struct element_type {
     vector<string> instanceNames;
 };
 
+struct elements_type {
+    map<int, element_type> elements;
+    map <string, set<int>> element_sets;
+};
+
 struct node_type {
     array<float, 3> coordinates;
     set<string> sets;
@@ -92,6 +97,11 @@ struct node_type {
 struct nodes_type {
     map<int, node_type> nodes;
     map <string, set<int>> node_sets;
+};
+
+struct mesh_type {
+    nodes_type nodes;
+    elements_type elements;
 };
 
 struct set_type {
@@ -499,7 +509,6 @@ class SpadeObject {
         //! Process odb_Node objects from the odb file
         /*!
           Process odb_Node objects, save node data in multiple vectors inside a map, return pointer to location in map
-//          \param node An odb_Node object in the odb
           \param nodes An odb_SequenceNode object in the odb
           \param instance_name An instance name where this node might be found
           \param assembly_name An assembly name where this node might be found
@@ -509,13 +518,18 @@ class SpadeObject {
           \sa process_odb()
         */
         nodes_type* process_nodes (const odb_SequenceNode &nodes, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name);
-        //! Process odb_Element object from the odb file
+        //! Process odb_Element objects from the odb file
         /*!
-          Process odb_Element object, potentially save element data in data map, return pointer to location in map
-          \param element An odb_Element object in the odb
-          \return element_type pointer to map that stores element data
+          Process odb_Element objects, save element data in data map, return pointer to location in map
+          \param elements An odb_Element object in the odb
+          \param instance_name An instance name where this node might be found
+          \param assembly_name An assembly name where this node might be found
+          \param set_name A set name where this node might be found
+          \param part_name A part name where this node might be found
+          \return elements_type pointer to map that stores element data
           \sa process_odb()
         */
+//        elements_type* process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name);
         element_type* process_element (const odb_Element &element);
         //! Process odb set object from the odb file
         /*!
@@ -1210,8 +1224,8 @@ class SpadeObject {
         vector<contact_explicit_type> explicit_interactions;
         constraint_type constraints;
         assembly_type root_assembly;
-        map<string, nodes_type> instance_nodes;
-        map<string, nodes_type> part_nodes;
+        map<string, mesh_type> instance_mesh;
+        map<string, mesh_type> part_mesh;
         map<string, element_type> elements;
         map<string, string> node_links;
         map<string, string> element_links;

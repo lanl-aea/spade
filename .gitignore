@@ -28,6 +28,8 @@ ABQ*
 *pycache*/
 *.jou
 .coverage
+.idea/
+.vscode/
 spade/spade_????_*
 spade/spade_????.HF*_*
 *.stdout
