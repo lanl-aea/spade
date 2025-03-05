@@ -343,9 +343,62 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
     }
 }
 
-// elements_type* SpadeObject::process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name) {
-element_type* SpadeObject::process_element(const odb_Element &element) {
-    // TODO: consider another way of uniquely identifying an element, since the string with all the instance names can be quite long
+elements_type* SpadeObject::process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name) {
+    elements_type new_elements;
+    string name;
+    if (!part_name.empty()) { 
+        try {  // If the element has been stored in elements, just return the address to it
+            new_elements = this->part_mesh.at(part_name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+        } catch (const std::out_of_range& oor) {
+            this->log_file->logDebug("New part elements for part: " + part_name);
+        }
+    } else {
+        name = instance_name;
+        if (name.empty()) { 
+            name = assembly_name;
+            if (name.empty()) { name = "ALL"; }
+        }
+        try {
+            new_elements = this->instance_mesh.at(name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+        } catch (const std::out_of_range& oor) {
+            this->log_file->logDebug("New elements for: " + name);
+        }
+    }
+    for (int i=0; i < elements.size(); i++) { 
+    map<string, map<int, element_type>> elements; // accessed like elements_type[type][label]
+        odb_Element element = elements.element(i);
+        int element_label = element.label();
+        string type = element.type().CStr();
+        map<int, element_type> new_elements_map;
+        element_type new_element;
+        try {
+            new_elements_map = new_elements.elements.at(type);
+            try {
+                new_element = new_elements_map.elements[type].at(element_label);
+                new_elements_map.elements[type][element_label].sets.insert(set_name);
+                if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
+                continue;
+            } catch (const std::out_of_range& oor) {
+//                new_nodes.nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]};
+// Add element members to new_element
+                new_elements[type][label] = new_element;
+                new_elements.elements[element_label].sets.insert(set_name);
+                if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
+            }
+        } catch (const std::out_of_range& oor) {
+// Add element members to new_element
+            new_elements_map[label] = new_element;
+            new_elements[type] = new_elements_map;
+        }
+    }
+    if (!part_name.empty()) { 
+            this->part_mesh[part_name].elements = new_elements;
+            return &this->part_mesh[part_name].elements;
+    } else {
+            this->instance_mesh[name].elements = new_elements;
+            return &this->instance_mesh[name].elements;
+    }
+
     element_type new_element;
     string element_key;
     new_element.label = element.label();

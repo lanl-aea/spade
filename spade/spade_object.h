@@ -77,15 +77,16 @@ struct tangential_behavior_type {
 };
 
 struct element_type {
-    int label;
-    string type;
+//    int label;
+//    string type;
     vector<int> connectivity;
     section_category_type sectionCategory;
     vector<string> instanceNames;
+    set<string> sets;
 };
 
 struct elements_type {
-    map<int, element_type> elements;
+    map<string, map<int, element_type>> elements; // accessed like elements_type[type][label]
     map <string, set<int>> element_sets;
 };
 
@@ -529,8 +530,7 @@ class SpadeObject {
           \return elements_type pointer to map that stores element data
           \sa process_odb()
         */
-//        elements_type* process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name);
-        element_type* process_element (const odb_Element &element);
+        elements_type* process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name);
         //! Process odb set object from the odb file
         /*!
           Process odb set object and return the values in an set_type
