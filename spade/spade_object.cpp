@@ -388,7 +388,7 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
                 new_element.sectionCategory = process_section_category(element.sectionCategory());
 
                 new_elements.elements[type][element_label] = new_element;
-                new_elements.elements[element_label].sets.insert(set_name);
+                new_elements.elements[type][element_label].sets.insert(set_name);
                 if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
             }
         } catch (const std::out_of_range& oor) {
@@ -2060,7 +2060,7 @@ void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const str
 
 void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const elements_type* elements, const string &set_name) {
 // void SpadeObject::write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type*> &elements) {
-    if (!elements.empty()) {
+    if (!elements->elements.empty()) {
 //        H5::Group elements_group = create_group(h5_file, group_name + "/elements");
 //        for (auto element : elements) { write_element(h5_file, elements_group, group_name + "/elements", *element); }
     }
@@ -2127,11 +2127,11 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
             } else if (odb_set.type == "Element Set") {
                 write_elements(h5_file, set_group, odb_set.elements, odb_set.name);
             } else if (odb_set.type == "Surface Set") {
-                if(!odb_set.elements.empty() && !odb_set.faces.empty())
+                if(!odb_set.elements->elements.empty() && !odb_set.faces.empty())
                 {
                     write_elements(h5_file, set_group, odb_set.elements, odb_set.name);
                     write_string_vector_dataset(set_group, "faces", odb_set.faces);
-                } else if(!odb_set.elements.empty()) {
+                } else if(!odb_set.elements->elements.empty()) {
                     write_elements(h5_file, set_group, odb_set.elements, odb_set.name);
                 } else {
                     write_nodes(h5_file, set_group, odb_set.nodes, odb_set.name);
