@@ -379,14 +379,27 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
                 if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
                 continue;
             } catch (const std::out_of_range& oor) {
-//                new_nodes.nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]};
-// Add element members to new_element
+                // Add element members to new_element
+                for (int i=0; i < element.instanceNames.size(); i++) { new_element.instanceNames.push_back(element.instance_names(i).CStr()); }
+                int element_connectivity_size;
+                const int* const connectivity = element.connectivity(element_connectivity_size);
+                for (int i=0; i < element_connectivity_size; i++) { new_element.connectivity.push_back(connectivity[i]); }
+                this->log_file->logDebug("\t\telement " + to_string(element_label) + ": connectivity count: " + to_string(new_element.connectivity.size()) + " instances count:" + to_string(new_element.instanceNames.size()));
+                new_element.sectionCategory = process_section_category(element.sectionCategory());
+
                 new_elements[type][label] = new_element;
                 new_elements.elements[element_label].sets.insert(set_name);
                 if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
             }
         } catch (const std::out_of_range& oor) {
-// Add element members to new_element
+            // Add element members to new_element
+            for (int i=0; i < element.instanceNames.size(); i++) { new_element.instanceNames.push_back(element.instance_names(i).CStr()); }
+            int element_connectivity_size;
+            const int* const connectivity = element.connectivity(element_connectivity_size);
+            for (int i=0; i < element_connectivity_size; i++) { new_element.connectivity.push_back(connectivity[i]); }
+            this->log_file->logDebug("\t\telement " + to_string(element_label) + ": connectivity count: " + to_string(new_element.connectivity.size()) + " instances count:" + to_string(new_element.instanceNames.size()));
+            new_element.sectionCategory = process_section_category(element.sectionCategory());
+
             new_elements_map[label] = new_element;
             new_elements[type] = new_elements_map;
         }
@@ -399,6 +412,7 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             return &this->instance_mesh[name].elements;
     }
 
+    /*
     element_type new_element;
     string element_key;
     new_element.label = element.label();
@@ -422,6 +436,7 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
         this->elements[element_key] = new_element;
         return &this->elements[element_key];
     }
+    */
 }
 
 set_type SpadeObject::process_set(const odb_Set &odb_set) {
@@ -447,7 +462,8 @@ set_type SpadeObject::process_set(const odb_Set &odb_set) {
             new_set.nodes = process_nodes(set_nodes, name.CStr(), "", new_set.name, "");
         } else if (new_set.type == "Element Set") {
             const odb_SequenceElement& set_elements = odb_set.elements(name);
-            for (int n=0; n < set_elements.size(); n++) { new_set.elements.push_back(process_element(set_elements.element(n))); }
+//            for (int n=0; n < set_elements.size(); n++) { new_set.elements.push_back(process_element(set_elements.element(n))); }
+            new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
         } else if (new_set.type == "Surface Set") {
             const odb_SequenceElement& set_elements = odb_set.elements(name);
             const odb_SequenceElementFace& set_faces = odb_set.faces(name);
@@ -456,13 +472,17 @@ set_type SpadeObject::process_set(const odb_Set &odb_set) {
             if(set_elements.size() && set_faces.size())
             {
                 for (int n=0; n<set_elements.size(); n++) {
-                    new_set.elements.push_back(process_element(set_elements.element(n)));
+//                    new_set.elements.push_back(process_element(set_elements.element(n)));
                     new_set.faces.push_back(this->faces_enum_strings[set_faces.constGet(n)]);
                 }
+                new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
             } else if(set_elements.size()) {
+                /*
                 for (int n=0; n < set_elements.size(); n++) {
                     new_set.elements.push_back(process_element(set_elements.element(n)));
                 }
+                */
+                new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
             } else {
                 new_set.nodes = process_nodes(set_nodes, name.CStr(), "", new_set.name, "");
             }
@@ -670,7 +690,8 @@ part_type SpadeObject::process_part (const odb_Part &part, odb_Odb &odb) {
     const odb_SequenceNode& nodes = part.nodes();
     new_part.nodes = process_nodes(nodes, "", "", "", new_part.name);
     odb_SequenceElement elements = part.elements();
-    for (int i=0; i<elements.size(); i++)  { new_part.elements.push_back(process_element(elements.element(i))); }
+//    for (int i=0; i<elements.size(); i++)  { new_part.elements.push_back(process_element(elements.element(i))); }
+    new_part.elements = process_elements(elements, "", "", "", new_part.name);
 
     odb_SetRepositoryIT node_iter(part.nodeSets());
     for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
@@ -817,7 +838,8 @@ instance_type SpadeObject::process_instance (const odb_Instance &instance, odb_O
     const odb_SequenceNode& nodes = instance.nodes();
     new_instance.nodes = process_nodes(nodes, new_instance.name, "", "", "");
     odb_SequenceElement elements = instance.elements();
-    for (int i=0; i<elements.size(); i++)  { new_instance.elements.push_back(process_element(elements.element(i))); }
+//    for (int i=0; i<elements.size(); i++)  { new_instance.elements.push_back(process_element(elements.element(i))); }
+    new_instance.elements = process_elements(elements, new_instance.name, "", "", "");
 
     this->log_file->logVerbose("\tnodeSets:");
     odb_SetRepositoryIT node_iter(instance.nodeSets());
@@ -886,7 +908,8 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     const odb_SequenceNode& nodes = assembly.nodes();
     new_assembly.nodes = process_nodes(nodes, "", new_assembly.name, "", "");
     const odb_SequenceElement& elements = assembly.elements();
-    for (int i=0; i<elements.size(); i++)  { new_assembly.elements.push_back(process_element(elements.element(i))); }
+//    for (int i=0; i<elements.size(); i++)  { new_assembly.elements.push_back(process_element(elements.element(i))); }
+    new_assembly.elements = process_elements(elements, "", new_assembly.name, "", "");
 
     this->log_file->logVerbose("\tnodeSets:");
     odb_SetRepositoryIT node_iter(assembly.nodeSets());
@@ -1231,7 +1254,9 @@ history_point_type SpadeObject::process_history_point (const odb_HistoryPoint hi
     new_history_point.instanceName = history_point.instance().name().CStr();
     new_history_point.assemblyName = history_point.assembly().name().CStr();
     try {
-        new_history_point.element = process_element(history_point.element());
+//        new_history_point.element = process_element(history_point.element());
+        new_history_point.element_label = element.label();
+        new_history_point.element_type = element.type().CStr();
         new_history_point.hasElement = true;
     } catch(odb_BaseException& exc) { new_history_point.hasElement = false; }
     new_history_point.node_label = history_point.node().label();

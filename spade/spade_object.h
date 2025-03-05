@@ -416,7 +416,9 @@ struct frame_type {
 };
 
 struct history_point_type {
-    element_type* element;
+//    element_type* element;
+    int element_label;
+    string element_type;
     bool hasElement;
     bool hasNode;
     int ipNumber;
