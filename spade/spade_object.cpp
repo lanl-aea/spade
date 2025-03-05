@@ -1722,7 +1722,8 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
         string element_label_group_name = history_point_group_name + "/element/" + to_string(history_point.element_label);
         H5::Group element_label_group = create_group(h5_file, element_label_group_name);
         write_string_dataset(element_label_group, "type", history_point.elementType);
-        write_section_category(h5_file, element_label_group, element_label_group_name + "/sectionCategory", history_point.element.sectionCategory);
+        H5::Group section_category_group = create_group(h5_file, element_label_group_name + "/sectionCategory");
+        write_section_category(h5_file, section_category_group, element_label_group_name + "/sectionCategory", history_point.element.sectionCategory);
         write_string_vector_dataset(element_label_group, "instanceNames", history_point.element.instanceNames);
         write_integer_vector_dataset(element_label_group, "connectivity", history_point.element.connectivity);
     }
@@ -2074,7 +2075,8 @@ void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const st
                     H5::Group elements_label_group = create_group(h5_file, elements_label_group_name);
                     element_type element_members = element_it->second;
                     write_string_dataset(elements_label_group, "type", type);
-                    write_section_category(h5_file, elements_label_group, elements_label_group_name + "/sectionCategory", (element_it->second).sectionCategory);
+                    H5::Group section_category_group = create_group(h5_file, elements_label_group_name + "/sectionCategory");
+                    write_section_category(h5_file, section_category_group, elements_label_group_name + "/sectionCategory", (element_it->second).sectionCategory);
                     write_string_vector_dataset(elements_label_group, "instanceNames", (element_it->second).instanceNames);
                     write_integer_vector_dataset(elements_label_group, "connectivity", (element_it->second).connectivity);
                 }
