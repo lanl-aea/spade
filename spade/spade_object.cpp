@@ -1263,9 +1263,14 @@ history_point_type SpadeObject::process_history_point (const odb_HistoryPoint hi
     new_history_point.instanceName = history_point.instance().name().CStr();
     new_history_point.assemblyName = history_point.assembly().name().CStr();
     try {
-//        new_history_point.element = process_element(history_point.element());
         new_history_point.element_label = history_point.element().label();
         new_history_point.element_type = history_point.element().type().CStr();
+        odb_SequenceString instance_names = history_point.element().instanceNames();
+        for (int i=0; i < instance_names.size(); i++) { new_history_point.element.instanceNames.push_back(instance_names[i].CStr()); }
+        int element_connectivity_size;
+        const int* const connectivity = history_point.element().connectivity(element_connectivity_size);
+        for (int i=0; i < element_connectivity_size; i++) { new_history_point.element.connectivity.push_back(connectivity[i]); }
+        new_element.sectionCategory = process_section_category(element.sectionCategory());
         new_history_point.hasElement = true;
     } catch(odb_BaseException& exc) { new_history_point.hasElement = false; }
     new_history_point.node_label = history_point.node().label();
@@ -1510,8 +1515,8 @@ void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name) {
         string part_group_name = group_name + "/" + replace_slashes(part.name);
         H5::Group part_group = create_group(h5_file, part_group_name);
         write_string_dataset(part_group, "embeddedSpace", part.embeddedSpace);
-        write_nodes(h5_file, part_group, part.nodes, "");
-        write_elements(h5_file, part_group, part.elements, "");
+        write_nodes(h5_file, part_group, part_group_name, part.nodes, "");
+        write_elements(h5_file, part_group, part_group_name, part.elements, "");
         write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets);
         write_sets(h5_file, part_group_name + "/elementSets", part.elementSets);
         write_sets(h5_file, part_group_name + "/surfaces", part.surfaces);
@@ -1524,8 +1529,8 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name) 
     write_instances(h5_file, root_assembly_group_name);
     write_string_dataset(root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
 //    if (this->command_line_arguments->odbformat()) {
-        write_nodes(h5_file, root_assembly_group, this->root_assembly.nodes, "");
-        write_elements(h5_file, root_assembly_group, this->root_assembly.elements, "");
+        write_nodes(h5_file, root_assembly_group, root_assembly_group_name, this->root_assembly.nodes, "");
+        write_elements(h5_file, root_assembly_group, root_assembly_group_name, this->root_assembly.elements, "");
         write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets);
         write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets);
         write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
@@ -1722,11 +1727,6 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
     write_string_dataset(history_point_group, "face", history_point.face);
     write_string_dataset(history_point_group, "position", history_point.position);
     if (history_point.hasElement) {
-        /*
-        string element_group_name = history_point_group_name + "/element";
-        H5::Group element_group = create_group(h5_file, element_group_name);
-        write_element(h5_file, element_group, element_group_name, *history_point.element);
-        */
         write_integer_dataset(history_point_group, "element", history_point.element_label);
         write_string_dataset(history_point_group, "element_type", history_point.element_type);
     }
@@ -1819,8 +1819,8 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name)
         string instance_group_name = instances_group_name + "/" + replace_slashes(instance.name);
         H5::Group instance_group = create_group(h5_file, instance_group_name);
         write_string_dataset(instance_group, "embeddedSpace", instance.embeddedSpace);
-        write_nodes(h5_file, instance_group, instance.nodes, "");
-        write_elements(h5_file, instance_group, instance.elements, "");
+        write_nodes(h5_file, instance_group, instance_group_name, instance.nodes, "");
+        write_elements(h5_file, instance_group, instance_group_name, instance.elements, "");
         write_sets(h5_file, instance_group_name + "/nodeSets", instance.nodeSets);
         write_sets(h5_file, instance_group_name + "/elementSets", instance.elementSets);
         write_sets(h5_file, instance_group_name + "/surfaces", instance.surfaces);
@@ -2066,7 +2066,7 @@ void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const str
 }
 */
 
-void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const elements_type* elements, const string &set_name) {
+void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const string &group_name, const elements_type* elements, const string &set_name) {
     elements_type all_elements = *elements;
     if (!all_elements.elements.empty()) {
         H5::Group elements_group = create_group(h5_file, group_name + "/elements");
@@ -2111,7 +2111,7 @@ void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const el
     }
 }
 
-void SpadeObject::write_nodes(H5::H5File &h5_file, H5::Group &group, const nodes_type* nodes, const string &set_name) {
+void SpadeObject::write_nodes(H5::H5File &h5_file, H5::Group &group, const string &group_name, const nodes_type* nodes, const string &set_name) {
     nodes_type all_nodes = *nodes;
     if (!all_nodes.nodes.empty()) {
         if (set_name.empty()) {
@@ -2167,18 +2167,18 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
         write_string_vector_dataset(set_group, "instanceNames", odb_set.instanceNames);
 //        if (this->command_line_arguments->odbformat()) {
             if (odb_set.type == "Node Set") {
-                write_nodes(h5_file, set_group, odb_set.nodes, odb_set.name);
+                write_nodes(h5_file, set_group, set_group_name, odb_set.nodes, odb_set.name);
             } else if (odb_set.type == "Element Set") {
-                write_elements(h5_file, set_group, odb_set.elements, odb_set.name);
+                write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
             } else if (odb_set.type == "Surface Set") {
                 if(!odb_set.elements->elements.empty() && !odb_set.faces.empty())
                 {
-                    write_elements(h5_file, set_group, odb_set.elements, odb_set.name);
+                    write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
                     write_string_vector_dataset(set_group, "faces", odb_set.faces);
                 } else if(!odb_set.elements->elements.empty()) {
-                    write_elements(h5_file, set_group, odb_set.elements, odb_set.name);
+                    write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
                 } else {
-                    write_nodes(h5_file, set_group, odb_set.nodes, odb_set.name);
+                    write_nodes(h5_file, set_group, set_group_name, odb_set.nodes, odb_set.name);
                 }
             }
 //        }

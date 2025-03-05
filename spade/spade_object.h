@@ -414,7 +414,7 @@ struct frame_type {
 };
 
 struct history_point_type {
-//    element_type* element;
+    element_type* element;
     int element_label;
     string element_type;
     bool hasElement;
@@ -893,34 +893,27 @@ class SpadeObject {
           \param group_name Name of the group where data is to be written
         */
         void write_interactions(H5::H5File &h5_file, const string &group_name);
-        //! Write element data to an HDF5 file
-        /*!
-          Write data from element type into an HDF5 file
-          \param h5_file Open h5_file object for writing
-          \param group HDF5 group in which to write the new data
-          \param group_name Name of the group where data is to be written
-          \param element Element data to be written
-        */
-        void write_element(H5::H5File &h5_file, H5::Group &group, const string &group_name, const element_type &element);
         //! Write elements data to an HDF5 file
         /*!
           Write vector of element data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group HDF5 group in which to write the new data
+          \param group_name Name of the group where data is to be written
           \param elements Element data to be written
           \param set_name String with the name of the set if given
         */
-        void write_elements(H5::H5File &h5_file, H5::Group &group, const elements_type* elements, const string &set_name);
+        void write_elements(H5::H5File &h5_file, H5::Group &group, const string &group_name, const elements_type* elements, const string &set_name);
         //! Write node data to an HDF5 file
         //! Write nodes data to an HDF5 file
         /*!
           Write vector of node data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group HDF5 group in which to write the new data
+          \param group_name Name of the group where data is to be written
           \param nodes Node data to be written
           \param set_name String with the name of the set if given
         */
-        void write_nodes(H5::H5File &h5_file, H5::Group &group, const nodes_type* nodes, const string &set_name);
+        void write_nodes(H5::H5File &h5_file, H5::Group &group, const string &group_name, const nodes_type* nodes, const string &set_name);
         //! Write a dataset for node coordinates which are stored as a vector of arrays of size 3
         /*!
           \param group Name of HDF5 group in which to write the new dataset
