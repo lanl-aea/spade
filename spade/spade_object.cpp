@@ -471,7 +471,6 @@ set_type SpadeObject::process_set(const odb_Set &odb_set) {
             new_set.nodes = process_nodes(set_nodes, name.CStr(), "", new_set.name, "");
         } else if (new_set.type == "Element Set") {
             const odb_SequenceElement& set_elements = odb_set.elements(name);
-//            for (int n=0; n < set_elements.size(); n++) { new_set.elements.push_back(process_element(set_elements.element(n))); }
             new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
         } else if (new_set.type == "Surface Set") {
             const odb_SequenceElement& set_elements = odb_set.elements(name);
@@ -481,16 +480,10 @@ set_type SpadeObject::process_set(const odb_Set &odb_set) {
             if(set_elements.size() && set_faces.size())
             {
                 for (int n=0; n<set_elements.size(); n++) {
-//                    new_set.elements.push_back(process_element(set_elements.element(n)));
                     new_set.faces.push_back(this->faces_enum_strings[set_faces.constGet(n)]);
                 }
                 new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
             } else if(set_elements.size()) {
-                /*
-                for (int n=0; n < set_elements.size(); n++) {
-                    new_set.elements.push_back(process_element(set_elements.element(n)));
-                }
-                */
                 new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
             } else {
                 new_set.nodes = process_nodes(set_nodes, name.CStr(), "", new_set.name, "");
@@ -699,7 +692,6 @@ part_type SpadeObject::process_part (const odb_Part &part, odb_Odb &odb) {
     const odb_SequenceNode& nodes = part.nodes();
     new_part.nodes = process_nodes(nodes, "", "", "", new_part.name);
     odb_SequenceElement elements = part.elements();
-//    for (int i=0; i<elements.size(); i++)  { new_part.elements.push_back(process_element(elements.element(i))); }
     new_part.elements = process_elements(elements, "", "", "", new_part.name);
 
     odb_SetRepositoryIT node_iter(part.nodeSets());
@@ -847,7 +839,6 @@ instance_type SpadeObject::process_instance (const odb_Instance &instance, odb_O
     const odb_SequenceNode& nodes = instance.nodes();
     new_instance.nodes = process_nodes(nodes, new_instance.name, "", "", "");
     odb_SequenceElement elements = instance.elements();
-//    for (int i=0; i<elements.size(); i++)  { new_instance.elements.push_back(process_element(elements.element(i))); }
     new_instance.elements = process_elements(elements, new_instance.name, "", "", "");
 
     this->log_file->logVerbose("\tnodeSets:");
@@ -917,7 +908,6 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     const odb_SequenceNode& nodes = assembly.nodes();
     new_assembly.nodes = process_nodes(nodes, "", new_assembly.name, "", "");
     const odb_SequenceElement& elements = assembly.elements();
-//    for (int i=0; i<elements.size(); i++)  { new_assembly.elements.push_back(process_element(elements.element(i))); }
     new_assembly.elements = process_elements(elements, "", new_assembly.name, "", "");
 
     this->log_file->logVerbose("\tnodeSets:");
@@ -1264,13 +1254,13 @@ history_point_type SpadeObject::process_history_point (const odb_HistoryPoint hi
     new_history_point.assemblyName = history_point.assembly().name().CStr();
     try {
         new_history_point.element_label = history_point.element().label();
-        new_history_point.element_type = history_point.element().type().CStr();
+        new_history_point.elementType = history_point.element().type().CStr();
         odb_SequenceString instance_names = history_point.element().instanceNames();
         for (int i=0; i < instance_names.size(); i++) { new_history_point.element.instanceNames.push_back(instance_names[i].CStr()); }
         int element_connectivity_size;
         const int* const connectivity = history_point.element().connectivity(element_connectivity_size);
         for (int i=0; i < element_connectivity_size; i++) { new_history_point.element.connectivity.push_back(connectivity[i]); }
-        new_element.sectionCategory = process_section_category(element.sectionCategory());
+        new_history_point.element.sectionCategory = process_section_category(history_point.element().sectionCategory());
         new_history_point.hasElement = true;
     } catch(odb_BaseException& exc) { new_history_point.hasElement = false; }
     new_history_point.node_label = history_point.node().label();
@@ -1729,10 +1719,10 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
     if (history_point.hasElement) {
         string element_group_name = history_point_group_name + "/element";
         H5::Group element_group = create_group(h5_file, element_group_name);
-        string element_label_group_name = history_point_group_name "/element/" + to_string(history_point.element_label);
+        string element_label_group_name = history_point_group_name + "/element/" + to_string(history_point.element_label);
         H5::Group element_label_group = create_group(h5_file, element_label_group_name);
-        write_string_dataset(element_label_group, "type", history_point.element_type);
-        write_string_dataset(element_label_group, "sectionCategory", history_point.element.sectionCategory);
+        write_string_dataset(element_label_group, "type", history_point.elementType);
+        write_section_category(h5_file, element_label_group, element_label_group_name + "/sectionCategory", history_point.element.sectionCategory);
         write_string_vector_dataset(element_label_group, "instanceNames", history_point.element.instanceNames);
         write_integer_vector_dataset(element_label_group, "connectivity", history_point.element.connectivity);
     }
@@ -2078,31 +2068,17 @@ void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const st
         if (set_name.empty()) {
             for(map<string, map<int, element_type>>::iterator it = all_elements.elements.begin(); it != all_elements.elements.end(); ++it) {
                 string type = it->first;
-                map<int, element_type> all_element_members = it->second;
-                vector<int> element_labels;
-                vector<string> section_categories;
-                vector<vector<int>> element_connectivity;
-                vector<vector<string>> instance_names;
-                vector<vector<string>> element_sets;
-                int max_connectivity_size = 0;
-                int max_instance_names = 0;
-                int max_set_names = 0;
-                for(map<int, element_type>::iterator element_it = all_element_members.begin(); element_it != all_elements_members.end(); ++element_it) {
-                    element_labels.push_back(element_it->first);
+                map<int, element_type> all_elements_members = it->second;
+                for(map<int, element_type>::iterator element_it = all_elements_members.begin(); element_it != all_elements_members.end(); ++element_it) {
+                    string elements_label_group_name = group_name + "/elements/" + to_string(element_it->first);
+                    H5::Group elements_label_group = create_group(h5_file, elements_label_group_name);
                     element_type element_members = element_it->second;
-                    section_categories.push_back((it->second).sectionCategory);
-                    element_connectivity.push_back((it->second).connectivity);
-                    if (element_connectivity[element_connectivity.size() - 1].size() > max_connectivity_size) { max_connectivity_size = element_connectivity[element_connectivity.size() - 1].size(); }
-                    instance_names.push_back((it->second).instanceNames);
-                    if (instance_names[instance_names.size() - 1].size() > max_instance_names) { max_instance_names = instance_names[instance_names.size() - 1].size(); }
-                    element_sets.push_back(vector<string> set_names((it->second).sets.begin(), (it->second).sets.end()));
+                    write_string_dataset(elements_label_group, "type", type);
+                    write_section_category(h5_file, elements_label_group, elements_label_group_name + "/sectionCategory", (element_it->second).sectionCategory);
+                    write_string_vector_dataset(elements_label_group, "instanceNames", (element_it->second).instanceNames);
+                    write_integer_vector_dataset(elements_label_group, "connectivity", (element_it->second).connectivity);
                 }
-                write_integer_vector_dataset(group, type, element_labels);
-                write_string_vector_dataset(group, "SectionCategory", element_labels);
-                write_integer_2D_vector(group, type + "_connectivity", max_connectivity_size, element_connectivity);
-                write_integer_2D_vector(group, type + "_connectivity", max_connectivity_size, element_connectivity);
             }
-            write_node_coordinates_dataset(group, node_coordinates);
         } else {
             try {  // If the element has been stored in elements, just return the address to it
                 set<int> element_label_set = all_elements.element_sets.at(set_name);
@@ -2121,7 +2097,7 @@ void SpadeObject::write_nodes(H5::H5File &h5_file, H5::Group &group, const strin
         if (set_name.empty()) {
             H5::Group nodes_group = create_group(h5_file, group_name + "/nodes");
             for(map<int,node_type>::iterator it = all_nodes.nodes.begin(); it != all_nodes.nodes.end(); ++it) {
-                write_float_array_dataset(nodes_group, to_string(it->first), 3, (it->second).coordinates);
+                write_node_coordinates_dataset(nodes_group, to_string(it->first), (it->second).coordinates);
             }
         } else {
             try {  // If the node has been stored in nodes, just return the address to it
@@ -2135,16 +2111,16 @@ void SpadeObject::write_nodes(H5::H5File &h5_file, H5::Group &group, const strin
     }
 }
 
-void SpadeObject::write_node_coordinates_dataset(const H5::Group &group, const vector<array<float, 3>> &node_coordinates) {
+void SpadeObject::write_node_coordinates_dataset(const H5::Group &group, const string &dataset_name, const array<float, 3> &node_coordinates) {
     if (node_coordinates.empty()) { return; }
-    hsize_t dimensions[] = {node_coordinates.size(), 3};
-    H5::DataSpace dataspace(2, dimensions);  // two dimensional data
+    hsize_t dimensions[] = {node_coordinates.size()};
+    H5::DataSpace dataspace(1, dimensions);
     try {
-        H5::DataSet dataset = group.createDataSet("node_coordinates", H5::PredType::NATIVE_FLOAT, dataspace);
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
         dataset.write(node_coordinates.data(), H5::PredType::NATIVE_FLOAT);
         dataset.close();
     } catch(H5::Exception& e) {
-        this->log_file->logWarning("Unable to create dataset node_coordinates. " + e.getDetailMsg());
+        this->log_file->logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
     }
     dataspace.close();
 }

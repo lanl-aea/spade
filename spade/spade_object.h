@@ -414,9 +414,9 @@ struct frame_type {
 };
 
 struct history_point_type {
-    element_type* element;
+    element_type element;
     int element_label;
-    string element_type;
+    string elementType;
     bool hasElement;
     bool hasNode;
     int ipNumber;
@@ -917,10 +917,11 @@ class SpadeObject {
         //! Write a dataset for node coordinates which are stored as a vector of arrays of size 3
         /*!
           \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the dataset where data is to be written
           \param node_coordinates The float data that should be written in the new dataset
           \sa write_float_array_dataset()
         */
-        void write_node_coordinates_dataset(const H5::Group &group, const vector<array<float, 3>> &node_coordinates);
+        void write_node_coordinates_dataset(const H5::Group &group, const string &dataset_name, const array<float, 3> &node_coordinates);
         //! Write sets data to an HDF5 file
         /*!
           Write vector of set data into an HDF5 file
