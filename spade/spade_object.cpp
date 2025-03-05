@@ -1732,7 +1732,7 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
         string element_label_group_name = history_point_group_name "/element/" + to_string(history_point.element_label);
         H5::Group element_label_group = create_group(h5_file, element_label_group_name);
         write_string_dataset(element_label_group, "type", history_point.element_type);
-        write_string_dataset(element_label_group, "sectionCategory", history_point.sectionCategory);
+        write_string_dataset(element_label_group, "sectionCategory", history_point.element.sectionCategory);
         write_string_vector_dataset(element_label_group, "instanceNames", history_point.element.instanceNames);
         write_integer_vector_dataset(element_label_group, "connectivity", history_point.element.connectivity);
     }
@@ -2075,7 +2075,6 @@ void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const st
     elements_type all_elements = *elements;
     if (!all_elements.elements.empty()) {
         H5::Group elements_group = create_group(h5_file, group_name + "/elements");
-//        for (auto element : elements) { write_element(h5_file, elements_group, group_name + "/elements", *element); }
         if (set_name.empty()) {
             for(map<string, map<int, element_type>>::iterator it = all_elements.elements.begin(); it != all_elements.elements.end(); ++it) {
                 string type = it->first;
@@ -2120,14 +2119,10 @@ void SpadeObject::write_nodes(H5::H5File &h5_file, H5::Group &group, const strin
     nodes_type all_nodes = *nodes;
     if (!all_nodes.nodes.empty()) {
         if (set_name.empty()) {
-            vector<int> node_labels;
-            vector<array<float, 3>> node_coordinates;
+            H5::Group nodes_group = create_group(h5_file, group_name + "/nodes");
             for(map<int,node_type>::iterator it = all_nodes.nodes.begin(); it != all_nodes.nodes.end(); ++it) {
-                node_labels.push_back(it->first);
-                node_coordinates.push_back((it->second).coordinates);
+                write_float_array_dataset(nodes_group, to_string(it->first), 3, (it->second).coordinates);
             }
-            write_integer_vector_dataset(group, "nodes", node_labels);
-            write_node_coordinates_dataset(group, node_coordinates);
         } else {
             try {  // If the node has been stored in nodes, just return the address to it
                 set<int> node_label_set = all_nodes.node_sets.at(set_name);
