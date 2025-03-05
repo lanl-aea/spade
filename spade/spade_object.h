@@ -77,8 +77,6 @@ struct tangential_behavior_type {
 };
 
 struct element_type {
-//    int label;
-//    string type;
     vector<int> connectivity;
     section_category_type sectionCategory;
     vector<string> instanceNames;
@@ -111,7 +109,7 @@ struct set_type {
     int size;
     vector<string> instanceNames;
     nodes_type* nodes;
-    vector<element_type*> elements;
+    elements_type* elements;
     vector<string> faces;
 };
 
@@ -230,7 +228,7 @@ struct part_type {
     string name;
     string embeddedSpace;
     nodes_type* nodes;
-    vector<element_type*> elements;
+    elements_type* elements;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -284,7 +282,7 @@ struct instance_type {
     string name;
     string embeddedSpace;
     nodes_type* nodes;
-    vector<element_type*> elements;
+    elements_type* elements;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -310,7 +308,7 @@ struct assembly_type {
     string name;
     string embeddedSpace;
     nodes_type* nodes;
-    vector<element_type*> elements;
+    elements_type* elements;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -908,17 +906,18 @@ class SpadeObject {
         /*!
           Write vector of element data into an HDF5 file
           \param h5_file Open h5_file object for writing
-          \param group_name Name of the group where data is to be written
-          \param elements Vector of element data to be written
+          \param group HDF5 group in which to write the new data
+          \param elements Element data to be written
+          \param set_name String with the name of the set if given
         */
-        void write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type*> &elements);
+        void write_elements(H5::H5File &h5_file, H5::Group &group, const elements_type* elements, const string &set_name);
         //! Write node data to an HDF5 file
         //! Write nodes data to an HDF5 file
         /*!
           Write vector of node data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group HDF5 group in which to write the new data
-          \param nodes Vector of node data to be written
+          \param nodes Node data to be written
           \param set_name String with the name of the set if given
         */
         void write_nodes(H5::H5File &h5_file, H5::Group &group, const nodes_type* nodes, const string &set_name);
