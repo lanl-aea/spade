@@ -326,12 +326,16 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
         try {
             coords_sets = new_nodes.nodes.at(node_label);
             new_nodes.nodes[node_label].sets.insert(set_name);
-            if (!set_name.empty()) { new_nodes.node_sets[set_name].insert(node_label); }
+//            if (this->command_line_arguments->odbformat()) {  // Don't need to store separate instances if using extract format
+                if (!set_name.empty()) { new_nodes.node_sets[set_name].insert(node_label); }
+//            }
             continue;
         } catch (const std::out_of_range& oor) {
             new_nodes.nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]};
             new_nodes.nodes[node_label].sets.insert(set_name);
-            if (!set_name.empty()) { new_nodes.node_sets[set_name].insert(node_label); }
+//            if (this->command_line_arguments->odbformat()) {  // Don't need to store separate instances if using extract format
+                if (!set_name.empty()) { new_nodes.node_sets[set_name].insert(node_label); }
+//            }
         }
     }
     if (!part_name.empty()) { 
@@ -375,7 +379,9 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             try {
                 new_element = new_elements.elements[type].at(element_label);
                 new_elements.elements[type][element_label].sets.insert(set_name);
-                if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
+//                if (this->command_line_arguments->odbformat()) {  // Don't need to store separate instances if using extract format
+                    if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
+//                }
                 continue;
             } catch (const std::out_of_range& oor) {
                 // Add element members to new_element
@@ -389,7 +395,9 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
 
                 new_elements.elements[type][element_label] = new_element;
                 new_elements.elements[type][element_label].sets.insert(set_name);
-                if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
+//                if (this->command_line_arguments->odbformat()) {  // Don't need to store separate instances if using extract format
+                    if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
+//                }
             }
         } catch (const std::out_of_range& oor) {
             // Add element members to new_element
@@ -2059,10 +2067,47 @@ void SpadeObject::write_element(H5::H5File &h5_file, H5::Group &group, const str
 */
 
 void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const elements_type* elements, const string &set_name) {
-// void SpadeObject::write_elements(H5::H5File &h5_file, const string &group_name, const vector<element_type*> &elements) {
-    if (!elements->elements.empty()) {
-//        H5::Group elements_group = create_group(h5_file, group_name + "/elements");
+    elements_type all_elements = *elements;
+    if (!all_elements.elements.empty()) {
+        H5::Group elements_group = create_group(h5_file, group_name + "/elements");
 //        for (auto element : elements) { write_element(h5_file, elements_group, group_name + "/elements", *element); }
+        if (set_name.empty()) {
+            for(map<string, map<int, element_type>>::iterator it = all_elements.elements.begin(); it != all_elements.elements.end(); ++it) {
+                string type = it->first;
+                map<int, element_type> all_element_members = it->second;
+                vector<int> element_labels;
+                vector<string> section_categories;
+                vector<vector<int>> element_connectivity;
+                vector<vector<string>> instance_names;
+                vector<vector<string>> element_sets;
+                int max_connectivity_size = 0;
+                int max_instance_names = 0;
+                int max_set_names = 0;
+                for(map<int, element_type>::iterator element_it = all_element_members.begin(); element_it != all_elements_members.end(); ++element_it) {
+                    element_labels.push_back(element_it->first);
+                    element_type element_members = element_it->second;
+                    section_categories.push_back((it->second).sectionCategory);
+                    element_connectivity.push_back((it->second).connectivity);
+                    if (element_connectivity[element_connectivity.size() - 1].size() > max_connectivity_size) { max_connectivity_size = element_connectivity[element_connectivity.size() - 1].size(); }
+                    instance_names.push_back((it->second).instanceNames);
+                    if (instance_names[instance_names.size() - 1].size() > max_instance_names) { max_instance_names = instance_names[instance_names.size() - 1].size(); }
+                    element_sets.push_back(vector<string> set_names((it->second).sets.begin(), (it->second).sets.end()));
+                }
+                write_integer_vector_dataset(group, type, element_labels);
+                write_string_vector_dataset(group, "SectionCategory", element_labels);
+                write_integer_2D_vector(group, type + "_connectivity", max_connectivity_size, element_connectivity);
+                write_integer_2D_vector(group, type + "_connectivity", max_connectivity_size, element_connectivity);
+            }
+            write_node_coordinates_dataset(group, node_coordinates);
+        } else {
+            try {  // If the element has been stored in elements, just return the address to it
+                set<int> element_label_set = all_elements.element_sets.at(set_name);
+                vector<int> element_labels(element_label_set.begin(), element_label_set.end());
+                write_integer_vector_dataset(group, "elements", element_labels);
+            } catch (const std::out_of_range& oor) {
+                this->log_file->logDebug("Element set could not be found for : " + set_name);
+            }
+        }
     }
 }
 
@@ -2081,8 +2126,7 @@ void SpadeObject::write_nodes(H5::H5File &h5_file, H5::Group &group, const nodes
         } else {
             try {  // If the node has been stored in nodes, just return the address to it
                 set<int> node_label_set = all_nodes.node_sets.at(set_name);
-                vector<int> node_labels;
-                for (set<int>::iterator it = node_label_set.begin(); it != node_label_set.end(); it++) { node_labels.push_back(*it); }
+                vector<int> node_labels(node_label_set.begin(), node_label_set.end());
                 write_integer_vector_dataset(group, "nodes", node_labels);
             } catch (const std::out_of_range& oor) {
                 this->log_file->logDebug("Node set could not be found for : " + set_name);
