@@ -17,6 +17,7 @@ Internal Changes
 - Rename variables named 'set' since it's a reserved word (:issue:`72`, :merge:`69`). By `Prabhu Khalsa`_.
 - Remove duplicate code in command line options class (:issue:`73`, :merge:`70`). By `Prabhu Khalsa`_.
 - Wrapping write and create attribute in a try/catch statement (:issue:`77`, :merge:`75`). By `Prabhu Khalsa`_.
+- Refactor how elements are stored for new extract format (:issue:`75`, :merge:`73`). By `Prabhu Khalsa`_.
 
 Enhancements
 ============
