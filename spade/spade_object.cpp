@@ -1727,14 +1727,19 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
     write_string_dataset(history_point_group, "face", history_point.face);
     write_string_dataset(history_point_group, "position", history_point.position);
     if (history_point.hasElement) {
-        write_integer_dataset(history_point_group, "element", history_point.element_label);
-        write_string_dataset(history_point_group, "element_type", history_point.element_type);
+        string element_group_name = history_point_group_name + "/element";
+        H5::Group element_group = create_group(h5_file, element_group_name);
+        string element_label_group_name = history_point_group_name "/element/" + to_string(history_point.element_label);
+        H5::Group element_label_group = create_group(h5_file, element_label_group_name);
+        write_string_dataset(element_label_group, "type", history_point.element_type);
+        write_string_dataset(element_label_group, "sectionCategory", history_point.sectionCategory);
+        write_string_vector_dataset(element_label_group, "instanceNames", history_point.element.instanceNames);
+        write_integer_vector_dataset(element_label_group, "connectivity", history_point.element.connectivity);
     }
     if (history_point.hasNode) {
         string node_group_name = history_point_group_name + "/node";
         H5::Group node_group = create_group(h5_file, node_group_name);
-        write_integer_dataset(history_point_group, "node", history_point.node_label);
-        write_float_array_dataset(history_point_group, "nodeCoordinates", 3, history_point.node_coordinates);
+        write_float_array_dataset(history_point_group, to_string(history_point.node_label), 3, history_point.node_coordinates);
     }
     write_set(h5_file, history_point_group_name, history_point.region);
     write_string_dataset(history_point_group, "assembly", history_point.assemblyName);
