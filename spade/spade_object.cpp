@@ -326,16 +326,16 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
         try {
             coords_sets = new_nodes.nodes.at(node_label);
             new_nodes.nodes[node_label].sets.insert(set_name);
-//            if (this->command_line_arguments->odbformat()) {  // Don't need to store separate instances if using extract format
+            if (this->command_line_arguments->odbformat()) {  // Don't need to store separate instances if using extract format
                 if (!set_name.empty()) { new_nodes.node_sets[set_name].insert(node_label); }
-//            }
+            }
             continue;
         } catch (const std::out_of_range& oor) {
             new_nodes.nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]};
             new_nodes.nodes[node_label].sets.insert(set_name);
-//            if (this->command_line_arguments->odbformat()) {  // Don't need to store separate instances if using extract format
+            if (this->command_line_arguments->odbformat()) {  // Don't need to store separate instances if using extract format
                 if (!set_name.empty()) { new_nodes.node_sets[set_name].insert(node_label); }
-//            }
+            }
         }
     }
     if (!part_name.empty()) { 
@@ -379,9 +379,7 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             try {
                 new_element = new_elements.elements[type].at(element_label);
                 new_elements.elements[type][element_label].sets.insert(set_name);
-//                if (this->command_line_arguments->odbformat()) {  // Don't need to store separate instances if using extract format
-                    if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
-//                }
+                if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
                 continue;
             } catch (const std::out_of_range& oor) {
                 // Add element members to new_element
@@ -395,9 +393,7 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
 
                 new_elements.elements[type][element_label] = new_element;
                 new_elements.elements[type][element_label].sets.insert(set_name);
-//                if (this->command_line_arguments->odbformat()) {  // Don't need to store separate instances if using extract format
-                    if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
-//                }
+                if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
             }
         } catch (const std::out_of_range& oor) {
             // Add element members to new_element
@@ -421,31 +417,6 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             return &this->instance_mesh[name].elements;
     }
 
-    /*
-    element_type new_element;
-    string element_key;
-    new_element.label = element.label();
-    odb_SequenceString instance_names = element.instanceNames();
-    for (int i=0; i < instance_names.size(); i++) {
-        new_element.instanceNames.push_back(instance_names[i].CStr());
-        element_key += new_element.instanceNames[i];
-    }
-    element_key = to_string(new_element.label) + element_key;
-    try {
-        return &this->elements.at(element_key);  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
-    } catch (const std::out_of_range& oor) {
-        new_element.type = element.type().CStr();
-        int element_connectivity_size;
-        const int* const connectivity = element.connectivity(element_connectivity_size);
-        for (int i=0; i < element_connectivity_size; i++) {
-            new_element.connectivity.push_back(connectivity[i]);
-        }
-        this->log_file->logDebug("\t\telement " + to_string(new_element.label) + ": connectivity count: " + to_string(new_element.connectivity.size()) + " instances count:" + to_string(new_element.instanceNames.size()));
-        new_element.sectionCategory = process_section_category(element.sectionCategory());
-        this->elements[element_key] = new_element;
-        return &this->elements[element_key];
-    }
-    */
 }
 
 set_type SpadeObject::process_set(const odb_Set &odb_set) {
@@ -766,6 +737,7 @@ datum_csys_type SpadeObject::process_csys(const odb_DatumCsys &datum_csys) {
     new_datum_csys.origin[0] = origin[0]; new_datum_csys.origin[1] = origin[1]; new_datum_csys.origin[2] = origin[2];
     return new_datum_csys;
 }
+
 analytic_surface_segment_type SpadeObject::process_segment (const odb_AnalyticSurfaceSegment &segment) {
     analytic_surface_segment_type new_segment;
     new_segment.type = segment.type().CStr();
@@ -1483,7 +1455,27 @@ void SpadeObject::write_h5 () {
         write_float_2D_data(user_xy_data_group, "data", this->user_xy_data[i].row_size, 2, this->user_xy_data[i].data);  // x-y data has two columns: x and y
     }
 
-    if (this->command_line_arguments->odbformat()) {  // Mimic the organization of data in an odb - though inefficient
+    if (!this->command_line_arguments->odbformat()) {
+        for(map<string,mesh_type>::iterator part_it = part_mesh.begin(); part_it != part_mesh.end(); ++part_it) {
+            string part_group_name = "/" + part_it->first;
+            nodes_type nodes = (part_it->second).nodes;
+            elements_type elements = (part_it->second).elements;
+            H5::Group extract_part_group = create_group(h5_file, part_group_name);
+            // write function to write mesh info
+        }
+        for(map<string,mesh_type>::iterator instance_it = instance_mesh.begin(); instance_it != instance_mesh.end(); ++instance_it) {
+            string instance_group_name = "/" + instance_it->first;
+            nodes_type nodes = (instance_it->second).nodes;
+            elements_type elements = (instance_it->second).elements;
+            H5::Group extract_instance_group = create_group(h5_file, instance_group_name);
+            // write function to write mesh info
+        }
+        /*
+        string mesh_group_name = instance_group_name + "/Mesh";
+        H5::Group mesh_group = create_group(h5_file, mesh_group_name);
+        if (instance.embeddedSpace == "AxiSymmetric") {
+        }
+        */
     }
     this->log_file->logVerbose("Writing constraints data at time: " + this->command_line_arguments->getTimeStamp(false));
     H5::Group contraints_group = create_group(h5_file, "/odb/constraints");
@@ -1507,10 +1499,12 @@ void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name) {
         string part_group_name = group_name + "/" + replace_slashes(part.name);
         H5::Group part_group = create_group(h5_file, part_group_name);
         write_string_dataset(part_group, "embeddedSpace", part.embeddedSpace);
-        write_nodes(h5_file, part_group, part_group_name, part.nodes, "");
-        write_elements(h5_file, part_group, part_group_name, part.elements, "");
-        write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets);
-        write_sets(h5_file, part_group_name + "/elementSets", part.elementSets);
+        if (this->command_line_arguments->odbformat()) {
+            write_nodes(h5_file, part_group, part_group_name, part.nodes, "");
+            write_elements(h5_file, part_group, part_group_name, part.elements, "");
+            write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets);
+            write_sets(h5_file, part_group_name + "/elementSets", part.elementSets);
+        }
         write_sets(h5_file, part_group_name + "/surfaces", part.surfaces);
     }
 }
@@ -1520,13 +1514,13 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name) 
     H5::Group root_assembly_group = create_group(h5_file, root_assembly_group_name);
     write_instances(h5_file, root_assembly_group_name);
     write_string_dataset(root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
-//    if (this->command_line_arguments->odbformat()) {
+    if (this->command_line_arguments->odbformat()) {
         write_nodes(h5_file, root_assembly_group, root_assembly_group_name, this->root_assembly.nodes, "");
         write_elements(h5_file, root_assembly_group, root_assembly_group_name, this->root_assembly.elements, "");
         write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets);
         write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets);
-        write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
-//    }
+    }
+    write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
     H5::Group connector_orientations_group = create_group(h5_file, root_assembly_group_name + "/connectorOrientations");
     for (int i=0; i<this->root_assembly.connectorOrientations.size(); i++) {
         string connector_orientation_group_name = root_assembly_group_name + "/connectorOrientations/" + to_string(i);
@@ -1804,23 +1798,15 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name)
     string instances_group_name = group_name + "/instances";
     H5::Group instances_group = create_group(h5_file, instances_group_name);
     for (auto instance : this->root_assembly.instances) {
-        if (!this->command_line_arguments->odbformat()) {
-            string instance_group_name = "/" + instance.name;
-            H5::Group extract_instance_group = create_group(h5_file, instance_group_name);
-            /*
-            string mesh_group_name = instance_group_name + "/Mesh";
-            H5::Group mesh_group = create_group(h5_file, mesh_group_name);
-            if (instance.embeddedSpace == "AxiSymmetric") {
-            }
-            */
-        }
         string instance_group_name = instances_group_name + "/" + replace_slashes(instance.name);
         H5::Group instance_group = create_group(h5_file, instance_group_name);
         write_string_dataset(instance_group, "embeddedSpace", instance.embeddedSpace);
-        write_nodes(h5_file, instance_group, instance_group_name, instance.nodes, "");
-        write_elements(h5_file, instance_group, instance_group_name, instance.elements, "");
-        write_sets(h5_file, instance_group_name + "/nodeSets", instance.nodeSets);
-        write_sets(h5_file, instance_group_name + "/elementSets", instance.elementSets);
+        if (this->command_line_arguments->odbformat()) {
+            write_nodes(h5_file, instance_group, instance_group_name, instance.nodes, "");
+            write_elements(h5_file, instance_group, instance_group_name, instance.elements, "");
+            write_sets(h5_file, instance_group_name + "/nodeSets", instance.nodeSets);
+            write_sets(h5_file, instance_group_name + "/elementSets", instance.elementSets);
+        }
         write_sets(h5_file, instance_group_name + "/surfaces", instance.surfaces);
         this->instance_links[instance.name] = instance_group_name;
         H5::Group section_assignments_group = create_group(h5_file, instance_group_name + "/sectionAssignments");
@@ -2112,7 +2098,7 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
         H5::Group set_group = create_group(h5_file, set_group_name);
         write_attribute(set_group, "type", odb_set.type);
         write_string_vector_dataset(set_group, "instanceNames", odb_set.instanceNames);
-//        if (this->command_line_arguments->odbformat()) {
+        if (this->command_line_arguments->odbformat()) {
             if (odb_set.type == "Node Set") {
                 write_nodes(h5_file, set_group, set_group_name, odb_set.nodes, odb_set.name);
             } else if (odb_set.type == "Element Set") {
@@ -2127,7 +2113,12 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
                     write_nodes(h5_file, set_group, set_group_name, odb_set.nodes, odb_set.name);
                 }
             }
-//        }
+        } else {
+            if (odb_set.type == "Surface Set" && !odb_set.elements->elements.empty() && !odb_set.faces.empty()) {
+                write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
+                write_string_vector_dataset(set_group, "faces", odb_set.faces);
+            }
+        }
     }
 }
 
