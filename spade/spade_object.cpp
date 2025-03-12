@@ -485,8 +485,10 @@ set_type SpadeObject::process_set(const odb_Set &odb_set) {
                 new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
             } else if(set_elements.size()) {
                 new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
+                new_set.nodes = nullptr;
             } else {
                 new_set.nodes = process_nodes(set_nodes, name.CStr(), "", new_set.name, "");
+                new_set.elements = nullptr;
             }
 
         } else {
@@ -2116,11 +2118,10 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
             } else if (odb_set.type == "Element Set") {
                 write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
             } else if (odb_set.type == "Surface Set") {
-                if(!odb_set.elements->elements.empty() && !odb_set.faces.empty())
-                {
+                if(odb_set.elements != nullptr && (!odb_set.elements->elements.empty() && !odb_set.faces.empty())) {
                     write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
                     write_string_vector_dataset(set_group, "faces", odb_set.faces);
-                } else if(!odb_set.elements->elements.empty()) {
+                } else if(odb_set.elements != nullptr && !odb_set.elements->elements.empty()) {
                     write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
                 } else {
                     write_nodes(h5_file, set_group, set_group_name, odb_set.nodes, odb_set.name);
