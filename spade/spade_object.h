@@ -961,12 +961,22 @@ class SpadeObject {
         //! Write a string as an attribute
         /*!
           Create an attribute with a string using the passed-in values
-          \param h5_file Open h5_file object for writing
           \param group Name of HDF5 group in which to write the new attribute
           \param attribute_name Name of the new attribute where a string is to be written
           \param string_value The string that should be written in the new attribute
         */
         void write_attribute(const H5::Group &group, const string &attribute_name, const string &string_value);
+        //! Write attributes for xarray to recgonize the dataset as part of an xarray
+        /*!
+          Write the passed-in values as attributes to the
+          \param group Name of HDF5 group in which to write the new attribute
+          \param name Name of HDF5 dataset in which to write the new attribute
+          \param class_name value of CLASS attribute
+          \param fill_value value of _FillValue attribute
+          \param coordinates value of coordinates attribute
+          \param description value of description attribute
+        */
+        void write_xarray_attributes(const H5::Group &group, const string &name, const string &class_name, const string &fill_value, const string &coordinates, const string &description, const string &dim_id);
         //! Write a vector of strings as an attribute
         /*!
           Create an attribute with a vector of strings using the passed-in values

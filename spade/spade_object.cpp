@@ -1509,7 +1509,11 @@ void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string
     }
     if (!mesh.nodes.nodes.empty()) {
         if (embedded_space == "AxiSymmetric") {
+            std::vector<string> coordinates = {"r", "z"};
+            write_xarray_attributes(mesh_group, "DIMENSION_SCALE", "coordinates", "", "", "", "1");
         } else {
+            std::vector<string> coordinates = {"x", "y", "z"};
+            write_xarray_attributes(mesh_group, "DIMENSION_SCALE", "coordinates", "", "", "", "1");
         }
     }
 
@@ -2152,7 +2156,7 @@ void SpadeObject::write_section_category(H5::H5File &h5_file, const H5::Group &g
     }
 }
 
-void SpadeObject::write_attribute(const H5::Group& group, const string & attribute_name, const string & string_value) {
+void SpadeObject::write_attribute(const H5::Group &group, const string &attribute_name, const string &string_value) {
     if (string_value.empty()) { return; }
     H5::DataSpace attribute_space(H5S_SCALAR);
     int string_size = string_value.size();
@@ -2163,6 +2167,54 @@ void SpadeObject::write_attribute(const H5::Group& group, const string & attribu
         attribute.write(string_type, string_value);
     } catch(H5::Exception& e) {
         this->log_file->logWarning("Unable to create attribute " + attribute_name + ". " + e.getDetailMsg());
+    }
+    attribute_space.close();
+}
+
+void SpadeObject::write_xarray_attributes(const H5::Group &group, const string &name, const string &class_name, const string &fill_value, const string &coordinates, const string &description, const string &dim_id) {
+//xarray attributes: NAME, CLASS, _FillValue, coordinates, description, _Netcdf4Dimid, REFERENCE_LIST, DIMENSION_LIST
+    if (name.empty()) { return; }
+    DataSet dataset = group.openDataSet(name);
+    H5::DataSpace attribute_space(H5S_SCALAR);
+    H5::StrType string_type (0, name.size());  // Use the length of the string
+    try {
+        H5::Attribute attribute = dataset.createAttribute("NAME", string_type, attribute_space);
+        attribute.write(string_type, name);
+    } catch(H5::Exception& e) { this->log_file->logWarning("Unable to create attribute NAME " + e.getDetailMsg()); }
+    if (!class_name.empty()) {
+        H5::StrType string_type (0, class_name.size());  // Use the length of the string
+        try {
+            H5::Attribute attribute = dataset.createAttribute("CLASS", string_type, attribute_space);
+            attribute.write(string_type, class_name);
+        } catch(H5::Exception& e) { this->log_file->logWarning("Unable to create attribute CLASS " + e.getDetailMsg()); }
+    }
+    if (!fill_value.empty()) {
+        H5::StrType string_type (0, fill_value.size());  // Use the length of the string
+        try {
+            H5::Attribute attribute = dataset.createAttribute("_FillValue", string_type, attribute_space);
+            attribute.write(string_type, fill_value);
+        } catch(H5::Exception& e) { this->log_file->logWarning("Unable to create attribute _FillValue " + e.getDetailMsg()); }
+    }
+    if (!coordinates.empty()) {
+        H5::StrType string_type (0, coordinates.size());  // Use the length of the string
+        try {
+            H5::Attribute attribute = dataset.createAttribute("coordinates", string_type, attribute_space);
+            attribute.write(string_type, coordinates);
+        } catch(H5::Exception& e) { this->log_file->logWarning("Unable to create attribute coordinates " + e.getDetailMsg()); }
+    }
+    if (!description.empty()) {
+        H5::StrType string_type (0, description.size());  // Use the length of the string
+        try {
+            H5::Attribute attribute = dataset.createAttribute("description", string_type, attribute_space);
+            attribute.write(string_type, description);
+        } catch(H5::Exception& e) { this->log_file->logWarning("Unable to create attribute description " + e.getDetailMsg()); }
+    }
+    if (!dim_id.empty()) {
+        H5::StrType string_type (0, dim_id.size());  // Use the length of the string
+        try {
+            H5::Attribute attribute = dataset.createAttribute("_Netcdf4Dimid", string_type, attribute_space);
+            attribute.write(string_type, dim_id);
+        } catch(H5::Exception& e) { this->log_file->logWarning("Unable to create attribute _Netcdf4Dimid " + e.getDetailMsg()); }
     }
     attribute_space.close();
 }
