@@ -1463,22 +1463,20 @@ void SpadeObject::write_h5 () {
         write_float_2D_data(user_xy_data_group, "data", this->user_xy_data[i].row_size, 2, this->user_xy_data[i].data);  // x-y data has two columns: x and y
     }
 
+    /*
     if (!this->command_line_arguments->odbformat()) {  // Write extract format
         for(map<string,mesh_type>::iterator part_it = part_mesh.begin(); part_it != part_mesh.end(); ++part_it) {
             string part_group_name = "/" + part_it->first;
-//            nodes_type nodes = (part_it->second).nodes;
-//            elements_type elements = (part_it->second).elements;
             H5::Group extract_part_group = create_group(h5_file, part_group_name);
             write_mesh(h5_file, extract_part_group, part_group_name, part_it->second);
         }
         for(map<string,mesh_type>::iterator instance_it = instance_mesh.begin(); instance_it != instance_mesh.end(); ++instance_it) {
             string instance_group_name = "/" + instance_it->first;
-//            nodes_type nodes = (instance_it->second).nodes;
-//            elements_type elements = (instance_it->second).elements;
             H5::Group extract_instance_group = create_group(h5_file, instance_group_name);
             write_mesh(h5_file, extract_instance_group, instance_group_name, instance_it->second);
         }
     }
+    */
     this->log_file->logVerbose("Writing constraints data at time: " + this->command_line_arguments->getTimeStamp(false));
     H5::Group contraints_group = create_group(h5_file, "/odb/constraints");
     write_constraints(h5_file, "odb/constraints");
@@ -1509,10 +1507,10 @@ void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string
     }
     if (!mesh.nodes.nodes.empty()) {
         if (embedded_space == "AxiSymmetric") {
-            std::vector<string> coordinates = {"r", "z"};
+            write_string_vector_dataset(mesh_group, "coordinates", {"r", "z"});
             write_xarray_attributes(mesh_group, "DIMENSION_SCALE", "coordinates", "", "", "", "1");
         } else {
-            std::vector<string> coordinates = {"x", "y", "z"};
+            write_string_vector_dataset(mesh_group, "coordinates", {"x", "y", "z"});
             write_xarray_attributes(mesh_group, "DIMENSION_SCALE", "coordinates", "", "", "", "1");
         }
     }
@@ -1841,34 +1839,40 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name)
             write_set(h5_file, section_assignment_group_name, instance.sectionAssignments[i].region);
             write_string_dataset(section_assignment_group, "sectionName", instance.sectionAssignments[i].sectionName);
         }
-        H5::Group rigid_bodies_group = create_group(h5_file, instance_group_name + "/rigidBodies");
-        for (int i=0; i<instance.rigidBodies.size(); i++) {
-            string rigid_body_group_name = instance_group_name + "/rigidBodies/" + to_string(i);
-            H5::Group rigid_body_group = create_group(h5_file, rigid_body_group_name);
-            write_string_dataset(rigid_body_group, "position", instance.rigidBodies[i].position);
-            write_string_dataset(rigid_body_group, "isothermal", instance.rigidBodies[i].isothermal);
-            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].referenceNode);
-            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].elements);
-            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].tieNodes);
-            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].pinNodes);
-            write_analytic_surface(h5_file, rigid_body_group_name, instance.rigidBodies[i].analyticSurface);
+        if (instance.rigidBodies.size() > 0) {
+            H5::Group rigid_bodies_group = create_group(h5_file, instance_group_name + "/rigidBodies");
+            for (int i=0; i<instance.rigidBodies.size(); i++) {
+                string rigid_body_group_name = instance_group_name + "/rigidBodies/" + to_string(i);
+                H5::Group rigid_body_group = create_group(h5_file, rigid_body_group_name);
+                write_string_dataset(rigid_body_group, "position", instance.rigidBodies[i].position);
+                write_string_dataset(rigid_body_group, "isothermal", instance.rigidBodies[i].isothermal);
+                write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].referenceNode);
+                write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].elements);
+                write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].tieNodes);
+                write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].pinNodes);
+                write_analytic_surface(h5_file, rigid_body_group_name, instance.rigidBodies[i].analyticSurface);
+            }
         }
-        H5::Group beam_orientations_group = create_group(h5_file, instance_group_name + "/beamOrientations");
-        for (int i=0; i<instance.beamOrientations.size(); i++) {
-            string beam_orientation_group_name = instance_group_name + "/beamOrientations/" + to_string(i);
-            H5::Group beam_orientation_group = create_group(h5_file, beam_orientation_group_name);
-            write_set(h5_file, beam_orientation_group_name, instance.beamOrientations[i].region);
-            write_string_dataset(beam_orientation_group, "method", instance.beamOrientations[i].method);
-            write_float_vector_dataset(beam_orientation_group, "vector", instance.beamOrientations[i].beam_vector);
+        if (instance.beamOrientations.size() > 0) {
+            H5::Group beam_orientations_group = create_group(h5_file, instance_group_name + "/beamOrientations");
+            for (int i=0; i<instance.beamOrientations.size(); i++) {
+                string beam_orientation_group_name = instance_group_name + "/beamOrientations/" + to_string(i);
+                H5::Group beam_orientation_group = create_group(h5_file, beam_orientation_group_name);
+                write_set(h5_file, beam_orientation_group_name, instance.beamOrientations[i].region);
+                write_string_dataset(beam_orientation_group, "method", instance.beamOrientations[i].method);
+                write_float_vector_dataset(beam_orientation_group, "vector", instance.beamOrientations[i].beam_vector);
+            }
         }
-        H5::Group rebar_orientations_group = create_group(h5_file, instance_group_name  + "/rebarOrientations");
-        for (int i=0; i<instance.rebarOrientations.size(); i++) {
-            string rebar_orientation_group_name = instance_group_name + "/rebarOrientations/" + to_string(i);
-            H5::Group rebar_orientation_group = create_group(h5_file, rebar_orientation_group_name);
-            write_string_dataset(rebar_orientation_group, "axis", instance.rebarOrientations[i].axis);
-            write_float_dataset(rebar_orientation_group, "angle", instance.rebarOrientations[i].angle);
-            write_set(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].region);
-            write_datum_csys(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].csys);
+        if (instance.rebarOrientations.size() > 0) {
+            H5::Group rebar_orientations_group = create_group(h5_file, instance_group_name  + "/rebarOrientations");
+            for (int i=0; i<instance.rebarOrientations.size(); i++) {
+                string rebar_orientation_group_name = instance_group_name + "/rebarOrientations/" + to_string(i);
+                H5::Group rebar_orientation_group = create_group(h5_file, rebar_orientation_group_name);
+                write_string_dataset(rebar_orientation_group, "axis", instance.rebarOrientations[i].axis);
+                write_float_dataset(rebar_orientation_group, "angle", instance.rebarOrientations[i].angle);
+                write_set(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].region);
+                write_datum_csys(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].csys);
+            }
         }
         write_analytic_surface(h5_file, instance_group_name, instance.analyticSurface);
     }
@@ -2045,8 +2049,8 @@ void SpadeObject::write_interactions(H5::H5File &h5_file, const string &group_na
 void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const string &group_name, const elements_type* elements, const string &set_name) {
     elements_type all_elements = *elements;
     if (!all_elements.elements.empty()) {
-        H5::Group elements_group = create_group(h5_file, group_name + "/elements");
         if (set_name.empty()) {
+            H5::Group elements_group = create_group(h5_file, group_name + "/elements");
             for(map<string, map<int, element_type>>::iterator it = all_elements.elements.begin(); it != all_elements.elements.end(); ++it) {
                 string type = it->first;
                 map<int, element_type> all_elements_members = it->second;
@@ -2062,7 +2066,7 @@ void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const st
                 }
             }
         } else {
-            try {  // If the element has been stored in elements, just return the address to it
+            try {
                 set<int> element_label_set = all_elements.element_sets.at(set_name);
                 vector<int> element_labels(element_label_set.begin(), element_label_set.end());
                 write_integer_vector_dataset(group, "elements", element_labels);
@@ -2129,19 +2133,23 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
             } else if (odb_set.type == "Element Set") {
                 write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
             } else if (odb_set.type == "Surface Set") {
-                if(odb_set.elements != nullptr && (!odb_set.elements->elements.empty() && !odb_set.faces.empty())) {
-                    write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
+                if (!odb_set.faces.empty()) {
                     write_string_vector_dataset(set_group, "faces", odb_set.faces);
-                } else if(odb_set.elements != nullptr && !odb_set.elements->elements.empty()) {
+                }
+                if (odb_set.elements != nullptr && !odb_set.elements->elements.empty()) {
                     write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
                 } else {
                     write_nodes(h5_file, set_group, set_group_name, odb_set.nodes, odb_set.name);
                 }
             }
         } else {
-            if (odb_set.type == "Surface Set" && !odb_set.elements->elements.empty() && !odb_set.faces.empty()) {
-                write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
-                write_string_vector_dataset(set_group, "faces", odb_set.faces);
+            if (odb_set.type == "Surface Set") { 
+                if (odb_set.elements != nullptr && !odb_set.elements->elements.empty()) {
+                    write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
+                }
+                if (!odb_set.faces.empty()) {
+                    write_string_vector_dataset(set_group, "faces", odb_set.faces);
+                }
             }
         }
     }
