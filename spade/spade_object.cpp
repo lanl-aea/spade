@@ -225,7 +225,11 @@ void SpadeObject::process_odb(odb_Odb &odb) {
         this->log_file->log("Part: " + string(part.name().CStr()));
         this->log_file->log("\tnode count: " + to_string(part.nodes().size()));
         this->log_file->log("\telement count: " + to_string(part.elements().size()));
-        this->parts.push_back(process_part(part, odb));
+//        this->parts.push_back(process_part(part, odb));
+        part_type new_part = process_part(part, odb);
+        this->parts.push_back(new_part);
+        this->part_mesh[new_part.name].part = &this->parts[this->parts.size() - 1];
+        this->part_mesh[new_part.name].instance = nullptr;
     }
 
     this->log_file->logVerbose("Reading root assembly.");
@@ -911,7 +915,11 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
         if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance.name().CStr())) {
             continue;
         }
-        new_assembly.instances.push_back(process_instance(instance, odb));
+//        new_assembly.instances.push_back(process_instance(instance, odb));
+        instance_type new_instance = process_instance(instance, odb);
+        new_assembly.instances.push_back(new_instance);
+        this->instance_mesh[new_instance.name].instance = &new_assembly.instances[new_assembly.instances.size() - 1];
+        this->instance_mesh[new_instance.name].part = nullptr;
     }
     odb_DatumCsysRepository datum_csyses = assembly.datumCsyses();
     odb_DatumCsysRepositoryIT datum_csyses_iter(datum_csyses);
@@ -1455,27 +1463,21 @@ void SpadeObject::write_h5 () {
         write_float_2D_data(user_xy_data_group, "data", this->user_xy_data[i].row_size, 2, this->user_xy_data[i].data);  // x-y data has two columns: x and y
     }
 
-    if (!this->command_line_arguments->odbformat()) {
+    if (!this->command_line_arguments->odbformat()) {  // Write extract format
         for(map<string,mesh_type>::iterator part_it = part_mesh.begin(); part_it != part_mesh.end(); ++part_it) {
             string part_group_name = "/" + part_it->first;
-            nodes_type nodes = (part_it->second).nodes;
-            elements_type elements = (part_it->second).elements;
+//            nodes_type nodes = (part_it->second).nodes;
+//            elements_type elements = (part_it->second).elements;
             H5::Group extract_part_group = create_group(h5_file, part_group_name);
-            // write function to write mesh info
+            write_mesh(h5_file, extract_part_group, part_group_name, part_it->second);
         }
         for(map<string,mesh_type>::iterator instance_it = instance_mesh.begin(); instance_it != instance_mesh.end(); ++instance_it) {
             string instance_group_name = "/" + instance_it->first;
-            nodes_type nodes = (instance_it->second).nodes;
-            elements_type elements = (instance_it->second).elements;
+//            nodes_type nodes = (instance_it->second).nodes;
+//            elements_type elements = (instance_it->second).elements;
             H5::Group extract_instance_group = create_group(h5_file, instance_group_name);
-            // write function to write mesh info
+            write_mesh(h5_file, extract_instance_group, instance_group_name, instance_it->second);
         }
-        /*
-        string mesh_group_name = instance_group_name + "/Mesh";
-        H5::Group mesh_group = create_group(h5_file, mesh_group_name);
-        if (instance.embeddedSpace == "AxiSymmetric") {
-        }
-        */
     }
     this->log_file->logVerbose("Writing constraints data at time: " + this->command_line_arguments->getTimeStamp(false));
     H5::Group contraints_group = create_group(h5_file, "/odb/constraints");
@@ -1492,6 +1494,25 @@ void SpadeObject::write_h5 () {
 
     h5_file.close();  // Close the hdf5 file
     this->log_file->log("Closing hdf5 file.");
+}
+
+void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, const mesh_type mesh) {
+    string mesh_group_name = group_name + "/Mesh";
+    H5::Group mesh_group = create_group(h5_file, mesh_group_name);
+    bool is_instance = true;
+    string embedded_space;
+    if (mesh.part == nullptr) {
+        embedded_space = mesh.instance->embeddedSpace;
+    } else {
+        embedded_space = mesh.part->embeddedSpace;
+        is_instance = false;
+    }
+    if (!mesh.nodes.nodes.empty()) {
+        if (embedded_space == "AxiSymmetric") {
+        } else {
+        }
+    }
+
 }
 
 void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name) {

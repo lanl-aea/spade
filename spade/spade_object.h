@@ -84,7 +84,7 @@ struct element_type {
 };
 
 struct elements_type {
-    map<string, map<int, element_type>> elements; // accessed like elements_type[type][label]
+    map<string, map<int, element_type>> elements; // accessed like elements_type[type][label] (e.g. elements_type['CAX4T'][1])
     map <string, set<int>> element_sets;
 };
 
@@ -96,11 +96,6 @@ struct node_type {
 struct nodes_type {
     map<int, node_type> nodes;
     map <string, set<int>> node_sets;
-};
-
-struct mesh_type {
-    nodes_type nodes;
-    elements_type elements;
 };
 
 struct set_type {
@@ -291,6 +286,13 @@ struct instance_type {
     vector<beam_orientation_type> beamOrientations;
     vector<rebar_orientation_type> rebarOrientations;
     analytic_surface_type analyticSurface;
+};
+
+struct mesh_type {
+    nodes_type nodes;
+    elements_type elements;
+    instance_type* instance;
+    part_type* part;
 };
 
 struct connector_orientation_type {
@@ -770,6 +772,15 @@ class SpadeObject {
           \sa SpadeObject()
         */
         void write_h5 ();
+        //! Write mesh data to an HDF5 file
+        /*!
+          Write mesh data in an extract format where all element and node data is in a single place
+          \param h5_file Open h5_file object for writing
+          \param group HDF5 group in which to write the new data
+          \param group_name Name of the group where data is to be written
+          \param mesh mesh data to be written
+        */
+        void write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, const mesh_type mesh);
         //! Write parts data to an HDF5 file
         /*!
           Write parts data into an HDF5 file
