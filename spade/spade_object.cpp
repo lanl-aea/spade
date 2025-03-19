@@ -1512,26 +1512,92 @@ void SpadeObject::write_h5 () {
     this->log_file->log("Closing hdf5 file.");
 }
 
-void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, const mesh_type mesh, const bool is_instance) {
+void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, mesh_type mesh, const bool is_instance) {
     string mesh_group_name = group_name + "/Mesh";
     H5::Group mesh_group = create_group(h5_file, mesh_group_name);
     string embedded_space;
     if (!mesh.nodes.nodes.empty()) {
-        vector<string> coordinates;
-        if (mesh.embedded_space == 2) {  // Two Dimensional Planar
-            coordinates = {"x", "y"};
-        } else if (mesh.embedded_space == 3) {  // AxiSymmetric
-            coordinates = {"r", "z"};
-        } else {  // Assume it's 3 dimensional with these names
-            coordinates = {"x", "y", "z"};
-        }
-        write_string_vector_dataset(mesh_group, "coordinates", coordinates);
-        write_xarray_attributes(mesh_group, "coordinates", "DIMENSION_SCALE", "", "", "", "1");
-        //  TODO: Find out if REFERENCE_LIST, DIMENSION_LIST which are lists of 'HDF5 object reference' need to be included for xarray to see it as a dataset
-        //  if so, find out what the references point to, create list of of references (or possibly list of tuples including the reference and an integer)
-        //  then write a function that can write a list as an attribute
+        write_mesh_nodes(h5_file, mesh_group, mesh.nodes.nodes, mesh.embedded_space);
     }
+}
 
+void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<int, node_type> nodes, const int embedded_space) {
+    vector<string> coordinates;
+    if (embedded_space == 2) {  // Two Dimensional Planar
+        coordinates = {"x", "y"};
+    } else if (embedded_space == 3) {  // AxiSymmetric
+        coordinates = {"r", "z"};
+    } else {  // Assume it's 3 dimensional with these names
+        coordinates = {"x", "y", "z"};
+    }
+    write_string_vector_dataset(group, "coordinates", coordinates);
+    write_xarray_attributes(group, "coordinates", "coordinates", "DIMENSION_SCALE", "", "", "", "1");
+    //  TODO: Find out if REFERENCE_LIST, DIMENSION_LIST which are lists of 'HDF5 object reference' need to be included for xarray to see it as a dataset
+    //  if so, find out what the references point to, create list of of references (or possibly list of tuples including the reference and an integer)
+    //  then write a function that can write a list as an attribute
+    vector<int> node_labels;
+    hsize_t dimension(nodes.size());
+    hvl_t variable_length_coord[dimension];
+    std::vector<hvl_t> variable_length_sets(dimension);
+    int node_count = 0;
+    for(map<int, node_type>::iterator node_it = nodes.begin(); node_it != nodes.end(); ++node_it) {
+        node_labels.push_back(node_it->first);
+        variable_length_coord[node_count].len = node_it->second.coordinates.size();
+        variable_length_coord[node_count].p = &node_it->second.coordinates[0];
+        variable_length_sets[node_count].len = node_it->second.sets.size();
+        variable_length_sets[node_count].p = new char*[node_it->second.sets.size()];
+        size_t set_count = 0;
+        for (const std::string& str : node_it->second.sets) {
+            char* c_str = new char[str.size() + 1];  // Plus 1 for null terminator
+            std::strcpy(c_str, str.c_str());
+            static_cast<char**>(variable_length_sets[node_count].p)[set_count] = c_str;
+            ++set_count;
+        }
+        node_count++;
+    }
+    write_integer_vector_dataset(group, "node", node_labels);
+    write_xarray_attributes(group, "node", "node", "DIMENSION_SCALE", "", "", "", "0");
+    H5::DataSpace dataspace_coord(1, &dimension);
+    H5::VarLenType datatype_coord(H5::PredType::NATIVE_FLOAT);
+    try {
+        H5::DataSet dataset_coord(group.createDataSet("node_location", datatype_coord, dataspace_coord));
+        dataset_coord.write(variable_length_coord, datatype_coord);
+        dataspace_coord.close();
+        datatype_coord.close();
+        dataset_coord.close();
+        // Clean up allocated memory
+        delete[] variable_length_coord;
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Unable to create dataset node_location. " + e.getDetailMsg());
+        dataspace_coord.close();
+        datatype_coord.close();
+    }
+    write_xarray_attributes(group, "node_sets", "", "", "nan", "", "", "");
+    H5::DataSpace dataspace_sets(1, &dimension);
+    H5::VarLenType datatype_sets(H5::StrType(0, H5T_VARIABLE));
+    try {
+        H5::DataSet dataset_sets(group.createDataSet("node_location", datatype_sets, dataspace_sets));
+        dataset_sets.write(variable_length_sets.data(), datatype_sets);
+        dataspace_sets.close();
+        datatype_sets.close();
+        dataset_sets.close();
+        // Clean up allocated memory
+        int i = 0;
+        for (auto const& node : nodes) {  // node is of type std::pair <int, node_type>
+            for (size_t j = 0; j < node.second.sets.size(); ++j) {
+                delete[] static_cast<char**>(variable_length_sets[i].p)[j];
+            }
+            delete[] static_cast<char**>(variable_length_sets[i].p);
+            i++;
+       }
+        /*
+        */
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Unable to create dataset node_location. " + e.getDetailMsg());
+        dataspace_sets.close();
+        datatype_sets.close();
+    }
+    write_xarray_attributes(group, "node_sets", "node_sets", "DIMENSION_SCALE", "", "", "", "2");
 }
 
 void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name) {
@@ -2182,23 +2248,25 @@ void SpadeObject::write_attribute(const H5::Group &group, const string &attribut
     attribute_space.close();
 }
 
-void SpadeObject::write_xarray_attributes(const H5::Group &group, const string &name, const string &class_name, const string &fill_value, const string &coordinates, const string &description, const string &dim_id) {
+void SpadeObject::write_xarray_attributes(const H5::Group &group, const string &dataset_name, const string &name, const string &class_name, const string &fill_value, const string &coordinates, const string &description, const string &dim_id) {
 //xarray attributes: NAME, CLASS, _FillValue, coordinates, description, _Netcdf4Dimid, REFERENCE_LIST, DIMENSION_LIST
-    if (name.empty()) { return; }
+    if (dataset_name.empty()) { return; }
     DataSet dataset;
     try {
-        dataset = group.openDataSet(name);
+        dataset = group.openDataSet(dataset_name);
     } catch (H5::Exception &e) {
-        this->log_file->logWarning("Unable to open dataset " + name + ". " + e.getDetailMsg());
+        this->log_file->logWarning("Unable to open dataset " + dataset_name + ". " + e.getDetailMsg());
         return;
     }
-    H5::DataSpace attribute_space(H5S_SCALAR);
-    H5::StrType string_type (0, name.size());  // Use the length of the string
-    try {
-        H5::Attribute attribute = dataset.createAttribute("NAME", string_type, attribute_space);
-        attribute.write(string_type, name);
-    } catch(H5::Exception& e) { this->log_file->logWarning("Unable to create attribute NAME " + e.getDetailMsg()); }
-    attribute_space.close();
+    if (!name.empty()) {
+        H5::DataSpace attribute_space(H5S_SCALAR);
+        H5::StrType string_type (0, name.size());  // Use the length of the string
+        try {
+            H5::Attribute attribute = dataset.createAttribute("NAME", string_type, attribute_space);
+            attribute.write(string_type, name);
+        } catch(H5::Exception& e) { this->log_file->logWarning("Unable to create attribute NAME " + e.getDetailMsg()); }
+        attribute_space.close();
+    }
     if (!class_name.empty()) {
         H5::DataSpace class_attribute_space(H5S_SCALAR);
         H5::StrType class_string_type (0, class_name.size());  // Use the length of the string

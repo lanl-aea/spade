@@ -89,7 +89,6 @@ struct elements_type {
 };
 
 struct node_type {
-//    array<float, 3> coordinates;
     vector<float> coordinates;
     set<string> sets;
 };
@@ -785,7 +784,16 @@ class SpadeObject {
           \param mesh mesh data to be written
           \param is_instance boolean determening if the mesh is an instance type or not
         */
-        void write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, const mesh_type mesh, const bool is_instance);
+        void write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, mesh_type mesh, const bool is_instance);
+        //! Write mesh node data to an HDF5 file
+        /*!
+          Write mesh node data in an extract format
+          \param h5_file Open h5_file object for writing
+          \param group HDF5 group in which to write the new data
+          \param nodes node data to be written
+          \param embedded_space integer indicating what type of embedded space, which indicates the dimensions
+        */
+        void write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<int, node_type> nodes, const int embedded_space);
         //! Write parts data to an HDF5 file
         /*!
           Write parts data into an HDF5 file
@@ -967,13 +975,14 @@ class SpadeObject {
         /*!
           Write the passed-in values as attributes to the
           \param group Name of HDF5 group in which to write the new attribute
-          \param name Name of HDF5 dataset in which to write the new attribute
+          \param dataset_name Name of HDF5 dataset in which to write the new attribute
+          \param name value of NAME attribute
           \param class_name value of CLASS attribute
           \param fill_value value of _FillValue attribute
           \param coordinates value of coordinates attribute
           \param description value of description attribute
         */
-        void write_xarray_attributes(const H5::Group &group, const string &name, const string &class_name, const string &fill_value, const string &coordinates, const string &description, const string &dim_id);
+        void write_xarray_attributes(const H5::Group &group, const string &dataset_name, const string &name, const string &class_name, const string &fill_value, const string &coordinates, const string &description, const string &dim_id);
         //! Write a vector of strings as an attribute
         /*!
           Create an attribute with a vector of strings using the passed-in values
