@@ -1530,20 +1530,24 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
     } else {  // Assume it's 3 dimensional with these names
         coordinates = {"x", "y", "z"};
     }
+    int true_coord_size = nodes.begin()->second.coordinates.size();
+    if (coordinates.size() < true_coord_size) { coordinates = {"x", "y", "z"}; }
     write_string_vector_dataset(group, "coordinates", coordinates);
     write_xarray_attributes(group, "coordinates", "coordinates", "DIMENSION_SCALE", "", "", "", "1");
     //  TODO: Find out if REFERENCE_LIST, DIMENSION_LIST which are lists of 'HDF5 object reference' need to be included for xarray to see it as a dataset
     //  if so, find out what the references point to, create list of of references (or possibly list of tuples including the reference and an integer)
     //  then write a function that can write a list as an attribute
     vector<int> node_labels;
+    vector<float> node_coords;
     hsize_t dimension(nodes.size());
     hvl_t variable_length_coord[dimension];
     std::vector<hvl_t> variable_length_sets(dimension);
     int node_count = 0;
     for(map<int, node_type>::iterator node_it = nodes.begin(); node_it != nodes.end(); ++node_it) {
         node_labels.push_back(node_it->first);
-        variable_length_coord[node_count].len = node_it->second.coordinates.size();
-        variable_length_coord[node_count].p = &node_it->second.coordinates[0];
+        for (const float& coord : node_it->second.coordinates) {
+            node_coords.push_back(coord);
+        }
         variable_length_sets[node_count].len = node_it->second.sets.size();
         variable_length_sets[node_count].p = new char*[node_it->second.sets.size()];
         size_t set_count = 0;
@@ -1557,26 +1561,28 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
     }
     write_integer_vector_dataset(group, "node", node_labels);
     write_xarray_attributes(group, "node", "node", "DIMENSION_SCALE", "", "", "", "0");
-    H5::DataSpace dataspace_coord(1, &dimension);
-    H5::VarLenType datatype_coord(H5::PredType::NATIVE_FLOAT);
+
+    hsize_t dims[2] = {nodes.size(), true_coord_size};
+    H5::DataSpace dataspace_coord(2, dims);
+    H5::DataType datatype_coord(H5::PredType::NATIVE_FLOAT);
+
     try {
-        H5::DataSet dataset_coord(group.createDataSet("node_location", datatype_coord, dataspace_coord));
-        dataset_coord.write(variable_length_coord, datatype_coord);
+        H5::DataSet dataset_coord = group.createDataSet("node_location", datatype_coord, dataspace_coord);
+        dataset_coord.write(node_coords.data(), datatype_coord);
         dataspace_coord.close();
         datatype_coord.close();
         dataset_coord.close();
-        // Clean up allocated memory
-        delete[] variable_length_coord;
     } catch(H5::Exception& e) {
         this->log_file->logWarning("Unable to create dataset node_location. " + e.getDetailMsg());
         dataspace_coord.close();
         datatype_coord.close();
     }
-    write_xarray_attributes(group, "node_sets", "", "", "nan", "", "", "");
+
+    write_xarray_attributes(group, "node_location", "", "", "nan", "", "", "");
     H5::DataSpace dataspace_sets(1, &dimension);
     H5::VarLenType datatype_sets(H5::StrType(0, H5T_VARIABLE));
     try {
-        H5::DataSet dataset_sets(group.createDataSet("node_location", datatype_sets, dataspace_sets));
+        H5::DataSet dataset_sets(group.createDataSet("node_sets", datatype_sets, dataspace_sets));
         dataset_sets.write(variable_length_sets.data(), datatype_sets);
         dataspace_sets.close();
         datatype_sets.close();
@@ -1593,7 +1599,7 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
         /*
         */
     } catch(H5::Exception& e) {
-        this->log_file->logWarning("Unable to create dataset node_location. " + e.getDetailMsg());
+        this->log_file->logWarning("Unable to create dataset node_sets. " + e.getDetailMsg());
         dataspace_sets.close();
         datatype_sets.close();
     }
