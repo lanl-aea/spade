@@ -229,7 +229,6 @@ void SpadeObject::process_odb(odb_Odb &odb) {
         part_type new_part = process_part(part, odb);
         this->parts.push_back(new_part);
         this->part_mesh[new_part.name].part = &this->parts[this->parts.size() - 1];
-        this->part_mesh[new_part.name].instance = nullptr;
     }
 
     this->log_file->logVerbose("Reading root assembly.");
@@ -310,6 +309,8 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             new_nodes = this->part_mesh.at(part_name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New part nodes for part: " + part_name);
+            this->part_mesh[part_name].part = nullptr;
+            this->part_mesh[part_name].instance = nullptr;
         }
     } else {
         name = instance_name;
@@ -321,6 +322,8 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             new_nodes = this->instance_mesh.at(name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New nodes for: " + name);
+            this->instance_mesh[name].part = nullptr;
+            this->instance_mesh[name].instance = nullptr;
         }
     }
     for (int i=0; i < nodes.size(); i++) { 
@@ -359,6 +362,8 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             new_elements = this->part_mesh.at(part_name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New part elements for part: " + part_name);
+            this->part_mesh[part_name].part = nullptr;
+            this->part_mesh[part_name].instance = nullptr;
         }
     } else {
         name = instance_name;
@@ -370,6 +375,8 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             new_elements = this->instance_mesh.at(name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New elements for: " + name);
+            this->instance_mesh[name].part = nullptr;
+            this->instance_mesh[name].instance = nullptr;
         }
     }
     for (int i=0; i < elements.size(); i++) { 
@@ -425,6 +432,8 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
 
 set_type SpadeObject::process_set(const odb_Set &odb_set) {
     set_type new_set;
+    new_set.nodes = nullptr;
+    new_set.elements = nullptr;
     if (odb_set.name().empty()) {
         return new_set;
     }
@@ -460,10 +469,8 @@ set_type SpadeObject::process_set(const odb_Set &odb_set) {
                 new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
             } else if(set_elements.size()) {
                 new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
-                new_set.nodes = nullptr;
             } else {
                 new_set.nodes = process_nodes(set_nodes, name.CStr(), "", new_set.name, "");
-                new_set.elements = nullptr;
             }
 
         } else {
@@ -663,6 +670,8 @@ shell_solid_coupling_type SpadeObject::process_shell_solid_coupling (const odb_S
 
 part_type SpadeObject::process_part (const odb_Part &part, odb_Odb &odb) {
     part_type new_part;
+    new_part.nodes = nullptr;  // Set pointers to a null value when data type is created so as to have a "value" to test against later
+    new_part.elements = nullptr;
     new_part.name = part.name().CStr();
     new_part.embeddedSpace = this->dimension_enum_strings[part.embeddedSpace()];
 
@@ -807,6 +816,8 @@ rigid_body_type SpadeObject::process_rigid_body (const odb_RigidBody &rigid_body
 
 instance_type SpadeObject::process_instance (const odb_Instance &instance, odb_Odb &odb) {
     instance_type new_instance;
+    new_instance.nodes = nullptr;  // Set pointers to a null value when data type is created so as to have a "value" to test against later
+    new_instance.elements = nullptr;
     new_instance.name = instance.name().CStr();
     new_instance.embeddedSpace = this->dimension_enum_strings[instance.embeddedSpace()];
 
@@ -875,6 +886,8 @@ connector_orientation_type SpadeObject::process_connector_orientation (const odb
 
 assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &odb) {
     assembly_type new_assembly;
+    new_assembly.nodes = nullptr;  // Set pointers to a null value when data type is created so as to have a "value" to test against later
+    new_assembly.elements = nullptr;
     new_assembly.name = assembly.name().CStr();
     this->log_file->logVerbose("Reading assembly data for " + new_assembly.name);
     new_assembly.embeddedSpace = this->dimension_enum_strings[assembly.embeddedSpace()];
@@ -919,7 +932,6 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
         instance_type new_instance = process_instance(instance, odb);
         new_assembly.instances.push_back(new_instance);
         this->instance_mesh[new_instance.name].instance = &new_assembly.instances[new_assembly.instances.size() - 1];
-        this->instance_mesh[new_instance.name].part = nullptr;
     }
     odb_DatumCsysRepository datum_csyses = assembly.datumCsyses();
     odb_DatumCsysRepositoryIT datum_csyses_iter(datum_csyses);
