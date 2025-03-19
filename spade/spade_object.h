@@ -293,6 +293,7 @@ struct mesh_type {
     elements_type elements;
     instance_type* instance;
     part_type* part;
+    bool two_dimensional;
 };
 
 struct connector_orientation_type {
@@ -517,10 +518,11 @@ class SpadeObject {
           \param assembly_name An assembly name where this node might be found
           \param set_name A set name where this node might be found
           \param part_name A part name where this node might be found
+          \param two_dimensional A boolean stating whether the data is two dimensional
           \return nodes_type pointer to map that stores node data
           \sa process_odb()
         */
-        nodes_type* process_nodes (const odb_SequenceNode &nodes, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name);
+        nodes_type* process_nodes (const odb_SequenceNode &nodes, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, const bool &two_dimensional);
         //! Process odb_Element objects from the odb file
         /*!
           Process odb_Element objects, save element data in data map, return pointer to location in map
@@ -529,10 +531,11 @@ class SpadeObject {
           \param assembly_name An assembly name where this node might be found
           \param set_name A set name where this node might be found
           \param part_name A part name where this node might be found
+          \param two_dimensional A boolean stating whether the data is two dimensional
           \return elements_type pointer to map that stores element data
           \sa process_odb()
         */
-        elements_type* process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name);
+        elements_type* process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, const bool &two_dimensional);
         //! Process odb set object from the odb file
         /*!
           Process odb set object and return the values in an set_type
