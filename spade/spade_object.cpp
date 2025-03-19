@@ -1463,20 +1463,18 @@ void SpadeObject::write_h5 () {
         write_float_2D_data(user_xy_data_group, "data", this->user_xy_data[i].row_size, 2, this->user_xy_data[i].data);  // x-y data has two columns: x and y
     }
 
-    /*
     if (!this->command_line_arguments->odbformat()) {  // Write extract format
         for(map<string,mesh_type>::iterator part_it = part_mesh.begin(); part_it != part_mesh.end(); ++part_it) {
             string part_group_name = "/" + part_it->first;
             H5::Group extract_part_group = create_group(h5_file, part_group_name);
-            write_mesh(h5_file, extract_part_group, part_group_name, part_it->second);
+            write_mesh(h5_file, extract_part_group, part_group_name, part_it->second, false);
         }
         for(map<string,mesh_type>::iterator instance_it = instance_mesh.begin(); instance_it != instance_mesh.end(); ++instance_it) {
             string instance_group_name = "/" + instance_it->first;
             H5::Group extract_instance_group = create_group(h5_file, instance_group_name);
-            write_mesh(h5_file, extract_instance_group, instance_group_name, instance_it->second);
+            write_mesh(h5_file, extract_instance_group, instance_group_name, instance_it->second, true);
         }
     }
-    */
     this->log_file->logVerbose("Writing constraints data at time: " + this->command_line_arguments->getTimeStamp(false));
     H5::Group contraints_group = create_group(h5_file, "/odb/constraints");
     write_constraints(h5_file, "odb/constraints");
@@ -1494,16 +1492,17 @@ void SpadeObject::write_h5 () {
     this->log_file->log("Closing hdf5 file.");
 }
 
-void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, const mesh_type mesh) {
+void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, const mesh_type mesh, const bool is_instance) {
     string mesh_group_name = group_name + "/Mesh";
     H5::Group mesh_group = create_group(h5_file, mesh_group_name);
-    bool is_instance = true;
     string embedded_space;
-    if (mesh.part == nullptr) {
-        embedded_space = mesh.instance->embeddedSpace;
-    } else {
-        embedded_space = mesh.part->embeddedSpace;
-        is_instance = false;
+    /*
+    if (group_name != "ALL") {
+        if (is_instance) {
+            embedded_space = mesh.instance->embeddedSpace;
+        } else {
+            embedded_space = mesh.part->embeddedSpace;
+        }
     }
     if (!mesh.nodes.nodes.empty()) {
         if (embedded_space == "AxiSymmetric") {
@@ -1514,6 +1513,7 @@ void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string
             write_xarray_attributes(mesh_group, "DIMENSION_SCALE", "coordinates", "", "", "", "1");
         }
     }
+    */
 
 }
 

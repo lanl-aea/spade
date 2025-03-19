@@ -779,8 +779,9 @@ class SpadeObject {
           \param group HDF5 group in which to write the new data
           \param group_name Name of the group where data is to be written
           \param mesh mesh data to be written
+          \param is_instance boolean determening if the mesh is an instance type or not
         */
-        void write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, const mesh_type mesh);
+        void write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, const mesh_type mesh, const bool is_instance);
         //! Write parts data to an HDF5 file
         /*!
           Write parts data into an HDF5 file
