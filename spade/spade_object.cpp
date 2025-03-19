@@ -340,7 +340,11 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             }
             continue;
         } catch (const std::out_of_range& oor) {
-            new_nodes.nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]};
+            if ((embedded_space == 2) || (embedded_space == 3)) {
+                new_nodes.nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1]};
+            } else {
+                new_nodes.nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]};
+            }
             new_nodes.nodes[node_label].sets.insert(set_name);
             if (this->command_line_arguments->odbformat()) {  // Don't need to store separate instances if using extract format
                 if (!set_name.empty()) { new_nodes.node_sets[set_name].insert(node_label); }
@@ -1513,16 +1517,19 @@ void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string
     H5::Group mesh_group = create_group(h5_file, mesh_group_name);
     string embedded_space;
     if (!mesh.nodes.nodes.empty()) {
+        vector<string> coordinates;
         if (mesh.embedded_space == 2) {  // Two Dimensional Planar
-            write_string_vector_dataset(mesh_group, "coordinates", {"x", "y"});
-            write_xarray_attributes(mesh_group, "DIMENSION_SCALE", "coordinates", "", "", "", "1");
+            coordinates = {"x", "y"};
         } else if (mesh.embedded_space == 3) {  // AxiSymmetric
-            write_string_vector_dataset(mesh_group, "coordinates", {"r", "z"});
-            write_xarray_attributes(mesh_group, "DIMENSION_SCALE", "coordinates", "", "", "", "1");
+            coordinates = {"r", "z"};
         } else {  // Assume it's 3 dimensional with these names
-            write_string_vector_dataset(mesh_group, "coordinates", {"x", "y", "z"});
-            write_xarray_attributes(mesh_group, "DIMENSION_SCALE", "coordinates", "", "", "", "1");
+            coordinates = {"x", "y", "z"};
         }
+        write_string_vector_dataset(mesh_group, "coordinates", coordinates);
+        write_xarray_attributes(mesh_group, "coordinates", "DIMENSION_SCALE", "", "", "", "1");
+        //  TODO: Find out if REFERENCE_LIST, DIMENSION_LIST which are lists of 'HDF5 object reference' need to be included for xarray to see it as a dataset
+        //  if so, find out what the references point to, create list of of references (or possibly list of tuples including the reference and an integer)
+        //  then write a function that can write a list as an attribute
     }
 
 }
@@ -2093,7 +2100,7 @@ void SpadeObject::write_nodes(H5::H5File &h5_file, H5::Group &group, const strin
         if (set_name.empty()) {
             H5::Group nodes_group = create_group(h5_file, group_name + "/nodes");
             for(map<int,node_type>::iterator it = all_nodes.nodes.begin(); it != all_nodes.nodes.end(); ++it) {
-                write_node_coordinates_dataset(nodes_group, to_string(it->first), (it->second).coordinates);
+                write_float_vector_dataset(nodes_group, to_string(it->first), (it->second).coordinates);
             }
         } else {
             try {  // If the node has been stored in nodes, just return the address to it
@@ -2105,20 +2112,6 @@ void SpadeObject::write_nodes(H5::H5File &h5_file, H5::Group &group, const strin
             }
         }
     }
-}
-
-void SpadeObject::write_node_coordinates_dataset(const H5::Group &group, const string &dataset_name, const array<float, 3> &node_coordinates) {
-    if (node_coordinates.empty()) { return; }
-    hsize_t dimensions[] = {node_coordinates.size()};
-    H5::DataSpace dataspace(1, dimensions);
-    try {
-        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
-        dataset.write(node_coordinates.data(), H5::PredType::NATIVE_FLOAT);
-        dataset.close();
-    } catch(H5::Exception& e) {
-        this->log_file->logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
-    }
-    dataspace.close();
 }
 
 void SpadeObject::write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets) {
@@ -2192,49 +2185,66 @@ void SpadeObject::write_attribute(const H5::Group &group, const string &attribut
 void SpadeObject::write_xarray_attributes(const H5::Group &group, const string &name, const string &class_name, const string &fill_value, const string &coordinates, const string &description, const string &dim_id) {
 //xarray attributes: NAME, CLASS, _FillValue, coordinates, description, _Netcdf4Dimid, REFERENCE_LIST, DIMENSION_LIST
     if (name.empty()) { return; }
-    DataSet dataset = group.openDataSet(name);
+    DataSet dataset;
+    try {
+        dataset = group.openDataSet(name);
+    } catch (H5::Exception &e) {
+        this->log_file->logWarning("Unable to open dataset " + name + ". " + e.getDetailMsg());
+        return;
+    }
     H5::DataSpace attribute_space(H5S_SCALAR);
     H5::StrType string_type (0, name.size());  // Use the length of the string
     try {
         H5::Attribute attribute = dataset.createAttribute("NAME", string_type, attribute_space);
         attribute.write(string_type, name);
     } catch(H5::Exception& e) { this->log_file->logWarning("Unable to create attribute NAME " + e.getDetailMsg()); }
+    attribute_space.close();
     if (!class_name.empty()) {
-        H5::StrType string_type (0, class_name.size());  // Use the length of the string
+        H5::DataSpace class_attribute_space(H5S_SCALAR);
+        H5::StrType class_string_type (0, class_name.size());  // Use the length of the string
         try {
-            H5::Attribute attribute = dataset.createAttribute("CLASS", string_type, attribute_space);
-            attribute.write(string_type, class_name);
+            H5::Attribute class_attribute = dataset.createAttribute("CLASS", class_string_type, class_attribute_space);
+            class_attribute.write(class_string_type, class_name);
         } catch(H5::Exception& e) { this->log_file->logWarning("Unable to create attribute CLASS " + e.getDetailMsg()); }
+        class_attribute_space.close();
     }
     if (!fill_value.empty()) {
-        H5::StrType string_type (0, fill_value.size());  // Use the length of the string
+        H5::DataSpace fill_attribute_space(H5S_SCALAR);
+        H5::StrType fill_string_type (0, fill_value.size());  // Use the length of the string
         try {
-            H5::Attribute attribute = dataset.createAttribute("_FillValue", string_type, attribute_space);
-            attribute.write(string_type, fill_value);
+            H5::Attribute fill_attribute = dataset.createAttribute("_FillValue", fill_string_type, fill_attribute_space);
+            fill_attribute.write(fill_string_type, fill_value);
         } catch(H5::Exception& e) { this->log_file->logWarning("Unable to create attribute _FillValue " + e.getDetailMsg()); }
+        fill_attribute_space.close();
     }
     if (!coordinates.empty()) {
-        H5::StrType string_type (0, coordinates.size());  // Use the length of the string
+        H5::DataSpace coord_attribute_space(H5S_SCALAR);
+        H5::StrType coord_string_type (0, coordinates.size());  // Use the length of the string
         try {
-            H5::Attribute attribute = dataset.createAttribute("coordinates", string_type, attribute_space);
-            attribute.write(string_type, coordinates);
+            H5::Attribute coord_attribute = dataset.createAttribute("coordinates", coord_string_type, coord_attribute_space);
+            coord_attribute.write(coord_string_type, coordinates);
         } catch(H5::Exception& e) { this->log_file->logWarning("Unable to create attribute coordinates " + e.getDetailMsg()); }
+        coord_attribute_space.close();
     }
     if (!description.empty()) {
-        H5::StrType string_type (0, description.size());  // Use the length of the string
+        H5::DataSpace description_attribute_space(H5S_SCALAR);
+        H5::StrType description_string_type (0, description.size());  // Use the length of the string
         try {
-            H5::Attribute attribute = dataset.createAttribute("description", string_type, attribute_space);
-            attribute.write(string_type, description);
+            H5::Attribute description_attribute = dataset.createAttribute("description", description_string_type, description_attribute_space);
+            description_attribute.write(description_string_type, description);
         } catch(H5::Exception& e) { this->log_file->logWarning("Unable to create attribute description " + e.getDetailMsg()); }
+        description_attribute_space.close();
     }
     if (!dim_id.empty()) {
-        H5::StrType string_type (0, dim_id.size());  // Use the length of the string
+        H5::DataSpace dim_attribute_space(H5S_SCALAR);
+        H5::StrType dim_string_type (0, dim_id.size());  // Use the length of the string
         try {
-            H5::Attribute attribute = dataset.createAttribute("_Netcdf4Dimid", string_type, attribute_space);
-            attribute.write(string_type, dim_id);
+            H5::Attribute dim_attribute = dataset.createAttribute("_Netcdf4Dimid", dim_string_type, dim_attribute_space);
+            dim_attribute.write(dim_string_type, dim_id);
         } catch(H5::Exception& e) { this->log_file->logWarning("Unable to create attribute _Netcdf4Dimid " + e.getDetailMsg()); }
+        dim_attribute_space.close();
     }
-    attribute_space.close();
+    dataset.close();
 }
 
 void SpadeObject::write_vector_attribute(const H5::Group &group, const string &attribute_name, const vector<string> &string_values) {
@@ -2666,7 +2676,7 @@ H5::Group SpadeObject::create_group(H5::H5File &h5_file, const string &group_nam
     try {
         return h5_file.createGroup(group_name.c_str());
     } catch(H5::Exception& e) {
-        this->log_file->logWarning("Unable to create group " + group_name + ". " + e.getDetailMsg());
+        this->log_file->logWarning("Unable to create group " + group_name + ". Group may already exist. " + e.getDetailMsg());
         try {
             return h5_file.openGroup(group_name.c_str());
         } catch(H5::Exception& e) {

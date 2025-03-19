@@ -89,7 +89,8 @@ struct elements_type {
 };
 
 struct node_type {
-    array<float, 3> coordinates;
+//    array<float, 3> coordinates;
+    vector<float> coordinates;
     set<string> sets;
 };
 
@@ -929,14 +930,6 @@ class SpadeObject {
           \param set_name String with the name of the set if given
         */
         void write_nodes(H5::H5File &h5_file, H5::Group &group, const string &group_name, const nodes_type* nodes, const string &set_name);
-        //! Write a dataset for node coordinates which are stored as a vector of arrays of size 3
-        /*!
-          \param group Name of HDF5 group in which to write the new dataset
-          \param dataset_name Name of the dataset where data is to be written
-          \param node_coordinates The float data that should be written in the new dataset
-          \sa write_float_array_dataset()
-        */
-        void write_node_coordinates_dataset(const H5::Group &group, const string &dataset_name, const array<float, 3> &node_coordinates);
         //! Write sets data to an HDF5 file
         /*!
           Write vector of set data into an HDF5 file
