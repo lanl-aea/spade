@@ -293,7 +293,6 @@ struct mesh_type {
     elements_type elements;
     instance_type* instance;
     part_type* part;
-    int embedded_space;
 };
 
 struct connector_orientation_type {
@@ -531,11 +530,10 @@ class SpadeObject {
           \param assembly_name An assembly name where this node might be found
           \param set_name A set name where this node might be found
           \param part_name A part name where this node might be found
-          \param embedded_space An int indicating what type of dimenions are being used
           \return elements_type pointer to map that stores element data
           \sa process_odb()
         */
-        elements_type* process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, const int &embedded_space);
+        elements_type* process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name);
         //! Process odb set object from the odb file
         /*!
           Process odb set object and return the values in an set_type
@@ -791,9 +789,17 @@ class SpadeObject {
           \param h5_file Open h5_file object for writing
           \param group HDF5 group in which to write the new data
           \param nodes node data to be written
-          \param embedded_space integer indicating what type of embedded space, which indicates the dimensions
+          \param embedded_space string indicating what type of embedded space, which indicates the dimensions
         */
-        void write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<int, node_type> nodes, const int embedded_space);
+        void write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<int, node_type> nodes, const string embedded_space);
+        //! Write mesh element data to an HDF5 file
+        /*!
+          Write mesh element data in an extract format
+          \param h5_file Open h5_file object for writing
+          \param group HDF5 group in which to write the new data
+          \param elements element data to be written
+        */
+        void write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map<string, map<int, element_type>> elements);
         //! Write parts data to an HDF5 file
         /*!
           Write parts data into an HDF5 file

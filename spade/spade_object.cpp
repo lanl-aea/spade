@@ -311,7 +311,6 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             this->log_file->logDebug("New part nodes for part: " + part_name);
             this->part_mesh[part_name].part = nullptr;
             this->part_mesh[part_name].instance = nullptr;
-            this->part_mesh[part_name].embedded_space = embedded_space;
         }
     } else {
         name = instance_name;
@@ -325,7 +324,6 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             this->log_file->logDebug("New nodes for: " + name);
             this->instance_mesh[name].part = nullptr;
             this->instance_mesh[name].instance = nullptr;
-            this->instance_mesh[name].embedded_space = embedded_space;
         }
     }
     for (int i=0; i < nodes.size(); i++) { 
@@ -360,7 +358,7 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
     }
 }
 
-elements_type* SpadeObject::process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, const int &embedded_space) {
+elements_type* SpadeObject::process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name) {
     elements_type new_elements;
     string name;
     if (!part_name.empty()) { 
@@ -370,7 +368,6 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             this->log_file->logDebug("New part elements for part: " + part_name);
             this->part_mesh[part_name].part = nullptr;
             this->part_mesh[part_name].instance = nullptr;
-            this->part_mesh[part_name].embedded_space = embedded_space;
         }
     } else {
         name = instance_name;
@@ -384,7 +381,6 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             this->log_file->logDebug("New elements for: " + name);
             this->instance_mesh[name].part = nullptr;
             this->instance_mesh[name].instance = nullptr;
-            this->instance_mesh[name].embedded_space = embedded_space;
         }
     }
     for (int i=0; i < elements.size(); i++) { 
@@ -463,7 +459,7 @@ set_type SpadeObject::process_set(const odb_Set &odb_set) {
             new_set.nodes = process_nodes(set_nodes, name.CStr(), "", new_set.name, "", 0);
         } else if (new_set.type == "Element Set") {
             const odb_SequenceElement& set_elements = odb_set.elements(name);
-            new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "", 0);
+            new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
         } else if (new_set.type == "Surface Set") {
             const odb_SequenceElement& set_elements = odb_set.elements(name);
             const odb_SequenceElementFace& set_faces = odb_set.faces(name);
@@ -474,9 +470,9 @@ set_type SpadeObject::process_set(const odb_Set &odb_set) {
                 for (int n=0; n<set_elements.size(); n++) {
                     new_set.faces.push_back(this->faces_enum_strings[set_faces.constGet(n)]);
                 }
-                new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "", 0);
+                new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
             } else if(set_elements.size()) {
-                new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "", 0);
+                new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
             } else {
                 new_set.nodes = process_nodes(set_nodes, name.CStr(), "", new_set.name, "", 0);
             }
@@ -686,7 +682,7 @@ part_type SpadeObject::process_part (const odb_Part &part, odb_Odb &odb) {
     const odb_SequenceNode& nodes = part.nodes();
     new_part.nodes = process_nodes(nodes, "", "", "", new_part.name, part.embeddedSpace());
     odb_SequenceElement elements = part.elements();
-    new_part.elements = process_elements(elements, "", "", "", new_part.name, part.embeddedSpace());
+    new_part.elements = process_elements(elements, "", "", "", new_part.name);
 
     odb_SetRepositoryIT node_iter(part.nodeSets());
     for (node_iter.first(); !node_iter.isDone(); node_iter.next()) {
@@ -836,7 +832,7 @@ instance_type SpadeObject::process_instance (const odb_Instance &instance, odb_O
     const odb_SequenceNode& nodes = instance.nodes();
     new_instance.nodes = process_nodes(nodes, new_instance.name, "", "", "", instance.embeddedSpace());
     odb_SequenceElement elements = instance.elements();
-    new_instance.elements = process_elements(elements, new_instance.name, "", "", "", instance.embeddedSpace());
+    new_instance.elements = process_elements(elements, new_instance.name, "", "", "");
 
     this->log_file->logVerbose("\tnodeSets:");
     odb_SetRepositoryIT node_iter(instance.nodeSets());
@@ -907,7 +903,7 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     const odb_SequenceNode& nodes = assembly.nodes();
     new_assembly.nodes = process_nodes(nodes, "", new_assembly.name, "", "", assembly.embeddedSpace());
     const odb_SequenceElement& elements = assembly.elements();
-    new_assembly.elements = process_elements(elements, "", new_assembly.name, "", "", assembly.embeddedSpace());
+    new_assembly.elements = process_elements(elements, "", new_assembly.name, "", "");
 
     this->log_file->logVerbose("\tnodeSets:");
     odb_SetRepositoryIT node_iter(assembly.nodeSets());
@@ -1516,26 +1512,32 @@ void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string
     string mesh_group_name = group_name + "/Mesh";
     H5::Group mesh_group = create_group(h5_file, mesh_group_name);
     string embedded_space;
-    if (!mesh.nodes.nodes.empty()) {
-        write_mesh_nodes(h5_file, mesh_group, mesh.nodes.nodes, mesh.embedded_space);
-    }
     if (is_instance) {
         if (mesh.instance != nullptr) {
             write_instance(h5_file, group, group_name, *mesh.instance);
+            if (!mesh.instance->embeddedSpace.empty()) { embedded_space = mesh.instance->embeddedSpace; }
         }
     } else {
         if (mesh.part != nullptr) {
-            write_string_dataset(group, "embeddedSpace", mesh.part->embeddedSpace);
+            if (!mesh.part->embeddedSpace.empty()) {
+                write_string_dataset(group, "embeddedSpace", mesh.part->embeddedSpace);
+                embedded_space = mesh.part->embeddedSpace;
+            }
         }
-
+    }
+    if (!mesh.nodes.nodes.empty()) {
+        write_mesh_nodes(h5_file, mesh_group, mesh.nodes.nodes, embedded_space);
+    }
+    if (!mesh.elements.elements.empty()) {
+        write_mesh_elements(h5_file, mesh_group, mesh.elements.elements);
     }
 }
 
-void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<int, node_type> nodes, const int embedded_space) {
+void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<int, node_type> nodes, const string embedded_space) {
     vector<string> coordinates;
-    if (embedded_space == 2) {  // Two Dimensional Planar
+    if (embedded_space == "Two Dimensional Planar") {
         coordinates = {"x", "y"};
-    } else if (embedded_space == 3) {  // AxiSymmetric
+    } else if (embedded_space == "AxiSymmetric") {
         coordinates = {"r", "z"};
     } else {  // Assume it's 3 dimensional with these names
         coordinates = {"x", "y", "z"};
@@ -1614,6 +1616,9 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
         datatype_sets.close();
     }
     write_xarray_attributes(group, "node_sets", "node_sets", "DIMENSION_SCALE", "", "", "", "2");
+}
+
+void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map<string, map<int, element_type>> elements) {
 }
 
 void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name) {
