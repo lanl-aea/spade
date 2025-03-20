@@ -1552,7 +1552,6 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
     vector<int> node_labels;
     vector<float> node_coords;
     hsize_t dimension(nodes.size());
-    hvl_t variable_length_coord[dimension];
     std::vector<hvl_t> variable_length_sets(dimension);
     int node_count = 0;
     for(map<int, node_type>::iterator node_it = nodes.begin(); node_it != nodes.end(); ++node_it) {
@@ -1589,8 +1588,8 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
         dataspace_coord.close();
         datatype_coord.close();
     }
-
     write_xarray_attributes(group, "node_location", "", "", "nan", "", "", "");
+
     H5::DataSpace dataspace_sets(1, &dimension);
     H5::VarLenType datatype_sets(H5::StrType(0, H5T_VARIABLE));
     try {
@@ -1615,10 +1614,121 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
         dataspace_sets.close();
         datatype_sets.close();
     }
-    write_xarray_attributes(group, "node_sets", "node_sets", "DIMENSION_SCALE", "", "", "", "2");
+    write_xarray_attributes(group, "node_sets", "node_sets", "DIMENSION_SCALE", "", "", "", "4");
 }
 
 void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map<string, map<int, element_type>> elements) {
+    for(map<string, map<int, element_type>>::iterator it = elements.begin(); it != elements.end(); ++it) {
+        string type = it->first;
+        map<int, element_type> element_members = it->second;
+
+        vector<int> element_labels;
+        vector<string> section_categories;
+        vector<int> element_connectivity;
+        int connectivity_size = element_members.begin()->second.connectivity.size();
+        vector<int> node_indices;
+        for (int i=0; i<connectivity_size; i++) { node_indices.push_back(i); }
+
+        hsize_t dimension(element_members.size());
+        std::vector<hvl_t> variable_length_sets(dimension);
+        std::vector<hvl_t> variable_length_instances(dimension);
+        int element_count = 0;
+        for(map<int, element_type>::iterator element_it = element_members.begin(); element_it != element_members.end(); ++element_it) {
+            element_labels.push_back(element_it->first);
+            section_categories.push_back(element_it->second.sectionCategory.name);
+            for (const float& connectivity : element_it->second.connectivity) {
+                element_connectivity.push_back(connectivity);
+            }
+            variable_length_sets[element_count].len = element_it->second.sets.size();
+            variable_length_sets[element_count].p = new char*[element_it->second.sets.size()];
+            size_t set_count = 0;
+            for (const std::string& str : element_it->second.sets) {
+                char* c_str = new char[str.size() + 1];  // Plus 1 for null terminator
+                std::strcpy(c_str, str.c_str());
+                static_cast<char**>(variable_length_sets[element_count].p)[set_count] = c_str;
+                ++set_count;
+            }
+            variable_length_instances[element_count].len = element_it->second.instanceNames.size();
+            variable_length_instances[element_count].p = new char*[element_it->second.instanceNames.size()];
+            size_t connectivity_count = 0;
+            for (const std::string& str : element_it->second.instanceNames) {
+                char* c_str = new char[str.size() + 1];  // Plus 1 for null terminator
+                std::strcpy(c_str, str.c_str());
+                static_cast<char**>(variable_length_instances[element_count].p)[connectivity_count] = c_str;
+                ++connectivity_count;
+            }
+            element_count++;
+        }
+        write_integer_vector_dataset(group, type, element_labels);
+        write_xarray_attributes(group, type, type, "DIMENSION_SCALE", "", "", "", "2");
+        write_integer_vector_dataset(group, type + "_node", node_indices);
+        write_xarray_attributes(group, type + "_node", type + "_node", "DIMENSION_SCALE", "", "", "", "3");
+        write_string_vector_dataset(group, "section_category", section_categories);  // Only xarray attribute is DIMENSION_LIST
+
+        hsize_t dims[2] = {element_members.size(), connectivity_size};
+        H5::DataSpace dataspace_connectivity(2, dims);
+        H5::DataType datatype_connectivity(H5::PredType::NATIVE_INT);
+        try {
+            H5::DataSet dataset_connectivity = group.createDataSet(type + "_mesh", datatype_connectivity, dataspace_connectivity);
+            dataset_connectivity.write(element_connectivity.data(), datatype_connectivity);
+            dataspace_connectivity.close();
+            datatype_connectivity.close();
+            dataset_connectivity.close();
+        } catch(H5::Exception& e) {
+            this->log_file->logWarning("Unable to create dataset " + type + "_mesh. " + e.getDetailMsg());
+            dataspace_connectivity.close();
+            datatype_connectivity.close();
+        }
+        write_xarray_attributes(group, type + "_mesh", "", "", "", "section_category", "", "");
+
+        H5::DataSpace dataspace_sets(1, &dimension);
+        H5::VarLenType datatype_sets(H5::StrType(0, H5T_VARIABLE));
+        try {
+            H5::DataSet dataset_sets(group.createDataSet("element_sets", datatype_sets, dataspace_sets));
+            dataset_sets.write(variable_length_sets.data(), datatype_sets);
+            dataspace_sets.close();
+            datatype_sets.close();
+            dataset_sets.close();
+            // Clean up allocated memory
+            int i = 0;
+            for (auto const& element : element_members) {  // element is of type std::pair <int, element_type>
+                for (size_t j = 0; j < element.second.sets.size(); ++j) {
+                    delete[] static_cast<char**>(variable_length_sets[i].p)[j];
+                }
+                delete[] static_cast<char**>(variable_length_sets[i].p);
+                i++;
+            }
+        } catch(H5::Exception& e) {
+            this->log_file->logWarning("Unable to create dataset element_sets. " + e.getDetailMsg());
+            dataspace_sets.close();
+            datatype_sets.close();
+        }
+        write_xarray_attributes(group, "element_sets", "element_sets", "DIMENSION_SCALE", "", "", "", "5");
+
+        H5::DataSpace dataspace_instances(1, &dimension);
+        H5::VarLenType datatype_instances(H5::StrType(0, H5T_VARIABLE));
+        try {
+            H5::DataSet dataset_instances(group.createDataSet("element_instances", datatype_instances, dataspace_instances));
+            dataset_instances.write(variable_length_instances.data(), datatype_instances);
+            dataspace_instances.close();
+            datatype_instances.close();
+            dataset_instances.close();
+            // Clean up allocated memory
+            int i = 0;
+            for (auto const& element : element_members) {  // element is of type std::pair <int, element_type>
+                for (size_t j = 0; j < element.second.instanceNames.size(); ++j) {
+                    delete[] static_cast<char**>(variable_length_instances[i].p)[j];
+                }
+                delete[] static_cast<char**>(variable_length_instances[i].p);
+                i++;
+            }
+        } catch(H5::Exception& e) {
+            this->log_file->logWarning("Unable to create dataset element_instances. " + e.getDetailMsg());
+            dataspace_instances.close();
+            datatype_instances.close();
+        }
+        write_xarray_attributes(group, "element_instances", "element_instances", "DIMENSION_SCALE", "", "", "", "6");
+    }
 }
 
 void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name) {
