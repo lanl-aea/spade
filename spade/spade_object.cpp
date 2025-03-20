@@ -1513,17 +1513,21 @@ void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string
     H5::Group mesh_group = create_group(h5_file, mesh_group_name);
     string embedded_space;
     if (is_instance) {
+        /*
         if (mesh.instance != nullptr) {
             write_instance(h5_file, group, group_name, *mesh.instance);
             if (!mesh.instance->embeddedSpace.empty()) { embedded_space = mesh.instance->embeddedSpace; }
         }
+        */
     } else {
+        /*
         if (mesh.part != nullptr) {
             if (!mesh.part->embeddedSpace.empty()) {
                 write_string_dataset(group, "embeddedSpace", mesh.part->embeddedSpace);
                 embedded_space = mesh.part->embeddedSpace;
             }
         }
+        */
     }
     if (!mesh.nodes.nodes.empty()) {
         write_mesh_nodes(h5_file, mesh_group, mesh.nodes.nodes, embedded_space);
@@ -1663,7 +1667,7 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
         write_xarray_attributes(group, type, type, "DIMENSION_SCALE", "", "", "", "2");
         write_integer_vector_dataset(group, type + "_node", node_indices);
         write_xarray_attributes(group, type + "_node", type + "_node", "DIMENSION_SCALE", "", "", "", "3");
-        write_string_vector_dataset(group, "section_category", section_categories);  // Only xarray attribute is DIMENSION_LIST
+        write_string_vector_dataset(group, type + "section_category", section_categories);  // Only xarray attribute is DIMENSION_LIST
 
         hsize_t dims[2] = {element_members.size(), connectivity_size};
         H5::DataSpace dataspace_connectivity(2, dims);
@@ -1684,7 +1688,7 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
         H5::DataSpace dataspace_sets(1, &dimension);
         H5::VarLenType datatype_sets(H5::StrType(0, H5T_VARIABLE));
         try {
-            H5::DataSet dataset_sets(group.createDataSet("element_sets", datatype_sets, dataspace_sets));
+            H5::DataSet dataset_sets(group.createDataSet(type + "element_sets", datatype_sets, dataspace_sets));
             dataset_sets.write(variable_length_sets.data(), datatype_sets);
             dataspace_sets.close();
             datatype_sets.close();
@@ -1703,12 +1707,12 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
             dataspace_sets.close();
             datatype_sets.close();
         }
-        write_xarray_attributes(group, "element_sets", "element_sets", "DIMENSION_SCALE", "", "", "", "5");
+        write_xarray_attributes(group, type + "element_sets", type + "element_sets", "DIMENSION_SCALE", "", "", "", "5");
 
         H5::DataSpace dataspace_instances(1, &dimension);
         H5::VarLenType datatype_instances(H5::StrType(0, H5T_VARIABLE));
         try {
-            H5::DataSet dataset_instances(group.createDataSet("element_instances", datatype_instances, dataspace_instances));
+            H5::DataSet dataset_instances(group.createDataSet(type + "element_instances", datatype_instances, dataspace_instances));
             dataset_instances.write(variable_length_instances.data(), datatype_instances);
             dataspace_instances.close();
             datatype_instances.close();
@@ -1727,7 +1731,7 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
             dataspace_instances.close();
             datatype_instances.close();
         }
-        write_xarray_attributes(group, "element_instances", "element_instances", "DIMENSION_SCALE", "", "", "", "6");
+        write_xarray_attributes(group, type + "element_instances", type + "element_instances", "DIMENSION_SCALE", "", "", "", "6");
     }
 }
 
