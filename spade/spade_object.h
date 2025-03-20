@@ -879,6 +879,15 @@ class SpadeObject {
           \param group_name Name of the group where data is to be written
         */
         void write_instances(H5::H5File &h5_file, const string &group_name);
+        //! Write instance data to an HDF5 file
+        /*!
+          Write instance data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group Group where data is to be written
+          \param group_name Name of the group where data is to be written
+          \param instance Data to be written
+        */
+        void write_instance(H5::H5File &h5_file, H5::Group &group, const string &group_name, instance_type instance);
         //! Write Analytic Surface data to an HDF5 file
         /*!
           Write Analytic Surface data into an HDF5 file

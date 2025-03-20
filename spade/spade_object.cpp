@@ -1519,6 +1519,16 @@ void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string
     if (!mesh.nodes.nodes.empty()) {
         write_mesh_nodes(h5_file, mesh_group, mesh.nodes.nodes, mesh.embedded_space);
     }
+    if (is_instance) {
+        if (mesh.instance != nullptr) {
+            write_instance(h5_file, group, group_name, *mesh.instance);
+        }
+    } else {
+        if (mesh.part != nullptr) {
+            write_string_dataset(group, "embeddedSpace", mesh.part->embeddedSpace);
+        }
+
+    }
 }
 
 void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<int, node_type> nodes, const int embedded_space) {
@@ -1595,7 +1605,7 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
             }
             delete[] static_cast<char**>(variable_length_sets[i].p);
             i++;
-       }
+        }
         /*
         */
     } catch(H5::Exception& e) {
@@ -1912,59 +1922,63 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name)
     for (auto instance : this->root_assembly.instances) {
         string instance_group_name = instances_group_name + "/" + replace_slashes(instance.name);
         H5::Group instance_group = create_group(h5_file, instance_group_name);
-        write_string_dataset(instance_group, "embeddedSpace", instance.embeddedSpace);
-        if (this->command_line_arguments->odbformat()) {
-            write_nodes(h5_file, instance_group, instance_group_name, instance.nodes, "");
-            write_elements(h5_file, instance_group, instance_group_name, instance.elements, "");
-            write_sets(h5_file, instance_group_name + "/nodeSets", instance.nodeSets);
-            write_sets(h5_file, instance_group_name + "/elementSets", instance.elementSets);
-        }
-        write_sets(h5_file, instance_group_name + "/surfaces", instance.surfaces);
-        this->instance_links[instance.name] = instance_group_name;
-        H5::Group section_assignments_group = create_group(h5_file, instance_group_name + "/sectionAssignments");
-        for (int i=0; i<instance.sectionAssignments.size(); i++) {
-            string section_assignment_group_name = instance_group_name + "/sectionAssignments/" + to_string(i);
-            H5::Group section_assignment_group = create_group(h5_file, section_assignment_group_name);
-            write_set(h5_file, section_assignment_group_name, instance.sectionAssignments[i].region);
-            write_string_dataset(section_assignment_group, "sectionName", instance.sectionAssignments[i].sectionName);
-        }
-        if (instance.rigidBodies.size() > 0) {
-            H5::Group rigid_bodies_group = create_group(h5_file, instance_group_name + "/rigidBodies");
-            for (int i=0; i<instance.rigidBodies.size(); i++) {
-                string rigid_body_group_name = instance_group_name + "/rigidBodies/" + to_string(i);
-                H5::Group rigid_body_group = create_group(h5_file, rigid_body_group_name);
-                write_string_dataset(rigid_body_group, "position", instance.rigidBodies[i].position);
-                write_string_dataset(rigid_body_group, "isothermal", instance.rigidBodies[i].isothermal);
-                write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].referenceNode);
-                write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].elements);
-                write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].tieNodes);
-                write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].pinNodes);
-                write_analytic_surface(h5_file, rigid_body_group_name, instance.rigidBodies[i].analyticSurface);
-            }
-        }
-        if (instance.beamOrientations.size() > 0) {
-            H5::Group beam_orientations_group = create_group(h5_file, instance_group_name + "/beamOrientations");
-            for (int i=0; i<instance.beamOrientations.size(); i++) {
-                string beam_orientation_group_name = instance_group_name + "/beamOrientations/" + to_string(i);
-                H5::Group beam_orientation_group = create_group(h5_file, beam_orientation_group_name);
-                write_set(h5_file, beam_orientation_group_name, instance.beamOrientations[i].region);
-                write_string_dataset(beam_orientation_group, "method", instance.beamOrientations[i].method);
-                write_float_vector_dataset(beam_orientation_group, "vector", instance.beamOrientations[i].beam_vector);
-            }
-        }
-        if (instance.rebarOrientations.size() > 0) {
-            H5::Group rebar_orientations_group = create_group(h5_file, instance_group_name  + "/rebarOrientations");
-            for (int i=0; i<instance.rebarOrientations.size(); i++) {
-                string rebar_orientation_group_name = instance_group_name + "/rebarOrientations/" + to_string(i);
-                H5::Group rebar_orientation_group = create_group(h5_file, rebar_orientation_group_name);
-                write_string_dataset(rebar_orientation_group, "axis", instance.rebarOrientations[i].axis);
-                write_float_dataset(rebar_orientation_group, "angle", instance.rebarOrientations[i].angle);
-                write_set(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].region);
-                write_datum_csys(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].csys);
-            }
-        }
-        write_analytic_surface(h5_file, instance_group_name, instance.analyticSurface);
+        write_instance(h5_file, instance_group, instance_group_name, instance);
     }
+}
+
+void SpadeObject::write_instance(H5::H5File &h5_file, H5::Group &group, const string &group_name, instance_type instance) {
+    write_string_dataset(group, "embeddedSpace", instance.embeddedSpace);
+    if (this->command_line_arguments->odbformat()) {
+        write_nodes(h5_file, group, group_name, instance.nodes, "");
+        write_elements(h5_file, group, group_name, instance.elements, "");
+        write_sets(h5_file, group_name + "/nodeSets", instance.nodeSets);
+        write_sets(h5_file, group_name + "/elementSets", instance.elementSets);
+    }
+    write_sets(h5_file, group_name + "/surfaces", instance.surfaces);
+    this->instance_links[instance.name] = group_name;
+    H5::Group section_assignments_group = create_group(h5_file, group_name + "/sectionAssignments");
+    for (int i=0; i<instance.sectionAssignments.size(); i++) {
+        string section_assignment_group_name = group_name + "/sectionAssignments/" + to_string(i);
+        H5::Group section_assignment_group = create_group(h5_file, section_assignment_group_name);
+        write_set(h5_file, section_assignment_group_name, instance.sectionAssignments[i].region);
+        write_string_dataset(section_assignment_group, "sectionName", instance.sectionAssignments[i].sectionName);
+    }
+    if (instance.rigidBodies.size() > 0) {
+        H5::Group rigid_bodies_group = create_group(h5_file, group_name + "/rigidBodies");
+        for (int i=0; i<instance.rigidBodies.size(); i++) {
+            string rigid_body_group_name = group_name + "/rigidBodies/" + to_string(i);
+            H5::Group rigid_body_group = create_group(h5_file, rigid_body_group_name);
+            write_string_dataset(rigid_body_group, "position", instance.rigidBodies[i].position);
+            write_string_dataset(rigid_body_group, "isothermal", instance.rigidBodies[i].isothermal);
+            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].referenceNode);
+            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].elements);
+            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].tieNodes);
+            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].pinNodes);
+            write_analytic_surface(h5_file, rigid_body_group_name, instance.rigidBodies[i].analyticSurface);
+        }
+    }
+    if (instance.beamOrientations.size() > 0) {
+        H5::Group beam_orientations_group = create_group(h5_file, group_name + "/beamOrientations");
+        for (int i=0; i<instance.beamOrientations.size(); i++) {
+            string beam_orientation_group_name = group_name + "/beamOrientations/" + to_string(i);
+            H5::Group beam_orientation_group = create_group(h5_file, beam_orientation_group_name);
+            write_set(h5_file, beam_orientation_group_name, instance.beamOrientations[i].region);
+            write_string_dataset(beam_orientation_group, "method", instance.beamOrientations[i].method);
+            write_float_vector_dataset(beam_orientation_group, "vector", instance.beamOrientations[i].beam_vector);
+        }
+    }
+    if (instance.rebarOrientations.size() > 0) {
+        H5::Group rebar_orientations_group = create_group(h5_file, group_name  + "/rebarOrientations");
+        for (int i=0; i<instance.rebarOrientations.size(); i++) {
+            string rebar_orientation_group_name = group_name + "/rebarOrientations/" + to_string(i);
+            H5::Group rebar_orientation_group = create_group(h5_file, rebar_orientation_group_name);
+            write_string_dataset(rebar_orientation_group, "axis", instance.rebarOrientations[i].axis);
+            write_float_dataset(rebar_orientation_group, "angle", instance.rebarOrientations[i].angle);
+            write_set(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].region);
+            write_datum_csys(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].csys);
+        }
+    }
+    write_analytic_surface(h5_file, group_name, instance.analyticSurface);
 }
 
 void SpadeObject::write_analytic_surface(H5::H5File &h5_file, const string &group_name, analytic_surface_type &analytic_surface) {
