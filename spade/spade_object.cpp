@@ -225,10 +225,10 @@ void SpadeObject::process_odb(odb_Odb &odb) {
         this->log_file->log("Part: " + string(part.name().CStr()));
         this->log_file->log("\tnode count: " + to_string(part.nodes().size()));
         this->log_file->log("\telement count: " + to_string(part.elements().size()));
-//        this->parts.push_back(process_part(part, odb));
+
         part_type new_part = process_part(part, odb);
         this->parts.push_back(new_part);
-        this->part_mesh[new_part.name].part = &this->parts[this->parts.size() - 1];
+        this->part_mesh[new_part.name].part_index = this->parts.size() - 1;
     }
 
     this->log_file->logVerbose("Reading root assembly.");
@@ -309,8 +309,6 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             new_nodes = this->part_mesh.at(part_name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New part nodes for part: " + part_name);
-            this->part_mesh[part_name].part = nullptr;
-            this->part_mesh[part_name].instance = nullptr;
         }
     } else {
         name = instance_name;
@@ -322,8 +320,6 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             new_nodes = this->instance_mesh.at(name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New nodes for: " + name);
-            this->instance_mesh[name].part = nullptr;
-            this->instance_mesh[name].instance = nullptr;
         }
     }
     for (int i=0; i < nodes.size(); i++) { 
@@ -366,8 +362,6 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             new_elements = this->part_mesh.at(part_name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New part elements for part: " + part_name);
-            this->part_mesh[part_name].part = nullptr;
-            this->part_mesh[part_name].instance = nullptr;
         }
     } else {
         name = instance_name;
@@ -379,8 +373,6 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             new_elements = this->instance_mesh.at(name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New elements for: " + name);
-            this->instance_mesh[name].part = nullptr;
-            this->instance_mesh[name].instance = nullptr;
         }
     }
     for (int i=0; i < elements.size(); i++) { 
@@ -932,10 +924,11 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
         if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance.name().CStr())) {
             continue;
         }
-//        new_assembly.instances.push_back(process_instance(instance, odb));
+
         instance_type new_instance = process_instance(instance, odb);
         new_assembly.instances.push_back(new_instance);
-        this->instance_mesh[new_instance.name].instance = &new_assembly.instances[new_assembly.instances.size() - 1];
+//        this->instance_mesh[new_instance.name].instance = &new_instance;
+        this->instance_mesh[new_instance.name].instance_index = new_assembly.instances.size() - 1;
     }
     odb_DatumCsysRepository datum_csyses = assembly.datumCsyses();
     odb_DatumCsysRepositoryIT datum_csyses_iter(datum_csyses);
@@ -1483,12 +1476,16 @@ void SpadeObject::write_h5 () {
         for(map<string,mesh_type>::iterator part_it = part_mesh.begin(); part_it != part_mesh.end(); ++part_it) {
             string part_group_name = "/" + part_it->first;
             H5::Group extract_part_group = create_group(h5_file, part_group_name);
-            write_mesh(h5_file, extract_part_group, part_group_name, part_it->second, false);
+            if (!part_it->second.nodes.nodes.empty() || !part_it->second.elements.elements.empty()) {
+                write_mesh(h5_file, extract_part_group, part_group_name, part_it->second, false);
+            }
         }
         for(map<string,mesh_type>::iterator instance_it = instance_mesh.begin(); instance_it != instance_mesh.end(); ++instance_it) {
             string instance_group_name = "/" + instance_it->first;
             H5::Group extract_instance_group = create_group(h5_file, instance_group_name);
-            write_mesh(h5_file, extract_instance_group, instance_group_name, instance_it->second, true);
+            if (!instance_it->second.nodes.nodes.empty() || !instance_it->second.elements.elements.empty()) {
+                write_mesh(h5_file, extract_instance_group, instance_group_name, instance_it->second, true);
+            }
         }
     }
     this->log_file->logVerbose("Writing constraints data at time: " + this->command_line_arguments->getTimeStamp(false));
@@ -1513,21 +1510,17 @@ void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string
     H5::Group mesh_group = create_group(h5_file, mesh_group_name);
     string embedded_space;
     if (is_instance) {
-        /*
-        if (mesh.instance != nullptr) {
-            write_instance(h5_file, group, group_name, *mesh.instance);
-            if (!mesh.instance->embeddedSpace.empty()) { embedded_space = mesh.instance->embeddedSpace; }
+        if (mesh.instance_index) {
+            write_instance(h5_file, group, group_name, this->root_assembly.instances[mesh.instance_index]);
+            if (!this->root_assembly.instances[mesh.instance_index].embeddedSpace.empty()) { embedded_space = this->root_assembly.instances[mesh.instance_index].embeddedSpace; }
         }
-        */
     } else {
-        /*
-        if (mesh.part != nullptr) {
-            if (!mesh.part->embeddedSpace.empty()) {
-                write_string_dataset(group, "embeddedSpace", mesh.part->embeddedSpace);
-                embedded_space = mesh.part->embeddedSpace;
+        if (mesh.part_index) {
+            if (!this->parts[mesh.part_index].embeddedSpace.empty()) {
+                embedded_space = this->parts[mesh.part_index].embeddedSpace;
+                write_string_dataset(group, "embeddedSpace", embedded_space);
             }
         }
-        */
     }
     if (!mesh.nodes.nodes.empty()) {
         write_mesh_nodes(h5_file, mesh_group, mesh.nodes.nodes, embedded_space);

@@ -291,8 +291,8 @@ struct instance_type {
 struct mesh_type {
     nodes_type nodes;
     elements_type elements;
-    instance_type* instance;
-    part_type* part;
+    int part_index;
+    int instance_index;
 };
 
 struct connector_orientation_type {
