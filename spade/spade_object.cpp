@@ -226,9 +226,8 @@ void SpadeObject::process_odb(odb_Odb &odb) {
         this->log_file->log("\tnode count: " + to_string(part.nodes().size()));
         this->log_file->log("\telement count: " + to_string(part.elements().size()));
 
-        part_type new_part = process_part(part, odb);
-        this->parts.push_back(new_part);
-        this->part_mesh[new_part.name].part_index = this->parts.size() - 1;
+        this->parts.push_back(process_part(part, odb));
+        this->part_mesh[part.name().CStr()].part_index = this->parts.size() - 1;
     }
 
     this->log_file->logVerbose("Reading root assembly.");
@@ -925,10 +924,8 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
             continue;
         }
 
-        instance_type new_instance = process_instance(instance, odb);
-        new_assembly.instances.push_back(new_instance);
-//        this->instance_mesh[new_instance.name].instance = &new_instance;
-        this->instance_mesh[new_instance.name].instance_index = new_assembly.instances.size() - 1;
+        new_assembly.instances.push_back(process_instance(instance, odb));
+        this->instance_mesh[instance.name().CStr()].instance_index = new_assembly.instances.size() - 1;
     }
     odb_DatumCsysRepository datum_csyses = assembly.datumCsyses();
     odb_DatumCsysRepositoryIT datum_csyses_iter(datum_csyses);
