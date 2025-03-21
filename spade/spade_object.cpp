@@ -308,6 +308,7 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             new_nodes = this->part_mesh.at(part_name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New part nodes for part: " + part_name);
+            this->part_mesh[part_name].part_index = -1;
         }
     } else {
         name = instance_name;
@@ -319,6 +320,7 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             new_nodes = this->instance_mesh.at(name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New nodes for: " + name);
+            this->instance_mesh[name].instance_index = -1;
         }
     }
     for (int i=0; i < nodes.size(); i++) { 
@@ -361,6 +363,7 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             new_elements = this->part_mesh.at(part_name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New part elements for part: " + part_name);
+            this->part_mesh[part_name].part_index = -1;
         }
     } else {
         name = instance_name;
@@ -372,6 +375,7 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             new_elements = this->instance_mesh.at(name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New elements for: " + name);
+            this->instance_mesh[name].instance_index = -1;
         }
     }
     for (int i=0; i < elements.size(); i++) { 
@@ -1470,18 +1474,33 @@ void SpadeObject::write_h5 () {
     }
 
     if (!this->command_line_arguments->odbformat()) {  // Write extract format
+        string embedded_space;
         for(map<string,mesh_type>::iterator part_it = part_mesh.begin(); part_it != part_mesh.end(); ++part_it) {
+            embedded_space = "";
             string part_group_name = "/" + part_it->first;
             H5::Group extract_part_group = create_group(h5_file, part_group_name);
             if (!part_it->second.nodes.nodes.empty() || !part_it->second.elements.elements.empty()) {
-                write_mesh(h5_file, extract_part_group, part_group_name, part_it->second, false);
+                if ((part_it->second).part_index >= 0) {
+                    if (!this->parts[(part_it->second).part_index].embeddedSpace.empty()) {
+                        embedded_space = this->parts[(part_it->second).part_index].embeddedSpace;
+                        write_string_dataset(extract_part_group, "embeddedSpace", embedded_space);
+                    }
+                }
+                write_mesh(h5_file, extract_part_group, part_group_name, part_it->second, embedded_space);
             }
         }
         for(map<string,mesh_type>::iterator instance_it = instance_mesh.begin(); instance_it != instance_mesh.end(); ++instance_it) {
+            embedded_space = "";
             string instance_group_name = "/" + instance_it->first;
             H5::Group extract_instance_group = create_group(h5_file, instance_group_name);
             if (!instance_it->second.nodes.nodes.empty() || !instance_it->second.elements.elements.empty()) {
-                write_mesh(h5_file, extract_instance_group, instance_group_name, instance_it->second, true);
+                if ((instance_it->second).instance_index >= 0) {
+                    string instance_sub_group_name = instance_group_name + "/instance_data";
+                    H5::Group extract_instance_sub_group = create_group(h5_file, instance_sub_group_name);
+                    write_instance(h5_file, extract_instance_sub_group, instance_sub_group_name, this->root_assembly.instances[(instance_it->second).instance_index]);
+                    if (!this->root_assembly.instances[(instance_it->second).instance_index].embeddedSpace.empty()) { embedded_space = this->root_assembly.instances[(instance_it->second).instance_index].embeddedSpace; }
+                }
+                write_mesh(h5_file, extract_instance_group, instance_group_name, instance_it->second, embedded_space);
             }
         }
     }
@@ -1502,23 +1521,9 @@ void SpadeObject::write_h5 () {
     this->log_file->log("Closing hdf5 file.");
 }
 
-void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, mesh_type mesh, const bool is_instance) {
+void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, mesh_type mesh, const string &embedded_space) {
     string mesh_group_name = group_name + "/Mesh";
     H5::Group mesh_group = create_group(h5_file, mesh_group_name);
-    string embedded_space;
-    if (is_instance) {
-        if (mesh.instance_index) {
-            write_instance(h5_file, group, group_name, this->root_assembly.instances[mesh.instance_index]);
-            if (!this->root_assembly.instances[mesh.instance_index].embeddedSpace.empty()) { embedded_space = this->root_assembly.instances[mesh.instance_index].embeddedSpace; }
-        }
-    } else {
-        if (mesh.part_index) {
-            if (!this->parts[mesh.part_index].embeddedSpace.empty()) {
-                embedded_space = this->parts[mesh.part_index].embeddedSpace;
-                write_string_dataset(group, "embeddedSpace", embedded_space);
-            }
-        }
-    }
     if (!mesh.nodes.nodes.empty()) {
         write_mesh_nodes(h5_file, mesh_group, mesh.nodes.nodes, embedded_space);
     }
