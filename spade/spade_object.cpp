@@ -323,14 +323,12 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             this->instance_mesh[name].instance_index = -1;
         }
     }
-    bool resize_coordinates = true;  // Check if all of the third coordiantes are zero (meaning it is actually 2 dimensional)
     for (int i=0; i < nodes.size(); i++) { 
         odb_Node node = nodes.node(i);
         int node_label = node.label();
         node_type coords_sets;
         try {
             coords_sets = new_nodes.nodes.at(node_label);
-            if (coords_sets.coordinates[2] != 0) { resize_coordinates = false; }
             new_nodes.nodes[node_label].sets.insert(set_name);
             if (this->command_line_arguments->odbformat()) {  // Don't need to store separate instances if using extract format
                 if (!set_name.empty()) { new_nodes.node_sets[set_name].insert(node_label); }
@@ -339,9 +337,7 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
         } catch (const std::out_of_range& oor) {
             if ((embedded_space == 2) || (embedded_space == 3)) {
                 new_nodes.nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1]};
-                resize_coordinates = false;
             } else {
-                if (node.coordinates()[2] != 0) { resize_coordinates = false; }
                 new_nodes.nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]};
             }
             new_nodes.nodes[node_label].sets.insert(set_name);
@@ -349,9 +345,6 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
                 if (!set_name.empty()) { new_nodes.node_sets[set_name].insert(node_label); }
             }
         }
-    }
-    if (resize_coordinates) {  // Resize 3 dimensional data to 2-D data if all third elements are 0
-        for (auto & new_node : new_nodes.nodes) { new_node.second.coordinates.resize(2); }
     }
     if (!part_name.empty()) { 
             this->part_mesh[part_name].nodes = new_nodes;
