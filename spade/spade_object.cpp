@@ -1619,7 +1619,8 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
         map<int, element_type> element_members = it->second;
 
         vector<int> element_labels;
-        vector<string> section_categories;
+        vector<string> section_categories_names;
+        vector<string> section_categories_descriptions;
         vector<int> element_connectivity;
         int connectivity_size = element_members.begin()->second.connectivity.size();
         vector<int> node_indices;
@@ -1628,10 +1629,14 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
         hsize_t dimension(element_members.size());
         std::vector<hvl_t> variable_length_sets(dimension);
         std::vector<hvl_t> variable_length_instances(dimension);
+        std::vector<hvl_t> variable_length_section_point_numbers(dimension);
+        std::vector<hvl_t> variable_length_section_point_descriptions(dimension);
         int element_count = 0;
+        bool section_point_empty = true;
         for(map<int, element_type>::iterator element_it = element_members.begin(); element_it != element_members.end(); ++element_it) {
             element_labels.push_back(element_it->first);
-            section_categories.push_back(element_it->second.sectionCategory.name);
+            section_categories_names.push_back(element_it->second.sectionCategory.name);
+            section_categories_descriptions.push_back(element_it->second.sectionCategory.description);
             for (const float& connectivity : element_it->second.connectivity) {
                 element_connectivity.push_back(connectivity);
             }
@@ -1653,13 +1658,33 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
                 static_cast<char**>(variable_length_instances[element_count].p)[connectivity_count] = c_str;
                 ++connectivity_count;
             }
+            if (element_it->second.sectionCategory.section_point_numbers.size()) {
+                section_point_empty = false;
+                variable_length_section_point_numbers[element_count].len = element_it->second.sectionCategory.section_point_numbers.size();
+                variable_length_section_point_numbers[element_count].p = new char*[element_it->second.sectionCategory.section_point_numbers.size()];
+                variable_length_section_point_descriptions[element_count].len = element_it->second.sectionCategory.section_point_descriptions.size();
+                variable_length_section_point_descriptions[element_count].p = new char*[element_it->second.sectionCategory.section_point_descriptions.size()];
+                size_t section_point_count = 0;
+                for (int i=0; i<element_it->second.sectionCategory.section_point_numbers.size(); i++) {
+                    string str_number = element_it->second.sectionCategory.section_point_numbers[i];
+                    string str_description = element_it->second.sectionCategory.section_point_descriptions[i];
+                    char* c_str_number = new char[str_number.size() + 1];  // Plus 1 for null terminator
+                    char* c_str_description = new char[str_description.size() + 1];  // Plus 1 for null terminator
+                    std::strcpy(c_str_number, str_number.c_str());
+                    std::strcpy(c_str_description, str_description.c_str());
+                    static_cast<char**>(variable_length_section_point_numbers[element_count].p)[section_point_count] = c_str_number;
+                    static_cast<char**>(variable_length_section_point_descriptions[element_count].p)[section_point_count] = c_str_description;
+                    ++section_point_count;
+                }
+            }
             element_count++;
         }
         write_integer_vector_dataset(group, type, element_labels);
         write_xarray_attributes(group, type, type, "DIMENSION_SCALE", "", "", "", "2");
         write_integer_vector_dataset(group, type + "_node", node_indices);
         write_xarray_attributes(group, type + "_node", type + "_node", "DIMENSION_SCALE", "", "", "", "3");
-        write_string_vector_dataset(group, type + "_section_category", section_categories);  // Only xarray attribute is DIMENSION_LIST
+        write_string_vector_dataset(group, type + "_section_category_names", section_categories_names);  // Only xarray attribute is DIMENSION_LIST
+        write_string_vector_dataset(group, type + "_section_category_descriptions", section_categories_descriptions);  // Only xarray attribute is DIMENSION_LIST
 
         hsize_t dims[2] = {element_members.size(), connectivity_size};
         H5::DataSpace dataspace_connectivity(2, dims);
@@ -1685,15 +1710,6 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
             dataspace_sets.close();
             datatype_sets.close();
             dataset_sets.close();
-            // Clean up allocated memory
-            int i = 0;
-            for (auto const& element : element_members) {  // element is of type std::pair <int, element_type>
-                for (size_t j = 0; j < element.second.sets.size(); ++j) {
-                    delete[] static_cast<char**>(variable_length_sets[i].p)[j];
-                }
-                delete[] static_cast<char**>(variable_length_sets[i].p);
-                i++;
-            }
         } catch(H5::Exception& e) {
             this->log_file->logWarning("Unable to create dataset element_sets. " + e.getDetailMsg());
             dataspace_sets.close();
@@ -1709,21 +1725,66 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
             dataspace_instances.close();
             datatype_instances.close();
             dataset_instances.close();
-            // Clean up allocated memory
-            int i = 0;
-            for (auto const& element : element_members) {  // element is of type std::pair <int, element_type>
-                for (size_t j = 0; j < element.second.instanceNames.size(); ++j) {
-                    delete[] static_cast<char**>(variable_length_instances[i].p)[j];
-                }
-                delete[] static_cast<char**>(variable_length_instances[i].p);
-                i++;
-            }
         } catch(H5::Exception& e) {
             this->log_file->logWarning("Unable to create dataset element_instances. " + e.getDetailMsg());
             dataspace_instances.close();
             datatype_instances.close();
         }
         write_xarray_attributes(group, type + "_element_instances", type + "element_instances", "DIMENSION_SCALE", "", "", "", "6");
+
+        if (!section_point_empty) {
+            H5::DataSpace dataspace_section_point_numbers(1, &dimension);
+            H5::VarLenType datatype_section_point_numbers(H5::StrType(0, H5T_VARIABLE));
+            try {
+                H5::DataSet dataset_section_point_numbers(group.createDataSet(type + "_section_point_numbers", datatype_section_point_numbers, dataspace_section_point_numbers));
+                dataset_section_point_numbers.write(variable_length_section_point_numbers.data(), datatype_section_point_numbers);
+                dataspace_section_point_numbers.close();
+                datatype_section_point_numbers.close();
+                dataset_section_point_numbers.close();
+            } catch(H5::Exception& e) {
+                this->log_file->logWarning("Unable to create dataset section_point_numbers. " + e.getDetailMsg());
+                dataspace_section_point_numbers.close();
+                datatype_section_point_numbers.close();
+            }
+
+            H5::DataSpace dataspace_section_point_descriptions(1, &dimension);
+            H5::VarLenType datatype_section_point_descriptions(H5::StrType(0, H5T_VARIABLE));
+            try {
+                H5::DataSet dataset_section_point_descriptions(group.createDataSet(type + "_section_point_descriptions", datatype_section_point_descriptions, dataspace_section_point_descriptions));
+                dataset_section_point_descriptions.write(variable_length_section_point_descriptions.data(), datatype_section_point_descriptions);
+                dataspace_section_point_descriptions.close();
+                datatype_section_point_descriptions.close();
+                dataset_section_point_descriptions.close();
+            } catch(H5::Exception& e) {
+                this->log_file->logWarning("Unable to create dataset section_point_descriptions. " + e.getDetailMsg());
+                dataspace_section_point_descriptions.close();
+                datatype_section_point_descriptions.close();
+            }
+        }
+
+        try {
+            // Clean up allocated memory
+            int i = 0;
+            for (auto const& element : element_members) {  // element is of type std::pair <int, element_type>
+                for (size_t j = 0; j < element.second.sets.size(); ++j) {
+                    delete[] static_cast<char**>(variable_length_sets[i].p)[j];
+                }
+                for (size_t j = 0; j < element.second.instanceNames.size(); ++j) {
+                    delete[] static_cast<char**>(variable_length_instances[i].p)[j];
+                }
+                for (size_t j = 0; j < element.second.sectionCategory.section_point_numbers.size(); ++j) {
+                    delete[] static_cast<char**>(variable_length_section_point_numbers[i].p)[j];
+                    delete[] static_cast<char**>(variable_length_section_point_descriptions[i].p)[j];
+                }
+                delete[] static_cast<char**>(variable_length_sets[i].p);
+                delete[] static_cast<char**>(variable_length_instances[i].p);
+                delete[] static_cast<char**>(variable_length_section_point_numbers[i].p);
+                delete[] static_cast<char**>(variable_length_section_point_descriptions[i].p);
+                i++;
+            }
+        } catch(H5::Exception& e) {
+            this->log_file->logDebug("Clean up of memory allocation failed. " + e.getDetailMsg());
+        }
     }
 }
 
