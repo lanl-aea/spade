@@ -446,7 +446,8 @@ set_type SpadeObject::process_set(const odb_Set &odb_set) {
     odb_SequenceString names = odb_set.instanceNames();
     for (int i=0; i<names.size(); i++) {
         odb_String name = names.constGet(i);
-        new_set.instanceNames.push_back(name.CStr());
+        string instance_name = name.CStr();
+        if (!instance_name.empty()) { new_set.instanceNames.push_back(name.CStr()); }
         if (new_set.type == "Node Set") {
             const odb_SequenceNode& set_nodes = odb_set.nodes(name);
             new_set.nodes = process_nodes(set_nodes, name.CStr(), "", new_set.name, "", 0);
@@ -2154,17 +2155,20 @@ void SpadeObject::write_instance(H5::H5File &h5_file, H5::Group &group, const st
 }
 
 void SpadeObject::write_analytic_surface(H5::H5File &h5_file, const string &group_name, analytic_surface_type &analytic_surface) {
+    if ((analytic_surface.name.empty()) && (analytic_surface.type.empty()) && (!analytic_surface.filletRadius) && (analytic_surface.segments.size() == 0) && (analytic_surface.localCoordData.size() == 0)) { return; }
     string analytic_surface_group_name = group_name + "/analyticSurface";
     H5::Group surface_group = create_group(h5_file, analytic_surface_group_name);
     write_string_dataset(surface_group, "name", analytic_surface.name);
     write_string_dataset(surface_group, "type", analytic_surface.type);
     write_double_dataset(surface_group, "filletRadius", analytic_surface.filletRadius);
-    H5::Group segments_group = create_group(h5_file, analytic_surface_group_name + "/segments");
-    for (int i=0; i<analytic_surface.segments.size(); i++) {
-        string segment_group_name = analytic_surface_group_name + "/segments/" + to_string(i);
-        H5::Group segment_group = create_group(h5_file, segment_group_name);
-        write_string_dataset(segment_group, "type", analytic_surface.segments[i].type);
-        write_float_2D_data(segment_group, "data", analytic_surface.segments[i].row_size, analytic_surface.segments[i].column_size, analytic_surface.segments[i].data);
+    if (analytic_surface.segments.size() != 0) {
+        H5::Group segments_group = create_group(h5_file, analytic_surface_group_name + "/segments");
+        for (int i=0; i<analytic_surface.segments.size(); i++) {
+            string segment_group_name = analytic_surface_group_name + "/segments/" + to_string(i);
+            H5::Group segment_group = create_group(h5_file, segment_group_name);
+            write_string_dataset(segment_group, "type", analytic_surface.segments[i].type);
+            write_float_2D_data(segment_group, "data", analytic_surface.segments[i].row_size, analytic_surface.segments[i].column_size, analytic_surface.segments[i].data);
+        }
     }
     write_float_2D_vector(surface_group, "localCoordData", analytic_surface.max_column_size, analytic_surface.localCoordData);
 }
