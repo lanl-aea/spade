@@ -250,10 +250,8 @@ section_category_type SpadeObject::process_section_category (const odb_SectionCa
     category.description = section_category.description().CStr();
     for (int i=0; i<section_category.sectionPoints().size(); i++) {
         odb_SectionPoint section_point = section_category.sectionPoints(i);
-        section_point_type point;
-        point.number = to_string(section_point.number());
-        point.description = section_point.description().CStr();
-        category.sectionPoints.push_back(point);
+        category.section_point_numbers.push_back(to_string(section_point.number()));
+        category.section_point_descriptions.push_back(section_point.description().CStr());
     }
     return category;
 }
@@ -2359,10 +2357,10 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
 
 void SpadeObject::write_section_category(H5::H5File &h5_file, const H5::Group &group, const string &group_name, const section_category_type &section_category) {
     write_string_dataset(group, "description", section_category.description);
-    for (int j=0; j<section_category.sectionPoints.size(); j++) {
-        string point_group_name = group_name + "/" + section_category.sectionPoints[j].number;
+    for (int j=0; j<section_category.section_point_numbers.size(); j++) {
+        string point_group_name = group_name + "/" + section_category.section_point_numbers[j];
         H5::Group section_point_group = create_group(h5_file, point_group_name);
-        write_string_dataset(section_point_group, "description", section_category.sectionPoints[j].description);
+        write_string_dataset(section_point_group, "description", section_category.section_point_descriptions[j]);
     }
 }
 

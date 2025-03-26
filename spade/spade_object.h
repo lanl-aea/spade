@@ -41,7 +41,9 @@ struct section_point_type {
 struct section_category_type {
     string name;
     string description;
-    vector<section_point_type> sectionPoints;
+//    vector<section_point_type> sectionPoints;
+    vector<string> section_point_numbers;
+    vector<string> section_point_descriptions;
 };
 
 struct user_xy_data_type {
