@@ -20,6 +20,8 @@ Internal Changes
 - Refactor how elements are stored for new extract format (:issue:`75`, :merge:`73`). By `Prabhu Khalsa`_.
 - Create mesh group in hdf5 file with data in extract format (:issue:`69`, :merge:`77`). By `Prabhu Khalsa`_.
 - Write section pont data under mesh group in extract format (:issue:`81`, :merge:`80`). By `Prabhu Khalsa`_.
+- Adjust some write functions to detect empty data before creating an empty hdf5 group (:issue:`82`, 
+  :merge:`81`). By `Prabhu Khalsa`_.
 
 Enhancements
 ============
