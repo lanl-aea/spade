@@ -365,7 +365,6 @@ struct field_bulk_type {
     int width;
     string baseElementType;
     string instance; // Will store just the instance name
-//    vector<string> faces;
     vector<vector<string>> faces;
     vector<int> elementLabels;
     vector<int> nodeLabels;
@@ -429,12 +428,11 @@ struct history_point_type {
     int node_label;
     float node_coordinates[3];
     set_type region;
-    string assemblyName;  // Just going to store the name not the entire assembly
-    string instanceName;  // Just going to store the name not the entire instance
+    string assemblyName;  // Just storing the name not the entire assembly
+    string instanceName;  // Just storing the name not the entire instance
 };
 
 struct history_output_type {
-    string name;
     string description;
     string type;
     vector<float> data;
@@ -444,12 +442,11 @@ struct history_output_type {
 };
 
 struct history_region_type {
-    string name;
     string description;
     string position;
     history_point_type point;
     string loadCase;
-    vector<history_output_type> historyOutputs;
+    map<string, history_output_type> historyOutputs;
 };
 
 struct step_type {
@@ -465,7 +462,7 @@ struct step_type {
     double mass;
     double acousticMass;
     vector<frame_type> frames;
-    vector<history_region_type> historyRegions;
+    map<string, history_region_type> historyRegions;
     vector<string> loadCases;
     vector<double> massCenter;
     vector<double> acousticMassCenter;
@@ -871,7 +868,7 @@ class SpadeObject {
           \param group_name Name of the group where data is to be written
           \param history_regions Data to be written
         */
-        void write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions);
+        void write_history_regions(H5::H5File &h5_file, const string &group_name, map<string, history_region_type> &history_regions);
         //! Write steps data to an HDF5 file
         /*!
           Write steps data into an HDF5 file
@@ -1264,6 +1261,7 @@ class SpadeObject {
         assembly_type root_assembly;
         map<string, mesh_type> instance_mesh;
         map<string, mesh_type> part_mesh;
+        map<string, map<string, map<string, history_region_type*>>> history_outputs;  //accessed like history_outputs[instance name][step name][region name]
         map<string, element_type> elements;
         map<string, string> node_links;
         map<string, string> element_links;

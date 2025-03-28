@@ -1298,7 +1298,7 @@ history_point_type SpadeObject::process_history_point (const odb_HistoryPoint hi
 
 history_output_type SpadeObject::process_history_output(const odb_HistoryOutput &history_output) {
     history_output_type new_history_output;
-    new_history_output.name = history_output.name().CStr();
+//    new_history_output.name = history_output.name().CStr();
     new_history_output.description = history_output.description().CStr();
     switch(history_output.type()) {
         case odb_Enum::SCALAR: new_history_output.type = "Scalar"; break;
@@ -1330,7 +1330,7 @@ history_output_type SpadeObject::process_history_output(const odb_HistoryOutput 
 
 history_region_type SpadeObject::process_history_region(const odb_HistoryRegion &history_region) {
     history_region_type new_history_region;
-    new_history_region.name = history_region.name().CStr();
+//    new_history_region.name = history_region.name().CStr();
     new_history_region.description = history_region.description().CStr();
     switch(history_region.position()) {
         case odb_Enum::NODAL: new_history_region.position = "Nodal"; break;
@@ -1345,8 +1345,10 @@ history_region_type SpadeObject::process_history_region(const odb_HistoryRegion 
     odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
     for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
         odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
-        if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output.name().CStr())) {
-            new_history_region.historyOutputs.push_back(process_history_output(history_output));
+        string history_output_name = history_output.name().CStr();
+        if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output_name)) {
+//            new_history_region.historyOutputs.push_back(process_history_output(history_output));
+            new_history_region.historyOutputs[history_output_name] = process_history_output(history_output);
         }
     }
     return new_history_region;
@@ -1398,8 +1400,18 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb) {
     for (history_region_iterator.first(); !history_region_iterator.isDone(); history_region_iterator.next())
     {
         const odb_HistoryRegion& history_region = history_region_iterator.currentValue();
-        if ((this->command_line_arguments->get("history-region") == "all") || (this->command_line_arguments->get("history-region") == history_region.name().CStr())) {
-            new_step.historyRegions.push_back(process_history_region(history_region));
+        string history_region_name = history_region.name().CStr();
+        if ((this->command_line_arguments->get("history-region") == "all") || (this->command_line_arguments->get("history-region") == history_region_name)) {
+            new_step.historyRegions[history_region_name] = process_history_region(history_region);
+            // After storing it above, also keep track of it by instance->step name->region name
+            string instance_name = new_step.historyRegions[history_region_name].point.instanceName;
+            if (instance_name.empty()) {
+                instance_name = new_step.historyRegions[history_region_name].point.assemblyName;
+                if (instance_name.empty()) {
+                    instance_name = "ASSEMBLY";
+                }
+            }
+            this->history_outputs[instance_name][new_step.name][history_region_name] = &new_step.historyRegions[history_region_name];
         }
     }
     this->steps.push_back(new_step);
@@ -2035,29 +2047,28 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
 
 void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_name, history_output_type &history_output) {
     H5::Group history_output_group = create_group(h5_file, group_name);
-    write_string_dataset(history_output_group, "name", history_output.name);
     write_string_dataset(history_output_group, "description", history_output.description);
     write_string_dataset(history_output_group, "type", history_output.type);
     write_float_2D_data(history_output_group, "data", history_output.row_size, 2, history_output.data);  // history output data has 2 columns: frameValue and value
     write_float_2D_data(history_output_group, "conjugateData", history_output.row_size_conjugate, 2, history_output.conjugateData);
 }
 
-void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions) {
+void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group_name, map<string, history_region_type> &history_regions) {
     string history_regions_group_name = group_name + "/historyRegions";
     H5::Group history_regions_group = create_group(h5_file, history_regions_group_name);
-    for (auto history_region : history_regions) {
-        string history_region_group_name = history_regions_group_name + "/" + replace_slashes(history_region.name);
+    for (auto history_region_pair : history_regions) {  // Looping through map of <string, history_region_type> pair
+        string history_region_group_name = history_regions_group_name + "/" + replace_slashes(history_region_pair.first);
         H5::Group history_region_group = create_group(h5_file, history_region_group_name);
-        write_string_dataset(history_region_group, "description", history_region.description);
-        write_string_dataset(history_region_group, "position", history_region.position);
-        write_string_dataset(history_region_group, "loadCase", history_region.loadCase);
-        write_history_point(h5_file, history_region_group_name, history_region.point);
+        write_string_dataset(history_region_group, "description", history_region_pair.second.description);
+        write_string_dataset(history_region_group, "position", history_region_pair.second.position);
+        write_string_dataset(history_region_group, "loadCase", history_region_pair.second.loadCase);
+        write_history_point(h5_file, history_region_group_name, history_region_pair.second.point);
         H5::Group history_outputs_group = create_group(h5_file, history_region_group_name + "/historyOutputs");
-        for (int i=0; i<history_region.historyOutputs.size(); i++) {
-            string history_output_group_name = history_region_group_name + "/historyOutputs/" + replace_slashes(history_region.historyOutputs[i].name);
-            write_history_output(h5_file, history_output_group_name, history_region.historyOutputs[i]);
+        for (auto history_output_pair : history_region_pair.second.historyOutputs) {  // Looping through map of <string, history_output_type> pair
+            string history_output_group_name = history_region_group_name + "/historyOutputs/" + replace_slashes(history_output_pair.first);
+            write_history_output(h5_file, history_output_group_name, history_output_pair.second);
         }
-        vector<history_output_type>().swap(history_region.historyOutputs);  // Swap vector with empty vector (freeing/clearing memory of vector)
+        history_region_pair.second.historyOutputs.clear(); // clear memory of map
     }
 }
 
