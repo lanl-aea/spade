@@ -435,6 +435,7 @@ struct history_point_type {
 struct history_output_type {
     string description;
     string type;
+    string name;
     vector<float> data;
     int row_size;
     vector<float> conjugateData;
@@ -446,7 +447,8 @@ struct history_region_type {
     string position;
     history_point_type point;
     string loadCase;
-    map<string, history_output_type> historyOutputs;
+//    map<string, history_output_type> historyOutputs;
+    vector<history_output_type> historyOutputs;
 };
 
 struct step_type {

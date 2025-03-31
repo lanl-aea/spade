@@ -1298,6 +1298,7 @@ history_point_type SpadeObject::process_history_point (const odb_HistoryPoint hi
 
 history_output_type SpadeObject::process_history_output(const odb_HistoryOutput &history_output) {
     history_output_type new_history_output;
+    new_history_output.name = history_output.name().CStr();
     new_history_output.description = history_output.description().CStr();
     switch(history_output.type()) {
         case odb_Enum::SCALAR: new_history_output.type = "Scalar"; break;
@@ -1343,9 +1344,8 @@ history_region_type SpadeObject::process_history_region(const odb_HistoryRegion 
     odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
     for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
         odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
-        string history_output_name = history_output.name().CStr();
-        if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output_name)) {
-            new_history_region.historyOutputs[history_output_name] = process_history_output(history_output);
+        if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output.name().CStr())) {
+            new_history_region.historyOutputs.push_back(process_history_output(history_output));
         }
     }
     return new_history_region;
@@ -2116,9 +2116,9 @@ void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group
         write_string_dataset(history_region_group, "loadCase", history_region_pair.second.loadCase);
         write_history_point(h5_file, history_region_group_name, history_region_pair.second.point);
         H5::Group history_outputs_group = create_group(h5_file, history_region_group_name + "/historyOutputs");
-        for (auto history_output_pair : history_region_pair.second.historyOutputs) {  // Looping through map of <string, history_output_type> pair
-            string history_output_group_name = history_region_group_name + "/historyOutputs/" + replace_slashes(history_output_pair.first);
-            write_history_output(h5_file, history_output_group_name, history_output_pair.second);
+        for (auto history_output : history_region_pair.second.historyOutputs) {
+            string history_output_group_name = history_region_group_name + "/historyOutputs/" + replace_slashes(history_output.name);
+            write_history_output(h5_file, history_output_group_name, history_output);
         }
         history_region_pair.second.historyOutputs.clear(); // clear memory of map
     }
@@ -2126,15 +2126,15 @@ void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group
 
 void SpadeObject::write_history_region(H5::H5File &h5_file, H5::Group &group, const string &group_name, history_region_type &history_region) {
     write_history_point(h5_file, group_name, history_region.point);
-    for (auto history_output_pair : history_region.historyOutputs) {  // Looping through map of <string, history_output_type> pair
+    for (auto history_output : history_region.historyOutputs) {
         // Per Abaqus documentation the conjugate data specifies the imaginary portion of a specified complex variable at each 
         // frame value (time, frequency, or mode). Therefore it seems that data and conjugate data can be present at the same time
         // So a group has to be created two handle two possible datasets, despite there usually being only one
-        H5::Group history_output_group = create_group(h5_file, group_name + "/" + replace_slashes(history_output_pair.first));
-        write_attribute(history_output_group, "type", history_output_pair.second.type);
-        write_attribute(history_output_group, "description", history_output_pair.second.description);
-        write_float_2D_data(history_output_group, "data", history_output_pair.second.row_size, 2, history_output_pair.second.data);  // history output data has 2 columns: frameValue and value
-        write_float_2D_data(history_output_group, "conjugateData", history_output_pair.second.row_size_conjugate, 2, history_output_pair.second.conjugateData);
+        H5::Group history_output_group = create_group(h5_file, group_name + "/" + replace_slashes(history_output.name));
+        write_attribute(history_output_group, "type", history_output.type);
+        write_attribute(history_output_group, "description", history_output.description);
+        write_float_2D_data(history_output_group, "data", history_output.row_size, 2, history_output.data);  // history output data has 2 columns: frameValue and value
+        write_float_2D_data(history_output_group, "conjugateData", history_output.row_size_conjugate, 2, history_output.conjugateData);
     }
     history_region.historyOutputs.clear(); // clear memory of map
 }
