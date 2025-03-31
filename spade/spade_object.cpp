@@ -2125,11 +2125,11 @@ void SpadeObject::write_history_region(H5::H5File &h5_file, H5::Group &group, co
         // Per Abaqus documentation the conjugate data specifies the imaginary portion of a specified complex variable at each 
         // frame value (time, frequency, or mode). Therefore it seems that data and conjugate data can be present at the same time
         // So a group has to be created two handle two possible datasets, despite there usually being only one
-        write_history_output(h5_file, group_name + "/" + replace_slashes(history_output_pair.first), history_output_pair.second);
-        write_attribute(history_output_group "type", history_output.type);
-        write_attribute(history_output_group "description", history_output.description);
-        write_float_2D_data(history_output_group, "data", history_output.row_size, 2, history_output.data);  // history output data has 2 columns: frameValue and value
-        write_float_2D_data(history_output_group, "conjugateData", history_output.row_size_conjugate, 2, history_output.conjugateData);
+        H5::Group history_output_group = create_group(h5_file, group_name + "/" + replace_slashes(history_output_pair.first));
+        write_attribute(history_output_group, "type", history_output_pair.second.type);
+        write_attribute(history_output_group, "description", history_output_pair.second.description);
+        write_float_2D_data(history_output_group, "data", history_output_pair.second.row_size, 2, history_output_pair.second.data);  // history output data has 2 columns: frameValue and value
+        write_float_2D_data(history_output_group, "conjugateData", history_output_pair.second.row_size_conjugate, 2, history_output_pair.second.conjugateData);
     }
     history_region.historyOutputs.clear(); // clear memory of map
 }
