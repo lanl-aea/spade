@@ -2043,29 +2043,49 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
     H5::Group history_point_group = create_group(h5_file, history_point_group_name);
     write_string_dataset(history_point_group, "face", history_point.face);
     write_string_dataset(history_point_group, "position", history_point.position);
-    if (history_point.hasElement) {
-        string element_group_name = history_point_group_name + "/element";
-        H5::Group element_group = create_group(h5_file, element_group_name);
-        string element_label_group_name = history_point_group_name + "/element/" + to_string(history_point.element_label);
-        H5::Group element_label_group = create_group(h5_file, element_label_group_name);
-        write_string_dataset(element_label_group, "type", history_point.elementType);
-        H5::Group section_category_group = create_group(h5_file, element_label_group_name + "/sectionCategory");
-        write_section_category(h5_file, section_category_group, element_label_group_name + "/sectionCategory", history_point.element.sectionCategory);
-        write_string_vector_dataset(element_label_group, "instanceNames", history_point.element.instanceNames);
-        write_integer_vector_dataset(element_label_group, "connectivity", history_point.element.connectivity);
-    }
-    if (history_point.hasNode) {
-        string node_group_name = history_point_group_name + "/node";
-        H5::Group node_group = create_group(h5_file, node_group_name);
-        write_float_array_dataset(history_point_group, to_string(history_point.node_label), 3, history_point.node_coordinates);
-    }
-    write_set(h5_file, history_point_group_name, history_point.region);
     write_string_dataset(history_point_group, "assembly", history_point.assemblyName);
     write_string_dataset(history_point_group, "instance", history_point.instanceName);
     write_integer_dataset(history_point_group, "ipNumber", history_point.ipNumber);
-    H5::Group section_point_group = create_group(h5_file, history_point_group_name + "/sectionPoint");
-    write_string_dataset(section_point_group, "number", history_point.sectionPoint.number);
-    write_string_dataset(section_point_group, "description", history_point.sectionPoint.description);
+    if (this->command_line_arguments->odbformat()) {
+        if (history_point.hasElement) {
+            string element_group_name = history_point_group_name + "/element";
+            H5::Group element_group = create_group(h5_file, element_group_name);
+            string element_label_group_name = history_point_group_name + "/element/" + to_string(history_point.element_label);
+            H5::Group element_label_group = create_group(h5_file, element_label_group_name);
+            write_string_dataset(element_label_group, "type", history_point.elementType);
+            H5::Group section_category_group = create_group(h5_file, element_label_group_name + "/sectionCategory");
+            write_section_category(h5_file, section_category_group, element_label_group_name + "/sectionCategory", history_point.element.sectionCategory);
+            write_string_vector_dataset(element_label_group, "instanceNames", history_point.element.instanceNames);
+            write_integer_vector_dataset(element_label_group, "connectivity", history_point.element.connectivity);
+        }
+        if (history_point.hasNode) {
+            string node_group_name = history_point_group_name + "/node";
+            H5::Group node_group = create_group(h5_file, node_group_name);
+            write_float_array_dataset(node_group, to_string(history_point.node_label), 3, history_point.node_coordinates);
+        }
+        write_set(h5_file, history_point_group_name, history_point.region);
+        H5::Group section_point_group = create_group(h5_file, history_point_group_name + "/sectionPoint");
+        write_string_dataset(section_point_group, "number", history_point.sectionPoint.number);
+        write_string_dataset(section_point_group, "description", history_point.sectionPoint.description);
+    } else {  // Extract format - write less groups and data
+        if (history_point.hasElement) {   // Write just a dataset with the element type and label (e.g. element_CAX4T_1) and the element connectivity
+            write_integer_vector_dataset(history_point_group, "element_" + history_point.elementType + "_" + to_string(history_point.element_label), history_point.element.connectivity);
+        }
+        if (history_point.hasNode) {  // Write a dataset with just the node label in the name and the node coordinates
+            write_float_array_dataset(history_point_group, "node_" + to_string(history_point.node_label), 3, history_point.node_coordinates);
+        }
+        if (!history_point.region.name.empty()) {
+            string set_group_name = history_point_group_name + "/" + replace_slashes(history_point.region.name);
+            H5::Group set_group = create_group(h5_file, set_group_name);
+            write_attribute(set_group, "type", history_point.region.type);
+            write_string_vector_dataset(set_group, "instanceNames", history_point.region.instanceNames);
+            if (!history_point.region.faces.empty()) {
+                write_string_vector_dataset(set_group, "faces", history_point.region.faces);
+            }
+        }
+        write_string_dataset(history_point_group, "section_point_number", history_point.sectionPoint.number);
+        write_string_dataset(history_point_group, "section_point_description", history_point.sectionPoint.description);
+    }
 
 }
 
@@ -2097,14 +2117,19 @@ void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group
 }
 
 void SpadeObject::write_history_region(H5::H5File &h5_file, H5::Group &group, const string &group_name, history_region_type &history_region) {
-    write_string_dataset(group, "description", history_region.description);
-    write_string_dataset(group, "position", history_region.position);
-    write_string_dataset(group, "loadCase", history_region.loadCase);
+    write_attribute(group, "description", history_region.description);
+    write_attribute(group, "position", history_region.position);
+    write_attribute(group, "loadCase", history_region.loadCase);
     write_history_point(h5_file, group_name, history_region.point);
-    H5::Group history_outputs_group = create_group(h5_file, group_name + "/historyOutputs");
     for (auto history_output_pair : history_region.historyOutputs) {  // Looping through map of <string, history_output_type> pair
-        string history_output_group_name = group_name + "/" + replace_slashes(history_output_pair.first);
-        write_history_output(h5_file, history_output_group_name, history_output_pair.second);
+        // Per Abaqus documentation the conjugate data specifies the imaginary portion of a specified complex variable at each 
+        // frame value (time, frequency, or mode). Therefore it seems that data and conjugate data can be present at the same time
+        // So a group has to be created two handle two possible datasets, despite there usually being only one
+        write_history_output(h5_file, group_name + "/" + replace_slashes(history_output_pair.first), history_output_pair.second);
+        write_attribute(history_output_group "type", history_output.type);
+        write_attribute(history_output_group "description", history_output.description);
+        write_float_2D_data(history_output_group, "data", history_output.row_size, 2, history_output.data);  // history output data has 2 columns: frameValue and value
+        write_float_2D_data(history_output_group, "conjugateData", history_output.row_size_conjugate, 2, history_output.conjugateData);
     }
     history_region.historyOutputs.clear(); // clear memory of map
 }
