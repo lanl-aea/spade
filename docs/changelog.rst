@@ -21,6 +21,7 @@ Internal Changes
 - Write section point data under mesh group in extract format (:issue:`81`, :merge:`80`). By `Prabhu Khalsa`_.
 - Adjust some write functions to detect empty data before creating an empty hdf5 group (:issue:`82`, 
   :merge:`81`). By `Prabhu Khalsa`_.
+- Using section assignment name for name of hdf5 group (:issue:`85`, :merge:`84`). By `Prabhu Khalsa`_.
 
 Enhancements
 ============
