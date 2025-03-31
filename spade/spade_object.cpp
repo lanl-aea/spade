@@ -2091,8 +2091,8 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
                 write_string_vector_dataset(set_group, "faces", history_point.region.faces);
             }
         }
-        write_string_dataset(history_point_group, "section_point_number", history_point.sectionPoint.number);
-        write_string_dataset(history_point_group, "section_point_description", history_point.sectionPoint.description);
+        write_attribute(history_point_group, "section_point_number", history_point.sectionPoint.number);
+        write_attribute(history_point_group, "section_point_description", history_point.sectionPoint.description);
     }
 
 }
