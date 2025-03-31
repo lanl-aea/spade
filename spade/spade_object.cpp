@@ -1345,7 +1345,6 @@ history_region_type SpadeObject::process_history_region(const odb_HistoryRegion 
         odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
         string history_output_name = history_output.name().CStr();
         if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output_name)) {
-//            new_history_region.historyOutputs.push_back(process_history_output(history_output));
             new_history_region.historyOutputs[history_output_name] = process_history_output(history_output);
         }
     }
@@ -1401,15 +1400,6 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb) {
         string history_region_name = history_region.name().CStr();
         if ((this->command_line_arguments->get("history-region") == "all") || (this->command_line_arguments->get("history-region") == history_region_name)) {
             new_step.historyRegions[history_region_name] = process_history_region(history_region);
-            // After storing it above, also keep track of it by instance->step name->region name
-            string instance_name = new_step.historyRegions[history_region_name].point.instanceName;
-            if (instance_name.empty()) {
-                instance_name = new_step.historyRegions[history_region_name].point.assemblyName;
-                if (instance_name.empty()) {
-                    instance_name = "ASSEMBLY";
-                }
-            }
-            this->history_outputs[instance_name][new_step.name][history_region_name] = &new_step.historyRegions[history_region_name];
         }
     }
     this->steps.push_back(new_step);
@@ -1510,6 +1500,37 @@ void SpadeObject::write_h5 () {
                     if (!this->root_assembly.instances[(instance_it->second).instance_index].embeddedSpace.empty()) { embedded_space = this->root_assembly.instances[(instance_it->second).instance_index].embeddedSpace; }
                 }
                 write_mesh(h5_file, extract_instance_group, instance_group_name, instance_it->second, embedded_space);
+            }
+        }
+        for (auto step : this->steps) {
+            for (auto history_region_pair : step.historyRegions) {  // Looping through map of <string, history_region_type> pair
+                // First grab the name of the instance or assembly or simply use "ASSEMBLY"
+                string instance_name = history_region_pair.second.point.instanceName;
+                if (instance_name.empty()) {
+                    instance_name = history_region_pair.second.point.assemblyName;
+                    if (instance_name.empty()) { instance_name = "ASSEMBLY"; }
+                }
+                // Next open the region group under the instance, and create the instance group if it doesn't exist
+                instance_name = "/" + instance_name;
+                H5::Group region_group;
+                string region_group_name = instance_name + "/" + replace_slashes(history_region_pair.first);
+                try {
+                    region_group = h5_file.openGroup(region_group_name.c_str());
+                } catch(H5::Exception& e) {
+                    H5::Group instance_group;
+                    try {
+                        instance_group = h5_file.openGroup(instance_name.c_str());
+                    } catch(H5::Exception& e) {
+                        instance_group = create_group(h5_file, instance_name);
+                    }
+                    region_group = create_group(h5_file, region_group_name);
+                }
+                string step_group_name = region_group_name + "/" + step.name;
+                H5::Group step_group = create_group(h5_file, step_group_name);
+//            this->log_file->logVerbose("Writing history data.");
+//            write_history_regions(h5_file, step_group_name, step.historyRegions);
+                //accessed like history_outputs[instance name][step name][region name]
+                //After storing it above, also keep track of it by instance->step name->region name
             }
         }
     }
@@ -2093,8 +2114,10 @@ void SpadeObject::write_steps(H5::H5File &h5_file, const string &group_name) {
         write_double_array_dataset(step_group, "inertiaAboutOrigin", 6, step.inertiaAboutOrigin);
         this->log_file->logVerbose("Writing frames data.");
         write_frames(h5_file, step_group_name, step.frames);
-        this->log_file->logVerbose("Writing history data.");
-        write_history_regions(h5_file, step_group_name, step.historyRegions);
+        if (this->command_line_arguments->odbformat()) {
+            this->log_file->logVerbose("Writing history data.");
+            write_history_regions(h5_file, step_group_name, step.historyRegions);
+        }
     }
 }
 

@@ -1261,7 +1261,6 @@ class SpadeObject {
         assembly_type root_assembly;
         map<string, mesh_type> instance_mesh;
         map<string, mesh_type> part_mesh;
-        map<string, map<string, map<string, history_region_type*>>> history_outputs;  //accessed like history_outputs[instance name][step name][region name]
         map<string, element_type> elements;
         map<string, string> node_links;
         map<string, string> element_links;
