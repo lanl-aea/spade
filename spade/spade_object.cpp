@@ -1298,7 +1298,6 @@ history_point_type SpadeObject::process_history_point (const odb_HistoryPoint hi
 
 history_output_type SpadeObject::process_history_output(const odb_HistoryOutput &history_output) {
     history_output_type new_history_output;
-//    new_history_output.name = history_output.name().CStr();
     new_history_output.description = history_output.description().CStr();
     switch(history_output.type()) {
         case odb_Enum::SCALAR: new_history_output.type = "Scalar"; break;
@@ -1330,7 +1329,6 @@ history_output_type SpadeObject::process_history_output(const odb_HistoryOutput 
 
 history_region_type SpadeObject::process_history_region(const odb_HistoryRegion &history_region) {
     history_region_type new_history_region;
-//    new_history_region.name = history_region.name().CStr();
     new_history_region.description = history_region.description().CStr();
     switch(history_region.position()) {
         case odb_Enum::NODAL: new_history_region.position = "Nodal"; break;
