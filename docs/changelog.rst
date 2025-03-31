@@ -18,8 +18,7 @@ Internal Changes
 - Remove duplicate code in command line options class (:issue:`73`, :merge:`70`). By `Prabhu Khalsa`_.
 - Wrapping write and create attribute in a try/catch statement (:issue:`77`, :merge:`75`). By `Prabhu Khalsa`_.
 - Refactor how elements are stored for new extract format (:issue:`75`, :merge:`73`). By `Prabhu Khalsa`_.
-- Create mesh group in hdf5 file with data in extract format (:issue:`69`, :merge:`77`). By `Prabhu Khalsa`_.
-- Write section pont data under mesh group in extract format (:issue:`81`, :merge:`80`). By `Prabhu Khalsa`_.
+- Write section point data under mesh group in extract format (:issue:`81`, :merge:`80`). By `Prabhu Khalsa`_.
 - Adjust some write functions to detect empty data before creating an empty hdf5 group (:issue:`82`, 
   :merge:`81`). By `Prabhu Khalsa`_.
 
@@ -27,6 +26,8 @@ Enhancements
 ============
 - Add command line option to specify odb format (:issue:`67`, :merge:`64`). By `Prabhu Khalsa`_.
 - Write odb and jobData as hdf5 attributes instead of datasets (:issue:`76`, :merge:`74`). By `Prabhu Khalsa`_.
+- Create mesh group in hdf5 file with data in extract format (:issue:`69`, :merge:`77`). By `Prabhu Khalsa`_.
+- Create HistoryOutputs group in hdf5 file with data in extract format (:issue:`84`, :merge:`83`). By `Prabhu Khalsa`_.
 
 *******************
 v0.3.7 (2025-02-06)
