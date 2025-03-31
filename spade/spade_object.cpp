@@ -1510,27 +1510,32 @@ void SpadeObject::write_h5 () {
                     instance_name = history_region_pair.second.point.assemblyName;
                     if (instance_name.empty()) { instance_name = "ASSEMBLY"; }
                 }
-                // Next open the region group under the instance, and create the instance group if it doesn't exist
+                // Next open the instance->HistoryOutputs->region group, and create the parent groups if they don't exist
                 instance_name = "/" + instance_name;
                 H5::Group region_group;
-                string region_group_name = instance_name + "/" + replace_slashes(history_region_pair.first);
+                string history_outputs_group_name = instance_name + "/HistoryOutputs";
+                string region_group_name = history_outputs_group_name + "/" + replace_slashes(history_region_pair.first);
                 try {
                     region_group = h5_file.openGroup(region_group_name.c_str());
                 } catch(H5::Exception& e) {
-                    H5::Group instance_group;
+                    H5::Group history_output_group;
                     try {
-                        instance_group = h5_file.openGroup(instance_name.c_str());
+                        history_output_group = h5_file.openGroup(history_outputs_group_name.c_str());
                     } catch(H5::Exception& e) {
-                        instance_group = create_group(h5_file, instance_name);
+                        H5::Group instance_group;
+                        try {
+                            instance_group = h5_file.openGroup(instance_name.c_str());
+                        } catch(H5::Exception& e) {
+                            instance_group = create_group(h5_file, instance_name);
+                        }
+                        history_output_group = create_group(h5_file, history_outputs_group_name);
                     }
                     region_group = create_group(h5_file, region_group_name);
                 }
                 string step_group_name = region_group_name + "/" + step.name;
                 H5::Group step_group = create_group(h5_file, step_group_name);
-//            this->log_file->logVerbose("Writing history data.");
-//            write_history_regions(h5_file, step_group_name, step.historyRegions);
-                //accessed like history_outputs[instance name][step name][region name]
-                //After storing it above, also keep track of it by instance->step name->region name
+                this->log_file->logVerbose("Writing history data.");
+                write_history_region(h5_file, step_group, step_group_name, history_region_pair.second);
             }
         }
     }
@@ -2089,6 +2094,19 @@ void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group
         }
         history_region_pair.second.historyOutputs.clear(); // clear memory of map
     }
+}
+
+void SpadeObject::write_history_region(H5::H5File &h5_file, H5::Group &group, const string &group_name, history_region_type &history_region) {
+    write_string_dataset(group, "description", history_region.description);
+    write_string_dataset(group, "position", history_region.position);
+    write_string_dataset(group, "loadCase", history_region.loadCase);
+    write_history_point(h5_file, group_name, history_region.point);
+    H5::Group history_outputs_group = create_group(h5_file, group_name + "/historyOutputs");
+    for (auto history_output_pair : history_region.historyOutputs) {  // Looping through map of <string, history_output_type> pair
+        string history_output_group_name = group_name + "/" + replace_slashes(history_output_pair.first);
+        write_history_output(h5_file, history_output_group_name, history_output_pair.second);
+    }
+    history_region.historyOutputs.clear(); // clear memory of map
 }
 
 void SpadeObject::write_steps(H5::H5File &h5_file, const string &group_name) {

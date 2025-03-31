@@ -869,6 +869,15 @@ class SpadeObject {
           \param history_regions Data to be written
         */
         void write_history_regions(H5::H5File &h5_file, const string &group_name, map<string, history_region_type> &history_regions);
+        //! Write history region data in extract format to an HDF5 file
+        /*!
+          Write history region data in extract format into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group Group where data is to be written
+          \param group_name Name of the group where data is to be written
+          \param history_region Data to be written
+        */
+        void write_history_region(H5::H5File &h5_file, H5::Group &group, const string &group_name, history_region_type &history_region);
         //! Write steps data to an HDF5 file
         /*!
           Write steps data into an HDF5 file
