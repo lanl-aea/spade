@@ -2191,10 +2191,9 @@ void SpadeObject::write_instance(H5::H5File &h5_file, H5::Group &group, const st
     this->instance_links[instance.name] = group_name;
     H5::Group section_assignments_group = create_group(h5_file, group_name + "/sectionAssignments");
     for (int i=0; i<instance.sectionAssignments.size(); i++) {
-        string section_assignment_group_name = group_name + "/sectionAssignments/" + to_string(i);
+        string section_assignment_group_name = group_name + "/sectionAssignments/" + instance.sectionAssignments[i].sectionName;
         H5::Group section_assignment_group = create_group(h5_file, section_assignment_group_name);
         write_set(h5_file, section_assignment_group_name, instance.sectionAssignments[i].region);
-        write_string_dataset(section_assignment_group, "sectionName", instance.sectionAssignments[i].sectionName);
     }
     if (instance.rigidBodies.size() > 0) {
         H5::Group rigid_bodies_group = create_group(h5_file, group_name + "/rigidBodies");
