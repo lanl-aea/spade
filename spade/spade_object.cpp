@@ -1531,6 +1531,9 @@ void SpadeObject::write_h5 () {
                         history_output_group = create_group(h5_file, history_outputs_group_name);
                     }
                     region_group = create_group(h5_file, region_group_name);
+                    write_attribute(region_group, "description", history_region_pair.second.description);
+                    write_attribute(region_group, "position", history_region_pair.second.position);
+                    write_attribute(region_group, "loadCase", history_region_pair.second.loadCase);
                 }
                 string step_group_name = region_group_name + "/" + step.name;
                 H5::Group step_group = create_group(h5_file, step_group_name);
@@ -2117,9 +2120,6 @@ void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group
 }
 
 void SpadeObject::write_history_region(H5::H5File &h5_file, H5::Group &group, const string &group_name, history_region_type &history_region) {
-    write_attribute(group, "description", history_region.description);
-    write_attribute(group, "position", history_region.position);
-    write_attribute(group, "loadCase", history_region.loadCase);
     write_history_point(h5_file, group_name, history_region.point);
     for (auto history_output_pair : history_region.historyOutputs) {  // Looping through map of <string, history_output_type> pair
         // Per Abaqus documentation the conjugate data specifies the imaginary portion of a specified complex variable at each 
