@@ -443,11 +443,11 @@ struct history_output_type {
 };
 
 struct history_region_type {
+    string name;
     string description;
     string position;
     history_point_type point;
     string loadCase;
-//    map<string, history_output_type> historyOutputs;
     vector<history_output_type> historyOutputs;
 };
 
@@ -464,7 +464,7 @@ struct step_type {
     double mass;
     double acousticMass;
     vector<frame_type> frames;
-    map<string, history_region_type> historyRegions;
+    vector<history_region_type> historyRegions;
     vector<string> loadCases;
     vector<double> massCenter;
     vector<double> acousticMassCenter;
@@ -870,7 +870,7 @@ class SpadeObject {
           \param group_name Name of the group where data is to be written
           \param history_regions Data to be written
         */
-        void write_history_regions(H5::H5File &h5_file, const string &group_name, map<string, history_region_type> &history_regions);
+        void write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions);
         //! Write history region data in extract format to an HDF5 file
         /*!
           Write history region data in extract format into an HDF5 file

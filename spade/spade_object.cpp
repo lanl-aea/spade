@@ -1330,6 +1330,7 @@ history_output_type SpadeObject::process_history_output(const odb_HistoryOutput 
 
 history_region_type SpadeObject::process_history_region(const odb_HistoryRegion &history_region) {
     history_region_type new_history_region;
+    new_history_region.name = history_region.name().CStr();
     new_history_region.description = history_region.description().CStr();
     switch(history_region.position()) {
         case odb_Enum::NODAL: new_history_region.position = "Nodal"; break;
@@ -1397,9 +1398,8 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb) {
     for (history_region_iterator.first(); !history_region_iterator.isDone(); history_region_iterator.next())
     {
         const odb_HistoryRegion& history_region = history_region_iterator.currentValue();
-        string history_region_name = history_region.name().CStr();
-        if ((this->command_line_arguments->get("history-region") == "all") || (this->command_line_arguments->get("history-region") == history_region_name)) {
-            new_step.historyRegions[history_region_name] = process_history_region(history_region);
+        if ((this->command_line_arguments->get("history-region") == "all") || (this->command_line_arguments->get("history-region") == history_region.name().CStr())) {
+            new_step.historyRegions.push_back(process_history_region(history_region));
         }
     }
     this->steps.push_back(new_step);
@@ -1503,18 +1503,18 @@ void SpadeObject::write_h5 () {
             }
         }
         for (auto step : this->steps) {
-            for (auto history_region_pair : step.historyRegions) {  // Looping through map of <string, history_region_type> pair
+            for (auto history_region : step.historyRegions) {
                 // First grab the name of the instance or assembly or simply use "ASSEMBLY"
-                string instance_name = history_region_pair.second.point.instanceName;
+                string instance_name = history_region.point.instanceName;
                 if (instance_name.empty()) {
-                    instance_name = history_region_pair.second.point.assemblyName;
+                    instance_name = history_region.point.assemblyName;
                     if (instance_name.empty()) { instance_name = "ASSEMBLY"; }
                 }
                 // Next open the instance->HistoryOutputs->region group, and create the parent groups if they don't exist
                 instance_name = "/" + instance_name;
                 H5::Group region_group;
                 string history_outputs_group_name = instance_name + "/HistoryOutputs";
-                string region_group_name = history_outputs_group_name + "/" + replace_slashes(history_region_pair.first);
+                string region_group_name = history_outputs_group_name + "/" + replace_slashes(history_region.name);
                 try {
                     region_group = h5_file.openGroup(region_group_name.c_str());
                 } catch(H5::Exception& e) {
@@ -1531,14 +1531,14 @@ void SpadeObject::write_h5 () {
                         history_output_group = create_group(h5_file, history_outputs_group_name);
                     }
                     region_group = create_group(h5_file, region_group_name);
-                    write_attribute(region_group, "description", history_region_pair.second.description);
-                    write_attribute(region_group, "position", history_region_pair.second.position);
-                    write_attribute(region_group, "loadCase", history_region_pair.second.loadCase);
+                    write_attribute(region_group, "description", history_region.description);
+                    write_attribute(region_group, "position", history_region.position);
+                    write_attribute(region_group, "loadCase", history_region.loadCase);
                 }
                 string step_group_name = region_group_name + "/" + step.name;
                 H5::Group step_group = create_group(h5_file, step_group_name);
                 this->log_file->logVerbose("Writing history data.");
-                write_history_region(h5_file, step_group, step_group_name, history_region_pair.second);
+                write_history_region(h5_file, step_group, step_group_name, history_region);
             }
         }
     }
@@ -2105,22 +2105,22 @@ void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_
     write_float_2D_data(history_output_group, "conjugateData", history_output.row_size_conjugate, 2, history_output.conjugateData);
 }
 
-void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group_name, map<string, history_region_type> &history_regions) {
+void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions) {
     string history_regions_group_name = group_name + "/historyRegions";
     H5::Group history_regions_group = create_group(h5_file, history_regions_group_name);
-    for (auto history_region_pair : history_regions) {  // Looping through map of <string, history_region_type> pair
-        string history_region_group_name = history_regions_group_name + "/" + replace_slashes(history_region_pair.first);
+    for (auto history_region : history_regions) {
+        string history_region_group_name = history_regions_group_name + "/" + replace_slashes(history_region.name);
         H5::Group history_region_group = create_group(h5_file, history_region_group_name);
-        write_string_dataset(history_region_group, "description", history_region_pair.second.description);
-        write_string_dataset(history_region_group, "position", history_region_pair.second.position);
-        write_string_dataset(history_region_group, "loadCase", history_region_pair.second.loadCase);
-        write_history_point(h5_file, history_region_group_name, history_region_pair.second.point);
+        write_string_dataset(history_region_group, "description", history_region.description);
+        write_string_dataset(history_region_group, "position", history_region.position);
+        write_string_dataset(history_region_group, "loadCase", history_region.loadCase);
+        write_history_point(h5_file, history_region_group_name, history_region.point);
         H5::Group history_outputs_group = create_group(h5_file, history_region_group_name + "/historyOutputs");
-        for (auto history_output : history_region_pair.second.historyOutputs) {
+        for (auto history_output : history_region.historyOutputs) {
             string history_output_group_name = history_region_group_name + "/historyOutputs/" + replace_slashes(history_output.name);
             write_history_output(h5_file, history_output_group_name, history_output);
         }
-        history_region_pair.second.historyOutputs.clear(); // clear memory of map
+        history_region.historyOutputs.clear(); // clear memory of map
     }
 }
 
