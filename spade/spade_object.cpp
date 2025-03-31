@@ -2044,12 +2044,12 @@ void SpadeObject::write_frames(H5::H5File &h5_file, const string &group_name, ve
 void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_name, history_point_type &history_point) {
     string history_point_group_name = group_name + "/point";
     H5::Group history_point_group = create_group(h5_file, history_point_group_name);
-    write_string_dataset(history_point_group, "face", history_point.face);
-    write_string_dataset(history_point_group, "position", history_point.position);
-    write_string_dataset(history_point_group, "assembly", history_point.assemblyName);
-    write_string_dataset(history_point_group, "instance", history_point.instanceName);
-    write_integer_dataset(history_point_group, "ipNumber", history_point.ipNumber);
     if (this->command_line_arguments->odbformat()) {
+        write_string_dataset(history_point_group, "face", history_point.face);
+        write_string_dataset(history_point_group, "position", history_point.position);
+        write_string_dataset(history_point_group, "assembly", history_point.assemblyName);
+        write_string_dataset(history_point_group, "instance", history_point.instanceName);
+        write_integer_dataset(history_point_group, "ipNumber", history_point.ipNumber);
         if (history_point.hasElement) {
             string element_group_name = history_point_group_name + "/element";
             H5::Group element_group = create_group(h5_file, element_group_name);
@@ -2071,6 +2071,11 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
         write_string_dataset(section_point_group, "number", history_point.sectionPoint.number);
         write_string_dataset(section_point_group, "description", history_point.sectionPoint.description);
     } else {  // Extract format - write less groups and data
+        write_attribute(history_point_group, "face", history_point.face);
+        write_attribute(history_point_group, "position", history_point.position);
+        write_attribute(history_point_group, "assembly", history_point.assemblyName);
+        write_attribute(history_point_group, "instance", history_point.instanceName);
+        write_attribute(history_point_group, "ipNumber", to_string(history_point.ipNumber));
         if (history_point.hasElement) {   // Write just a dataset with the element type and label (e.g. element_CAX4T_1) and the element connectivity
             write_integer_vector_dataset(history_point_group, "element_" + history_point.elementType + "_" + to_string(history_point.element_label), history_point.element.connectivity);
         }
