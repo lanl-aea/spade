@@ -6,7 +6,6 @@
 #include "H5Cpp.h"
 using namespace H5;
 #include <odb_API.h>
-#include <optional>
 
 #include "cmd_line_arguments.h"
 #include "logging.h"
@@ -327,10 +326,10 @@ struct field_location_type {
 };
 
 struct field_value_type {
-    vector<std::optional<int>> elementLabels;
-    vector<std::optional<int>> nodeLabels;
-    vector<std::optional<int>> integrationPoints;
-    vector<string> types;
+    vector<int> elementLabel;
+    vector<int> nodeLabel;
+    vector<int> integrationPoint;
+    vector<string> type;
     vector<float> magnitude;
     vector<float> tresca;
     vector<float> press;
@@ -341,11 +340,10 @@ struct field_value_type {
     vector<float> maxInPlanePrincipal;
     vector<float> minInPlanePrincipal;
     vector<float> outOfPlanePrincipal;
-    vector<string> instances;  // Will store just the instance name
-    vector<string> sectionPointNumbers;
-    vector<string> sectionPointDescriptions;
+    vector<string> instance;  // Will store just the instance name
+    vector<string> sectionPointNumber;
+    vector<string> sectionPointDescription;
 //    section_point_type sectionPoint;
-    bool empty;  // If int or float values are not populated set this to true
     bool magnitudeEmpty;
     bool trescaEmpty;
     bool pressEmpty;
@@ -841,9 +839,10 @@ class SpadeObject {
           Write field value data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
-          \param field_value Data to be written
+          \param group Group where data is to be written
+          \param values Data to be written
         */
-        void write_field_value(H5::H5File &h5_file, const string &group_name, field_value_type &field_value);
+        void write_field_values(H5::H5File &h5_file, const string &group_name, H5::Group &group, field_value_type &values);
         //! Write field output data to an HDF5 file
         /*!
           Write field output data into an HDF5 file

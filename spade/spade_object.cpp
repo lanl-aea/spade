@@ -35,7 +35,6 @@ using namespace std;
 #include <cmath>
 #include <sys/stat.h>
 #include <filesystem>
-#include <optional>
 
 #include <odb_API.h>
 #include <odb_Coupling.h>
@@ -947,25 +946,19 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
 void SpadeObject::process_field_values(const odb_FieldValue &field_value, const odb_SequenceInvariant& invariants, field_value_type &values) {
     int elementLabel = field_value.elementLabel();
     if (elementLabel != -1) { 
-        values.elementLabels.push_back(elementLabel);
         values.elementEmpty = false;
-    } else {
-        values.elementLabels.push_back(std::nullopt);
     }
+    values.elementLabel.push_back(elementLabel);
     int nodeLabel = field_value.nodeLabel();
     if (nodeLabel != -1) { 
-        values.nodeLabels.push_back(nodeLabel);
         values.nodeEmpty = false;
-    } else {
-        values.nodeLabels.push_back(std::nullopt);
     }
+    values.nodeLabel.push_back(nodeLabel);
     int integrationPoint = field_value.integrationPoint();
     if (integrationPoint != -1) { 
-        values.integrationPoints.push_back(integrationPoint); 
         values.integrationPointEmpty = false;
-    } else {
-        values.integrationPoints.push_back(std::nullopt);
     }
+    values.integrationPoint.push_back(integrationPoint); 
     string value_type = "";
     switch(field_value.type()) {
         case odb_Enum::SCALAR: value_type = "Scalar"; break;
@@ -976,7 +969,7 @@ void SpadeObject::process_field_values(const odb_FieldValue &field_value, const 
         case odb_Enum::TENSOR_2D_PLANAR: value_type = "Tensor 2D Planar"; break;
         case odb_Enum::TENSOR_2D_SURFACE: value_type = "Tensor 2D Surface"; break;
     }
-    values.types.push_back(value_type);
+    values.type.push_back(value_type);
     if (value_type != "") { values.typeEmpty = false; }
     if (invariants.isMember(odb_Enum::MAGNITUDE)) {
         values.magnitude.push_back(field_value.magnitude());
@@ -1020,15 +1013,15 @@ void SpadeObject::process_field_values(const odb_FieldValue &field_value, const 
     } else { values.outOfPlanePrincipal.push_back(NAN); }
     string section_point_number =  to_string(field_value.sectionPoint().number());
     if (section_point_number != "-1") { 
-        values.sectionPointNumbers.push_back(section_point_number); 
+        values.sectionPointNumber.push_back(section_point_number); 
         values.sectionPointNumberEmpty = false; 
-    } else { values.sectionPointNumbers.push_back(""); }
+    } else { values.sectionPointNumber.push_back(""); }
     string section_point_description = "";
     section_point_description =  field_value.sectionPoint().description().CStr();
     if (section_point_description != "") { 
         values.sectionPointDescriptionEmpty = false;
     }
-    values.sectionPointDescriptions.push_back(section_point_description); 
+    values.sectionPointDescription.push_back(section_point_description); 
 }
 
 field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data) {
@@ -1211,13 +1204,13 @@ field_output_type SpadeObject::process_field_output (const odb_FieldOutput &fiel
     if (new_field_output.values.maxInPlanePrincipalEmpty) { new_field_output.values.maxInPlanePrincipal.clear(); }
     if (new_field_output.values.minInPlanePrincipalEmpty) { new_field_output.values.minInPlanePrincipal.clear(); }
     if (new_field_output.values.outOfPlanePrincipalEmpty) { new_field_output.values.outOfPlanePrincipal.clear(); }
-    if (new_field_output.values.elementEmpty) { new_field_output.values.elementLabels.clear(); }
-    if (new_field_output.values.nodeEmpty) { new_field_output.values.nodeLabels.clear(); }
-    if (new_field_output.values.integrationPointEmpty) { new_field_output.values.integrationPoints.clear(); }
-    if (new_field_output.values.typeEmpty) { new_field_output.values.types.clear(); }
-    if (new_field_output.values.instanceEmpty) { new_field_output.values.instances.clear(); }
-    if (new_field_output.values.sectionPointNumberEmpty) { new_field_output.values.sectionPointNumbers.clear(); }
-    if (new_field_output.values.sectionPointDescriptionEmpty) { new_field_output.values.sectionPointDescriptions.clear(); }
+    if (new_field_output.values.elementEmpty) { new_field_output.values.elementLabel.clear(); }
+    if (new_field_output.values.nodeEmpty) { new_field_output.values.nodeLabel.clear(); }
+    if (new_field_output.values.integrationPointEmpty) { new_field_output.values.integrationPoint.clear(); }
+    if (new_field_output.values.typeEmpty) { new_field_output.values.type.clear(); }
+    if (new_field_output.values.instanceEmpty) { new_field_output.values.instance.clear(); }
+    if (new_field_output.values.sectionPointNumberEmpty) { new_field_output.values.sectionPointNumber.clear(); }
+    if (new_field_output.values.sectionPointDescriptionEmpty) { new_field_output.values.sectionPointDescription.clear(); }
 
     new_field_output.max_length = 0;
     new_field_output.max_width = 0;
@@ -1910,53 +1903,62 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name) 
     }
 }
 
-void SpadeObject::write_field_value(H5::H5File &h5_file, const string &group_name, field_value_type &field_value) {
+void SpadeObject::write_field_values(H5::H5File &h5_file, const string &group_name, H5::Group &group, field_value_type &values) {
     H5::Group value_group = create_group(h5_file, group_name);
-    if (field_value.elementLabel != -1) {
-        write_integer_dataset(value_group, "elementLabel", field_value.elementLabel);
+    if (!values.elementEmpty) {
+        write_integer_vector_dataset(group, "elementLabel", values.elementLabel);
     }
-    if (field_value.nodeLabel != -1) {
-        write_integer_dataset(value_group, "nodeLabel", field_value.nodeLabel);
+    if (!values.nodeEmpty) {
+        write_integer_vector_dataset(group, "nodeLabel", values.nodeLabel);
     }
-    if (field_value.integrationPoint != -1) {
-        write_integer_dataset(value_group, "integrationPoint", field_value.integrationPoint);
+    if (!values.integrationPointEmpty) {
+        write_integer_vector_dataset(group, "integrationPoint", values.integrationPoint);
     }
-    if (!field_value.magnitudeEmpty) {
-        write_float_dataset(value_group, "magnitude", field_value.magnitude);
+    if (!values.typeEmpty) {
+        write_string_vector_dataset(group, "type", values.type);
     }
-    if (!field_value.trescaEmpty) {
-        write_float_dataset(value_group, "tresca", field_value.tresca);
+    if (!values.magnitudeEmpty) {
+        write_float_vector_dataset(group, "magnitude", values.magnitude);
     }
-    if (!field_value.pressEmpty) {
-        write_float_dataset(value_group, "press", field_value.press);
+    if (!values.trescaEmpty) {
+        write_float_vector_dataset(group, "tresca", values.tresca);
     }
-    if (!field_value.inv3Empty) {
-        write_float_dataset(value_group, "inv3", field_value.inv3);
+    if (!values.pressEmpty) {
+        write_float_vector_dataset(group, "press", values.press);
     }
-    if (!field_value.maxPrincipalEmpty) {
-        write_float_dataset(value_group, "maxPrincipal", field_value.maxPrincipal);
+    if (!values.inv3Empty) {
+        write_float_vector_dataset(group, "inv3", values.inv3);
     }
-    if (!field_value.midPrincipalEmpty) {
-        write_float_dataset(value_group, "midPrincipal", field_value.midPrincipal);
+    if (!values.maxPrincipalEmpty) {
+        write_float_vector_dataset(group, "maxPrincipal", values.maxPrincipal);
     }
-    if (!field_value.minPrincipalEmpty) {
-        write_float_dataset(value_group, "minPrincipal", field_value.minPrincipal);
+    if (!values.midPrincipalEmpty) {
+        write_float_vector_dataset(group, "midPrincipal", values.midPrincipal);
     }
-    if (!field_value.maxInPlanePrincipalEmpty) {
-        write_float_dataset(value_group, "maxInPlanePrincipal", field_value.maxInPlanePrincipal);
+    if (!values.minPrincipalEmpty) {
+        write_float_vector_dataset(group, "minPrincipal", values.minPrincipal);
     }
-    if (!field_value.minInPlanePrincipalEmpty) {
-        write_float_dataset(value_group, "minInPlanePrincipal", field_value.minInPlanePrincipal);
+    if (!values.maxInPlanePrincipalEmpty) {
+        write_float_vector_dataset(group, "maxInPlanePrincipal", values.maxInPlanePrincipal);
     }
-    if (!field_value.outOfPlanePrincipalEmpty) {
-        write_float_dataset(value_group, "outOfPlanePrincipal", field_value.outOfPlanePrincipal);
+    if (!values.minInPlanePrincipalEmpty) {
+        write_float_vector_dataset(group, "minInPlanePrincipal", values.minInPlanePrincipal);
     }
-    if (field_value.sectionPoint.number != "-1") {
+    if (!values.outOfPlanePrincipalEmpty) {
+        write_float_vector_dataset(group, "outOfPlanePrincipal", values.outOfPlanePrincipal);
+    }
+    if (!values.instanceEmpty) {
+        write_string_vector_dataset(group, "instance", values.instance);
+    }
+    if ((!values.sectionPointNumberEmpty) || (!values.sectionPointDescriptionEmpty)) {
         H5::Group section_point_group = create_group(h5_file, group_name + "/sectionPoint");
-        write_string_dataset(section_point_group, "number", field_value.sectionPoint.number);
-        write_string_dataset(section_point_group, "description", field_value.sectionPoint.description);
+        if (!values.sectionPointNumberEmpty) {
+            write_string_vector_dataset(section_point_group, "number", values.sectionPointNumber);
+        }
+        if (!values.sectionPointDescriptionEmpty) {
+            write_string_vector_dataset(section_point_group, "description", values.sectionPointDescription);
+        }
     }
-    write_string_dataset(value_group, "type", field_value.type);
 }
 
 void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group_name, field_bulk_type &field_bulk_data, bool complex_data) {
@@ -2035,7 +2037,9 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, const string &group_na
             write_string_dataset(section_point_group, "description", field_output.locations[i].sectionPoint[j].description);
         }
     }
-    H5::Group values_group = create_group(h5_file, group_name + "/values");
+//    H5::Group values_group = create_group(h5_file, group_name + "/values");
+    write_field_values(h5_file, group_name, field_output_group, field_output.values);
+    /*
     if (!field_output.node_values_empty) {
         H5::Group node_values_group = create_group(h5_file, group_name + "/values/nodes");
         for (auto [node_number, field_output_value] : field_output.nodeValues) {
@@ -2050,6 +2054,7 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, const string &group_na
             write_field_value(h5_file, value_group_name, field_output_value);
         }
     }
+    */
     for (int i=0; i<field_output.dataValues.size(); i++) {
         string value_group_name = group_name + "/values/" + to_string(i);  // Another viable name might be element type plus section point
         write_field_bulk_data(h5_file, value_group_name, field_output.dataValues[i], field_output.isComplex);
