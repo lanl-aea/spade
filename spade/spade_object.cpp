@@ -1678,8 +1678,8 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
         dataset_sets.close();
         // Clean up allocated memory
         int i = 0;
-        for (auto const& node : nodes) {  // node is of type std::pair <int, node_type>
-            for (size_t j = 0; j < node.second.sets.size(); ++j) {
+        for (auto [node_id, node] : nodes) {
+            for (size_t j = 0; j < node.sets.size(); ++j) {
                 delete[] static_cast<char**>(variable_length_sets[i].p)[j];
             }
             delete[] static_cast<char**>(variable_length_sets[i].p);
@@ -1845,14 +1845,14 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
         try {
             // Clean up allocated memory
             int i = 0;
-            for (auto const& element : element_members) {  // element is of type std::pair <int, element_type>
-                for (size_t j = 0; j < element.second.sets.size(); ++j) {
+            for (auto [element_id, element] : elements) {
+                for (size_t j = 0; j < element.sets.size(); ++j) {
                     delete[] static_cast<char**>(variable_length_sets[i].p)[j];
                 }
-                for (size_t j = 0; j < element.second.instanceNames.size(); ++j) {
+                for (size_t j = 0; j < element.instanceNames.size(); ++j) {
                     delete[] static_cast<char**>(variable_length_instances[i].p)[j];
                 }
-                for (size_t j = 0; j < element.second.sectionCategory.section_point_numbers.size(); ++j) {
+                for (size_t j = 0; j < element.sectionCategory.section_point_numbers.size(); ++j) {
                     delete[] static_cast<char**>(variable_length_section_point_numbers[i].p)[j];
                     delete[] static_cast<char**>(variable_length_section_point_descriptions[i].p)[j];
                 }
