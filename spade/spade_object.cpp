@@ -1473,35 +1473,43 @@ void SpadeObject::write_h5 () {
     write_vector_attribute(job_data_group, "productAddOns", this->job_data.productAddOns);
     write_attribute(job_data_group, "version", this->job_data.version);
 
-    this->log_file->logVerbose("Writing sector definition at time: " + this->command_line_arguments->getTimeStamp(false));
-    H5::Group sector_definition_group = create_group(h5_file, "/odb/sectorDefinition");
-    write_integer_dataset(sector_definition_group, "numSectors", this->sector_definition.numSectors);
-    H5::Group symmetry_axis_group = create_group(h5_file, "/odb/sectorDefinition/symmetryAxis");
-    write_string_dataset(symmetry_axis_group, "StartPoint", this->sector_definition.start_point);
-    write_string_dataset(symmetry_axis_group, "EndPoint", this->sector_definition.end_point);
-
-    this->log_file->logVerbose("Writing section categories at time: " + this->command_line_arguments->getTimeStamp(false));
-    H5::Group section_categories_group = create_group(h5_file, "/odb/sectionCategories");
-    for (int i=0; i<this->section_categories.size(); i++) {
-        string category_group_name = "/odb/sectionCategories/" + replace_slashes(this->section_categories[i].name);
-        H5::Group section_category_group = create_group(h5_file, category_group_name);
-        write_section_category(h5_file, section_category_group, category_group_name, this->section_categories[i]);
+    if ((this->sector_definition.numSectors) || (!this->sector_definition.start_point.empty()) || (!this->sector_definition.end_point.empty())) {
+        this->log_file->logVerbose("Writing sector definition at time: " + this->command_line_arguments->getTimeStamp(false));
+        H5::Group sector_definition_group = create_group(h5_file, "/odb/sectorDefinition");
+        write_integer_dataset(sector_definition_group, "numSectors", this->sector_definition.numSectors);
+        if ((!this->sector_definition.start_point.empty()) || (!this->sector_definition.end_point.empty())) {
+            H5::Group symmetry_axis_group = create_group(h5_file, "/odb/sectorDefinition/symmetryAxis");
+            write_string_dataset(symmetry_axis_group, "StartPoint", this->sector_definition.start_point);
+            write_string_dataset(symmetry_axis_group, "EndPoint", this->sector_definition.end_point);
+        }
     }
 
-    this->log_file->logVerbose("Writing user data at time: " + this->command_line_arguments->getTimeStamp(false));
-    H5::Group user_data_group = create_group(h5_file, "/odb/userData");
-    for (int i=0; i<this->user_xy_data.size(); i++) {
-        string user_xy_data_name = "/odb/userData/" + replace_slashes(this->user_xy_data[i].name);
-        this->log_file->logVerbose("User data name:" + this->user_xy_data[i].name);
-        H5::Group user_xy_data_group = create_group(h5_file, user_xy_data_name);
-        write_string_dataset(user_xy_data_group, "sourceDescription", this->user_xy_data[i].sourceDescription);
-        write_string_dataset(user_xy_data_group, "contentDescription", this->user_xy_data[i].contentDescription);
-        write_string_dataset(user_xy_data_group, "positionDescription", this->user_xy_data[i].positionDescription);
-        write_string_dataset(user_xy_data_group, "xAxisLabel", this->user_xy_data[i].xAxisLabel);
-        write_string_dataset(user_xy_data_group, "yAxisLabel", this->user_xy_data[i].yAxisLabel);
-        write_string_dataset(user_xy_data_group, "legendLabel", this->user_xy_data[i].legendLabel);
-        write_string_dataset(user_xy_data_group, "description", this->user_xy_data[i].description);
-        write_float_2D_data(user_xy_data_group, "data", this->user_xy_data[i].row_size, 2, this->user_xy_data[i].data);  // x-y data has two columns: x and y
+    if (this->section_categories.size() > 0) {
+        this->log_file->logVerbose("Writing section categories at time: " + this->command_line_arguments->getTimeStamp(false));
+        H5::Group section_categories_group = create_group(h5_file, "/odb/sectionCategories");
+        for (int i=0; i<this->section_categories.size(); i++) {
+            string category_group_name = "/odb/sectionCategories/" + replace_slashes(this->section_categories[i].name);
+            H5::Group section_category_group = create_group(h5_file, category_group_name);
+            write_section_category(h5_file, section_category_group, category_group_name, this->section_categories[i]);
+        }
+    }
+
+    if (this->user_xy_data.size() > 0) {
+        this->log_file->logVerbose("Writing user data at time: " + this->command_line_arguments->getTimeStamp(false));
+        H5::Group user_data_group = create_group(h5_file, "/odb/userData");
+        for (int i=0; i<this->user_xy_data.size(); i++) {
+            string user_xy_data_name = "/odb/userData/" + replace_slashes(this->user_xy_data[i].name);
+            this->log_file->logVerbose("User data name:" + this->user_xy_data[i].name);
+            H5::Group user_xy_data_group = create_group(h5_file, user_xy_data_name);
+            write_string_dataset(user_xy_data_group, "sourceDescription", this->user_xy_data[i].sourceDescription);
+            write_string_dataset(user_xy_data_group, "contentDescription", this->user_xy_data[i].contentDescription);
+            write_string_dataset(user_xy_data_group, "positionDescription", this->user_xy_data[i].positionDescription);
+            write_string_dataset(user_xy_data_group, "xAxisLabel", this->user_xy_data[i].xAxisLabel);
+            write_string_dataset(user_xy_data_group, "yAxisLabel", this->user_xy_data[i].yAxisLabel);
+            write_string_dataset(user_xy_data_group, "legendLabel", this->user_xy_data[i].legendLabel);
+            write_string_dataset(user_xy_data_group, "description", this->user_xy_data[i].description);
+            write_float_2D_data(user_xy_data_group, "data", this->user_xy_data[i].row_size, 2, this->user_xy_data[i].data);  // x-y data has two columns: x and y
+        }
     }
 
     if (!this->command_line_arguments->odbformat()) {  // Write extract format
@@ -1574,9 +1582,11 @@ void SpadeObject::write_h5 () {
             }
         }
     }
-    this->log_file->logVerbose("Writing constraints data at time: " + this->command_line_arguments->getTimeStamp(false));
-    H5::Group contraints_group = create_group(h5_file, "/odb/constraints");
-    write_constraints(h5_file, "odb/constraints");
+    if ((!this->constraints.ties.empty()) || (!this->constraints.display_bodies.empty()) || (!this->constraints.couplings.empty()) || (!this->constraints.mpc.empty()) || (!this->constraints.shell_solid_couplings.empty())) {
+        this->log_file->logVerbose("Writing constraints data at time: " + this->command_line_arguments->getTimeStamp(false));
+        H5::Group contraints_group = create_group(h5_file, "/odb/constraints");
+        write_constraints(h5_file, "odb/constraints");
+    }
     this->log_file->logVerbose("Writing interactions data at time: " + this->command_line_arguments->getTimeStamp(false));
     write_interactions(h5_file, "odb");
     H5::Group parts_group = create_group(h5_file, "/odb/parts");
