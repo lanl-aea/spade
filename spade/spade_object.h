@@ -327,9 +327,9 @@ struct field_location_type {
 };
 
 struct field_value_type {
-    vector<std.optional<int>> elementLabels;
-    vector<std.optional<int>> nodeLabels;
-    vector<std.optional<int>> integrationPoints;
+    vector<std::optional<int>> elementLabels;
+    vector<std::optional<int>> nodeLabels;
+    vector<std::optional<int>> integrationPoints;
     vector<string> types;
     vector<float> magnitude;
     vector<float> tresca;

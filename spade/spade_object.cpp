@@ -1028,7 +1028,7 @@ void SpadeObject::process_field_values(const odb_FieldValue &field_value, const 
     if (section_point_description != "") { 
         values.sectionPointDescriptionEmpty = false;
     }
-    values.sectionPointDescriptions.push_back(section_point_descriptions); 
+    values.sectionPointDescriptions.push_back(section_point_description); 
 }
 
 field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data) {
@@ -1200,6 +1200,7 @@ field_output_type SpadeObject::process_field_output (const odb_FieldOutput &fiel
             process_field_values(field_values.constGet(i), field_output.validInvariants(), new_field_output.values);
         }
     }
+    // Clear any empty vector to save memory
     if (new_field_output.values.magnitudeEmpty) { new_field_output.values.magnitude.clear(); }
     if (new_field_output.values.trescaEmpty) { new_field_output.values.tresca.clear(); }
     if (new_field_output.values.pressEmpty) { new_field_output.values.press.clear(); }
