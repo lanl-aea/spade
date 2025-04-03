@@ -1675,8 +1675,6 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
             delete[] static_cast<char**>(variable_length_sets[i].p);
             i++;
         }
-        /*
-        */
     } catch(H5::Exception& e) {
         this->log_file->logWarning("Unable to create dataset node_sets. " + e.getDetailMsg());
         dataspace_sets.close();
@@ -2030,16 +2028,28 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, const string &group_na
         string location_group_name = group_name + "/locations/" + to_string(i);
         H5::Group location_group = create_group(h5_file, location_group_name);
         write_string_dataset(location_group, "position", field_output.locations[i].position);
-        H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint");
-        for (int j=0; j<field_output.locations[i].sectionPoint.size(); j++) {
-            H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint/" + field_output.locations[i].sectionPoint[j].number);
-            write_string_dataset(section_point_group, "description", field_output.locations[i].sectionPoint[j].description);
+        if (field_output.locations[i].sectionPoint.size() > 0) {
+            H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint");
+            for (int j=0; j<field_output.locations[i].sectionPoint.size(); j++) {
+                H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint/" + field_output.locations[i].sectionPoint[j].number);
+                write_string_dataset(section_point_group, "description", field_output.locations[i].sectionPoint[j].description);
+            }
         }
     }
-    H5::Group values_group = create_group(h5_file, group_name + "/values");
     write_field_values(h5_file, group_name, field_output_group, field_output.values);
+    set<string> field_data_names;
     for (int i=0; i<field_output.dataValues.size(); i++) {
-        string value_group_name = group_name + "/values/" + to_string(i);  // Another viable name might be element type plus section point
+        string data_name;
+        if (!field_output.dataValues[i].baseElementType.empty()) { 
+            data_name = field_output.dataValues[i].baseElementType; 
+        } else {
+            data_name = field_output.dataValues[i].position; 
+        }
+        if (field_data_names.find(data_name) != field_data_names.end()) {  // If this name already exists, append the index to it
+            data_name = data_name + "_" + to_string(i);   // It would be nice to append the section point number to it, but I'm not sure how to do that reliably
+        }
+        field_data_names.insert(data_name);
+        string value_group_name = group_name + "/" + data_name;
         write_field_bulk_data(h5_file, value_group_name, field_output.dataValues[i], field_output.isComplex);
     }
     write_attribute(field_output_group, "max_width", to_string(field_output.max_width));

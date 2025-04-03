@@ -343,7 +343,6 @@ struct field_value_type {
     vector<string> instance;  // Will store just the instance name
     vector<string> sectionPointNumber;
     vector<string> sectionPointDescription;
-//    section_point_type sectionPoint;
     bool magnitudeEmpty;
     bool trescaEmpty;
     bool pressEmpty;
@@ -399,14 +398,10 @@ struct field_output_type {
     int dim2;
 //    string isEngineeringTensor;  // Boolean
     vector<field_location_type> locations;
-//    map<int, field_value_type> nodeValues;
-//    map<int, field_value_type> elementValues;
     field_value_type values;
     vector<field_bulk_type> dataValues;
     int max_width;
     int max_length;
-//    bool node_values_empty;
-//    bool element_values_empty;
     bool isComplex;  // Flag indicating if there is conjugate data
 };
 
