@@ -1895,18 +1895,20 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name) 
         write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets);
     }
     write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
-    H5::Group connector_orientations_group = create_group(h5_file, root_assembly_group_name + "/connectorOrientations");
-    for (int i=0; i<this->root_assembly.connectorOrientations.size(); i++) {
-        string connector_orientation_group_name = root_assembly_group_name + "/connectorOrientations/" + to_string(i);
-        H5::Group connector_orientation_group = create_group(h5_file, connector_orientation_group_name);
-        write_set(h5_file, connector_orientation_group_name, this->root_assembly.connectorOrientations[i].region);
-        write_string_dataset(connector_orientation_group, "orient2sameAs1", this->root_assembly.connectorOrientations[i].orient2sameAs1);
-        write_float_dataset(connector_orientation_group, "angle1", this->root_assembly.connectorOrientations[i].angle1);
-        write_float_dataset(connector_orientation_group, "angle2", this->root_assembly.connectorOrientations[i].angle2);
-        write_datum_csys(h5_file, connector_orientation_group_name, this->root_assembly.connectorOrientations[i].localCsys1);
-        write_datum_csys(h5_file, connector_orientation_group_name, this->root_assembly.connectorOrientations[i].localCsys2);
-        write_string_dataset(connector_orientation_group, "axis1", this->root_assembly.connectorOrientations[i].axis1);
-        write_string_dataset(connector_orientation_group, "axis2", this->root_assembly.connectorOrientations[i].axis2);
+    if (this->root_assembly.connectorOrientations.size() > 0) {
+        H5::Group connector_orientations_group = create_group(h5_file, root_assembly_group_name + "/connectorOrientations");
+        for (int i=0; i<this->root_assembly.connectorOrientations.size(); i++) {
+            string connector_orientation_group_name = root_assembly_group_name + "/connectorOrientations/" + to_string(i);
+            H5::Group connector_orientation_group = create_group(h5_file, connector_orientation_group_name);
+            write_set(h5_file, connector_orientation_group_name, this->root_assembly.connectorOrientations[i].region);
+            write_string_dataset(connector_orientation_group, "orient2sameAs1", this->root_assembly.connectorOrientations[i].orient2sameAs1);
+            write_float_dataset(connector_orientation_group, "angle1", this->root_assembly.connectorOrientations[i].angle1);
+            write_float_dataset(connector_orientation_group, "angle2", this->root_assembly.connectorOrientations[i].angle2);
+            write_datum_csys(h5_file, connector_orientation_group_name, this->root_assembly.connectorOrientations[i].localCsys1);
+            write_datum_csys(h5_file, connector_orientation_group_name, this->root_assembly.connectorOrientations[i].localCsys2);
+            write_string_dataset(connector_orientation_group, "axis1", this->root_assembly.connectorOrientations[i].axis1);
+            write_string_dataset(connector_orientation_group, "axis2", this->root_assembly.connectorOrientations[i].axis2);
+        }
     }
 }
 
@@ -2033,16 +2035,18 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, const string &group_na
     write_string_vector_dataset(field_output_group, "componentLabels", field_output.componentLabels);
     write_string_vector_dataset(field_output_group, "validInvariants", field_output.validInvariants);
 
-    H5::Group locations_group = create_group(h5_file, group_name + "/locations");
-    for (int i=0; i<field_output.locations.size(); i++) {
-        string location_group_name = group_name + "/locations/" + to_string(i);
-        H5::Group location_group = create_group(h5_file, location_group_name);
-        write_string_dataset(location_group, "position", field_output.locations[i].position);
-        if (field_output.locations[i].sectionPoint.size() > 0) {
-            H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint");
-            for (int j=0; j<field_output.locations[i].sectionPoint.size(); j++) {
-                H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint/" + field_output.locations[i].sectionPoint[j].number);
-                write_string_dataset(section_point_group, "description", field_output.locations[i].sectionPoint[j].description);
+    if (field_output.locations.size() > 0) {
+        H5::Group locations_group = create_group(h5_file, group_name + "/locations");
+        for (int i=0; i<field_output.locations.size(); i++) {
+            string location_group_name = group_name + "/locations/" + to_string(i);
+            H5::Group location_group = create_group(h5_file, location_group_name);
+            write_string_dataset(location_group, "position", field_output.locations[i].position);
+            if (field_output.locations[i].sectionPoint.size() > 0) {
+                H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint");
+                for (int j=0; j<field_output.locations[i].sectionPoint.size(); j++) {
+                    H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint/" + field_output.locations[i].sectionPoint[j].number);
+                    write_string_dataset(section_point_group, "description", field_output.locations[i].sectionPoint[j].description);
+                }
             }
         }
     }
@@ -2079,11 +2083,13 @@ void SpadeObject::write_frames(H5::H5File &h5_file, const string &group_name, ve
         write_string_dataset(frame_group, "loadCase", frame.loadCase);
         write_float_dataset(frame_group, "frameValue", frame.frameValue);
         write_float_dataset(frame_group, "frequency", frame.frequency);
-        H5::Group field_outputs_group = create_group(h5_file, frame_group_name + "/fieldOutputs");
-        this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
-        for (int i=0; i<frame.fieldOutputs.size(); i++) {
-            string field_output_group_name = frame_group_name + "/fieldOutputs/" + replace_slashes(frame.fieldOutputs[i].name);
-            write_field_output(h5_file, field_output_group_name, frame.fieldOutputs[i]);
+        if (frame.fieldOutputs.size() > 0) {
+            H5::Group field_outputs_group = create_group(h5_file, frame_group_name + "/fieldOutputs");
+            this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
+            for (int i=0; i<frame.fieldOutputs.size(); i++) {
+                string field_output_group_name = frame_group_name + "/fieldOutputs/" + replace_slashes(frame.fieldOutputs[i].name);
+                write_field_output(h5_file, field_output_group_name, frame.fieldOutputs[i]);
+            }
         }
         write_attribute(frame_group, "max_width", to_string(frame.max_width));
         write_attribute(frame_group, "max_length", to_string(frame.max_length));
@@ -2237,11 +2243,13 @@ void SpadeObject::write_instance(H5::H5File &h5_file, H5::Group &group, const st
     }
     write_sets(h5_file, group_name + "/surfaces", instance.surfaces);
     this->instance_links[instance.name] = group_name;
-    H5::Group section_assignments_group = create_group(h5_file, group_name + "/sectionAssignments");
-    for (int i=0; i<instance.sectionAssignments.size(); i++) {
-        string section_assignment_group_name = group_name + "/sectionAssignments/" + instance.sectionAssignments[i].sectionName;
-        H5::Group section_assignment_group = create_group(h5_file, section_assignment_group_name);
-        write_set(h5_file, section_assignment_group_name, instance.sectionAssignments[i].region);
+    if (instance.sectionAssignments.size() > 0) {
+        H5::Group section_assignments_group = create_group(h5_file, group_name + "/sectionAssignments");
+        for (int i=0; i<instance.sectionAssignments.size(); i++) {
+            string section_assignment_group_name = group_name + "/sectionAssignments/" + instance.sectionAssignments[i].sectionName;
+            H5::Group section_assignment_group = create_group(h5_file, section_assignment_group_name);
+            write_set(h5_file, section_assignment_group_name, instance.sectionAssignments[i].region);
+        }
     }
     if (instance.rigidBodies.size() > 0) {
         H5::Group rigid_bodies_group = create_group(h5_file, group_name + "/rigidBodies");
