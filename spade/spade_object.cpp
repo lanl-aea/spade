@@ -1713,41 +1713,41 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
         std::vector<hvl_t> variable_length_section_point_descriptions(dimension);
         int element_count = 0;
         bool section_point_empty = true;
-        for(map<int, element_type>::iterator element_it = element_members.begin(); element_it != element_members.end(); ++element_it) {
-            element_labels.push_back(element_it->first);
-            section_categories_names.push_back(element_it->second.sectionCategory.name);
-            section_categories_descriptions.push_back(element_it->second.sectionCategory.description);
-            for (const float& connectivity : element_it->second.connectivity) {
+        for (auto [element_id, element] : element_members) {
+            element_labels.push_back(element_id);
+            section_categories_names.push_back(element.sectionCategory.name);
+            section_categories_descriptions.push_back(element.sectionCategory.description);
+            for (const float& connectivity : element.connectivity) {
                 element_connectivity.push_back(connectivity);
             }
-            variable_length_sets[element_count].len = element_it->second.sets.size();
-            variable_length_sets[element_count].p = new char*[element_it->second.sets.size()];
+            variable_length_sets[element_count].len = element.sets.size();
+            variable_length_sets[element_count].p = new char*[element.sets.size()];
             size_t set_count = 0;
-            for (const std::string& str : element_it->second.sets) {
+            for (const std::string& str : element.sets) {
                 char* c_str = new char[str.size() + 1];  // Plus 1 for null terminator
                 std::strcpy(c_str, str.c_str());
                 static_cast<char**>(variable_length_sets[element_count].p)[set_count] = c_str;
                 ++set_count;
             }
-            variable_length_instances[element_count].len = element_it->second.instanceNames.size();
-            variable_length_instances[element_count].p = new char*[element_it->second.instanceNames.size()];
+            variable_length_instances[element_count].len = element.instanceNames.size();
+            variable_length_instances[element_count].p = new char*[element.instanceNames.size()];
             size_t connectivity_count = 0;
-            for (const std::string& str : element_it->second.instanceNames) {
+            for (const std::string& str : element.instanceNames) {
                 char* c_str = new char[str.size() + 1];  // Plus 1 for null terminator
                 std::strcpy(c_str, str.c_str());
                 static_cast<char**>(variable_length_instances[element_count].p)[connectivity_count] = c_str;
                 ++connectivity_count;
             }
-            if (element_it->second.sectionCategory.section_point_numbers.size()) {
+            if (element.sectionCategory.section_point_numbers.size()) {
                 section_point_empty = false;
-                variable_length_section_point_numbers[element_count].len = element_it->second.sectionCategory.section_point_numbers.size();
-                variable_length_section_point_numbers[element_count].p = new char*[element_it->second.sectionCategory.section_point_numbers.size()];
-                variable_length_section_point_descriptions[element_count].len = element_it->second.sectionCategory.section_point_descriptions.size();
-                variable_length_section_point_descriptions[element_count].p = new char*[element_it->second.sectionCategory.section_point_descriptions.size()];
+                variable_length_section_point_numbers[element_count].len = element.sectionCategory.section_point_numbers.size();
+                variable_length_section_point_numbers[element_count].p = new char*[element.sectionCategory.section_point_numbers.size()];
+                variable_length_section_point_descriptions[element_count].len = element.sectionCategory.section_point_descriptions.size();
+                variable_length_section_point_descriptions[element_count].p = new char*[element.sectionCategory.section_point_descriptions.size()];
                 size_t section_point_count = 0;
-                for (int i=0; i<element_it->second.sectionCategory.section_point_numbers.size(); i++) {
-                    string str_number = element_it->second.sectionCategory.section_point_numbers[i];
-                    string str_description = element_it->second.sectionCategory.section_point_descriptions[i];
+                for (int i=0; i<element.sectionCategory.section_point_numbers.size(); i++) {
+                    string str_number = element.sectionCategory.section_point_numbers[i];
+                    string str_description = element.sectionCategory.section_point_descriptions[i];
                     char* c_str_number = new char[str_number.size() + 1];  // Plus 1 for null terminator
                     char* c_str_description = new char[str_description.size() + 1];  // Plus 1 for null terminator
                     std::strcpy(c_str_number, str_number.c_str());
@@ -2465,18 +2465,15 @@ void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const st
     if (!all_elements.elements.empty()) {
         if (set_name.empty()) {
             H5::Group elements_group = create_group(h5_file, group_name + "/elements");
-            for(map<string, map<int, element_type>>::iterator it = all_elements.elements.begin(); it != all_elements.elements.end(); ++it) {
-                string type = it->first;
-                map<int, element_type> all_elements_members = it->second;
-                for(map<int, element_type>::iterator element_it = all_elements_members.begin(); element_it != all_elements_members.end(); ++element_it) {
-                    string elements_label_group_name = group_name + "/elements/" + to_string(element_it->first);
+            for (auto [type, element] : all_elements.elements) {
+                for (auto [element_id, element_members] : element) {
+                    string elements_label_group_name = group_name + "/elements/" + to_string(element_id);
                     H5::Group elements_label_group = create_group(h5_file, elements_label_group_name);
-                    element_type element_members = element_it->second;
                     write_string_dataset(elements_label_group, "type", type);
                     H5::Group section_category_group = create_group(h5_file, elements_label_group_name + "/sectionCategory");
-                    write_section_category(h5_file, section_category_group, elements_label_group_name + "/sectionCategory", (element_it->second).sectionCategory);
-                    write_string_vector_dataset(elements_label_group, "instanceNames", (element_it->second).instanceNames);
-                    write_integer_vector_dataset(elements_label_group, "connectivity", (element_it->second).connectivity);
+                    write_section_category(h5_file, section_category_group, elements_label_group_name + "/sectionCategory", element_members.sectionCategory);
+                    write_string_vector_dataset(elements_label_group, "instanceNames", element_members.instanceNames);
+                    write_integer_vector_dataset(elements_label_group, "connectivity", element_members.connectivity);
                 }
             }
         } else {
