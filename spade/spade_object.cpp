@@ -1514,32 +1514,32 @@ void SpadeObject::write_h5 () {
 
     if (!this->command_line_arguments->odbformat()) {  // Write extract format
         string embedded_space;
-        for(map<string,mesh_type>::iterator part_it = part_mesh.begin(); part_it != part_mesh.end(); ++part_it) {
+        for (auto [part_name, part] : part_mesh) {
             embedded_space = "";
-            string part_group_name = "/" + part_it->first;
+            string part_group_name = "/" + part_name;
             H5::Group extract_part_group = create_group(h5_file, part_group_name);
-            if (!part_it->second.nodes.nodes.empty() || !part_it->second.elements.elements.empty()) {
-                if ((part_it->second).part_index >= 0) {
-                    if (!this->parts[(part_it->second).part_index].embeddedSpace.empty()) {
-                        embedded_space = this->parts[(part_it->second).part_index].embeddedSpace;
+            if (!part.nodes.nodes.empty() || !part.elements.elements.empty()) {
+                if (part.part_index >= 0) {
+                    if (!this->parts[part.part_index].embeddedSpace.empty()) {
+                        embedded_space = this->parts[part.part_index].embeddedSpace;
                         write_string_dataset(extract_part_group, "embeddedSpace", embedded_space);
                     }
                 }
-                write_mesh(h5_file, extract_part_group, part_group_name, part_it->second, embedded_space);
+                write_mesh(h5_file, extract_part_group, part_group_name, part, embedded_space);
             }
         }
-        for(map<string,mesh_type>::iterator instance_it = instance_mesh.begin(); instance_it != instance_mesh.end(); ++instance_it) {
+        for (auto [instance_name, instance] : instance_mesh) {
             embedded_space = "";
-            string instance_group_name = "/" + instance_it->first;
+            string instance_group_name = "/" + instance_name;
             H5::Group extract_instance_group = create_group(h5_file, instance_group_name);
-            if (!instance_it->second.nodes.nodes.empty() || !instance_it->second.elements.elements.empty()) {
-                if ((instance_it->second).instance_index >= 0) {
+            if (!instance.nodes.nodes.empty() || !instance.elements.elements.empty()) {
+                if (instance.instance_index >= 0) {
                     string instance_sub_group_name = instance_group_name + "/instance_data";
                     H5::Group extract_instance_sub_group = create_group(h5_file, instance_sub_group_name);
-                    write_instance(h5_file, extract_instance_sub_group, instance_sub_group_name, this->root_assembly.instances[(instance_it->second).instance_index]);
-                    if (!this->root_assembly.instances[(instance_it->second).instance_index].embeddedSpace.empty()) { embedded_space = this->root_assembly.instances[(instance_it->second).instance_index].embeddedSpace; }
+                    write_instance(h5_file, extract_instance_sub_group, instance_sub_group_name, this->root_assembly.instances[instance.instance_index]);
+                    if (!this->root_assembly.instances[instance.instance_index].embeddedSpace.empty()) { embedded_space = this->root_assembly.instances[instance.instance_index].embeddedSpace; }
                 }
-                write_mesh(h5_file, extract_instance_group, instance_group_name, instance_it->second, embedded_space);
+                write_mesh(h5_file, extract_instance_group, instance_group_name, instance, embedded_space);
             }
         }
         for (auto step : this->steps) {
@@ -1632,15 +1632,15 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
     hsize_t dimension(nodes.size());
     std::vector<hvl_t> variable_length_sets(dimension);
     int node_count = 0;
-    for(map<int, node_type>::iterator node_it = nodes.begin(); node_it != nodes.end(); ++node_it) {
-        node_labels.push_back(node_it->first);
-        for (const float& coord : node_it->second.coordinates) {
+    for (auto [node_id, node] : nodes) {
+        node_labels.push_back(node_id);
+        for (const float& coord : node.coordinates) {
             node_coords.push_back(coord);
         }
-        variable_length_sets[node_count].len = node_it->second.sets.size();
-        variable_length_sets[node_count].p = new char*[node_it->second.sets.size()];
+        variable_length_sets[node_count].len = node.sets.size();
+        variable_length_sets[node_count].p = new char*[node.sets.size()];
         size_t set_count = 0;
-        for (const std::string& str : node_it->second.sets) {
+        for (const std::string& str : node.sets) {
             char* c_str = new char[str.size() + 1];  // Plus 1 for null terminator
             std::strcpy(c_str, str.c_str());
             static_cast<char**>(variable_length_sets[node_count].p)[set_count] = c_str;
@@ -1845,7 +1845,7 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
         try {
             // Clean up allocated memory
             int i = 0;
-            for (auto [element_id, element] : elements) {
+            for (auto [element_id, element] : element_members) {
                 for (size_t j = 0; j < element.sets.size(); ++j) {
                     delete[] static_cast<char**>(variable_length_sets[i].p)[j];
                 }
