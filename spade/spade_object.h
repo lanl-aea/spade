@@ -6,6 +6,7 @@
 #include "H5Cpp.h"
 using namespace H5;
 #include <odb_API.h>
+#include <optional>
 
 #include "cmd_line_arguments.h"
 #include "logging.h"
@@ -326,22 +327,24 @@ struct field_location_type {
 };
 
 struct field_value_type {
-    int elementLabel;
-    int nodeLabel;
-    int integrationPoint;
-    string type;
-    float magnitude;
-    float tresca;
-    float press;
-    float inv3;
-    float maxPrincipal;
-    float midPrincipal;
-    float minPrincipal;
-    float maxInPlanePrincipal;
-    float minInPlanePrincipal;
-    float outOfPlanePrincipal;
-    string instance;  // Will store just the instance name
-    section_point_type sectionPoint;
+    vector<std.optional<int>> elementLabels;
+    vector<std.optional<int>> nodeLabels;
+    vector<std.optional<int>> integrationPoints;
+    vector<string> types;
+    vector<float> magnitude;
+    vector<float> tresca;
+    vector<float> press;
+    vector<float> inv3;
+    vector<float> maxPrincipal;
+    vector<float> midPrincipal;
+    vector<float> minPrincipal;
+    vector<float> maxInPlanePrincipal;
+    vector<float> minInPlanePrincipal;
+    vector<float> outOfPlanePrincipal;
+    vector<string> instances;  // Will store just the instance name
+    vector<string> sectionPointNumbers;
+    vector<string> sectionPointDescriptions;
+//    section_point_type sectionPoint;
     bool empty;  // If int or float values are not populated set this to true
     bool magnitudeEmpty;
     bool trescaEmpty;
@@ -353,6 +356,14 @@ struct field_value_type {
     bool maxInPlanePrincipalEmpty;
     bool minInPlanePrincipalEmpty;
     bool outOfPlanePrincipalEmpty;
+
+    bool elementEmpty;
+    bool nodeEmpty;
+    bool integrationPointEmpty;
+    bool typeEmpty;
+    bool instanceEmpty;
+    bool sectionPointNumberEmpty;
+    bool sectionPointDescriptionEmpty;
 };
 
 struct field_bulk_type {
@@ -390,13 +401,14 @@ struct field_output_type {
     int dim2;
 //    string isEngineeringTensor;  // Boolean
     vector<field_location_type> locations;
-    map<int, field_value_type> nodeValues;
-    map<int, field_value_type> elementValues;
+//    map<int, field_value_type> nodeValues;
+//    map<int, field_value_type> elementValues;
+    field_value_type values;
     vector<field_bulk_type> dataValues;
     int max_width;
     int max_length;
-    bool node_values_empty;
-    bool element_values_empty;
+//    bool node_values_empty;
+//    bool element_values_empty;
     bool isComplex;  // Flag indicating if there is conjugate data
 };
 
@@ -654,10 +666,11 @@ class SpadeObject {
           Process a field value object and store the results
           \param field_value An odb field value object
           \param invariants An odb sequence invariant object
+          \param values Data structure for storing processed data
           \return field_value_type with data stored from the odb
           \sa process_odb()
         */
-        field_value_type process_field_values(const odb_FieldValue &field_value, const odb_SequenceInvariant& invariants);
+        void process_field_values(const odb_FieldValue &field_value, const odb_SequenceInvariant& invariants, field_value_type &values);
         //! Process field bulk data from the odb file
         /*!
           Process a field bulk data object and store the results

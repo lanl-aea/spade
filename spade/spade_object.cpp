@@ -35,6 +35,7 @@ using namespace std;
 #include <cmath>
 #include <sys/stat.h>
 #include <filesystem>
+#include <optional>
 
 #include <odb_API.h>
 #include <odb_Coupling.h>
@@ -943,76 +944,91 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     return new_assembly;
 }
 
-field_value_type SpadeObject::process_field_values(const odb_FieldValue &field_value, const odb_SequenceInvariant& invariants) {
-    field_value_type new_field_value;
-    new_field_value.empty = true;
-    new_field_value.elementLabel = field_value.elementLabel();
-    new_field_value.nodeLabel = field_value.nodeLabel();
-    new_field_value.integrationPoint = field_value.integrationPoint();
-    if (new_field_value.integrationPoint != -1) { new_field_value.empty = false; }
-    switch(field_value.type()) {
-        case odb_Enum::SCALAR: new_field_value.type = "Scalar"; break;
-        case odb_Enum::VECTOR: new_field_value.type = "Vector"; break;
-        case odb_Enum::TENSOR_3D_FULL: new_field_value.type = "Tensor 3D Full"; break;
-        case odb_Enum::TENSOR_3D_PLANAR: new_field_value.type = "Tensor 3D Planar"; break;
-        case odb_Enum::TENSOR_3D_SURFACE: new_field_value.type = "Tensor 3D Surface"; break;
-        case odb_Enum::TENSOR_2D_PLANAR: new_field_value.type = "Tensor 2D Planar"; break;
-        case odb_Enum::TENSOR_2D_SURFACE: new_field_value.type = "Tensor 2D Surface"; break;
+void SpadeObject::process_field_values(const odb_FieldValue &field_value, const odb_SequenceInvariant& invariants, field_value_type &values) {
+    int elementLabel = field_value.elementLabel();
+    if (elementLabel != -1) { 
+        values.elementLabels.push_back(elementLabel);
+        values.elementEmpty = false;
+    } else {
+        values.elementLabels.push_back(std::nullopt);
     }
+    int nodeLabel = field_value.nodeLabel();
+    if (nodeLabel != -1) { 
+        values.nodeLabels.push_back(nodeLabel);
+        values.nodeEmpty = false;
+    } else {
+        values.nodeLabels.push_back(std::nullopt);
+    }
+    int integrationPoint = field_value.integrationPoint();
+    if (integrationPoint != -1) { 
+        values.integrationPoints.push_back(integrationPoint); 
+        values.integrationPointEmpty = false;
+    } else {
+        values.integrationPoints.push_back(std::nullopt);
+    }
+    string value_type = "";
+    switch(field_value.type()) {
+        case odb_Enum::SCALAR: value_type = "Scalar"; break;
+        case odb_Enum::VECTOR: value_type = "Vector"; break;
+        case odb_Enum::TENSOR_3D_FULL: value_type = "Tensor 3D Full"; break;
+        case odb_Enum::TENSOR_3D_PLANAR: value_type = "Tensor 3D Planar"; break;
+        case odb_Enum::TENSOR_3D_SURFACE: value_type = "Tensor 3D Surface"; break;
+        case odb_Enum::TENSOR_2D_PLANAR: value_type = "Tensor 2D Planar"; break;
+        case odb_Enum::TENSOR_2D_SURFACE: value_type = "Tensor 2D Surface"; break;
+    }
+    values.types.push_back(value_type);
+    if (value_type != "") { values.typeEmpty = false; }
     if (invariants.isMember(odb_Enum::MAGNITUDE)) {
-        new_field_value.magnitude = field_value.magnitude();
-        new_field_value.empty = false;
-        new_field_value.magnitudeEmpty = false;
-    } else { new_field_value.magnitude = 0; new_field_value.magnitudeEmpty = true; }
+        values.magnitude.push_back(field_value.magnitude());
+        values.magnitudeEmpty = false;
+    } else { values.magnitude.push_back(NAN); }
     if (invariants.isMember(odb_Enum::TRESCA)) {
-        new_field_value.tresca = field_value.tresca();
-        new_field_value.empty = false;
-        new_field_value.trescaEmpty = false;
-    } else { new_field_value.tresca = 0; new_field_value.trescaEmpty = true; }
+        values.tresca.push_back(field_value.tresca());
+        values.trescaEmpty = false;
+    } else { values.tresca.push_back(NAN); }
     if (invariants.isMember(odb_Enum::PRESS)) {
-        new_field_value.press = field_value.press();
-        new_field_value.empty = false;
-        new_field_value.pressEmpty = false;
-    } else { new_field_value.press = 0; new_field_value.pressEmpty = true; }
+        values.press.push_back(field_value.press());
+        values.pressEmpty = false;
+    } else { values.press.push_back(NAN); }
     if (invariants.isMember(odb_Enum::INV3)) {
-        new_field_value.inv3 = field_value.inv3();
-        new_field_value.empty = false;
-        new_field_value.inv3Empty = false;
-    } else { new_field_value.inv3 = 0; new_field_value.inv3Empty = true; }
+        values.inv3.push_back(field_value.inv3());
+        values.inv3Empty = false;
+    } else { values.inv3.push_back(NAN); }
     if (invariants.isMember(odb_Enum::MAX_PRINCIPAL)) {
-        new_field_value.maxPrincipal = field_value.maxPrincipal();
-        new_field_value.empty = false;
-        new_field_value.maxPrincipalEmpty = false;
-    } else { new_field_value.maxPrincipal = 0; new_field_value.maxPrincipalEmpty = true; }
+        values.maxPrincipal.push_back(field_value.maxPrincipal());
+        values.maxPrincipalEmpty = false;
+    } else { values.maxPrincipal.push_back(NAN); }
     if (invariants.isMember(odb_Enum::MID_PRINCIPAL)) {
-        new_field_value.midPrincipal = field_value.midPrincipal();
-        new_field_value.empty = false;
-        new_field_value.midPrincipalEmpty = false;
-    } else { new_field_value.midPrincipal = 0; new_field_value.midPrincipalEmpty = true; }
+        values.midPrincipal.push_back(field_value.midPrincipal());
+        values.midPrincipalEmpty = false;
+    } else { values.midPrincipal.push_back(NAN); }
     if (invariants.isMember(odb_Enum::MIN_PRINCIPAL)) {
-        new_field_value.minPrincipal = field_value.minPrincipal();
-        new_field_value.empty = false;
-        new_field_value.minPrincipalEmpty = false;
-    } else { new_field_value.minPrincipal = 0; new_field_value.minPrincipalEmpty = true; }
+        values.minPrincipal.push_back(field_value.minPrincipal());
+        values.minPrincipalEmpty = false;
+    } else { values.minPrincipal.push_back(NAN); }
     if (invariants.isMember(odb_Enum::MAX_INPLANE_PRINCIPAL)) {
-        new_field_value.maxInPlanePrincipal = field_value.maxInPlanePrincipal();
-        new_field_value.empty = false;
-        new_field_value.maxInPlanePrincipalEmpty = false;
-    } else { new_field_value.maxInPlanePrincipal = 0; new_field_value.maxInPlanePrincipalEmpty = true; }
+        values.maxInPlanePrincipal.push_back(field_value.maxInPlanePrincipal());
+        values.maxInPlanePrincipalEmpty = false;
+    } else { values.maxInPlanePrincipal.push_back(NAN); }
     if (invariants.isMember(odb_Enum::MIN_INPLANE_PRINCIPAL)) {
-        new_field_value.minInPlanePrincipal = field_value.minInPlanePrincipal();
-        new_field_value.empty = false;
-        new_field_value.minInPlanePrincipalEmpty = false;
-    } else { new_field_value.minInPlanePrincipal = 0; new_field_value.minInPlanePrincipalEmpty = true; }
+        values.minInPlanePrincipal.push_back(field_value.minInPlanePrincipal());
+        values.minInPlanePrincipalEmpty = false;
+    } else { values.minInPlanePrincipal.push_back(NAN); }
     if (invariants.isMember(odb_Enum::OUTOFPLANE_PRINCIPAL)) {
-        new_field_value.outOfPlanePrincipal = field_value.outOfPlanePrincipal();
-        new_field_value.empty = false;
-        new_field_value.outOfPlanePrincipalEmpty = false;
-    } else { new_field_value.outOfPlanePrincipal = 0; new_field_value.outOfPlanePrincipalEmpty = true; }
-    new_field_value.sectionPoint.number =  to_string(field_value.sectionPoint().number());
-    if (new_field_value.sectionPoint.number != "-1") { new_field_value.empty = false; }
-    new_field_value.sectionPoint.description =  field_value.sectionPoint().description().CStr();
-    return new_field_value;
+        values.outOfPlanePrincipal.push_back(field_value.outOfPlanePrincipal());
+        values.outOfPlanePrincipalEmpty = false;
+    } else { values.outOfPlanePrincipal.push_back(NAN); }
+    string section_point_number =  to_string(field_value.sectionPoint().number());
+    if (section_point_number != "-1") { 
+        values.sectionPointNumbers.push_back(section_point_number); 
+        values.sectionPointNumberEmpty = false; 
+    } else { values.sectionPointNumbers.push_back(""); }
+    string section_point_description = "";
+    section_point_description =  field_value.sectionPoint().description().CStr();
+    if (section_point_description != "") { 
+        values.sectionPointDescriptionEmpty = false;
+    }
+    values.sectionPointDescriptions.push_back(section_point_descriptions); 
 }
 
 field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data) {
@@ -1161,24 +1177,47 @@ field_output_type SpadeObject::process_field_output (const odb_FieldOutput &fiel
         new_field_output.validInvariants.push_back(invariant.c_str());
     }
     odb_SequenceFieldValue field_values = field_output.values();
-    new_field_output.node_values_empty = true;
-    new_field_output.element_values_empty = true;
+    new_field_output.values.magnitudeEmpty = true;
+    new_field_output.values.trescaEmpty = true;
+    new_field_output.values.pressEmpty = true;
+    new_field_output.values.inv3Empty = true;
+    new_field_output.values.maxPrincipalEmpty = true;
+    new_field_output.values.midPrincipalEmpty = true;
+    new_field_output.values.minPrincipalEmpty = true;
+    new_field_output.values.maxInPlanePrincipalEmpty = true;
+    new_field_output.values.minInPlanePrincipalEmpty = true;
+    new_field_output.values.outOfPlanePrincipalEmpty = true;
+    new_field_output.values.elementEmpty = true;
+    new_field_output.values.nodeEmpty = true;
+    new_field_output.values.integrationPointEmpty = true;
+    new_field_output.values.typeEmpty = true;
+    new_field_output.values.instanceEmpty = true;
+    new_field_output.values.sectionPointNumberEmpty = true;
+    new_field_output.values.sectionPointDescriptionEmpty = true;
     if (field_output.validInvariants().size() > 0) {
         for (int i=0; i<field_values.size(); i++) {
-            const odb_FieldValue& field_value = field_values.constGet(i);
-            field_value_type new_field_value = process_field_values(field_value, field_output.validInvariants());
-            if (!new_field_value.empty) {
-                if (new_field_value.elementLabel != -1) {
-                    new_field_output.elementValues[new_field_value.elementLabel] = new_field_value;
-                    new_field_output.element_values_empty = false;
-                }
-                if (new_field_value.nodeLabel != -1) {
-                    new_field_output.nodeValues[new_field_value.nodeLabel] = new_field_value;
-                    new_field_output.node_values_empty = false;
-                }
-            }
+//            const odb_FieldValue& field_value = field_values.constGet(i);
+            process_field_values(field_values.constGet(i), field_output.validInvariants(), new_field_output.values);
         }
     }
+    if (new_field_output.values.magnitudeEmpty) { new_field_output.values.magnitude.clear(); }
+    if (new_field_output.values.trescaEmpty) { new_field_output.values.tresca.clear(); }
+    if (new_field_output.values.pressEmpty) { new_field_output.values.press.clear(); }
+    if (new_field_output.values.inv3Empty) { new_field_output.values.inv3.clear(); }
+    if (new_field_output.values.maxPrincipalEmpty) { new_field_output.values.maxPrincipal.clear(); }
+    if (new_field_output.values.midPrincipalEmpty) { new_field_output.values.midPrincipal.clear(); }
+    if (new_field_output.values.minPrincipalEmpty) { new_field_output.values.minPrincipal.clear(); }
+    if (new_field_output.values.maxInPlanePrincipalEmpty) { new_field_output.values.maxInPlanePrincipal.clear(); }
+    if (new_field_output.values.minInPlanePrincipalEmpty) { new_field_output.values.minInPlanePrincipal.clear(); }
+    if (new_field_output.values.outOfPlanePrincipalEmpty) { new_field_output.values.outOfPlanePrincipal.clear(); }
+    if (new_field_output.values.elementEmpty) { new_field_output.values.elementLabels.clear(); }
+    if (new_field_output.values.nodeEmpty) { new_field_output.values.nodeLabels.clear(); }
+    if (new_field_output.values.integrationPointEmpty) { new_field_output.values.integrationPoints.clear(); }
+    if (new_field_output.values.typeEmpty) { new_field_output.values.types.clear(); }
+    if (new_field_output.values.instanceEmpty) { new_field_output.values.instances.clear(); }
+    if (new_field_output.values.sectionPointNumberEmpty) { new_field_output.values.sectionPointNumbers.clear(); }
+    if (new_field_output.values.sectionPointDescriptionEmpty) { new_field_output.values.sectionPointDescriptions.clear(); }
+
     new_field_output.max_length = 0;
     new_field_output.max_width = 0;
     const odb_SequenceFieldBulkData& field_bulk_values = field_output.bulkDataBlocks();
