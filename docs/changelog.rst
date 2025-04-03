@@ -22,6 +22,8 @@ Internal Changes
 - Adjust some write functions to detect empty data before creating an empty hdf5 group (:issue:`82`, 
   :merge:`81`). By `Prabhu Khalsa`_.
 - Using section assignment name for name of hdf5 group (:issue:`85`, :merge:`84`). By `Prabhu Khalsa`_.
+- Changing how field output is stored and written (:issue:`86`, :merge:`85`). By `Prabhu Khalsa`_.
+- Add checks to prevent writing of empty groups (:issue:`88`, :merge:`86`). By `Prabhu Khalsa`_.
 
 Enhancements
 ============
