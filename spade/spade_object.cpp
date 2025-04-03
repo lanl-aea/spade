@@ -1694,9 +1694,7 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
 }
 
 void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map<string, map<int, element_type>> elements) {
-    for(map<string, map<int, element_type>>::iterator it = elements.begin(); it != elements.end(); ++it) {
-        string type = it->first;
-        map<int, element_type> element_members = it->second;
+    for (auto [type, element_members] : elements) {
 
         vector<int> element_labels;
         vector<string> section_categories_names;
@@ -2493,8 +2491,8 @@ void SpadeObject::write_nodes(H5::H5File &h5_file, H5::Group &group, const strin
     if (!all_nodes.nodes.empty()) {
         if (set_name.empty()) {
             H5::Group nodes_group = create_group(h5_file, group_name + "/nodes");
-            for(map<int,node_type>::iterator it = all_nodes.nodes.begin(); it != all_nodes.nodes.end(); ++it) {
-                write_float_vector_dataset(nodes_group, to_string(it->first), (it->second).coordinates);
+            for (auto [node_id, node] : all_nodes.nodes) {
+                write_float_vector_dataset(nodes_group, to_string(node_id), (node).coordinates);
             }
         } else {
             try {  // If the node has been stored in nodes, just return the address to it
