@@ -1580,6 +1580,31 @@ void SpadeObject::write_h5 () {
                 this->log_file->logVerbose("Writing history data.");
                 write_history_region(h5_file, step_group, step_group_name, history_region);
             }
+            for (auto frame : frames) {
+                /*
+                string frame_group_name = frames_group_name + "/" + to_string(frame.incrementNumber);
+                H5::Group frame_group = create_group(h5_file, frame_group_name);
+                write_integer_dataset(frame_group, "cyclicModeNumber", frame.cyclicModeNumber);
+                write_integer_dataset(frame_group, "mode", frame.mode);
+                write_string_dataset(frame_group, "description", frame.description);
+                write_string_dataset(frame_group, "domain", frame.domain);
+                write_string_dataset(frame_group, "loadCase", frame.loadCase);
+                write_float_dataset(frame_group, "frameValue", frame.frameValue);
+                write_float_dataset(frame_group, "frequency", frame.frequency);
+                if (frame.fieldOutputs.size() > 0) {
+                    H5::Group field_outputs_group = create_group(h5_file, frame_group_name + "/fieldOutputs");
+                    this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
+                    for (int i=0; i<frame.fieldOutputs.size(); i++) {
+                        string field_output_group_name = frame_group_name + "/fieldOutputs/" + replace_slashes(frame.fieldOutputs[i].name);
+                        write_field_output(h5_file, field_output_group_name, frame.fieldOutputs[i]);
+                    }
+                }
+                write_attribute(frame_group, "max_width", to_string(frame.max_width));
+                write_attribute(frame_group, "max_length", to_string(frame.max_length));
+                */
+            }
+}
+void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_name, history_point_type &history_point) {
         }
     }
     if ((!this->constraints.ties.empty()) || (!this->constraints.display_bodies.empty()) || (!this->constraints.couplings.empty()) || (!this->constraints.mpc.empty()) || (!this->constraints.shell_solid_couplings.empty())) {
@@ -2212,9 +2237,9 @@ void SpadeObject::write_steps(H5::H5File &h5_file, const string &group_name) {
         write_double_vector_dataset(step_group, "acousticMassCenter", step.acousticMassCenter);
         write_double_array_dataset(step_group, "inertiaAboutCenter", 6, step.inertiaAboutCenter);
         write_double_array_dataset(step_group, "inertiaAboutOrigin", 6, step.inertiaAboutOrigin);
-        this->log_file->logVerbose("Writing frames data.");
-        write_frames(h5_file, step_group_name, step.frames);
         if (this->command_line_arguments->odbformat()) {
+            this->log_file->logVerbose("Writing frames data.");
+            write_frames(h5_file, step_group_name, step.frames);
             this->log_file->logVerbose("Writing history data.");
             write_history_regions(h5_file, step_group_name, step.historyRegions);
         }
