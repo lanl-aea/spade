@@ -340,7 +340,6 @@ struct field_value_type {
     vector<float> maxInPlanePrincipal;
     vector<float> minInPlanePrincipal;
     vector<float> outOfPlanePrincipal;
-    vector<string> instance;  // Will store just the instance name
     vector<string> sectionPointNumber;
     vector<string> sectionPointDescription;
     bool magnitudeEmpty;
@@ -358,7 +357,6 @@ struct field_value_type {
     bool nodeEmpty;
     bool integrationPointEmpty;
     bool typeEmpty;
-    bool instanceEmpty;
     bool sectionPointNumberEmpty;
     bool sectionPointDescriptionEmpty;
 };
@@ -372,7 +370,6 @@ struct field_bulk_type {
     int valuesPerElement;
     int width;
     string baseElementType;
-    string instance; // Will store just the instance name
     vector<vector<string>> faces;
     vector<int> elementLabels;
     vector<int> nodeLabels;
@@ -388,6 +385,11 @@ struct field_bulk_type {
     bool emptyFaces;  // Keep track of whether any face data exists
 };
 
+struct field_data_type {
+    field_value_type fieldValues;
+    vector<field_bulk_type> bulkValues;
+};
+
 struct field_output_type {
     string name;
     string description;
@@ -398,8 +400,7 @@ struct field_output_type {
     int dim2;
 //    string isEngineeringTensor;  // Boolean
     vector<field_location_type> locations;
-    field_value_type values;
-    vector<field_bulk_type> dataValues;
+    map<string, field_data_type> values;  // String index is the name of the instance
     int max_width;
     int max_length;
     bool isComplex;  // Flag indicating if there is conjugate data
@@ -1287,6 +1288,7 @@ class SpadeObject {
 
         string dimension_enum_strings[4];
         string faces_enum_strings[35];
+        string default_instance_name;
         CmdLineArguments* command_line_arguments;
         Logging* log_file;
 };
