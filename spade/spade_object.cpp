@@ -1561,26 +1561,10 @@ void SpadeObject::write_h5 () {
                     if (instance_name.empty()) { instance_name = this->default_instance_name; }
                 }
                 // Next open the instance->HistoryOutputs->region group, and create the parent groups if they don't exist
-                instance_name = "/" + instance_name;
-                H5::Group region_group;
-                string history_outputs_group_name = instance_name + "/HistoryOutputs";
-                string region_group_name = history_outputs_group_name + "/" + replace_slashes(history_region.name);
-                try {
-                    region_group = h5_file.openGroup(region_group_name.c_str());
-                } catch(H5::Exception& e) {
-                    H5::Group history_output_group;
-                    try {
-                        history_output_group = h5_file.openGroup(history_outputs_group_name.c_str());
-                    } catch(H5::Exception& e) {
-                        H5::Group instance_group;
-                        try {
-                            instance_group = h5_file.openGroup(instance_name.c_str());
-                        } catch(H5::Exception& e) {
-                            instance_group = create_group(h5_file, instance_name);
-                        }
-                        history_output_group = create_group(h5_file, history_outputs_group_name);
-                    }
-                    region_group = create_group(h5_file, region_group_name);
+                string region_group_name = "/" + instance_name + "/HistoryOutputs/" + replace_slashes(history_region.name);
+                bool sub_group_exists = true;
+                H5::Group region_group = open_subgroup(h5_file, region_group_name, sub_group_exists);
+                if (!sub_group_exists) {
                     write_attribute(region_group, "description", history_region.description);
                     write_attribute(region_group, "position", history_region.position);
                     write_attribute(region_group, "loadCase", history_region.loadCase);
@@ -1591,37 +1575,35 @@ void SpadeObject::write_h5 () {
                 write_history_region(h5_file, step_group, step_group_name, history_region);
             }
             for (auto frame : step.frames) {
-                /*
                 if (frame.fieldOutputs.size() > 0) {
-                    for (auto field_output : frame.FieldOutputs) {
-                        for (auto data_value : field_output.dataValues) {
-                            string instance_name = data_value.instance;
-                            if (instance_name.empty()) { instance_name = this->default_instance_name; }
+                    for (auto field_output : frame.fieldOutputs) {
+                        for (auto [current_instance_name, field_output_value] : field_output.values) {
+                            string field_output_group_name = "/" + current_instance_name + "/FieldOutputs/" + replace_slashes(field_output.name);
+                            bool sub_group_exists = true;
+                            H5::Group field_ouput_group = open_subgroup(h5_file, field_output_group_name, sub_group_exists);
+                            if (!sub_group_exists) {
+                            }
+                            string step_group_name = field_output_group_name + "/" + step.name;
+                            H5::Group step_group = create_group(h5_file, step_group_name);
+                            string frame_group_name = step_group_name + "/" + to_string(frame.incrementNumber);
+                            H5::Group frame_group = create_group(h5_file, frame_group_name);
+                            write_integer_dataset(frame_group, "cyclicModeNumber", frame.cyclicModeNumber);
+                            write_integer_dataset(frame_group, "mode", frame.mode);
+                            write_string_dataset(frame_group, "description", frame.description);
+                            write_string_dataset(frame_group, "domain", frame.domain);
+                            write_string_dataset(frame_group, "loadCase", frame.loadCase);
+                            write_float_dataset(frame_group, "frameValue", frame.frameValue);
+                            write_float_dataset(frame_group, "frequency", frame.frequency);
+                            write_attribute(frame_group, "max_width", to_string(frame.max_width));
+                            write_attribute(frame_group, "max_length", to_string(frame.max_length));
+                            if (frame.fieldOutputs.size() > 0) {
+                                this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
+        // TODO write new function or adjust current write_field_output for writing extract field output format
+                                write_field_output(h5_file, frame_group_name, field_output);
+                            }
                         }
                     }
                 }
-                */
-                /*
-                string frame_group_name = frames_group_name + "/" + to_string(frame.incrementNumber);
-                H5::Group frame_group = create_group(h5_file, frame_group_name);
-                write_integer_dataset(frame_group, "cyclicModeNumber", frame.cyclicModeNumber);
-                write_integer_dataset(frame_group, "mode", frame.mode);
-                write_string_dataset(frame_group, "description", frame.description);
-                write_string_dataset(frame_group, "domain", frame.domain);
-                write_string_dataset(frame_group, "loadCase", frame.loadCase);
-                write_float_dataset(frame_group, "frameValue", frame.frameValue);
-                write_float_dataset(frame_group, "frequency", frame.frequency);
-                if (frame.fieldOutputs.size() > 0) {
-                    H5::Group field_outputs_group = create_group(h5_file, frame_group_name + "/fieldOutputs");
-                    this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
-                    for (int i=0; i<frame.fieldOutputs.size(); i++) {
-                        string field_output_group_name = frame_group_name + "/fieldOutputs/" + replace_slashes(frame.fieldOutputs[i].name);
-                        write_field_output(h5_file, field_output_group_name, frame.fieldOutputs[i]);
-                    }
-                }
-                write_attribute(frame_group, "max_width", to_string(frame.max_width));
-                write_attribute(frame_group, "max_length", to_string(frame.max_length));
-                */
             }
         }
     }
@@ -1643,6 +1625,20 @@ void SpadeObject::write_h5 () {
     h5_file.close();  // Close the hdf5 file
     this->log_file->log("Closing hdf5 file.");
 }
+
+H5::Group SpadeObject::open_subgroup(H5::H5File &h5_file, const string &sub_group_name, bool exists) {
+    try {
+        exists = true;
+        return h5_file.openGroup(sub_group_name.c_str());
+    } catch(H5::Exception& e) {
+        exists = false;
+        std::filesystem::path sub_group_path(sub_group_name);
+        string parent_path = sub_group_path.parent_path().string();
+        H5::Group parent_group = open_subgroup(h5_file, parent_path, exists);
+    }
+    return create_group(h5_file, sub_group_name);
+}
+
 
 void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, mesh_type mesh, const string &embedded_space) {
     string mesh_group_name = group_name + "/Mesh";
