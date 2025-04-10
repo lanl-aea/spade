@@ -329,7 +329,7 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
         try {
             coords_sets = new_nodes.nodes.at(node_label);
             new_nodes.nodes[node_label].sets.insert(set_name);
-            if (this->command_line_arguments->odbformat()) {  // Don't need to store separate instances if using extract format
+            if (this->command_line_arguments->get("format") == "odb") {  // Don't need to store separate instances if using extract format
                 if (!set_name.empty()) { new_nodes.node_sets[set_name].insert(node_label); }
             }
             continue;
@@ -340,7 +340,7 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
                 new_nodes.nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]};
             }
             new_nodes.nodes[node_label].sets.insert(set_name);
-            if (this->command_line_arguments->odbformat()) {  // Don't need to store separate instances if using extract format
+            if (this->command_line_arguments->get("format") == "odb") {  // Don't need to store separate instances if using extract format
                 if (!set_name.empty()) { new_nodes.node_sets[set_name].insert(node_label); }
             }
         }
@@ -1522,7 +1522,7 @@ void SpadeObject::write_h5 () {
         }
     }
 
-    if (!this->command_line_arguments->odbformat()) {  // Write extract format
+    if (this->command_line_arguments->get("format") == "extract") {  // Write extract format
         write_mesh(h5_file);
         for (auto step : this->steps) {
             write_extract_history_output(h5_file, step);
@@ -1959,7 +1959,7 @@ void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name) {
         string part_group_name = group_name + "/" + replace_slashes(part.name);
         H5::Group part_group = create_group(h5_file, part_group_name);
         write_string_dataset(part_group, "embeddedSpace", part.embeddedSpace);
-        if (this->command_line_arguments->odbformat()) {
+        if (this->command_line_arguments->get("format") == "odb") {
             write_nodes(h5_file, part_group, part_group_name, part.nodes, "");
             write_elements(h5_file, part_group, part_group_name, part.elements, "");
             write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets);
@@ -1974,7 +1974,7 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name) 
     H5::Group root_assembly_group = create_group(h5_file, root_assembly_group_name);
     write_instances(h5_file, root_assembly_group_name);
     write_string_dataset(root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
-    if (this->command_line_arguments->odbformat()) {
+    if (this->command_line_arguments->get("format") == "odb") {
         write_nodes(h5_file, root_assembly_group, root_assembly_group_name, this->root_assembly.nodes, "");
         write_elements(h5_file, root_assembly_group, root_assembly_group_name, this->root_assembly.elements, "");
         write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets);
@@ -2142,7 +2142,7 @@ void SpadeObject::write_frames(H5::H5File &h5_file, const string &group_name, ve
         write_string_dataset(frame_group, "loadCase", frame.loadCase);
         write_float_dataset(frame_group, "frameValue", frame.frameValue);
         write_float_dataset(frame_group, "frequency", frame.frequency);
-        if (this->command_line_arguments->odbformat()) {
+        if (this->command_line_arguments->get("format") == "odb") {
             if (frame.fieldOutputs.size() > 0) {
                 H5::Group field_outputs_group = create_group(h5_file, frame_group_name + "/fieldOutputs");
                 this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
@@ -2159,7 +2159,7 @@ void SpadeObject::write_frames(H5::H5File &h5_file, const string &group_name, ve
 void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_name, history_point_type &history_point) {
     string history_point_group_name = group_name + "/point";
     H5::Group history_point_group = create_group(h5_file, history_point_group_name);
-    if (this->command_line_arguments->odbformat()) {
+    if (this->command_line_arguments->get("format") == "odb") {
         write_string_dataset(history_point_group, "face", history_point.face);
         write_string_dataset(history_point_group, "position", history_point.position);
         write_string_dataset(history_point_group, "assembly", history_point.assemblyName);
@@ -2277,7 +2277,7 @@ void SpadeObject::write_steps(H5::H5File &h5_file, const string &group_name) {
         write_double_array_dataset(step_group, "inertiaAboutOrigin", 6, step.inertiaAboutOrigin);
         this->log_file->logVerbose("Writing frames data.");
         write_frames(h5_file, step_group_name, step.frames);
-        if (this->command_line_arguments->odbformat()) {
+        if (this->command_line_arguments->get("format") == "odb") {
             this->log_file->logVerbose("Writing history data.");
             write_history_regions(h5_file, step_group_name, step.historyRegions);
         }
@@ -2296,7 +2296,7 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name)
 
 void SpadeObject::write_instance(H5::H5File &h5_file, H5::Group &group, const string &group_name, instance_type instance) {
     write_string_dataset(group, "embeddedSpace", instance.embeddedSpace);
-    if (this->command_line_arguments->odbformat()) {
+    if (this->command_line_arguments->get("format") == "odb") {
         write_nodes(h5_file, group, group_name, instance.nodes, "");
         write_elements(h5_file, group, group_name, instance.elements, "");
         write_sets(h5_file, group_name + "/nodeSets", instance.nodeSets);
@@ -2585,7 +2585,7 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
         H5::Group set_group = create_group(h5_file, set_group_name);
         write_attribute(set_group, "type", odb_set.type);
         write_string_vector_dataset(set_group, "instanceNames", odb_set.instanceNames);
-        if (this->command_line_arguments->odbformat()) {
+        if (this->command_line_arguments->get("format") == "odb") {
             if (odb_set.type == "Node Set") {
                 write_nodes(h5_file, set_group, set_group_name, odb_set.nodes, odb_set.name);
             } else if (odb_set.type == "Element Set") {

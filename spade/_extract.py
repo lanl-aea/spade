@@ -162,6 +162,13 @@ def get_parser() -> argparse.ArgumentParser:
              f"(default: {_utilities.character_delimited_list(_settings._default_abaqus_commands)})",
         # fmt: on
     )
+    parser.add_argument(
+        "--format",
+        type=str,
+        choices=["extract", "odb"],  # Future choice will include vtk for Paraview opening
+        default="extract",
+        help='Specify the format of the data in the output file',
+    )
 
     # True or false inputs
     parser.add_argument(
@@ -190,12 +197,6 @@ def get_parser() -> argparse.ArgumentParser:
         action="store_true",
         default=False,
         help=argparse.SUPPRESS,
-    )
-    parser.add_argument(
-        "--odb-format",
-        action="store_true",
-        default=False,
-        help='Extracted file is in a format resembling data structures in an odb file',
     )
     return parser
 
@@ -311,6 +312,8 @@ def cpp_wrapper(args) -> str:
         full_command_line_arguments += f" --history-region {args.history_region}"
     if args.instance:
         full_command_line_arguments += f" --instance {args.instance}"
+    if args.odb_format:
+        full_command_line_arguments += f" --format {args.format}"
 
     # True or False inputs
     if args.verbose:
@@ -319,8 +322,6 @@ def cpp_wrapper(args) -> str:
         full_command_line_arguments += " --force-overwrite"
     if args.debug:
         full_command_line_arguments += " --debug"
-    if args.odb_format:
-        full_command_line_arguments += " --odb-format"
 
     return full_command_line_arguments
 

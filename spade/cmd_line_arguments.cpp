@@ -39,7 +39,6 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
     this->debug_output = false;
     this->help_command = false;
     this->force_overwrite = false;
-    this->odb_format = false;
     this->command_line_arguments["odb-file"] = "";
     this->command_line_arguments["extracted-file"] = "";
     this->command_line_arguments["extracted-file-type"] = "";
@@ -51,6 +50,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
     this->command_line_arguments["history-region"] = "";
     this->command_line_arguments["instance"] = "";
     this->command_line_arguments["log-file"] = "";
+    this->command_line_arguments["format"] = "extract";
     this->start_time = this->getTimeStamp(true);
 
     while (1) {
@@ -70,7 +70,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
             {"history-region",      required_argument, 0,  0 },
             {"instance",            required_argument, 0,  0 },
             {"log-file",            required_argument, 0,  0 },
-            {"odb-format",          no_argument,       0,  0 },
+            {"format",              required_argument, 0,  0 },
             {0,0,0,0 }
         };
 
@@ -82,9 +82,6 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
                 string option_name =  string(long_options[option_index].name);
                 if (optarg) {
                     this->command_line_arguments[option_name] = string(optarg);
-                } else {
-                    if (option_name == "odb-format")
-                        this->odb_format = true;
                 }
                 break;
             }
@@ -259,7 +256,7 @@ string CmdLineArguments::helpMessage () {
     help_message += "\t--history-region\tget information from specified history region (default: all)\n";
     help_message += "\t--instance\tget information from specified instance (default: all)\n";
     help_message += "\t--log-file\tname of log file (default: <odb file name>.spade.log)\n";
-    help_message += "\t--odb-format\twrite extracted file with data formated similar to an odb\n";
+    help_message += "\t--format\tSpecify the format of the data in the output file\n";
     // TODO: Add more here
     help_message += "\nExample: " + this->command_name + " odb_file.odb\n";
     help_message += "\n";
@@ -301,4 +298,3 @@ bool CmdLineArguments::verbose() const { return this->verbose_output; }
 bool CmdLineArguments::debug() const { return this->debug_output; }
 bool CmdLineArguments::force() const { return this->force_overwrite; }
 bool CmdLineArguments::help() const { return this->help_command; }
-bool CmdLineArguments::odbformat() const { return this->odb_format; }
