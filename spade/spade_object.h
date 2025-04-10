@@ -488,15 +488,15 @@ class SpadeObject {
           The constructor checks to see if the odb file needs to be upgraded, upgrades if necessary, then opens it and calls the function to process the odb
           \param command_line_arguments CmdLineArguments object storing command line arguments
           \param log_file Logging object for writing log messages
-          \sa process_odb()
+          \sa process_odb_without_steps()
         */
         SpadeObject (CmdLineArguments &command_line_arguments, Logging &log_file);
-        //! Process the open odb file and store the results
+        //! Process all but the steps data from the open odb file and store the results
         /*!
           After the odb has been opened this function will do the parsing, including calling of other functions needed for parsing
           \param odb An open odb object
         */
-        void process_odb (odb_Odb &odb);
+        void process_odb_without_steps (odb_Odb &odb);
         //! Process odb_SectionCategory object from the odb file
         /*!
           Process odb_SectionCategory object and return the values in a section_category_type
@@ -758,28 +758,37 @@ class SpadeObject {
           \sa process_odb()
         */
         shell_solid_coupling_type process_shell_solid_coupling (const odb_ShellSolidCoupling &shell_solid_coupling);
+        //! Process and write the step data from the odb
+        /*!
+          With the odb file still open and the h5 file open, loop through the history and field output data and read then write,
+          rather than store all the data in memory then write it later
+          \param odb An open odb object
+          \param h5_file Open h5_file object for writing
+        */
+        void process_and_write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_file);
 
 
         //Functions for writing out the data
 
-        //! Write output to a YAML file.
+        //! Write non-step output to a YAML file.
         /*!
           Write the parsed odb data to a YAML formatted file
           \sa SpadeObject()
         */
-        void write_yaml ();
-        //! Write output to a JSON file.
+        void write_yaml_without_steps ();
+        //! Write non-step output to a JSON file.
         /*!
           Write the parsed odb data to a JSON formatted file
           \sa SpadeObject()
         */
-        void write_json ();
-        //! Write output to an HDF5 file.
+        void write_json_without_steps ();
+        //! Write non-step output to an HDF5 file.
         /*!
           Write the parsed odb data to an HDF5 formatted file
+          \param h5_file Open h5_file object for writing
           \sa SpadeObject()
         */
-        void write_h5 ();
+        void write_h5_without_steps (H5::H5File &h5_file);
         //! Open hdf5 subgroup and create it and it's parent groups if they don't exist
         /*!
           Open and return hdf5 group, if it doesn't exist then create it, if it's parent groups don't exist create them

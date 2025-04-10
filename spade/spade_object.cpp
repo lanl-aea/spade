@@ -106,7 +106,34 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
     this->log_file = &log_file;
     try {  // Since the odb object isn't recognized outside the scope of the try/except, block the processing has to be done within the try block
         odb_Odb& odb = openOdb(file_name, true);  // Open as read only
-        process_odb(odb);
+        process_odb_without_steps(odb);
+        log_file.log("Non step data from the odb processed and stored.");
+        log_file.log("Writing extracted file at time: " + command_line_arguments.getTimeStamp(false));
+        if (command_line_arguments["extracted-file-type"] == "h5") {
+            // Open file for writing
+            std::ifstream hdf5File (this->command_line_arguments->get("extracted-file").c_str());
+            this->log_file->log("Creating hdf5 file: " + this->command_line_arguments->get("extracted-file"));
+            const H5std_string FILE_NAME(this->command_line_arguments->get("extracted-file"));
+
+            H5::Exception::dontPrint();
+            H5::H5File* h5_file_pointer = 0;
+            try {
+                h5_file_pointer = new H5::H5File(FILE_NAME, H5F_ACC_TRUNC);
+            } catch(const H5::FileIException&) {
+                throw std::runtime_error("Issue opening file: " + this->command_line_arguments->get("extracted-file"));
+            }
+            H5::H5File h5_file = *h5_file_pointer;
+
+            this->write_h5_without_steps(h5_file);
+            process_and_write_step_data_h5 (odb, h5_file);
+
+            h5_file.close();  // Close the hdf5 file
+            this->log_file->log("Closing hdf5 file.");
+        } else if (command_line_arguments["extracted-file-type"] == "json") {
+            this->write_json_without_steps();
+        } else if (command_line_arguments["extracted-file-type"] == "yaml") {
+            this->write_yaml_without_steps();
+        }
         odb.close();
         log_file.log("Odb Extract object successfully created.");
     }
@@ -118,14 +145,10 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
         log_file.logErrorAndExit("Unkown exception when attempting to open odb file.");
     }
 
-    log_file.log("Writing extracted file at time: " + command_line_arguments.getTimeStamp(false));
-    if (command_line_arguments["extracted-file-type"] == "h5") this->write_h5();
-    else if (command_line_arguments["extracted-file-type"] == "json") this->write_json();
-    else if (command_line_arguments["extracted-file-type"] == "yaml") this->write_yaml();
 
 }
 
-void SpadeObject::process_odb(odb_Odb &odb) {
+void SpadeObject::process_odb_without_steps(odb_Odb &odb) {
 
     this->log_file->logVerbose("Reading top level attributes of odb.");
     this->name = odb.name().CStr();
@@ -233,15 +256,6 @@ void SpadeObject::process_odb(odb_Odb &odb) {
 
     this->log_file->logVerbose("Reading root assembly.");
     this->root_assembly = process_assembly(odb.rootAssembly(), odb);
-
-    this->log_file->logVerbose("Reading steps.");
-    odb_StepRepository step_repository = odb.steps();
-    odb_StepRepositoryIT step_iter (step_repository);
-    for (step_iter.first(); !step_iter.isDone(); step_iter.next())
-    {
-        const odb_Step& current_step = step_repository[step_iter.currentKey()];
-        process_step(current_step, odb);
-    }
 
 }
 
@@ -1447,22 +1461,30 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb) {
     this->steps.push_back(new_step);
 }
 
-void SpadeObject::write_h5 () {
+void SpadeObject::process_and_write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_file) {
+
+    this->log_file->logVerbose("Reading steps.");
+    odb_StepRepository step_repository = odb.steps();
+    odb_StepRepositoryIT step_iter (step_repository);
+    for (step_iter.first(); !step_iter.isDone(); step_iter.next())
+    {
+        const odb_Step& current_step = step_repository[step_iter.currentKey()];
+        process_step(current_step, odb);
+    }
+
+    if (this->command_line_arguments->get("format") == "extract") {  // Write extract format
+        for (auto step : this->steps) {
+            write_extract_history_output(h5_file, step);
+            write_extract_field_output(h5_file, step);
+        }
+    }
+    this->log_file->logVerbose("Writing steps data at time: " + this->command_line_arguments->getTimeStamp(false));
+    write_steps(h5_file, "odb");
+}
+
+void SpadeObject::write_h5_without_steps (H5::H5File &h5_file) {
 // Write out data to hdf5 file
 
-    // Open file for writing
-    std::ifstream hdf5File (this->command_line_arguments->get("extracted-file").c_str());
-    this->log_file->log("Creating hdf5 file: " + this->command_line_arguments->get("extracted-file"));
-    const H5std_string FILE_NAME(this->command_line_arguments->get("extracted-file"));
-
-    H5::Exception::dontPrint();
-    H5::H5File* h5_file_pointer = 0;
-    try {
-        h5_file_pointer = new H5::H5File(FILE_NAME, H5F_ACC_TRUNC);
-    } catch(const H5::FileIException&) {
-        throw std::runtime_error("Issue opening file: " + this->command_line_arguments->get("extracted-file"));
-    }
-    H5::H5File h5_file = *h5_file_pointer;
 
     this->log_file->logVerbose("Writing top level data to odb group.");
     H5::Group odb_group = create_group(h5_file, "/odb");
@@ -1524,10 +1546,6 @@ void SpadeObject::write_h5 () {
 
     if (this->command_line_arguments->get("format") == "extract") {  // Write extract format
         write_mesh(h5_file);
-        for (auto step : this->steps) {
-            write_extract_history_output(h5_file, step);
-            write_extract_field_output(h5_file, step);
-        }
     }
     if ((!this->constraints.ties.empty()) || (!this->constraints.display_bodies.empty()) || (!this->constraints.couplings.empty()) || (!this->constraints.mpc.empty()) || (!this->constraints.shell_solid_couplings.empty())) {
         this->log_file->logVerbose("Writing constraints data at time: " + this->command_line_arguments->getTimeStamp(false));
@@ -1541,11 +1559,6 @@ void SpadeObject::write_h5 () {
     write_parts(h5_file, "odb/parts");
     this->log_file->logVerbose("Writing assembly data at time: " + this->command_line_arguments->getTimeStamp(false));
     write_assembly(h5_file, "odb/rootAssembly");
-    this->log_file->logVerbose("Writing steps data at time: " + this->command_line_arguments->getTimeStamp(false));
-    write_steps(h5_file, "odb");
-
-    h5_file.close();  // Close the hdf5 file
-    this->log_file->log("Closing hdf5 file.");
 }
 
 H5::Group SpadeObject::open_subgroup(H5::H5File &h5_file, const string &sub_group_name, bool &exists) {
@@ -3149,8 +3162,10 @@ string SpadeObject::replace_slashes(const string &name) {
 }
 
 
-void SpadeObject::write_yaml () {
+void SpadeObject::write_yaml_without_steps () {
+    // TODO: write this function if requested
 }
 
-void SpadeObject::write_json () {
+void SpadeObject::write_json_without_steps () {
+    // TODO: write this function if requested
 }
