@@ -1548,16 +1548,16 @@ void SpadeObject::write_h5 () {
     this->log_file->log("Closing hdf5 file.");
 }
 
-H5::Group SpadeObject::open_subgroup(H5::H5File &h5_file, const string &sub_group_name, bool exists) {
+H5::Group SpadeObject::open_subgroup(H5::H5File &h5_file, const string &sub_group_name, bool &exists) {
     try {
         exists = true;
         return h5_file.openGroup(sub_group_name.c_str());
     } catch(H5::Exception& e) {
-        exists = false;
         std::filesystem::path sub_group_path(sub_group_name);
         string parent_path = sub_group_path.parent_path().string();
         H5::Group parent_group = open_subgroup(h5_file, parent_path, exists);
     }
+    exists = false;
     return create_group(h5_file, sub_group_name);
 }
 
@@ -1891,20 +1891,63 @@ void SpadeObject::write_extract_field_output(H5::H5File &h5_file, step_type &ste
         if (frame.fieldOutputs.size() > 0) {
             for (auto field_output : frame.fieldOutputs) {
                 string field_output_group_name;
+                H5::Group field_output_group;
+                bool field_output_group_exists = true;
                 for (auto [current_instance_name, field_output_value] : field_output.values) {
                     field_output_group_name = "/" + current_instance_name + "/FieldOutputs/" + replace_slashes(field_output.name);
                     bool sub_group_exists = true;
-                    H5::Group field_ouput_group = open_subgroup(h5_file, field_output_group_name, sub_group_exists);
-                    if (!sub_group_exists) {
-                    }
+                    field_output_group = open_subgroup(h5_file, field_output_group_name, sub_group_exists);
+                    if (!sub_group_exists) { field_output_group_exists = false; }  //sub_group_exists gets written over after each loop iteration
                     string step_group_name = field_output_group_name + "/" + step.name;
                     H5::Group step_group = create_group(h5_file, step_group_name);
                     string frame_group_name = step_group_name + "/" + to_string(frame.incrementNumber);
                     H5::Group frame_group = create_group(h5_file, frame_group_name);
-                    this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
-// TODO write new function writing extract field output format
-// TODO: write frame data under 'odb' heading instead of over and over again here
-                    write_field_output(h5_file, frame_group_name, field_output);
+                    this->log_file->logVerbose("Writing field output values for " + field_output_group_name + ".");
+                    write_field_values(h5_file, frame_group_name, frame_group, field_output_value.fieldValues);
+
+                    set<string> field_data_names;
+                    for (int i=0; i<field_output_value.bulkValues.size(); i++) {
+                        string data_name;
+                        if (!field_output_value.bulkValues[i].baseElementType.empty()) { 
+                            data_name = field_output_value.bulkValues[i].baseElementType; 
+                        } else {
+                            data_name = field_output_value.bulkValues[i].position; 
+                        }
+                        if (field_data_names.find(data_name) != field_data_names.end()) {  // If this name already exists, append the index to it
+                            data_name = data_name + "_" + to_string(i);   // It would be nice to append the section point number to it, but I'm not sure how to do that reliably
+                        }
+                        field_data_names.insert(data_name);
+                        string value_group_name = frame_group_name + "/" + data_name;
+                        write_field_bulk_data(h5_file, value_group_name, field_output_value.bulkValues[i], field_output.isComplex);
+                    }
+                }
+                if (!field_output_group_exists) {  // If the field output group already exists, then this data was written previously
+                    write_string_dataset(field_output_group, "description", field_output.description);
+                    write_string_dataset(field_output_group, "type", field_output.type);
+                    write_integer_dataset(field_output_group, "dim", field_output.dim);
+                    write_integer_dataset(field_output_group, "dim2", field_output.dim2);
+                //    write_string_dataset(field_output_group, "isEngineeringTensor", field_output.isEngineeringTensor);
+                    write_string_vector_dataset(field_output_group, "componentLabels", field_output.componentLabels);
+                    write_string_vector_dataset(field_output_group, "validInvariants", field_output.validInvariants);
+
+                    write_attribute(field_output_group, "max_width", to_string(field_output.max_width));
+                    write_attribute(field_output_group, "max_length", to_string(field_output.max_length));
+
+                    if (field_output.locations.size() > 0) {
+                        H5::Group locations_group = create_group(h5_file, field_output_group_name + "/locations");
+                        for (int i=0; i<field_output.locations.size(); i++) {
+                            string location_group_name = field_output_group_name + "/locations/" + to_string(i);
+                            H5::Group location_group = create_group(h5_file, location_group_name);
+                            write_string_dataset(location_group, "position", field_output.locations[i].position);
+                            if (field_output.locations[i].sectionPoint.size() > 0) {
+                                H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint");
+                                for (int j=0; j<field_output.locations[i].sectionPoint.size(); j++) {
+                                    H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint/" + field_output.locations[i].sectionPoint[j].number);
+                                    write_string_dataset(section_point_group, "description", field_output.locations[i].sectionPoint[j].description);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -2099,12 +2142,14 @@ void SpadeObject::write_frames(H5::H5File &h5_file, const string &group_name, ve
         write_string_dataset(frame_group, "loadCase", frame.loadCase);
         write_float_dataset(frame_group, "frameValue", frame.frameValue);
         write_float_dataset(frame_group, "frequency", frame.frequency);
-        if (frame.fieldOutputs.size() > 0) {
-            H5::Group field_outputs_group = create_group(h5_file, frame_group_name + "/fieldOutputs");
-            this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
-            for (int i=0; i<frame.fieldOutputs.size(); i++) {
-                string field_output_group_name = frame_group_name + "/fieldOutputs/" + replace_slashes(frame.fieldOutputs[i].name);
-                write_field_output(h5_file, field_output_group_name, frame.fieldOutputs[i]);
+        if (this->command_line_arguments->odbformat()) {
+            if (frame.fieldOutputs.size() > 0) {
+                H5::Group field_outputs_group = create_group(h5_file, frame_group_name + "/fieldOutputs");
+                this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
+                for (int i=0; i<frame.fieldOutputs.size(); i++) {
+                    string field_output_group_name = frame_group_name + "/fieldOutputs/" + replace_slashes(frame.fieldOutputs[i].name);
+                    write_field_output(h5_file, field_output_group_name, frame.fieldOutputs[i]);
+                }
             }
         }
         write_attribute(frame_group, "max_width", to_string(frame.max_width));
@@ -2230,9 +2275,9 @@ void SpadeObject::write_steps(H5::H5File &h5_file, const string &group_name) {
         write_double_vector_dataset(step_group, "acousticMassCenter", step.acousticMassCenter);
         write_double_array_dataset(step_group, "inertiaAboutCenter", 6, step.inertiaAboutCenter);
         write_double_array_dataset(step_group, "inertiaAboutOrigin", 6, step.inertiaAboutOrigin);
+        this->log_file->logVerbose("Writing frames data.");
+        write_frames(h5_file, step_group_name, step.frames);
         if (this->command_line_arguments->odbformat()) {
-            this->log_file->logVerbose("Writing frames data.");
-            write_frames(h5_file, step_group_name, step.frames);
             this->log_file->logVerbose("Writing history data.");
             write_history_regions(h5_file, step_group_name, step.historyRegions);
         }

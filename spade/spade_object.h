@@ -787,7 +787,7 @@ class SpadeObject {
           \param sub_group_name Name of the sub group to open or create
           \param exists Boolean indicating if the sub group already exists
         */
-        H5::Group open_subgroup(H5::H5File &h5_file, const string &sub_group_name, bool exists);
+        H5::Group open_subgroup(H5::H5File &h5_file, const string &sub_group_name, bool &exists);
         //! Write mesh data to an HDF5 file
         /*!
           Write mesh data in an extract format where all element and node data is in a single place
