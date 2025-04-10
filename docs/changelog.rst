@@ -33,6 +33,7 @@ Enhancements
 - Create mesh group in hdf5 file with data in extract format (:issue:`69`, :merge:`77`). By `Prabhu Khalsa`_.
 - Create HistoryOutputs group in hdf5 file with data in extract format (:issue:`84`, :merge:`83`). By `Prabhu Khalsa`_.
 - Create FieldOutputs group in hdf5 file with data in extract format (:issue:`89`, :merge:`88`). By `Prabhu Khalsa`_.
+- Change odb-format command line option to format option (:issue:`90`, :merge:`89`). By `Prabhu Khalsa`_.
 
 *******************
 v0.3.7 (2025-02-06)
