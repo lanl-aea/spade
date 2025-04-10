@@ -1523,88 +1523,10 @@ void SpadeObject::write_h5 () {
     }
 
     if (!this->command_line_arguments->odbformat()) {  // Write extract format
-        string embedded_space;
-        for (auto [part_name, part] : part_mesh) {
-            embedded_space = "";
-            string part_group_name = "/" + part_name;
-            H5::Group extract_part_group = create_group(h5_file, part_group_name);
-            if (!part.nodes.nodes.empty() || !part.elements.elements.empty()) {
-                if (part.part_index >= 0) {
-                    if (!this->parts[part.part_index].embeddedSpace.empty()) {
-                        embedded_space = this->parts[part.part_index].embeddedSpace;
-                        write_string_dataset(extract_part_group, "embeddedSpace", embedded_space);
-                    }
-                }
-                write_mesh(h5_file, extract_part_group, part_group_name, part, embedded_space);
-            }
-        }
-        for (auto [instance_name, instance] : instance_mesh) {
-            embedded_space = "";
-            string instance_group_name = "/" + instance_name;
-            H5::Group extract_instance_group = create_group(h5_file, instance_group_name);
-            if (!instance.nodes.nodes.empty() || !instance.elements.elements.empty()) {
-                if (instance.instance_index >= 0) {
-                    string instance_sub_group_name = instance_group_name + "/instance_data";
-                    H5::Group extract_instance_sub_group = create_group(h5_file, instance_sub_group_name);
-                    write_instance(h5_file, extract_instance_sub_group, instance_sub_group_name, this->root_assembly.instances[instance.instance_index]);
-                    if (!this->root_assembly.instances[instance.instance_index].embeddedSpace.empty()) { embedded_space = this->root_assembly.instances[instance.instance_index].embeddedSpace; }
-                }
-                write_mesh(h5_file, extract_instance_group, instance_group_name, instance, embedded_space);
-            }
-        }
+        write_mesh(h5_file);
         for (auto step : this->steps) {
-            for (auto history_region : step.historyRegions) {
-                // First grab the name of the instance or assembly or simply use "ASSEMBLY"
-                string instance_name = history_region.point.instanceName;
-                if (instance_name.empty()) {
-                    instance_name = history_region.point.assemblyName;
-                    if (instance_name.empty()) { instance_name = this->default_instance_name; }
-                }
-                // Next open the instance->HistoryOutputs->region group, and create the parent groups if they don't exist
-                string region_group_name = "/" + instance_name + "/HistoryOutputs/" + replace_slashes(history_region.name);
-                bool sub_group_exists = true;
-                H5::Group region_group = open_subgroup(h5_file, region_group_name, sub_group_exists);
-                if (!sub_group_exists) {
-                    write_attribute(region_group, "description", history_region.description);
-                    write_attribute(region_group, "position", history_region.position);
-                    write_attribute(region_group, "loadCase", history_region.loadCase);
-                }
-                string step_group_name = region_group_name + "/" + step.name;
-                H5::Group step_group = create_group(h5_file, step_group_name);
-                this->log_file->logVerbose("Writing history data.");
-                write_history_region(h5_file, step_group, step_group_name, history_region);
-            }
-            for (auto frame : step.frames) {
-                if (frame.fieldOutputs.size() > 0) {
-                    for (auto field_output : frame.fieldOutputs) {
-                        for (auto [current_instance_name, field_output_value] : field_output.values) {
-                            string field_output_group_name = "/" + current_instance_name + "/FieldOutputs/" + replace_slashes(field_output.name);
-                            bool sub_group_exists = true;
-                            H5::Group field_ouput_group = open_subgroup(h5_file, field_output_group_name, sub_group_exists);
-                            if (!sub_group_exists) {
-                            }
-                            string step_group_name = field_output_group_name + "/" + step.name;
-                            H5::Group step_group = create_group(h5_file, step_group_name);
-                            string frame_group_name = step_group_name + "/" + to_string(frame.incrementNumber);
-                            H5::Group frame_group = create_group(h5_file, frame_group_name);
-                            write_integer_dataset(frame_group, "cyclicModeNumber", frame.cyclicModeNumber);
-                            write_integer_dataset(frame_group, "mode", frame.mode);
-                            write_string_dataset(frame_group, "description", frame.description);
-                            write_string_dataset(frame_group, "domain", frame.domain);
-                            write_string_dataset(frame_group, "loadCase", frame.loadCase);
-                            write_float_dataset(frame_group, "frameValue", frame.frameValue);
-                            write_float_dataset(frame_group, "frequency", frame.frequency);
-                            write_attribute(frame_group, "max_width", to_string(frame.max_width));
-                            write_attribute(frame_group, "max_length", to_string(frame.max_length));
-                            if (frame.fieldOutputs.size() > 0) {
-                                this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
-        // TODO write new function or adjust current write_field_output for writing extract field output format
-                                write_field_output(h5_file, frame_group_name, field_output);
-                            }
-                        }
-                    }
-                }
-            }
+            write_extract_history_output(h5_file, step);
+            write_extract_field_output(h5_file, step);
         }
     }
     if ((!this->constraints.ties.empty()) || (!this->constraints.display_bodies.empty()) || (!this->constraints.couplings.empty()) || (!this->constraints.mpc.empty()) || (!this->constraints.shell_solid_couplings.empty())) {
@@ -1640,14 +1562,49 @@ H5::Group SpadeObject::open_subgroup(H5::H5File &h5_file, const string &sub_grou
 }
 
 
-void SpadeObject::write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, mesh_type mesh, const string &embedded_space) {
-    string mesh_group_name = group_name + "/Mesh";
-    H5::Group mesh_group = create_group(h5_file, mesh_group_name);
-    if (!mesh.nodes.nodes.empty()) {
-        write_mesh_nodes(h5_file, mesh_group, mesh.nodes.nodes, embedded_space);
+void SpadeObject::write_mesh(H5::H5File &h5_file) {
+    string embedded_space;
+    for (auto [part_name, part] : this->part_mesh) {
+        embedded_space = "";
+        string part_group_name = "/" + part_name;
+        H5::Group extract_part_group = create_group(h5_file, part_group_name);
+        if (!part.nodes.nodes.empty() || !part.elements.elements.empty()) {
+            if (part.part_index >= 0) {
+                if (!this->parts[part.part_index].embeddedSpace.empty()) {
+                    embedded_space = this->parts[part.part_index].embeddedSpace;
+                    write_string_dataset(extract_part_group, "embeddedSpace", embedded_space);
+                }
+            }
+            string part_mesh_group_name = part_group_name + "/Mesh";
+            H5::Group part_mesh_group = create_group(h5_file, part_mesh_group_name);
+            if (!part.nodes.nodes.empty()) {
+                write_mesh_nodes(h5_file, part_mesh_group, part.nodes.nodes, embedded_space);
+            }
+            if (!part.elements.elements.empty()) {
+                write_mesh_elements(h5_file, part_mesh_group, part.elements.elements);
+            }
+        }
     }
-    if (!mesh.elements.elements.empty()) {
-        write_mesh_elements(h5_file, mesh_group, mesh.elements.elements);
+    for (auto [instance_name, instance] : this->instance_mesh) {
+        embedded_space = "";
+        string instance_group_name = "/" + instance_name;
+        H5::Group extract_instance_group = create_group(h5_file, instance_group_name);
+        if (!instance.nodes.nodes.empty() || !instance.elements.elements.empty()) {
+            if (instance.instance_index >= 0) {
+                string instance_sub_group_name = instance_group_name + "/instance_data";
+                H5::Group extract_instance_sub_group = create_group(h5_file, instance_sub_group_name);
+                write_instance(h5_file, extract_instance_sub_group, instance_sub_group_name, this->root_assembly.instances[instance.instance_index]);
+                if (!this->root_assembly.instances[instance.instance_index].embeddedSpace.empty()) { embedded_space = this->root_assembly.instances[instance.instance_index].embeddedSpace; }
+            }
+            string instance_mesh_group_name = instance_group_name + "/Mesh";
+            H5::Group instance_mesh_group = create_group(h5_file, instance_mesh_group_name);
+            if (!instance.nodes.nodes.empty()) {
+                write_mesh_nodes(h5_file, instance_mesh_group, instance.nodes.nodes, embedded_space);
+            }
+            if (!instance.elements.elements.empty()) {
+                write_mesh_elements(h5_file, instance_mesh_group, instance.elements.elements);
+            }
+        }
     }
 }
 
@@ -1901,6 +1858,55 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
             }
         } catch(H5::Exception& e) {
             this->log_file->logDebug("Clean up of memory allocation failed. " + e.getDetailMsg());
+        }
+    }
+}
+
+void SpadeObject::write_extract_history_output(H5::H5File &h5_file, step_type &step) {
+    for (auto history_region : step.historyRegions) {
+        // First grab the name of the instance or assembly or simply use "ASSEMBLY"
+        string instance_name = history_region.point.instanceName;
+        if (instance_name.empty()) {
+            instance_name = history_region.point.assemblyName;
+            if (instance_name.empty()) { instance_name = this->default_instance_name; }
+        }
+        // Next open the instance->HistoryOutputs->region group, and create the parent groups if they don't exist
+        string region_group_name = "/" + instance_name + "/HistoryOutputs/" + replace_slashes(history_region.name);
+        bool sub_group_exists = true;
+        H5::Group region_group = open_subgroup(h5_file, region_group_name, sub_group_exists);
+        if (!sub_group_exists) {
+            write_attribute(region_group, "description", history_region.description);
+            write_attribute(region_group, "position", history_region.position);
+            write_attribute(region_group, "loadCase", history_region.loadCase);
+        }
+        string step_group_name = region_group_name + "/" + step.name;
+        H5::Group step_group = create_group(h5_file, step_group_name);
+        this->log_file->logVerbose("Writing history data.");
+        write_history_region(h5_file, step_group, step_group_name, history_region);
+    }
+}
+
+void SpadeObject::write_extract_field_output(H5::H5File &h5_file, step_type &step) {
+    for (auto frame : step.frames) {
+        if (frame.fieldOutputs.size() > 0) {
+            for (auto field_output : frame.fieldOutputs) {
+                string field_output_group_name;
+                for (auto [current_instance_name, field_output_value] : field_output.values) {
+                    field_output_group_name = "/" + current_instance_name + "/FieldOutputs/" + replace_slashes(field_output.name);
+                    bool sub_group_exists = true;
+                    H5::Group field_ouput_group = open_subgroup(h5_file, field_output_group_name, sub_group_exists);
+                    if (!sub_group_exists) {
+                    }
+                    string step_group_name = field_output_group_name + "/" + step.name;
+                    H5::Group step_group = create_group(h5_file, step_group_name);
+                    string frame_group_name = step_group_name + "/" + to_string(frame.incrementNumber);
+                    H5::Group frame_group = create_group(h5_file, frame_group_name);
+                    this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
+// TODO write new function writing extract field output format
+// TODO: write frame data under 'odb' heading instead of over and over again here
+                    write_field_output(h5_file, frame_group_name, field_output);
+                }
+            }
         }
     }
 }
@@ -3082,7 +3088,6 @@ H5::Group SpadeObject::create_group(H5::H5File &h5_file, const string &group_nam
     try {
         return h5_file.createGroup(group_name.c_str());
     } catch(H5::Exception& e) {
-        this->log_file->logWarning("Unable to create group " + group_name + ". Group may already exist. " + e.getDetailMsg());
         try {
             return h5_file.openGroup(group_name.c_str());
         } catch(H5::Exception& e) {

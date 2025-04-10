@@ -792,12 +792,8 @@ class SpadeObject {
         /*!
           Write mesh data in an extract format where all element and node data is in a single place
           \param h5_file Open h5_file object for writing
-          \param group HDF5 group in which to write the new data
-          \param group_name Name of the group where data is to be written
-          \param mesh mesh data to be written
-          \param embedded_space string describing which type of embedded space is used
         */
-        void write_mesh(H5::H5File &h5_file, H5::Group &group, const string &group_name, mesh_type mesh, const string &embedded_space);
+        void write_mesh(H5::H5File &h5_file);
         //! Write mesh node data to an HDF5 file
         /*!
           Write mesh node data in an extract format
@@ -815,6 +811,20 @@ class SpadeObject {
           \param elements element data to be written
         */
         void write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map<string, map<int, element_type>> elements);
+        //! Write history output in extract format to HDF5 file
+        /*!
+          Write history output in extract format for given step
+          \param h5_file Open h5_file object for writing
+          \param step Current Step for which to write field output
+        */
+        void write_extract_history_output(H5::H5File &h5_file, step_type &step);
+        //! Write field output in extract format to HDF5 file
+        /*!
+          Write field output in extract format for given step
+          \param h5_file Open h5_file object for writing
+          \param step Current Step for which to write field output
+        */
+        void write_extract_field_output(H5::H5File &h5_file, step_type &step);
         //! Write parts data to an HDF5 file
         /*!
           Write parts data into an HDF5 file
