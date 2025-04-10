@@ -1408,8 +1408,7 @@ history_region_type SpadeObject::process_history_region(const odb_HistoryRegion 
     return new_history_region;
 }
 
-void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb) {
-    step_type new_step;
+void SpadeObject::process_step(const odb_Step &step, step_type &new_step, odb_Odb &odb) {
     new_step.name = step.name().CStr();
     if ((this->command_line_arguments->get("step") != "all") && (this->command_line_arguments->get("step") != new_step.name)) {
         return;
@@ -1439,26 +1438,6 @@ void SpadeObject::process_step(const odb_Step &step, odb_Odb &odb) {
     for (int i=0; i<inertia_about_origin.size(); i++) { new_step.inertiaAboutOrigin[i] = inertia_about_origin[i]; }
     odb_LoadCaseRepository load_cases = step.loadCases();
     for (int i=0; i<load_cases.size(); i++) { new_step.loadCases.push_back(load_cases[i].name().CStr()); }
-    const odb_SequenceFrame& frames = step.frames();
-    this->log_file->logVerbose("Reading frames.");
-    for (int f=0; f<frames.size(); f++) {
-        const odb_Frame& frame = frames.constGet(f);
-        frame_type new_frame = process_frame(frame);
-        if (!new_frame.skip) {
-            new_step.frames.push_back(new_frame);
-        }
-    }
-    const odb_HistoryRegionRepository& history_regions = step.historyRegions();
-    odb_HistoryRegionRepositoryIT history_region_iterator (history_regions);
-    this->log_file->logVerbose("Reading history regions.");
-    for (history_region_iterator.first(); !history_region_iterator.isDone(); history_region_iterator.next())
-    {
-        const odb_HistoryRegion& history_region = history_region_iterator.currentValue();
-        if ((this->command_line_arguments->get("history-region") == "all") || (this->command_line_arguments->get("history-region") == history_region.name().CStr())) {
-            new_step.historyRegions.push_back(process_history_region(history_region));
-        }
-    }
-    this->steps.push_back(new_step);
 }
 
 void SpadeObject::process_and_write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_file) {
@@ -1466,20 +1445,39 @@ void SpadeObject::process_and_write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_f
     this->log_file->logVerbose("Reading steps.");
     odb_StepRepository step_repository = odb.steps();
     odb_StepRepositoryIT step_iter (step_repository);
+    string steps_group_name = "/odb/steps";
+    H5::Group steps_group = create_group(h5_file, steps_group_name);
     for (step_iter.first(); !step_iter.isDone(); step_iter.next())
     {
         const odb_Step& current_step = step_repository[step_iter.currentKey()];
-        process_step(current_step, odb);
-    }
+        step_type new_step;
+        process_step(current_step, new_step, odb);
 
-    if (this->command_line_arguments->get("format") == "extract") {  // Write extract format
-        for (auto step : this->steps) {
-            write_extract_history_output(h5_file, step);
-            write_extract_field_output(h5_file, step);
+        const odb_SequenceFrame& frames = current_step.frames();
+        this->log_file->logVerbose("Reading frames.");
+        for (int f=0; f<frames.size(); f++) {
+            const odb_Frame& frame = frames.constGet(f);
+            frame_type new_frame = process_frame(frame);
+            if (!new_frame.skip) {
+                new_step.frames.push_back(new_frame);
+            }
         }
+        const odb_HistoryRegionRepository& history_regions = current_step.historyRegions();
+        odb_HistoryRegionRepositoryIT history_region_iterator (history_regions);
+        this->log_file->logVerbose("Reading history regions.");
+        for (history_region_iterator.first(); !history_region_iterator.isDone(); history_region_iterator.next())
+        {
+            const odb_HistoryRegion& history_region = history_region_iterator.currentValue();
+            if ((this->command_line_arguments->get("history-region") == "all") || (this->command_line_arguments->get("history-region") == history_region.name().CStr())) {
+                new_step.historyRegions.push_back(process_history_region(history_region));
+            }
+        }
+        if (this->command_line_arguments->get("format") == "extract") {  // Write extract format
+            write_extract_history_output(h5_file, new_step);
+            write_extract_field_output(h5_file, new_step);
+        }
+        write_step(h5_file, steps_group_name, new_step);
     }
-    this->log_file->logVerbose("Writing steps data at time: " + this->command_line_arguments->getTimeStamp(false));
-    write_steps(h5_file, "odb");
 }
 
 void SpadeObject::write_h5_without_steps (H5::H5File &h5_file) {
@@ -2267,33 +2265,29 @@ void SpadeObject::write_history_region(H5::H5File &h5_file, H5::Group &group, co
     history_region.historyOutputs.clear(); // clear memory of map
 }
 
-void SpadeObject::write_steps(H5::H5File &h5_file, const string &group_name) {
-    string steps_group_name = group_name + "/steps";
-    H5::Group steps_group = create_group(h5_file, steps_group_name);
-    for (auto step : this->steps) {
-        string step_group_name = steps_group_name + "/" + replace_slashes(step.name);
-        H5::Group step_group = create_group(h5_file, step_group_name);
-        write_string_dataset(step_group, "description", step.description);
-        write_string_dataset(step_group, "domain", step.domain);
-        write_string_dataset(step_group, "previousStepName", step.previousStepName);
-        write_string_dataset(step_group, "procedure", step.procedure);
-        write_string_dataset(step_group, "nlgeom", step.nlgeom);
-        write_integer_dataset(step_group, "number", step.number);
-        write_double_dataset(step_group, "timePeriod", step.timePeriod);
-        write_double_dataset(step_group, "totalTime", step.totalTime);
-        write_double_dataset(step_group, "mass", step.mass);
-        write_double_dataset(step_group, "acousticMass", step.acousticMass);
-        write_string_vector_dataset(step_group, "loadCases", step.loadCases);
-        write_double_vector_dataset(step_group, "massCenter", step.massCenter);
-        write_double_vector_dataset(step_group, "acousticMassCenter", step.acousticMassCenter);
-        write_double_array_dataset(step_group, "inertiaAboutCenter", 6, step.inertiaAboutCenter);
-        write_double_array_dataset(step_group, "inertiaAboutOrigin", 6, step.inertiaAboutOrigin);
-        this->log_file->logVerbose("Writing frames data.");
-        write_frames(h5_file, step_group_name, step.frames);
-        if (this->command_line_arguments->get("format") == "odb") {
-            this->log_file->logVerbose("Writing history data.");
-            write_history_regions(h5_file, step_group_name, step.historyRegions);
-        }
+void SpadeObject::write_step(H5::H5File &h5_file, const string &group_name, step_type& step) {
+    string step_group_name = group_name + "/" + replace_slashes(step.name);
+    H5::Group step_group = create_group(h5_file, step_group_name);
+    write_string_dataset(step_group, "description", step.description);
+    write_string_dataset(step_group, "domain", step.domain);
+    write_string_dataset(step_group, "previousStepName", step.previousStepName);
+    write_string_dataset(step_group, "procedure", step.procedure);
+    write_string_dataset(step_group, "nlgeom", step.nlgeom);
+    write_integer_dataset(step_group, "number", step.number);
+    write_double_dataset(step_group, "timePeriod", step.timePeriod);
+    write_double_dataset(step_group, "totalTime", step.totalTime);
+    write_double_dataset(step_group, "mass", step.mass);
+    write_double_dataset(step_group, "acousticMass", step.acousticMass);
+    write_string_vector_dataset(step_group, "loadCases", step.loadCases);
+    write_double_vector_dataset(step_group, "massCenter", step.massCenter);
+    write_double_vector_dataset(step_group, "acousticMassCenter", step.acousticMassCenter);
+    write_double_array_dataset(step_group, "inertiaAboutCenter", 6, step.inertiaAboutCenter);
+    write_double_array_dataset(step_group, "inertiaAboutOrigin", 6, step.inertiaAboutOrigin);
+    this->log_file->logVerbose("Writing frames data.");
+    write_frames(h5_file, step_group_name, step.frames);
+    if (this->command_line_arguments->get("format") == "odb") {
+        this->log_file->logVerbose("Writing history data.");
+        write_history_regions(h5_file, step_group_name, step.historyRegions);
     }
 }
 

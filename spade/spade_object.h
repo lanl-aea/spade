@@ -719,10 +719,11 @@ class SpadeObject {
         /*!
           Process a step object and store the results
           \param step An odb step object
+          \param new_step An object for storing step data
           \param odb An open odb object
           \sa process_odb()
         */
-        void process_step (const odb_Step &step, odb_Odb &odb);
+        void process_step (const odb_Step &step, step_type &new_step, odb_Odb &odb);
         //! Process a tie constraint from the odb file
         /*!
           Process a Tie object and store the results
@@ -920,8 +921,9 @@ class SpadeObject {
           Write steps data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
+          \param step Step object to write
         */
-        void write_steps(H5::H5File &h5_file, const string &group_name);
+        void write_step(H5::H5File &h5_file, const string &group_name, step_type& step);
         //! Write instances data to an HDF5 file
         /*!
           Write instances data into an HDF5 file
@@ -1311,7 +1313,6 @@ class SpadeObject {
         map<string, string> node_links;
         map<string, string> element_links;
         map<string, string> instance_links;
-        vector<step_type> steps;
 
         string dimension_enum_strings[4];
         string faces_enum_strings[35];
