@@ -312,7 +312,7 @@ def cpp_wrapper(args) -> str:
         full_command_line_arguments += f" --history-region {args.history_region}"
     if args.instance:
         full_command_line_arguments += f" --instance {args.instance}"
-    if args.odb_format:
+    if args.format:
         full_command_line_arguments += f" --format {args.format}"
 
     # True or False inputs
