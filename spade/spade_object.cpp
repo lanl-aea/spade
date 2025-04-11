@@ -141,9 +141,15 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
         string error_message = exc.UserReport().CStr();
         log_file.logErrorAndExit("odbBaseException caught. Abaqus error message: " + error_message);
     }
-    catch(...) {
-        log_file.logErrorAndExit("Unkown exception when attempting to open odb file.");
+    catch (const std::exception& e) {
+        // Catch any exception that inherits from std::exception
+        std::cerr << "Exception caught: " << e.what() << std::endl;
     }
+    /*
+    catch(...) {
+        log_file.logErrorAndExit("Unknown exception ");
+    }
+    */
 
 
 }
@@ -1397,14 +1403,6 @@ history_region_type SpadeObject::process_history_region(const odb_HistoryRegion 
     }
     new_history_region.loadCase = history_region.loadCase().name().CStr();
     new_history_region.point = process_history_point(history_region.historyPoint());
-    const odb_HistoryOutputRepository& history_outputs = history_region.historyOutputs();
-    odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
-    for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
-        odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
-        if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output.name().CStr())) {
-            new_history_region.historyOutputs.push_back(process_history_output(history_output));
-        }
-    }
     return new_history_region;
 }
 
@@ -1448,6 +1446,7 @@ void SpadeObject::process_and_write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_f
     H5::Group steps_group = create_group(h5_file, steps_group_name);
     for (step_iter.first(); !step_iter.isDone(); step_iter.next())
     {
+        // Read and write step data
         const odb_Step& current_step = step_repository[step_iter.currentKey()];
         if ((this->command_line_arguments->get("step") != "all") && (this->command_line_arguments->get("step") != current_step.name().CStr())) {
             continue;
@@ -1458,6 +1457,7 @@ void SpadeObject::process_and_write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_f
         H5::Group step_group = create_group(h5_file, step_group_name);
         write_step(h5_file, step_group, new_step);
 
+        // Read and write frame data
         string frames_group_name = step_group_name + "/frames";
         H5::Group frames_group = create_group(h5_file, frames_group_name);
         const odb_SequenceFrame& frames = current_step.frames();
@@ -1487,22 +1487,53 @@ void SpadeObject::process_and_write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_f
                 }
             }
         }
-        const odb_HistoryRegionRepository& history_regions = current_step.historyRegions();
-        odb_HistoryRegionRepositoryIT history_region_iterator (history_regions);
-        this->log_file->logVerbose("Reading history regions.");
-        for (history_region_iterator.first(); !history_region_iterator.isDone(); history_region_iterator.next())
-        {
-            const odb_HistoryRegion& history_region = history_region_iterator.currentValue();
-            if ((this->command_line_arguments->get("history-region") == "all") || (this->command_line_arguments->get("history-region") == history_region.name().CStr())) {
-                new_step.historyRegions.push_back(process_history_region(history_region));
-            }
-        }
+
+        // Read and write history output data
+        process_and_write_history_data_h5 (odb, h5_file, current_step, step_group_name);
+
         if (this->command_line_arguments->get("format") == "extract") {  // Write extract format
-            write_extract_history_output(h5_file, new_step);
             write_extract_field_output(h5_file, new_step);
-        } else if (this->command_line_arguments->get("format") == "odb") {
-            this->log_file->logVerbose("Writing history data.");
-            write_history_regions(h5_file, step_group_name, new_step.historyRegions);
+        }
+    }
+}
+
+void SpadeObject::process_and_write_history_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name) {
+    const odb_HistoryRegionRepository& history_regions = step.historyRegions();
+    odb_HistoryRegionRepositoryIT history_region_iterator (history_regions);
+
+    string history_regions_group_name = group_name + "/historyRegions";
+    H5::Group history_regions_group = create_group(h5_file, history_regions_group_name);
+    for (history_region_iterator.first(); !history_region_iterator.isDone(); history_region_iterator.next())
+    {
+        const odb_HistoryRegion& history_region = history_region_iterator.currentValue();
+        string history_region_name = history_region.name().CStr();
+        if ((this->command_line_arguments->get("history-region") == "all") || (this->command_line_arguments->get("history-region") == history_region_name)) {
+            this->log_file->logVerbose("Reading data for history region " + history_region_name);
+            history_region_type new_history_region = process_history_region(history_region);
+            string history_outputs_group_name;
+            string history_output_group_name;
+            this->log_file->logVerbose("Writing data for history region " + history_region_name);
+            string history_region_group_name = history_regions_group_name + "/" + replace_slashes(history_region_name);
+            write_history_region(h5_file, history_region_group_name, new_history_region);
+            if (this->command_line_arguments->get("format") == "odb") {
+                history_outputs_group_name = history_region_group_name + "/HistoryOutputs";
+                H5::Group history_outputs_group = create_group(h5_file, history_outputs_group_name);
+            } else if (this->command_line_arguments->get("format") == "extract") {
+                history_outputs_group_name = step.name().CStr();  // Initialize group name
+                write_extract_history_region(h5_file, new_history_region, history_outputs_group_name);  // Modifies group name
+            }
+
+            const odb_HistoryOutputRepository& history_outputs = history_region.historyOutputs();
+            odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
+            for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
+                odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
+                string history_output_name = history_output.name().CStr();
+                if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output_name)) {
+                    history_output_type new_history_output = process_history_output(history_output);
+                    history_output_group_name = history_outputs_group_name + "/" + replace_slashes(history_output_name);
+                    write_history_output(h5_file, history_output_group_name, new_history_output);
+                }
+            }
         }
     }
 }
@@ -1900,28 +1931,19 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
     }
 }
 
-void SpadeObject::write_extract_history_output(H5::H5File &h5_file, step_type &step) {
-    for (auto history_region : step.historyRegions) {
-        // First grab the name of the instance or assembly or simply use "ASSEMBLY"
-        string instance_name = history_region.point.instanceName;
-        if (instance_name.empty()) {
-            instance_name = history_region.point.assemblyName;
-            if (instance_name.empty()) { instance_name = this->default_instance_name; }
-        }
-        // Next open the instance->HistoryOutputs->region group, and create the parent groups if they don't exist
-        string region_group_name = "/" + instance_name + "/HistoryOutputs/" + replace_slashes(history_region.name);
-        bool sub_group_exists = true;
-        H5::Group region_group = open_subgroup(h5_file, region_group_name, sub_group_exists);
-        if (!sub_group_exists) {
-            write_attribute(region_group, "description", history_region.description);
-            write_attribute(region_group, "position", history_region.position);
-            write_attribute(region_group, "loadCase", history_region.loadCase);
-        }
-        string step_group_name = region_group_name + "/" + step.name;
-        H5::Group step_group = create_group(h5_file, step_group_name);
-        this->log_file->logVerbose("Writing history data.");
-        write_history_region(h5_file, step_group, step_group_name, history_region);
+void SpadeObject::write_extract_history_region(H5::H5File &h5_file, history_region_type &history_region, string &step_group_name) {
+    // First grab the name of the instance or assembly or simply use "ASSEMBLY"
+    string instance_name = history_region.point.instanceName;
+    if (instance_name.empty()) {
+        instance_name = history_region.point.assemblyName;
+        if (instance_name.empty()) { instance_name = this->default_instance_name; }
     }
+    // Next open the instance->HistoryOutputs->region group, and create the parent groups if they don't exist
+    string region_group_name = "/" + instance_name + "/HistoryOutputs/" + replace_slashes(history_region.name);
+    bool sub_group_exists = true;
+    H5::Group region_group = open_subgroup(h5_file, region_group_name, sub_group_exists);
+    step_group_name = region_group_name + "/" + step_group_name;
+    H5::Group step_group = create_group(h5_file, step_group_name);
 }
 
 void SpadeObject::write_extract_field_output(H5::H5File &h5_file, step_type &step) {
@@ -2226,13 +2248,18 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
                 write_string_vector_dataset(set_group, "faces", history_point.region.faces);
             }
         }
-        write_attribute(history_point_group, "section_point_number", history_point.sectionPoint.number);
+        if (history_point.sectionPoint.number != "-1") { 
+            write_attribute(history_point_group, "section_point_number", history_point.sectionPoint.number);
+        }
         write_attribute(history_point_group, "section_point_description", history_point.sectionPoint.description);
     }
 
 }
 
 void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_name, history_output_type &history_output) {
+    // Per Abaqus documentation the conjugate data specifies the imaginary portion of a specified complex variable at each 
+    // frame value (time, frequency, or mode). Therefore it seems that data and conjugate data can be present at the same time
+    // So a group has to be created two handle two possible datasets, despite there usually being only one
     H5::Group history_output_group = create_group(h5_file, group_name);
     write_string_dataset(history_output_group, "description", history_output.description);
     write_string_dataset(history_output_group, "type", history_output.type);
@@ -2240,38 +2267,12 @@ void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_
     write_float_2D_data(history_output_group, "conjugateData", history_output.row_size_conjugate, 2, history_output.conjugateData);
 }
 
-void SpadeObject::write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions) {
-    string history_regions_group_name = group_name + "/historyRegions";
-    H5::Group history_regions_group = create_group(h5_file, history_regions_group_name);
-    for (auto history_region : history_regions) {
-        string history_region_group_name = history_regions_group_name + "/" + replace_slashes(history_region.name);
-        H5::Group history_region_group = create_group(h5_file, history_region_group_name);
-        write_string_dataset(history_region_group, "description", history_region.description);
-        write_string_dataset(history_region_group, "position", history_region.position);
-        write_string_dataset(history_region_group, "loadCase", history_region.loadCase);
-        write_history_point(h5_file, history_region_group_name, history_region.point);
-        H5::Group history_outputs_group = create_group(h5_file, history_region_group_name + "/historyOutputs");
-        for (auto history_output : history_region.historyOutputs) {
-            string history_output_group_name = history_region_group_name + "/historyOutputs/" + replace_slashes(history_output.name);
-            write_history_output(h5_file, history_output_group_name, history_output);
-        }
-        history_region.historyOutputs.clear(); // clear memory of map
-    }
-}
-
-void SpadeObject::write_history_region(H5::H5File &h5_file, H5::Group &group, const string &group_name, history_region_type &history_region) {
+void SpadeObject::write_history_region(H5::H5File &h5_file, const string &group_name, history_region_type &history_region) {
+    H5::Group history_region_group = create_group(h5_file, group_name);
+    write_string_dataset(history_region_group, "description", history_region.description);
+    write_string_dataset(history_region_group, "position", history_region.position);
+    write_string_dataset(history_region_group, "loadCase", history_region.loadCase);
     write_history_point(h5_file, group_name, history_region.point);
-    for (auto history_output : history_region.historyOutputs) {
-        // Per Abaqus documentation the conjugate data specifies the imaginary portion of a specified complex variable at each 
-        // frame value (time, frequency, or mode). Therefore it seems that data and conjugate data can be present at the same time
-        // So a group has to be created two handle two possible datasets, despite there usually being only one
-        H5::Group history_output_group = create_group(h5_file, group_name + "/" + replace_slashes(history_output.name));
-        write_attribute(history_output_group, "type", history_output.type);
-        write_attribute(history_output_group, "description", history_output.description);
-        write_float_2D_data(history_output_group, "data", history_output.row_size, 2, history_output.data);  // history output data has 2 columns: frameValue and value
-        write_float_2D_data(history_output_group, "conjugateData", history_output.row_size_conjugate, 2, history_output.conjugateData);
-    }
-    history_region.historyOutputs.clear(); // clear memory of map
 }
 
 void SpadeObject::write_step(H5::H5File &h5_file, H5::Group &step_group, step_type& step) {

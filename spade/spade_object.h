@@ -767,6 +767,15 @@ class SpadeObject {
           \param h5_file Open h5_file object for writing
         */
         void process_and_write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_file);
+        //! Process and write the history output data from the odb
+        /*!
+          With the odb and the h5 file open, loop through and read then write the history output data
+          \param odb An open odb object
+          \param step An odb step object
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+        */
+        void process_and_write_history_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name);
 
 
         //Functions for writing out the data
@@ -821,13 +830,14 @@ class SpadeObject {
           \param elements element data to be written
         */
         void write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map<string, map<int, element_type>> elements);
-        //! Write history output in extract format to HDF5 file
+        //! Write history region in extract format to HDF5 file
         /*!
-          Write history output in extract format for given step
+          Write history region in extract format for given step
           \param h5_file Open h5_file object for writing
-          \param step Current Step for which to write field output
+          \param history_region Data to be written
+          \param step_group_name Name of current step
         */
-        void write_extract_history_output(H5::H5File &h5_file, step_type &step);
+        void write_extract_history_region(H5::H5File &h5_file, history_region_type &history_region, string &step_group_name);
         //! Write field output in extract format to HDF5 file
         /*!
           Write field output in extract format for given step
@@ -899,23 +909,14 @@ class SpadeObject {
           \param history_output Data to be written
         */
         void write_history_output(H5::H5File &h5_file, const string &group_name, history_output_type &history_output);
-        //! Write history regions data to an HDF5 file
+        //! Write history region data to an HDF5 file
         /*!
-          Write history regions data into an HDF5 file
+          Write history region data into an HDF5 file
           \param h5_file Open h5_file object for writing
-          \param group_name Name of the group where data is to be written
-          \param history_regions Data to be written
-        */
-        void write_history_regions(H5::H5File &h5_file, const string &group_name, vector<history_region_type> &history_regions);
-        //! Write history region data in extract format to an HDF5 file
-        /*!
-          Write history region data in extract format into an HDF5 file
-          \param h5_file Open h5_file object for writing
-          \param group Group where data is to be written
           \param group_name Name of the group where data is to be written
           \param history_region Data to be written
         */
-        void write_history_region(H5::H5File &h5_file, H5::Group &group, const string &group_name, history_region_type &history_region);
+        void write_history_region(H5::H5File &h5_file, const string &group_name, history_region_type &history_region);
         //! Write steps data to an HDF5 file
         /*!
           Write steps data into an HDF5 file
