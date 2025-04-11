@@ -719,11 +719,11 @@ class SpadeObject {
         /*!
           Process a step object and store the results
           \param step An odb step object
-          \param new_step An object for storing step data
           \param odb An open odb object
+          \return step_type with data stored from the odb
           \sa process_odb()
         */
-        void process_step (const odb_Step &step, step_type &new_step, odb_Odb &odb);
+        step_type process_step (const odb_Step &step, odb_Odb &odb);
         //! Process a tie constraint from the odb file
         /*!
           Process a Tie object and store the results
@@ -879,10 +879,10 @@ class SpadeObject {
         /*!
           Write frames data into an HDF5 file
           \param h5_file Open h5_file object for writing
-          \param group_name Name of the group where data is to be written
+          \param frame_group Group where data is to be written
           \param frames Data to be written
         */
-        void write_frames(H5::H5File &h5_file, const string &group_name, vector<frame_type> &frames);
+        void write_frame(H5::H5File &h5_file, H5::Group &frame_group, frame_type &frame);
         //! Write history point data to an HDF5 file
         /*!
           Write history point data into an HDF5 file
@@ -920,10 +920,10 @@ class SpadeObject {
         /*!
           Write steps data into an HDF5 file
           \param h5_file Open h5_file object for writing
-          \param group_name Name of the group where data is to be written
+          \param step_group Group where data is to be written
           \param step Step object to write
         */
-        void write_step(H5::H5File &h5_file, const string &group_name, step_type& step);
+        void write_step(H5::H5File &h5_file, H5::Group &step_group, step_type& step);
         //! Write instances data to an HDF5 file
         /*!
           Write instances data into an HDF5 file

@@ -1408,11 +1408,9 @@ history_region_type SpadeObject::process_history_region(const odb_HistoryRegion 
     return new_history_region;
 }
 
-void SpadeObject::process_step(const odb_Step &step, step_type &new_step, odb_Odb &odb) {
+step_type SpadeObject::process_step(const odb_Step &step, odb_Odb &odb) {
+    step_type new_step;
     new_step.name = step.name().CStr();
-    if ((this->command_line_arguments->get("step") != "all") && (this->command_line_arguments->get("step") != new_step.name)) {
-        return;
-    }
     new_step.description = step.description().CStr();
     switch(step.domain()) {
         case odb_Enum::TIME: new_step.domain = "Time"; break;
@@ -1438,6 +1436,7 @@ void SpadeObject::process_step(const odb_Step &step, step_type &new_step, odb_Od
     for (int i=0; i<inertia_about_origin.size(); i++) { new_step.inertiaAboutOrigin[i] = inertia_about_origin[i]; }
     odb_LoadCaseRepository load_cases = step.loadCases();
     for (int i=0; i<load_cases.size(); i++) { new_step.loadCases.push_back(load_cases[i].name().CStr()); }
+    return new_step;
 }
 
 void SpadeObject::process_and_write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_file) {
@@ -1450,16 +1449,42 @@ void SpadeObject::process_and_write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_f
     for (step_iter.first(); !step_iter.isDone(); step_iter.next())
     {
         const odb_Step& current_step = step_repository[step_iter.currentKey()];
-        step_type new_step;
-        process_step(current_step, new_step, odb);
+        if ((this->command_line_arguments->get("step") != "all") && (this->command_line_arguments->get("step") != current_step.name().CStr())) {
+            continue;
+        }
+        step_type new_step = process_step(current_step, odb);  // Process and write step data that isn't history or field output
 
+        string step_group_name = steps_group_name + "/" + replace_slashes(new_step.name);
+        H5::Group step_group = create_group(h5_file, step_group_name);
+        write_step(h5_file, step_group, new_step);
+
+        string frames_group_name = step_group_name + "/frames";
+        H5::Group frames_group = create_group(h5_file, frames_group_name);
         const odb_SequenceFrame& frames = current_step.frames();
-        this->log_file->logVerbose("Reading frames.");
         for (int f=0; f<frames.size(); f++) {
             const odb_Frame& frame = frames.constGet(f);
+            string frame_number = to_string(frame.incrementNumber());
+            this->log_file->logVerbose("Reading frame " + frame_number);
             frame_type new_frame = process_frame(frame);
             if (!new_frame.skip) {
                 new_step.frames.push_back(new_frame);
+            }
+            this->log_file->logVerbose("Writing frame " + frame_number + " data");
+            string frame_group_name = frames_group_name + "/" + frame_number;
+            H5::Group frame_group = create_group(h5_file, frame_group_name);
+            write_frame(h5_file, frame_group, new_frame);
+            write_attribute(frame_group, "max_width", to_string(new_frame.max_width));
+            write_attribute(frame_group, "max_length", to_string(new_frame.max_length));
+
+            if (this->command_line_arguments->get("format") == "odb") {
+                if (new_frame.fieldOutputs.size() > 0) {
+                    H5::Group field_outputs_group = create_group(h5_file, frame_group_name + "/fieldOutputs");
+                    this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
+                    for (int i=0; i<new_frame.fieldOutputs.size(); i++) {
+                        string field_output_group_name = frame_group_name + "/fieldOutputs/" + replace_slashes(new_frame.fieldOutputs[i].name);
+                        write_field_output(h5_file, field_output_group_name, new_frame.fieldOutputs[i]);
+                    }
+                }
             }
         }
         const odb_HistoryRegionRepository& history_regions = current_step.historyRegions();
@@ -1475,8 +1500,10 @@ void SpadeObject::process_and_write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_f
         if (this->command_line_arguments->get("format") == "extract") {  // Write extract format
             write_extract_history_output(h5_file, new_step);
             write_extract_field_output(h5_file, new_step);
+        } else if (this->command_line_arguments->get("format") == "odb") {
+            this->log_file->logVerbose("Writing history data.");
+            write_history_regions(h5_file, step_group_name, new_step.historyRegions);
         }
-        write_step(h5_file, steps_group_name, new_step);
     }
 }
 
@@ -2140,32 +2167,14 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, const string &group_na
     write_attribute(field_output_group, "max_length", to_string(field_output.max_length));
 }
 
-void SpadeObject::write_frames(H5::H5File &h5_file, const string &group_name, vector<frame_type> &frames) {
-    string frames_group_name = group_name + "/frames";
-    H5::Group frames_group = create_group(h5_file, frames_group_name);
-    for (auto frame : frames) {
-        string frame_group_name = frames_group_name + "/" + to_string(frame.incrementNumber);
-        H5::Group frame_group = create_group(h5_file, frame_group_name);
-        write_integer_dataset(frame_group, "cyclicModeNumber", frame.cyclicModeNumber);
-        write_integer_dataset(frame_group, "mode", frame.mode);
-        write_string_dataset(frame_group, "description", frame.description);
-        write_string_dataset(frame_group, "domain", frame.domain);
-        write_string_dataset(frame_group, "loadCase", frame.loadCase);
-        write_float_dataset(frame_group, "frameValue", frame.frameValue);
-        write_float_dataset(frame_group, "frequency", frame.frequency);
-        if (this->command_line_arguments->get("format") == "odb") {
-            if (frame.fieldOutputs.size() > 0) {
-                H5::Group field_outputs_group = create_group(h5_file, frame_group_name + "/fieldOutputs");
-                this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
-                for (int i=0; i<frame.fieldOutputs.size(); i++) {
-                    string field_output_group_name = frame_group_name + "/fieldOutputs/" + replace_slashes(frame.fieldOutputs[i].name);
-                    write_field_output(h5_file, field_output_group_name, frame.fieldOutputs[i]);
-                }
-            }
-        }
-        write_attribute(frame_group, "max_width", to_string(frame.max_width));
-        write_attribute(frame_group, "max_length", to_string(frame.max_length));
-    }
+void SpadeObject::write_frame(H5::H5File &h5_file, H5::Group &frame_group, frame_type &frame) {
+    if (frame.cyclicModeNumber != -1) { write_integer_dataset(frame_group, "cyclicModeNumber", frame.cyclicModeNumber); }
+    write_integer_dataset(frame_group, "mode", frame.mode);
+    write_string_dataset(frame_group, "description", frame.description);
+    write_string_dataset(frame_group, "domain", frame.domain);
+    write_string_dataset(frame_group, "loadCase", frame.loadCase);
+    write_float_dataset(frame_group, "frameValue", frame.frameValue);
+    write_float_dataset(frame_group, "frequency", frame.frequency);
 }
 void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_name, history_point_type &history_point) {
     string history_point_group_name = group_name + "/point";
@@ -2265,9 +2274,7 @@ void SpadeObject::write_history_region(H5::H5File &h5_file, H5::Group &group, co
     history_region.historyOutputs.clear(); // clear memory of map
 }
 
-void SpadeObject::write_step(H5::H5File &h5_file, const string &group_name, step_type& step) {
-    string step_group_name = group_name + "/" + replace_slashes(step.name);
-    H5::Group step_group = create_group(h5_file, step_group_name);
+void SpadeObject::write_step(H5::H5File &h5_file, H5::Group &step_group, step_type& step) {
     write_string_dataset(step_group, "description", step.description);
     write_string_dataset(step_group, "domain", step.domain);
     write_string_dataset(step_group, "previousStepName", step.previousStepName);
@@ -2283,12 +2290,6 @@ void SpadeObject::write_step(H5::H5File &h5_file, const string &group_name, step
     write_double_vector_dataset(step_group, "acousticMassCenter", step.acousticMassCenter);
     write_double_array_dataset(step_group, "inertiaAboutCenter", 6, step.inertiaAboutCenter);
     write_double_array_dataset(step_group, "inertiaAboutOrigin", 6, step.inertiaAboutOrigin);
-    this->log_file->logVerbose("Writing frames data.");
-    write_frames(h5_file, step_group_name, step.frames);
-    if (this->command_line_arguments->get("format") == "odb") {
-        this->log_file->logVerbose("Writing history data.");
-        write_history_regions(h5_file, step_group_name, step.historyRegions);
-    }
 }
 
 void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name) {
