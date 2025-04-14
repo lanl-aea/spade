@@ -822,14 +822,14 @@ class SpadeObject {
           \param elements element data to be written
         */
         void write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map<string, map<int, element_type>> elements);
-        //! Write history region in extract format to HDF5 file
+        //! Create the necessary group and parent groups for writing history region and output data in the hdf5 file
         /*!
-          Write history region in extract format for given step
+          Create the necessary groups and store the name in the passed in group name argument
           \param h5_file Open h5_file object for writing
           \param history_region Data to be written
           \param step_group_name Name of current step
         */
-        void write_extract_history_region(H5::H5File &h5_file, history_region_type &history_region, string &step_group_name);
+        void create_extract_history_group(H5::H5File &h5_file, history_region_type &history_region, string &step_group_name);
         //! Write field output in extract format to HDF5 file
         /*!
           Write field output in extract format for given step

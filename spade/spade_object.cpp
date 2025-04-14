@@ -1488,7 +1488,7 @@ void SpadeObject::process_and_write_history_data_h5 (odb_Odb &odb, H5::H5File &h
                 H5::Group history_outputs_group = create_group(h5_file, history_outputs_group_name);
             } else if (this->command_line_arguments->get("format") == "extract") {
                 history_outputs_group_name = step.name().CStr();  // Initialize group name
-                write_extract_history_region(h5_file, new_history_region, history_outputs_group_name);  // Modifies group name
+                create_extract_history_group(h5_file, new_history_region, history_outputs_group_name);  // Modifies group name
             }
 
             const odb_HistoryOutputRepository& history_outputs = history_region.historyOutputs();
@@ -1898,7 +1898,7 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
     }
 }
 
-void SpadeObject::write_extract_history_region(H5::H5File &h5_file, history_region_type &history_region, string &step_group_name) {
+void SpadeObject::create_extract_history_group(H5::H5File &h5_file, history_region_type &history_region, string &step_group_name) {
     // First grab the name of the instance or assembly or simply use "ASSEMBLY"
     string instance_name = history_region.point.instanceName;
     if (instance_name.empty()) {
