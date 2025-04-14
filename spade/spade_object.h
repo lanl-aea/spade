@@ -415,7 +415,6 @@ struct frame_type {
     float frameValue;
     float frequency;
     string loadCase;
-    vector<field_output_type> fieldOutputs;
     int max_width;
     int max_length;
     bool skip;  // Don't process if a frame-value is specified on the command line that approximately matches the frameValue or frequency
@@ -438,23 +437,12 @@ struct history_point_type {
     string instanceName;  // Just storing the name not the entire instance
 };
 
-struct history_output_type {
-    string description;
-    string type;
-    string name;
-    vector<float> data;
-    int row_size;
-    vector<float> conjugateData;
-    int row_size_conjugate;
-};
-
 struct history_region_type {
     string name;
     string description;
     string position;
     history_point_type point;
     string loadCase;
-    vector<history_output_type> historyOutputs;
 };
 
 struct step_type {
@@ -469,8 +457,6 @@ struct step_type {
     double totalTime;
     double mass;
     double acousticMass;
-    vector<frame_type> frames;
-    vector<history_region_type> historyRegions;
     vector<string> loadCases;
     vector<double> massCenter;
     vector<double> acousticMassCenter;
@@ -768,6 +754,15 @@ class SpadeObject {
           \param group_name Name of the group where data is to be written
         */
         void process_and_write_history_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name);
+        //! Process and write the field output data from the odb
+        /*!
+          With the odb and the h5 file open, loop through and read then write the field output data
+          \param odb An open odb object
+          \param step An odb step object
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+        */
+        void process_and_write_field_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name);
 
 
         //Functions for writing out the data
@@ -834,9 +829,11 @@ class SpadeObject {
         /*!
           Write field output in extract format for given step
           \param h5_file Open h5_file object for writing
-          \param step Current Step for which to write field output
+          \param field_output Data to be written
+          \param step_name Name of step where data is to be written
+          \param frame_number Frame number where data is to be written given as a string
         */
-        void write_extract_field_output(H5::H5File &h5_file, step_type &step);
+        void write_extract_field_output(H5::H5File &h5_file, field_output_type &field_output, const string &step_name, const string &frame_number);
         //! Write parts data to an HDF5 file
         /*!
           Write parts data into an HDF5 file
