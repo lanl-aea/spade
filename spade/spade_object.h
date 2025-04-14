@@ -699,14 +699,6 @@ class SpadeObject {
           \sa process_odb()
         */
         history_point_type process_history_point (const odb_HistoryPoint history_point);
-        //! Process a history output from the odb file
-        /*!
-          Process a history output object and store the results
-          \param history_output An odb history output object
-          \return history_output_type with data stored from the odb
-          \sa process_odb()
-        */
-        history_output_type process_history_output (const odb_HistoryOutput &history_region);
         //! Process a history region from the odb file
         /*!
           Process a history region object and store the results
@@ -908,7 +900,7 @@ class SpadeObject {
           \param group_name Name of the group where data is to be written
           \param history_output Data to be written
         */
-        void write_history_output(H5::H5File &h5_file, const string &group_name, history_output_type &history_output);
+        void write_history_output(H5::H5File &h5_file, const string &group_name, const odb_HistoryOutput &history_output);
         //! Write history region data to an HDF5 file
         /*!
           Write history region data into an HDF5 file

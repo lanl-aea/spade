@@ -1358,38 +1358,6 @@ history_point_type SpadeObject::process_history_point (const odb_HistoryPoint hi
     return new_history_point;
 }
 
-history_output_type SpadeObject::process_history_output(const odb_HistoryOutput &history_output) {
-    history_output_type new_history_output;
-    new_history_output.name = history_output.name().CStr();
-    new_history_output.description = history_output.description().CStr();
-    switch(history_output.type()) {
-        case odb_Enum::SCALAR: new_history_output.type = "Scalar"; break;
-    }
-
-    const odb_SequenceSequenceFloat& data = history_output.data();
-    new_history_output.row_size = data.size();
-    for (int i=0; i<data.size(); i++) {
-        odb_SequenceFloat data_dimension1 = data.constGet(i);
-        vector<float> dimension1;
-        for (int j=0; j<data_dimension1.size(); j++) {
-            new_history_output.data.push_back(data_dimension1.constGet(j));
-        }
-    }
-
-    const odb_SequenceSequenceFloat& conjugate_data = history_output.conjugateData();
-    new_history_output.row_size_conjugate = conjugate_data.size();
-    for (int i=0; i<conjugate_data.size(); i++) {
-        odb_SequenceFloat conjugate_data_dimension1 = conjugate_data.constGet(i);
-        vector<float> dimension1;
-        for (int j=0; j<conjugate_data_dimension1.size(); j++) {
-            new_history_output.conjugateData.push_back(conjugate_data_dimension1.constGet(j));
-        }
-    }
-
-    return new_history_output;
-
-}
-
 history_region_type SpadeObject::process_history_region(const odb_HistoryRegion &history_region) {
     history_region_type new_history_region;
     new_history_region.name = history_region.name().CStr();
@@ -1529,9 +1497,8 @@ void SpadeObject::process_and_write_history_data_h5 (odb_Odb &odb, H5::H5File &h
                 odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
                 string history_output_name = history_output.name().CStr();
                 if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output_name)) {
-                    history_output_type new_history_output = process_history_output(history_output);
                     history_output_group_name = history_outputs_group_name + "/" + replace_slashes(history_output_name);
-                    write_history_output(h5_file, history_output_group_name, new_history_output);
+                    write_history_output(h5_file, history_output_group_name, history_output);
                 }
             }
         }
@@ -2198,6 +2165,7 @@ void SpadeObject::write_frame(H5::H5File &h5_file, H5::Group &frame_group, frame
     write_float_dataset(frame_group, "frameValue", frame.frameValue);
     write_float_dataset(frame_group, "frequency", frame.frequency);
 }
+
 void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_name, history_point_type &history_point) {
     string history_point_group_name = group_name + "/point";
     H5::Group history_point_group = create_group(h5_file, history_point_group_name);
@@ -2256,15 +2224,40 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
 
 }
 
-void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_name, history_output_type &history_output) {
+void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_name, const odb_HistoryOutput &history_output) {
     // Per Abaqus documentation the conjugate data specifies the imaginary portion of a specified complex variable at each 
     // frame value (time, frequency, or mode). Therefore it seems that data and conjugate data can be present at the same time
     // So a group has to be created two handle two possible datasets, despite there usually being only one
     H5::Group history_output_group = create_group(h5_file, group_name);
-    write_string_dataset(history_output_group, "description", history_output.description);
-    write_string_dataset(history_output_group, "type", history_output.type);
-    write_float_2D_data(history_output_group, "data", history_output.row_size, 2, history_output.data);  // history output data has 2 columns: frameValue and value
-    write_float_2D_data(history_output_group, "conjugateData", history_output.row_size_conjugate, 2, history_output.conjugateData);
+
+    write_string_dataset(history_output_group, "description", history_output.description().CStr());
+    string history_output_type;
+    switch(history_output.type()) {
+        case odb_Enum::SCALAR: history_output_type = "Scalar"; break;
+    }
+    write_string_dataset(history_output_group, "type", history_output_type);
+
+    vector<float> output_data;
+    const odb_SequenceSequenceFloat& data = history_output.data();
+    int row_size = data.size();
+    for (int i=0; i<data.size(); i++) {
+        odb_SequenceFloat data_dimension1 = data.constGet(i);
+        for (int j=0; j<data_dimension1.size(); j++) {
+            output_data.push_back(data_dimension1.constGet(j));
+        }
+    }
+    write_float_2D_data(history_output_group, "data", row_size, 2, output_data);  // history output data has 2 columns: frameValue and value
+
+    vector<float> output_conjugate_data;
+    const odb_SequenceSequenceFloat& conjugate_data = history_output.conjugateData();
+    int row_size_conjugate = conjugate_data.size();
+    for (int i=0; i<conjugate_data.size(); i++) {
+        odb_SequenceFloat conjugate_data_dimension1 = conjugate_data.constGet(i);
+        for (int j=0; j<conjugate_data_dimension1.size(); j++) {
+            output_conjugate_data.push_back(conjugate_data_dimension1.constGet(j));
+        }
+    }
+    write_float_2D_data(history_output_group, "conjugateData", row_size_conjugate, 2, output_conjugate_data);
 }
 
 void SpadeObject::write_history_region(H5::H5File &h5_file, const string &group_name, history_region_type &history_region) {
