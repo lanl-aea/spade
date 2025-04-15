@@ -980,16 +980,7 @@ void SpadeObject::process_field_values(const odb_FieldValue &field_value, const 
         values.integrationPointEmpty = false;
     }
     values.integrationPoint.push_back(integrationPoint); 
-    string value_type = "";
-    switch(field_value.type()) {
-        case odb_Enum::SCALAR: value_type = "Scalar"; break;
-        case odb_Enum::VECTOR: value_type = "Vector"; break;
-        case odb_Enum::TENSOR_3D_FULL: value_type = "Tensor 3D Full"; break;
-        case odb_Enum::TENSOR_3D_PLANAR: value_type = "Tensor 3D Planar"; break;
-        case odb_Enum::TENSOR_3D_SURFACE: value_type = "Tensor 3D Surface"; break;
-        case odb_Enum::TENSOR_2D_PLANAR: value_type = "Tensor 2D Planar"; break;
-        case odb_Enum::TENSOR_2D_SURFACE: value_type = "Tensor 2D Surface"; break;
-    }
+    string value_type = get_field_type_enum(field_value.type());
     values.type.push_back(value_type);
     if (value_type != "") { values.typeEmpty = false; }
     if ((invariants.isMember(odb_Enum::MAGNITUDE)) && (field_value.magnitude() != 0)) {
@@ -1045,9 +1036,9 @@ void SpadeObject::process_field_values(const odb_FieldValue &field_value, const 
     values.sectionPointDescription.push_back(section_point_description); 
 }
 
-string SpadeObject::get_field_type(odb_Enum::odb_DataTypeEnum type) {
+string SpadeObject::get_field_type_enum(odb_Enum::odb_DataTypeEnum type_enum) {
     string value_type = "";
-    switch(type) {
+    switch(type_enum) {
         case odb_Enum::SCALAR: value_type = "Scalar"; break;
         case odb_Enum::VECTOR: value_type = "Vector"; break;
         case odb_Enum::TENSOR_3D_FULL: value_type = "Tensor 3D Full"; break;
@@ -1059,16 +1050,44 @@ string SpadeObject::get_field_type(odb_Enum::odb_DataTypeEnum type) {
     return value_type;
 }
 
+string SpadeObject::get_valid_invariant_enum(odb_Enum::odb_InvariantEnum invariant_enum) {
+    string invariant = "";
+    switch(invariant_enum) {
+        case odb_Enum::MAGNITUDE: invariant = "Magnitude"; break;
+        case odb_Enum::MISES: invariant = "Mises"; break;
+        case odb_Enum::TRESCA: invariant = "Tresca"; break;
+        case odb_Enum::PRESS: invariant = "Press"; break;
+        case odb_Enum::INV3: invariant = "Inv3"; break;
+        case odb_Enum::MAX_PRINCIPAL: invariant = "Max Principal"; break;
+        case odb_Enum::MID_PRINCIPAL: invariant = "Mid Principal"; break;
+        case odb_Enum::MIN_PRINCIPAL: invariant = "Min Principal"; break;
+        case odb_Enum::MAX_INPLANE_PRINCIPAL: invariant = "Max Inplane Principal"; break;
+        case odb_Enum::MIN_INPLANE_PRINCIPAL: invariant = "Min Inplane Principal"; break;
+        case odb_Enum::OUTOFPLANE_PRINCIPAL: invariant = "Out of Plane Principal"; break;
+    }
+    return invariant;
+}
+
+string SpadeObject::get_position_enum(odb_Enum::odb_ResultPositionEnum position_enum) {
+    string position = "";
+    switch(position_enum) {
+        case odb_Enum::NODAL: position = "Nodal"; break;
+        case odb_Enum::ELEMENT_NODAL: position = "Element Nodal"; break;
+        case odb_Enum::INTEGRATION_POINT: position = "Integration Point"; break;
+        case odb_Enum::ELEMENT_FACE: position = "Element Face"; break;
+        case odb_Enum::ELEMENT_FACE_INTEGRATION_POINT: position = "Element Face Integration Point"; break;
+        case odb_Enum::WHOLE_ELEMENT: position = "Whole Element"; break;
+        case odb_Enum::WHOLE_REGION: position = "Whole Region"; break;
+        case odb_Enum::WHOLE_PART_INSTANCE: position = "Whole Part Instance"; break;
+        case odb_Enum::WHOLE_MODEL: position = "Whole Model"; break;
+    }
+    return position;
+}
+
 field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data) {
     field_bulk_type new_field_bulk_data;
     new_field_bulk_data.emptyFaces = true;
-    switch(field_bulk_data.position()) {
-        case odb_Enum::NODAL: new_field_bulk_data.position = "Nodal"; break;
-        case odb_Enum::INTEGRATION_POINT: new_field_bulk_data.position = "Integration Point"; break;
-        case odb_Enum::ELEMENT_NODAL: new_field_bulk_data.position = "Element Nodal"; break;
-        case odb_Enum::ELEMENT_FACE: new_field_bulk_data.position = "Element Face"; break;
-        case odb_Enum::CENTROID: new_field_bulk_data.position = "Centroid"; break;
-    }
+    new_field_bulk_data.position = get_position_enum(field_bulk_data.position());
     new_field_bulk_data.length = field_bulk_data.length();
     new_field_bulk_data.width = field_bulk_data.width();
     int full_length = new_field_bulk_data.length * new_field_bulk_data.width;
@@ -1167,13 +1186,7 @@ field_output_type SpadeObject::process_field_output (const odb_FieldOutput &fiel
     for (int i=0; i<field_locations.size(); i++) {
         odb_FieldLocation field_location = field_locations.constGet(i);
         field_location_type new_field_location;
-        switch(field_location.position()) {
-            case odb_Enum::NODAL: new_field_location.position = "Nodal"; break;
-            case odb_Enum::INTEGRATION_POINT: new_field_location.position = "Integration Point"; break;
-            case odb_Enum::ELEMENT_NODAL: new_field_location.position = "Element Nodal"; break;
-            case odb_Enum::ELEMENT_FACE: new_field_location.position = "Element Face"; break;
-            case odb_Enum::CENTROID: new_field_location.position = "Centroid"; break;
-        }
+        new_field_location.position = get_position_enum(field_location.position());
         for (int i=0; i<field_location.sectionPoint().size(); i++) {
             section_point_type point;
             point.number = to_string(field_location.sectionPoint(i).number());
@@ -1344,17 +1357,7 @@ history_point_type SpadeObject::process_history_point (const odb_HistoryPoint hi
         case odb_Enum::END2: new_history_point.face = "End 2"; break;
         case odb_Enum::END3: new_history_point.face = "End 3"; break;
     }
-    switch(history_point.position()) {
-        case odb_Enum::NODAL: new_history_point.position = "Nodal"; break;
-        case odb_Enum::ELEMENT_NODAL: new_history_point.position = "Element Nodal"; break;
-        case odb_Enum::INTEGRATION_POINT: new_history_point.position = "Integration Point"; break;
-        case odb_Enum::ELEMENT_FACE: new_history_point.position = "Element Face"; break;
-        case odb_Enum::ELEMENT_FACE_INTEGRATION_POINT: new_history_point.position = "Element Face Integration Point"; break;
-        case odb_Enum::WHOLE_ELEMENT: new_history_point.position = "Whole Element"; break;
-        case odb_Enum::WHOLE_REGION: new_history_point.position = "Whole Region"; break;
-        case odb_Enum::WHOLE_PART_INSTANCE: new_history_point.position = "Whole Part Instance"; break;
-        case odb_Enum::WHOLE_MODEL: new_history_point.position = "Whole Model"; break;
-    }
+    new_history_point.position = get_position_enum(history_point.position());
 
     return new_history_point;
 }
@@ -1363,13 +1366,7 @@ history_region_type SpadeObject::process_history_region(const odb_HistoryRegion 
     history_region_type new_history_region;
     new_history_region.name = history_region.name().CStr();
     new_history_region.description = history_region.description().CStr();
-    switch(history_region.position()) {
-        case odb_Enum::NODAL: new_history_region.position = "Nodal"; break;
-        case odb_Enum::INTEGRATION_POINT: new_history_region.position = "Integration Point"; break;
-        case odb_Enum::WHOLE_ELEMENT: new_history_region.position = "Whole Element"; break;
-        case odb_Enum::WHOLE_REGION: new_history_region.position = "Whole Region"; break;
-        case odb_Enum::WHOLE_MODEL: new_history_region.position = "Whole Model"; break;
-    }
+    new_history_region.position = get_position_enum(history_region.position());
     new_history_region.loadCase = history_region.loadCase().name().CStr();
     new_history_region.point = process_history_point(history_region.historyPoint());
     return new_history_region;
@@ -2183,7 +2180,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
         H5::Group field_output_group = create_group(h5_file, group_name);
         write_string_dataset(field_output_group, "name", field_output_name);
         write_string_dataset(field_output_group, "description", field_output.description().CStr());
-        write_string_dataset(field_output_group, "type", get_field_type(field_output.type()));
+        write_string_dataset(field_output_group, "type", get_field_type_enum(field_output.type()));
         write_integer_dataset(field_output_group, "dim", field_output.dim());
         write_integer_dataset(field_output_group, "dim2", field_output.dim2());
         // TODO: Maybe reach out to 3DS to determine if they plan to implement isEngineeringTensor() function
@@ -2199,21 +2196,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
 
         vector<const char*> valid_invariants;
         for (int i=0; i<field_output.validInvariants().size(); i++) {
-            string invariant;
-            switch(field_output.validInvariants().constGet(i)) {
-                case odb_Enum::MAGNITUDE: invariant = "Magnitude"; break;
-                case odb_Enum::MISES: invariant = "Mises"; break;
-                case odb_Enum::TRESCA: invariant = "Tresca"; break;
-                case odb_Enum::PRESS: invariant = "Press"; break;
-                case odb_Enum::INV3: invariant = "Inv3"; break;
-                case odb_Enum::MAX_PRINCIPAL: invariant = "Max Principal"; break;
-                case odb_Enum::MID_PRINCIPAL: invariant = "Mid Principal"; break;
-                case odb_Enum::MIN_PRINCIPAL: invariant = "Min Principal"; break;
-                case odb_Enum::MAX_INPLANE_PRINCIPAL: invariant = "Max Inplane Principal"; break;
-                case odb_Enum::MIN_INPLANE_PRINCIPAL: invariant = "Min Inplane Principal"; break;
-                case odb_Enum::OUTOFPLANE_PRINCIPAL: invariant = "Out of Plane Principal"; break;
-            }
-            valid_invariants.push_back(invariant.c_str());
+            valid_invariants.push_back(get_valid_invariant_enum(field_output.validInvariants().constGet(i)).c_str());
         }
         write_c_string_vector_dataset(field_output_group, "validInvariants", valid_invariants);
 
@@ -2225,14 +2208,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
                 string location_group_name = group_name + "/locations/" + to_string(i);
                 H5::Group location_group = create_group(h5_file, location_group_name);
 
-                string position;
-                switch(field_location.position()) {
-                    case odb_Enum::NODAL: position = "Nodal"; break;
-                    case odb_Enum::INTEGRATION_POINT: position = "Integration Point"; break;
-                    case odb_Enum::ELEMENT_NODAL: position = "Element Nodal"; break;
-                    case odb_Enum::ELEMENT_FACE: position = "Element Face"; break;
-                    case odb_Enum::CENTROID: position = "Centroid"; break;
-                }
+                string position = get_position_enum(field_location.position());
                 write_string_dataset(location_group, "position", position);
                 if (field_location.sectionPoint().size() > 0) {
                     H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint");

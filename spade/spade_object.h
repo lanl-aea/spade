@@ -654,10 +654,24 @@ class SpadeObject {
         //! Return a string representing a type of field value
         /*!
           From an odb_Enum return a string representation 
-          \param type An odb_Enum type to be rpresented as a string
+          \param type An odb_Enum type to be represented as a string
           \return string representation of odb_Enum
         */
-        string get_field_type(odb_Enum::odb_DataTypeEnum type);
+        string get_field_type_enum(odb_Enum::odb_DataTypeEnum type_enum);
+        //! Return a string representing a valid invariant enum
+        /*!
+          From an odb_Enum return a string representation 
+          \param invariant An odb_Enum type to be represented as a string
+          \return string representation of odb_Enum
+        */
+        string get_valid_invariant_enum(odb_Enum::odb_InvariantEnum invariant_enum);
+        //! Return a string representing a position enum
+        /*!
+          From an odb_Enum return a string representation 
+          \param invariant An odb_Enum type to be represented as a string
+          \return string representation of odb_Enum
+        */
+        string get_position_enum(odb_Enum::odb_ResultPositionEnum position_enum);
         //! Process field bulk data from the odb file
         /*!
           Process a field bulk data object and store the results
