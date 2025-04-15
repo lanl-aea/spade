@@ -651,6 +651,13 @@ class SpadeObject {
           \sa process_odb()
         */
         void process_field_values(const odb_FieldValue &field_value, const odb_SequenceInvariant& invariants, field_value_type &values);
+        //! Return a string representing a type of field value
+        /*!
+          From an odb_Enum return a string representation 
+          \param type An odb_Enum type to be rpresented as a string
+          \return string representation of odb_Enum
+        */
+        string get_field_type(odb_Enum::odb_DataTypeEnum type);
         //! Process field bulk data from the odb file
         /*!
           Process a field bulk data object and store the results
@@ -744,7 +751,7 @@ class SpadeObject {
           \param odb An open odb object
           \param h5_file Open h5_file object for writing
         */
-        void process_and_write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_file);
+        void write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_file);
         //! Process and write the history output data from the odb
         /*!
           With the odb and the h5 file open, loop through and read then write the history output data
@@ -753,16 +760,16 @@ class SpadeObject {
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
         */
-        void process_and_write_history_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name);
-        //! Process and write the field output data from the odb
+        void write_history_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name);
+        //! Process and write the frame data from the odb
         /*!
-          With the odb and the h5 file open, loop through and read then write the field output data
+          With the odb and the h5 file open, loop through and read then write the frame data
           \param odb An open odb object
           \param step An odb step object
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
         */
-        void process_and_write_field_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name);
+        void write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name);
 
 
         //Functions for writing out the data
@@ -874,6 +881,27 @@ class SpadeObject {
           \param field_output Data to be written
         */
         void write_field_output(H5::H5File &h5_file, const string &group_name, field_output_type &field_output);
+        //! Write all field output data to an HDF5 file
+        /*!
+          Write all field output data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param frame Frame with field output data to be written
+          \param group_name Name of the group where data is to be written
+          \param max_width Will store the max width of the frame
+          \param max_length Will store the max length of the frame
+        */
+        void write_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &group_name, int max_width, int max_length);
+        //! Write all field output data to an HDF5 file
+        /*!
+          Write all field output data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param frame Frame with field output data to be written
+          \param group_name Name of the group where data is to be written
+          \param step_name Name of step where data is to be written
+          \param max_width Will store the max width of the frame
+          \param max_length Will store the max length of the frame
+        */
+        void write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &group_name, const string &step_name, int max_width, int max_length);
         //! Write frames data to an HDF5 file
         /*!
           Write frames data into an HDF5 file
@@ -1059,6 +1087,14 @@ class SpadeObject {
           \param string_values The vector of strings that should be written in the new dataset
         */
         void write_string_vector_dataset(const H5::Group &group, const string &dataset_name, const vector<string> &string_values);
+        //! Write a vector of C strings as a dataset
+        /*!
+          Create a dataset with an array of C strings using the passed-in values
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where an array of strings is to be written
+          \param string_values The vector of C strings that should be written in the new dataset
+        */
+        void write_c_string_vector_dataset(const H5::Group &group, const string &dataset_name, vector<const char*> &string_values);
         //! Write an integer as a dataset
         /*!
           Create a dataset with an integer using the passed-in value

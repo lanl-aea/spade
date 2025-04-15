@@ -125,7 +125,7 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
             H5::H5File h5_file = *h5_file_pointer;
 
             this->write_h5_without_steps(h5_file);
-            process_and_write_step_data_h5 (odb, h5_file);
+            write_step_data_h5 (odb, h5_file);
 
             h5_file.close();  // Close the hdf5 file
             this->log_file->log("Closing hdf5 file.");
@@ -1045,6 +1045,20 @@ void SpadeObject::process_field_values(const odb_FieldValue &field_value, const 
     values.sectionPointDescription.push_back(section_point_description); 
 }
 
+string SpadeObject::get_field_type(odb_Enum::odb_DataTypeEnum type) {
+    string value_type = "";
+    switch(type) {
+        case odb_Enum::SCALAR: value_type = "Scalar"; break;
+        case odb_Enum::VECTOR: value_type = "Vector"; break;
+        case odb_Enum::TENSOR_3D_FULL: value_type = "Tensor 3D Full"; break;
+        case odb_Enum::TENSOR_3D_PLANAR: value_type = "Tensor 3D Planar"; break;
+        case odb_Enum::TENSOR_3D_SURFACE: value_type = "Tensor 3D Surface"; break;
+        case odb_Enum::TENSOR_2D_PLANAR: value_type = "Tensor 2D Planar"; break;
+        case odb_Enum::TENSOR_2D_SURFACE: value_type = "Tensor 2D Surface"; break;
+    }
+    return value_type;
+}
+
 field_bulk_type SpadeObject::process_field_bulk_data(const odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data) {
     field_bulk_type new_field_bulk_data;
     new_field_bulk_data.emptyFaces = true;
@@ -1392,7 +1406,7 @@ step_type SpadeObject::process_step(const odb_Step &step, odb_Odb &odb) {
     return new_step;
 }
 
-void SpadeObject::process_and_write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_file) {
+void SpadeObject::write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_file) {
 
     this->log_file->logVerbose("Reading steps.");
     odb_StepRepository step_repository = odb.steps();
@@ -1413,13 +1427,13 @@ void SpadeObject::process_and_write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_f
         write_step(h5_file, step_group, new_step);
 
         // Read and write history output data
-        process_and_write_history_data_h5 (odb, h5_file, current_step, step_group_name);
+        write_history_data_h5 (odb, h5_file, current_step, step_group_name);
         // Read and write history output data
-        process_and_write_field_data_h5 (odb, h5_file, current_step, step_group_name);
+        write_frame_data_h5 (odb, h5_file, current_step, step_group_name);
     }
 }
 
-void SpadeObject::process_and_write_history_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name) {
+void SpadeObject::write_history_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name) {
     const odb_HistoryRegionRepository& history_regions = step.historyRegions();
     odb_HistoryRegionRepositoryIT history_region_iterator (history_regions);
 
@@ -1459,7 +1473,7 @@ void SpadeObject::process_and_write_history_data_h5 (odb_Odb &odb, H5::H5File &h
     }
 }
 
-void SpadeObject::process_and_write_field_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name) {
+void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name) {
     // Read and write frame data
     string frames_group_name = group_name + "/frames";
     H5::Group frames_group = create_group(h5_file, frames_group_name);
@@ -1479,22 +1493,21 @@ void SpadeObject::process_and_write_field_data_h5 (odb_Odb &odb, H5::H5File &h5_
             write_attribute(frame_group, "max_width", to_string(new_frame.max_width));
             write_attribute(frame_group, "max_length", to_string(new_frame.max_length));
 
-            string field_outputs_group_name = frame_group_name + "/fieldOutputs";
-            H5::Group field_outputs_group = create_group(h5_file, field_outputs_group_name);
 
-
-            const odb_FieldOutputRepository& field_outputs = frame.fieldOutputs();
-            odb_FieldOutputRepositoryIT field_outputs_iterator(field_outputs);
-            this->log_file->logVerbose("Reading field output for " + new_frame.description + ".");
             new_frame.max_length = 0;
             new_frame.max_width = 0;
-            int field_output_count = 0;
+            this->log_file->logVerbose("Writing field outputs for " + new_frame.description + ".");
+            if (this->command_line_arguments->get("format") == "odb") {
+                write_field_outputs(h5_file, frame, frame_group_name, new_frame.max_width, new_frame.max_length);
+            } else if (this->command_line_arguments->get("format") == "extract") {
+                write_extract_field_outputs(h5_file, frame, frame_group_name, step.name().CStr(), new_frame.max_width, new_frame.max_length);
+            }
+            /*
             for (field_outputs_iterator.first(); !field_outputs_iterator.isDone(); field_outputs_iterator.next()) {
                 const odb_FieldOutput& field = field_outputs[field_outputs_iterator.currentKey()];
                 field_output_type new_field_output = process_field_output(field);
                 if (new_field_output.max_width > new_frame.max_width) {  new_frame.max_width = new_field_output.max_width; }
                 if (new_field_output.max_length > new_frame.max_length) {  new_frame.max_length = new_field_output.max_length; }
-                field_output_count++;
 
                 if (this->command_line_arguments->get("format") == "odb") {
                     this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
@@ -1504,6 +1517,7 @@ void SpadeObject::process_and_write_field_data_h5 (odb_Odb &odb, H5::H5File &h5_
                     write_extract_field_output(h5_file, new_field_output, step.name().CStr(), frame_number);
                 }
             }
+            */
         }
     }
 
@@ -2154,6 +2168,176 @@ void SpadeObject::write_field_output(H5::H5File &h5_file, const string &group_na
     write_attribute(field_output_group, "max_length", to_string(field_output.max_length));
 }
 
+void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &group_name, int max_width, int max_length) {
+    string field_outputs_group_name = group_name + "/fieldOutputs";
+    H5::Group field_outputs_group = create_group(h5_file, field_outputs_group_name);
+
+    const odb_FieldOutputRepository& field_outputs = frame.fieldOutputs();
+    odb_FieldOutputRepositoryIT field_outputs_iterator(field_outputs);
+    for (field_outputs_iterator.first(); !field_outputs_iterator.isDone(); field_outputs_iterator.next()) {
+        const odb_FieldOutput& field_output = field_outputs[field_outputs_iterator.currentKey()];
+//        field_output_type new_field_output = process_field_output(field);
+
+        string field_output_name = field_output.name().CStr();
+        string field_output_group_name = field_outputs_group_name + "/" + replace_slashes(field_output_name);
+        H5::Group field_output_group = create_group(h5_file, group_name);
+        write_string_dataset(field_output_group, "name", field_output_name);
+        write_string_dataset(field_output_group, "description", field_output.description().CStr());
+        write_string_dataset(field_output_group, "type", get_field_type(field_output.type()));
+        write_integer_dataset(field_output_group, "dim", field_output.dim());
+        write_integer_dataset(field_output_group, "dim2", field_output.dim2());
+        // TODO: Maybe reach out to 3DS to determine if they plan to implement isEngineeringTensor() function
+        // string isEngineeringTensor = (field_output.isEngineeringTensor()) ? "true" : "false";
+        // write_string_dataset(field_output_group, "isEngineeringTensor", isEngineeringTensor);
+
+        vector<const char*> component_labels;
+        odb_SequenceString available_components = field_output.componentLabels();
+        for (int i=0; i<available_components.size(); i++) {
+            component_labels.push_back(available_components[i].CStr());
+        }
+        write_c_string_vector_dataset(field_output_group, "componentLabels", component_labels);
+
+        vector<const char*> valid_invariants;
+        for (int i=0; i<field_output.validInvariants().size(); i++) {
+            string invariant;
+            switch(field_output.validInvariants().constGet(i)) {
+                case odb_Enum::MAGNITUDE: invariant = "Magnitude"; break;
+                case odb_Enum::MISES: invariant = "Mises"; break;
+                case odb_Enum::TRESCA: invariant = "Tresca"; break;
+                case odb_Enum::PRESS: invariant = "Press"; break;
+                case odb_Enum::INV3: invariant = "Inv3"; break;
+                case odb_Enum::MAX_PRINCIPAL: invariant = "Max Principal"; break;
+                case odb_Enum::MID_PRINCIPAL: invariant = "Mid Principal"; break;
+                case odb_Enum::MIN_PRINCIPAL: invariant = "Min Principal"; break;
+                case odb_Enum::MAX_INPLANE_PRINCIPAL: invariant = "Max Inplane Principal"; break;
+                case odb_Enum::MIN_INPLANE_PRINCIPAL: invariant = "Min Inplane Principal"; break;
+                case odb_Enum::OUTOFPLANE_PRINCIPAL: invariant = "Out of Plane Principal"; break;
+            }
+            valid_invariants.push_back(invariant.c_str());
+        }
+        write_c_string_vector_dataset(field_output_group, "validInvariants", valid_invariants);
+
+        odb_SequenceFieldLocation field_locations = field_output.locations();
+        if (field_locations.size() > 0) {
+            H5::Group locations_group = create_group(h5_file, group_name + "/locations");
+            for (int i=0; i<field_locations.size(); i++) {
+                odb_FieldLocation field_location = field_locations.constGet(i);
+                string location_group_name = group_name + "/locations/" + to_string(i);
+                H5::Group location_group = create_group(h5_file, location_group_name);
+
+                string position;
+                switch(field_location.position()) {
+                    case odb_Enum::NODAL: position = "Nodal"; break;
+                    case odb_Enum::INTEGRATION_POINT: position = "Integration Point"; break;
+                    case odb_Enum::ELEMENT_NODAL: position = "Element Nodal"; break;
+                    case odb_Enum::ELEMENT_FACE: position = "Element Face"; break;
+                    case odb_Enum::CENTROID: position = "Centroid"; break;
+                }
+                write_string_dataset(location_group, "position", position);
+                if (field_location.sectionPoint().size() > 0) {
+                    H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint");
+                    for (int j=0; i<field_location.sectionPoint().size(); j++) {
+                        H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint/" + to_string(field_location.sectionPoint(j).number()));
+                        write_string_dataset(section_point_group, "description", field_location.sectionPoint(j).description().CStr());
+                    }
+                }
+            }
+        }
+
+
+        /*
+    odb_SequenceFieldValue field_values = field_output.values();
+    set<string> instance_names;
+    if (field_output.validInvariants().size() > 0) {
+        for (int i=0; i<field_values.size(); i++) {
+            odb_FieldValue field_value  = field_values.constGet(i);
+            string instance_name = field_value.instance().name().CStr();
+            if (instance_name.empty()) { instance_name = this->default_instance_name; }
+            if (instance_names.find(instance_name) == instance_names.end()) {
+                new_field_output.values[instance_name].fieldValues.magnitudeEmpty = true;
+                new_field_output.values[instance_name].fieldValues.trescaEmpty = true;
+                new_field_output.values[instance_name].fieldValues.pressEmpty = true;
+                new_field_output.values[instance_name].fieldValues.inv3Empty = true;
+                new_field_output.values[instance_name].fieldValues.maxPrincipalEmpty = true;
+                new_field_output.values[instance_name].fieldValues.midPrincipalEmpty = true;
+                new_field_output.values[instance_name].fieldValues.minPrincipalEmpty = true;
+                new_field_output.values[instance_name].fieldValues.maxInPlanePrincipalEmpty = true;
+                new_field_output.values[instance_name].fieldValues.minInPlanePrincipalEmpty = true;
+                new_field_output.values[instance_name].fieldValues.outOfPlanePrincipalEmpty = true;
+                new_field_output.values[instance_name].fieldValues.elementEmpty = true;
+                new_field_output.values[instance_name].fieldValues.nodeEmpty = true;
+                new_field_output.values[instance_name].fieldValues.integrationPointEmpty = true;
+                new_field_output.values[instance_name].fieldValues.typeEmpty = true;
+                new_field_output.values[instance_name].fieldValues.sectionPointNumberEmpty = true;
+                new_field_output.values[instance_name].fieldValues.sectionPointDescriptionEmpty = true;
+                instance_names.insert(instance_name);
+            }
+
+            process_field_values(field_value, field_output.validInvariants(), new_field_output.values[instance_name].fieldValues);
+        }
+    }
+    for (string instance_name : instance_names) {
+        // Clear any empty vector to save memory
+        if (new_field_output.values[instance_name].fieldValues.magnitudeEmpty) { new_field_output.values[instance_name].fieldValues.magnitude.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.trescaEmpty) { new_field_output.values[instance_name].fieldValues.tresca.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.pressEmpty) { new_field_output.values[instance_name].fieldValues.press.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.inv3Empty) { new_field_output.values[instance_name].fieldValues.inv3.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.maxPrincipalEmpty) { new_field_output.values[instance_name].fieldValues.maxPrincipal.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.midPrincipalEmpty) { new_field_output.values[instance_name].fieldValues.midPrincipal.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.minPrincipalEmpty) { new_field_output.values[instance_name].fieldValues.minPrincipal.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.maxInPlanePrincipalEmpty) { new_field_output.values[instance_name].fieldValues.maxInPlanePrincipal.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.minInPlanePrincipalEmpty) { new_field_output.values[instance_name].fieldValues.minInPlanePrincipal.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.outOfPlanePrincipalEmpty) { new_field_output.values[instance_name].fieldValues.outOfPlanePrincipal.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.elementEmpty) { new_field_output.values[instance_name].fieldValues.elementLabel.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.nodeEmpty) { new_field_output.values[instance_name].fieldValues.nodeLabel.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.integrationPointEmpty) { new_field_output.values[instance_name].fieldValues.integrationPoint.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.typeEmpty) { new_field_output.values[instance_name].fieldValues.type.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.sectionPointNumberEmpty) { new_field_output.values[instance_name].fieldValues.sectionPointNumber.clear(); }
+        if (new_field_output.values[instance_name].fieldValues.sectionPointDescriptionEmpty) { new_field_output.values[instance_name].fieldValues.sectionPointDescription.clear(); }
+    }
+
+    new_field_output.max_length = 0;
+    new_field_output.max_width = 0;
+    const odb_SequenceFieldBulkData& field_bulk_values = field_output.bulkDataBlocks();
+    new_field_output.isComplex = field_output.isComplex();
+    for (int i=0; i<field_bulk_values.size(); i++) {  // There seems to be a "block" per element type and if the element type is the same per section point
+                                                      // e.g. In one odb the "E" field values had three "blocks" One for element type B23 (section point 1)
+                                                      // one for element type B23 (section point 5), and one for element type GAPUNI
+        const odb_FieldBulkData& field_bulk_value = field_bulk_values[i];
+        string instance_name = field_bulk_value.instance().name().CStr();
+        if (instance_name.empty()) { instance_name = this->default_instance_name; }
+        if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance_name)) {
+            continue;
+        }
+        new_field_output.values[instance_name].bulkValues.push_back(process_field_bulk_data(field_bulk_value, field_output.validInvariants(), field_output.isComplex()));
+        if (new_field_output.values[instance_name].bulkValues[i].width > new_field_output.max_width) {  new_field_output.max_width = new_field_output.values[instance_name].bulkValues[i].width; }
+        if (new_field_output.values[instance_name].bulkValues[i].length > new_field_output.max_length) {  new_field_output.max_length = new_field_output.values[instance_name].bulkValues[i].length; }
+    }
+
+
+        if (new_field_output.max_width > max_width) {  max_width = new_field_output.max_width; }
+        if (new_field_output.max_length > max_length) {  max_length = new_field_output.max_length; }
+        */
+    }
+}
+
+void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &group_name, const string &step_name, int max_width, int max_length) {
+    string field_outputs_group_name = group_name + "/fieldOutputs";
+    H5::Group field_outputs_group = create_group(h5_file, field_outputs_group_name);
+
+    const odb_FieldOutputRepository& field_outputs = frame.fieldOutputs();
+    odb_FieldOutputRepositoryIT field_outputs_iterator(field_outputs);
+    for (field_outputs_iterator.first(); !field_outputs_iterator.isDone(); field_outputs_iterator.next()) {
+        const odb_FieldOutput& field_output = field_outputs[field_outputs_iterator.currentKey()];
+//        field_output_type new_field_output = process_field_output(field);
+
+/*
+        if (new_field_output.max_width > max_width) {  max_width = new_field_output.max_width; }
+        if (new_field_output.max_length > max_length) {  max_length = new_field_output.max_length; }
+*/
+    }
+}
+
 void SpadeObject::write_frame(H5::H5File &h5_file, H5::Group &frame_group, frame_type &frame) {
     if (frame.cyclicModeNumber != -1) { write_integer_dataset(frame_group, "cyclicModeNumber", frame.cyclicModeNumber); }
     write_integer_dataset(frame_group, "mode", frame.mode);
@@ -2761,6 +2945,22 @@ void SpadeObject::write_string_vector_dataset(const H5::Group& group, const stri
     }
     dataspace.close();
 }
+
+void SpadeObject::write_c_string_vector_dataset(const H5::Group& group, const string & dataset_name, vector<const char*> & string_values) {
+    if (string_values.empty()) { return; }
+    hsize_t dimensions[1] {string_values.size()};
+    H5::DataSpace  dataspace(1, dimensions);
+    H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
+        dataset.write(string_values.data(), string_type);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
+    dataspace.close();
+}
+
 
 void SpadeObject::write_string_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, string *string_array) {
     if (!string_array) { return; }
