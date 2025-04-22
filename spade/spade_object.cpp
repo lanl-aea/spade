@@ -2189,51 +2189,78 @@ void SpadeObject::write_bulk_data(H5::H5File &h5_file, const string &group_name,
 //            write_integer_2D_data(bulk_group, "integrationPoints", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.integrationPoints());
         }
 
-    /*
-    if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
-        data = field_bulk_data.data();
-        conjugate_data = field_bulk_data.conjugateData();
-        local_coordinate_system = field_bulk_data.localCoordSystem();
-        new_field_bulk_data.data.insert(new_field_bulk_data.data.end(), &data[0], &data[full_length]);
-        if (complex_data) {
-            new_field_bulk_data.conjugateData.insert(new_field_bulk_data.conjugateData.end(), &conjugate_data[0], &conjugate_data[full_length]);
-        }
-        if ((local_coordinate_system) && (coord_length)) {
-            new_field_bulk_data.localCoordSystem.insert(new_field_bulk_data.localCoordSystem.end(), &local_coordinate_system[0], &local_coordinate_system[coord_length]);
-        }
-    } else {
-        data_double = field_bulk_data.dataDouble();
-        conjugate_data_double = field_bulk_data.conjugateDataDouble();
-        local_coordinate_system_double = field_bulk_data.localCoordSystemDouble();
-        new_field_bulk_data.dataDouble.insert(new_field_bulk_data.dataDouble.end(), &data_double[0], &data_double[full_length]);
-        if (complex_data) {
-            new_field_bulk_data.conjugateDataDouble.insert(new_field_bulk_data.conjugateDataDouble.end(), &conjugate_data_double[0], &conjugate_data_double[full_length]);
-        }
-        if ((local_coordinate_system_double) && (coord_length)) {
-            new_field_bulk_data.localCoordSystemDouble.insert(new_field_bulk_data.localCoordSystemDouble.end(), &local_coordinate_system_double[0], &local_coordinate_system_double[coord_length]);
-        }
-    }
-    */
         if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
-            write_float_3D_data(bulk_group, "data", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.data);
-            vector<float>().swap(field_bulk_data.data);  // Swap float vector with empty float vector (freeing memory of vector)
-            write_float_3D_data(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width, field_bulk_data.conjugateData);
-            write_float_3D_data(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements, number_of_integration_points, field_bulk_data.orientationWidth(), field_bulk_data.localCoordSystem);
+            data = field_bulk_data.data();
+            vector<float> bulk_data;
+            bulk_data.insert(bulk_data.end(), &data[0], &data[full_length]);
+            write_float_3D_data(bulk_group, "data", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), bulk_data);
+//            write_float_3D_data(bulk_group, "data", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.data());
+            vector<float>().swap(bulk_data);  // Swap float vector with empty float vector (freeing memory of vector)
+            if (complex_data) {
+                conjugate_data = field_bulk_data.conjugateData();
+                vector<float> bulk_conjugate_data;
+                bulk_conjugate_data.insert(bulk_conjugate_data.end(), &conjugate_data[0], &conjugate_data[full_length]);
+                write_float_3D_data(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), bulk_conjugate_data);
+//                write_float_3D_data(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.conjugateData());
+            }
+            local_coordinate_system = field_bulk_data.localCoordSystem();
+            if ((local_coordinate_system) && (coord_length)) {
+                vector<float> bulk_coordinate_system;
+                bulk_coordinate_system.insert(bulk_coordinate_system.end(), &local_coordinate_system[0], &local_coordinate_system[full_length]);
+                write_float_3D_data(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), bulk_coordinate_system);
+//                write_float_3D_data(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), field_bulk_data.localCoordSystem());
+            }
         } else {  // Double precision
-            write_double_3D_data(bulk_group, "data", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width, field_bulk_data.dataDouble);
-            vector<double>().swap(field_bulk_data.dataDouble);  // Swap vector with empty vector (freeing memory of vector)
-            write_double_3D_data(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width, field_bulk_data.conjugateDataDouble);
-            write_double_3D_data(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), field_bulk_data.localCoordSystemDouble);
+            data_double = field_bulk_data.dataDouble();
+            vector<float> bulk_data_double;
+            bulk_data_double.insert(bulk_data_double.end(), &data_double[0], &data_double[full_length]);
+            write_double_3D_data(bulk_group, "data", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), bulk_data_double);
+//            write_double_3D_data(bulk_group, "data", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.dataDouble());
+            vector<double>().swap(bulk_data_double);  // Swap vector with empty vector (freeing memory of vector)
+            if (complex_data) {
+                conjugate_data_double = field_bulk_data.conjugateDataDouble();
+                vector<float> bulk_conjugate_data_double;
+                bulk_conjugate_data_double.insert(bulk_conjugate_data_double.end(), &conjugate_data_double[0], &conjugate_data_double[full_length]);
+                write_double_3D_data(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), bulk_conjugate_data_double);
+//                write_double_3D_data(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.conjugateDataDouble());
+            }
+            local_coordinate_system_double = field_bulk_data.localCoordSystemDouble();
+            if ((local_coordinate_system_double) && (coord_length)) {
+                vector<float> bulk_coordinate_system_double;
+                bulk_coordinate_system_double.insert(bulk_coordinate_system_double.end(), &local_coordinate_system_double[0], &local_coordinate_system_double[full_length]);
+                write_double_3D_data(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), bulk_coordinate_system_double);
+//                write_double_3D_data(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), field_bulk_data.localCoordSystemDouble());
+            }
         }
     } else {  // Nodes
         if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
-            write_float_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width, field_bulk_data.data);
-            vector<float>().swap(field_bulk_data.data);  // Swap float vector with empty float vector (freeing memory of vector)
-            write_float_2D_data(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width, field_bulk_data.conjugateData);
+            data = field_bulk_data.data();
+            vector<float> bulk_data;
+            bulk_data.insert(bulk_data.end(), &data[0], &data[full_length]);
+            write_float_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), data);
+//            write_float_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.data());
+            vector<float>().swap(data);  // Swap float vector with empty float vector (freeing memory of vector)
+            if (complex_data) {
+                conjugate_data = field_bulk_data.conjugateData();
+                vector<float> bulk_conjugate_data;
+                bulk_conjugate_data.insert(bulk_conjugate_data.end(), &conjugate_data[0], &conjugate_data[full_length]);
+                write_float_2D_data(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), bulk_conjugate_data);
+//                write_float_2D_data(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.conjugateData());
+            }
         } else {  // Double precision
-            write_double_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width, field_bulk_data.dataDouble);
-            vector<double>().swap(field_bulk_data.dataDouble);  // Swap vector with empty vector (freeing memory of vector)
-            write_double_2D_data(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width, field_bulk_data.conjugateDataDouble);
+            data_double = field_bulk_data.dataDouble();
+            vector<float> bulk_data_double;
+            bulk_data_double.insert(bulk_data_double.end(), &data_double[0], &data_double[full_length]);
+            write_double_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), bulk_data_double);
+//            write_double_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.dataDouble());
+            vector<double>().swap(data_double);  // Swap vector with empty vector (freeing memory of vector)
+            if (complex_data) {
+                conjugate_data_double = field_bulk_data.conjugateDataDouble();
+                vector<float> bulk_conjugate_data_double;
+                bulk_conjugate_data_double.insert(bulk_conjugate_data_double.end(), &conjugate_data_double[0], &conjugate_data_double[full_length]);
+                write_double_2D_data(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), bulk_conjugate_data_double);
+//                write_double_2D_data(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.conjugateDataDouble());
+            }
         }
 
         int* node_labels = field_bulk_data.nodeLabels();
