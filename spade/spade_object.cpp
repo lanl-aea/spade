@@ -1497,24 +1497,8 @@ void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const 
             if (this->command_line_arguments->get("format") == "odb") {
                 write_field_outputs(h5_file, frame, frame_group_name, new_frame.max_width, new_frame.max_length);
             } else if (this->command_line_arguments->get("format") == "extract") {
-                write_extract_field_outputs(h5_file, frame, frame_group_name, step.name().CStr(), new_frame.max_width, new_frame.max_length);
+                write_extract_field_outputs(h5_file, frame, step.name().CStr(), new_frame.max_width, new_frame.max_length);
             }
-            /*
-            for (field_outputs_iterator.first(); !field_outputs_iterator.isDone(); field_outputs_iterator.next()) {
-                const odb_FieldOutput& field = field_outputs[field_outputs_iterator.currentKey()];
-                field_output_type new_field_output = process_field_output(field);
-                if (new_field_output.max_width > new_frame.max_width) {  new_frame.max_width = new_field_output.max_width; }
-                if (new_field_output.max_length > new_frame.max_length) {  new_frame.max_length = new_field_output.max_length; }
-
-                if (this->command_line_arguments->get("format") == "odb") {
-                    this->log_file->logVerbose("Writing field output for " + frame_group_name + ".");
-                    string field_output_group_name = field_outputs_group_name + "/" + replace_slashes(new_field_output.name);
-                    write_field_output(h5_file, field_output_group_name, new_field_output);
-                } else if (this->command_line_arguments->get("format") == "extract") {
-                    write_extract_field_output(h5_file, new_field_output, step.name().CStr(), frame_number);
-                }
-            }
-            */
         }
     }
 
@@ -2465,9 +2449,8 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
     }
 }
 
-void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &group_name, const string &step_name, int max_width, int max_length) {
-    string field_outputs_group_name = group_name + "/fieldOutputs";
-    H5::Group field_outputs_group = create_group(h5_file, field_outputs_group_name);
+void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &step_name, int max_width, int max_length) {
+    string frame_number = to_string(frame.incrementNumber());
 
     const odb_FieldOutputRepository& field_outputs = frame.fieldOutputs();
     odb_FieldOutputRepositoryIT field_outputs_iterator(field_outputs);
@@ -2475,10 +2458,137 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
         const odb_FieldOutput& field_output = field_outputs[field_outputs_iterator.currentKey()];
 //        field_output_type new_field_output = process_field_output(field);
 
-/*
-        if (new_field_output.max_width > max_width) {  max_width = new_field_output.max_width; }
-        if (new_field_output.max_length > max_length) {  max_length = new_field_output.max_length; }
-*/
+        string field_output_name = field_output.name().CStr();
+        string field_output_safe_name = replace_slashes(field_output_name);
+
+        vector<const char*> component_labels;
+        odb_SequenceString available_components = field_output.componentLabels();
+        for (int i=0; i<available_components.size(); i++) {
+            component_labels.push_back(available_components[i].CStr());
+        }
+
+        vector<string> valid_invariants;
+        for (int i=0; i<field_output.validInvariants().size(); i++) {
+            valid_invariants.push_back(get_valid_invariant_enum(field_output.validInvariants().constGet(i)));
+        }
+
+        odb_SequenceFieldLocation field_locations = field_output.locations();
+
+        map<string, field_value_type> values_map;  // String index is the name of the instance
+        odb_SequenceFieldValue field_values = field_output.values();
+        set<string> instance_names;
+        bool write_mises = false;
+        if (field_output.validInvariants().size() > 0) {
+            field_value_type new_field_value;
+            for (int i=0; i<field_values.size(); i++) {
+                odb_FieldValue field_value  = field_values.constGet(i);
+                string instance_name = field_value.instance().name().CStr();
+                if (instance_name.empty()) { instance_name = this->default_instance_name; }
+                if (instance_names.find(instance_name) == instance_names.end()) {
+                    values_map[instance_name].magnitudeEmpty = true;
+                    values_map[instance_name].trescaEmpty = true;
+                    values_map[instance_name].pressEmpty = true;
+                    values_map[instance_name].inv3Empty = true;
+                    values_map[instance_name].maxPrincipalEmpty = true;
+                    values_map[instance_name].midPrincipalEmpty = true;
+                    values_map[instance_name].minPrincipalEmpty = true;
+                    values_map[instance_name].maxInPlanePrincipalEmpty = true;
+                    values_map[instance_name].minInPlanePrincipalEmpty = true;
+                    values_map[instance_name].outOfPlanePrincipalEmpty = true;
+                    values_map[instance_name].elementEmpty = true;
+                    values_map[instance_name].nodeEmpty = true;
+                    values_map[instance_name].integrationPointEmpty = true;
+                    values_map[instance_name].typeEmpty = true;
+                    values_map[instance_name].sectionPointNumberEmpty = true;
+                    values_map[instance_name].sectionPointDescriptionEmpty = true;
+                    instance_names.insert(instance_name);
+                }
+                process_field_values(field_value, field_output.validInvariants(), values_map[instance_name]);
+            }
+            if (field_output.validInvariants().isMember(odb_Enum::MISES)) {
+                write_mises = true;
+            }
+        }
+
+        for (auto [instance_name, field_output_value] : values_map) {
+            string field_output_group_name = instance_name + "/FieldOutputs/" + field_output_safe_name + "/" + step_name + "/" + frame_number;
+            bool sub_group_exists = false;
+            H5::Group field_output_group = open_subgroup(h5_file, field_output_group_name, sub_group_exists);
+            write_field_values(h5_file, field_output_group_name, field_output_group, field_output_value);
+
+            write_string_dataset(field_output_group, "name", field_output_name);
+            write_string_dataset(field_output_group, "description", field_output.description().CStr());
+            write_string_dataset(field_output_group, "type", get_field_type_enum(field_output.type()));
+            write_integer_dataset(field_output_group, "dim", field_output.dim());
+            write_integer_dataset(field_output_group, "dim2", field_output.dim2());
+            // TODO: Maybe reach out to 3DS to determine if they plan to implement isEngineeringTensor() function
+            // string isEngineeringTensor = (field_output.isEngineeringTensor()) ? "true" : "false";
+            // write_string_dataset(field_output_group, "isEngineeringTensor", isEngineeringTensor);
+
+            write_c_string_vector_dataset(field_output_group, "componentLabels", component_labels);
+            write_string_vector_dataset(field_output_group, "validInvariants", valid_invariants);
+
+            if (field_locations.size() > 0) {
+                H5::Group locations_group = create_group(h5_file, field_output_group_name + "/locations");
+                for (int i=0; i<field_locations.size(); i++) {
+                    odb_FieldLocation field_location = field_locations.constGet(i);
+                    string location_group_name = field_output_group_name + "/locations/" + to_string(i);
+                    H5::Group location_group = create_group(h5_file, location_group_name);
+
+                    string position = get_position_enum(field_location.position());
+                    write_string_dataset(location_group, "position", position);
+                    if (field_location.sectionPoint().size() > 0) {
+                        H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint");
+                        for (int j=0; i<field_location.sectionPoint().size(); j++) {
+                            H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint/" + to_string(field_location.sectionPoint(j).number()));
+                            write_string_dataset(section_point_group, "description", field_location.sectionPoint(j).description().CStr());
+                        }
+                    }
+                }
+            }
+
+        }
+
+        int field_output_max_length = 0;
+        int field_output_max_width = 0;
+        set<string> field_data_names;
+        const odb_SequenceFieldBulkData& field_bulk_values = field_output.bulkDataBlocks();
+        for (int i=0; i<field_bulk_values.size(); i++) {  // There seems to be a "block" per element type and if the element type is the same per section point
+                                                        // e.g. In one odb the "E" field values had three "blocks" One for element type B23 (section point 1)
+                                                        // one for element type B23 (section point 5), and one for element type GAPUNI
+            const odb_FieldBulkData& field_bulk_value = field_bulk_values[i];
+
+            // Skip instance if 'all' not specified and instance doesn't match user input
+            string instance_name = field_bulk_value.instance().name().CStr();
+            if (instance_name.empty()) { instance_name = this->default_instance_name; }
+            if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance_name)) {
+                continue;
+            }
+
+            // Get name of group where to write data
+            string position = get_position_enum(field_bulk_value.position());
+            string data_name;
+            string base_element_type = "";
+            base_element_type = field_bulk_value.baseElementType().CStr();
+            if (!base_element_type.empty()) { 
+                data_name = field_bulk_value.baseElementType().CStr();
+            } else {
+                data_name = position;
+            }
+            if (field_data_names.find(data_name) != field_data_names.end()) {  // If this name already exists, append the index to it
+                data_name = data_name + "_" + to_string(i);   // It would be nice to append the section point number to it, but I'm not sure how to do that reliably
+            }
+            field_data_names.insert(data_name);
+
+            if (field_bulk_value.width() > field_output_max_width) {  field_output_max_width = field_bulk_value.width(); }
+            if (field_bulk_value.length() > field_output_max_length) {  field_output_max_length = field_bulk_value.length(); }
+
+            string value_group_name = instance_name + "/FieldOutputs/" + field_output_safe_name + "/" + step_name + "/" + frame_number + "/" + data_name;
+            write_bulk_data(h5_file, value_group_name, field_bulk_value, field_output.isComplex(), write_mises);
+        }
+
+        if (field_output_max_width > max_width) {  max_width = field_output_max_width; }
+        if (field_output_max_length > max_length) {  max_length = field_output_max_length; }
     }
 }
 
