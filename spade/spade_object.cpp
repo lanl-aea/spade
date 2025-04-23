@@ -2115,7 +2115,8 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
 }
 
 void SpadeObject::write_bulk_data(H5::H5File &h5_file, const string &group_name, const odb_FieldBulkData &field_bulk_data, bool complex_data, bool write_mises) {
-    H5::Group bulk_group = create_group(h5_file, group_name);
+    bool sub_group_exists = false;
+    H5::Group bulk_group = open_subgroup(h5_file, group_name, sub_group_exists);
 
     int full_length = field_bulk_data.length() * field_bulk_data.width();
     int coord_length = 0;
