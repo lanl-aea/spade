@@ -887,7 +887,7 @@ class SpadeObject {
           \param complex_data Boolean indicating if the data is complex
           \param write_mises Boolean indicating if mises data should be written
         */
-        void write_bulk_data(H5::H5File &h5_file, const string &group_name, odb_FieldBulkData &field_bulk_data, bool complex_data, bool write_mises);
+        void write_bulk_data(H5::H5File &h5_file, const string &group_name, const odb_FieldBulkData &field_bulk_data, bool complex_data, bool write_mises);
         //! Write field value data to an HDF5 file
         /*!
           Write field value data into an HDF5 file

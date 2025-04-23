@@ -2114,7 +2114,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
     }
 }
 
-void SpadeObject::write_bulk_data(H5::H5File &h5_file, const string &group_name, odb_FieldBulkData &field_bulk_data, bool complex_data, bool write_mises) {
+void SpadeObject::write_bulk_data(H5::H5File &h5_file, const string &group_name, const odb_FieldBulkData &field_bulk_data, bool complex_data, bool write_mises) {
     H5::Group bulk_group = create_group(h5_file, group_name);
 
     int full_length = field_bulk_data.length() * field_bulk_data.width();
@@ -2134,29 +2134,28 @@ void SpadeObject::write_bulk_data(H5::H5File &h5_file, const string &group_name,
 
         int number_of_integration_points = field_bulk_data.length()/field_bulk_data.numberOfElements();
         coord_length = field_bulk_data.length() * field_bulk_data.orientationWidth();
-        odb_Enum::odb_ElementFaceEnum* faces = field_bulk_data.faces();
-//        string faces[field_bulk_data.numberOfElements()][number_of_integration_points];
 
-        if (field_bulk_data.baseElementType()) {
+        if (field_bulk_data.baseElementType().CStr() != "") {
             write_string_dataset(bulk_group, "baseElementType", field_bulk_data.baseElementType().CStr());
         }
         write_integer_dataset(bulk_group, "orientationWidth", field_bulk_data.orientationWidth());
-        if (field_bulk_data.numberOfElements != 0) {
+        if (field_bulk_data.numberOfElements() != 0) {
             write_integer_dataset(bulk_group, "numberOfElements", field_bulk_data.numberOfElements());
         }
         if (field_bulk_data.valuesPerElement() != 0) {
             write_integer_dataset(bulk_group, "valuesPerElement", field_bulk_data.valuesPerElement());
         }
 
-        vector<const char*> component_labels;
+        vector<const char*> field_component_labels;
         odb_SequenceString component_labels = field_bulk_data.componentLabels();
         for (int i=0; i<field_bulk_data.componentLabels().size(); i++) {  // Usually just around 3 labels or less
-            component_labels.push_back(field_bulk_data.componentLabels[i].CStr());
+            field_component_labels.push_back(component_labels[i].CStr());
         }
-        write_c_string_vector_dataset(bulk_group, "componentLabels", component_labels);
+        write_c_string_vector_dataset(bulk_group, "componentLabels", field_component_labels);
 
 
         odb_Enum::odb_ElementFaceEnum* faces = field_bulk_data.faces();
+//        string faces[field_bulk_data.numberOfElements()][number_of_integration_points];
         if (faces) {
             vector<vector<string>> faces_vector;
             int current_position = 0;
@@ -2167,13 +2166,14 @@ void SpadeObject::write_bulk_data(H5::H5File &h5_file, const string &group_name,
                 }
                 faces_vector.push_back(current_faces);
             }
-            write_string_2D_vector(bulk_group, "faces", number_of_integration_points, field_bulk_data.faces);
+            write_string_2D_vector(bulk_group, "faces", number_of_integration_points, faces_vector);
         }
 
         float* bulk_mises = field_bulk_data.mises();
-        float mises[field_bulk_data.numberOfElements()][number_of_integration_points];
+//        float mises[field_bulk_data.numberOfElements()][number_of_integration_points];
+        vector<float> mises;
         if (write_mises) {
-            mises.insert(mises.end(), &bulk_mises[0], &bulk_mises[new_field_bulk_data.length()]);
+            mises.insert(mises.end(), &bulk_mises[0], &bulk_mises[field_bulk_data.length()]);
             write_float_2D_data(bulk_group, "mises", field_bulk_data.numberOfElements(), field_bulk_data.width(), mises);
 //            write_float_2D_data(bulk_group, "mises", field_bulk_data.numberOfElements(), field_bulk_data.width(), field_bulk_data.mises());
         }
@@ -2212,21 +2212,21 @@ void SpadeObject::write_bulk_data(H5::H5File &h5_file, const string &group_name,
             }
         } else {  // Double precision
             data_double = field_bulk_data.dataDouble();
-            vector<float> bulk_data_double;
+            vector<double> bulk_data_double;
             bulk_data_double.insert(bulk_data_double.end(), &data_double[0], &data_double[full_length]);
             write_double_3D_data(bulk_group, "data", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), bulk_data_double);
 //            write_double_3D_data(bulk_group, "data", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.dataDouble());
             vector<double>().swap(bulk_data_double);  // Swap vector with empty vector (freeing memory of vector)
             if (complex_data) {
                 conjugate_data_double = field_bulk_data.conjugateDataDouble();
-                vector<float> bulk_conjugate_data_double;
+                vector<double> bulk_conjugate_data_double;
                 bulk_conjugate_data_double.insert(bulk_conjugate_data_double.end(), &conjugate_data_double[0], &conjugate_data_double[full_length]);
                 write_double_3D_data(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), bulk_conjugate_data_double);
 //                write_double_3D_data(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.conjugateDataDouble());
             }
             local_coordinate_system_double = field_bulk_data.localCoordSystemDouble();
             if ((local_coordinate_system_double) && (coord_length)) {
-                vector<float> bulk_coordinate_system_double;
+                vector<double> bulk_coordinate_system_double;
                 bulk_coordinate_system_double.insert(bulk_coordinate_system_double.end(), &local_coordinate_system_double[0], &local_coordinate_system_double[full_length]);
                 write_double_3D_data(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), bulk_coordinate_system_double);
 //                write_double_3D_data(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), field_bulk_data.localCoordSystemDouble());
@@ -2237,9 +2237,9 @@ void SpadeObject::write_bulk_data(H5::H5File &h5_file, const string &group_name,
             data = field_bulk_data.data();
             vector<float> bulk_data;
             bulk_data.insert(bulk_data.end(), &data[0], &data[full_length]);
-            write_float_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), data);
+            write_float_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), bulk_data);
 //            write_float_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.data());
-            vector<float>().swap(data);  // Swap float vector with empty float vector (freeing memory of vector)
+            vector<float>().swap(bulk_data);  // Swap float vector with empty float vector (freeing memory of vector)
             if (complex_data) {
                 conjugate_data = field_bulk_data.conjugateData();
                 vector<float> bulk_conjugate_data;
@@ -2249,14 +2249,14 @@ void SpadeObject::write_bulk_data(H5::H5File &h5_file, const string &group_name,
             }
         } else {  // Double precision
             data_double = field_bulk_data.dataDouble();
-            vector<float> bulk_data_double;
+            vector<double> bulk_data_double;
             bulk_data_double.insert(bulk_data_double.end(), &data_double[0], &data_double[full_length]);
             write_double_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), bulk_data_double);
 //            write_double_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.dataDouble());
-            vector<double>().swap(data_double);  // Swap vector with empty vector (freeing memory of vector)
+            vector<double>().swap(bulk_data_double);  // Swap vector with empty vector (freeing memory of vector)
             if (complex_data) {
                 conjugate_data_double = field_bulk_data.conjugateDataDouble();
-                vector<float> bulk_conjugate_data_double;
+                vector<double> bulk_conjugate_data_double;
                 bulk_conjugate_data_double.insert(bulk_conjugate_data_double.end(), &conjugate_data_double[0], &conjugate_data_double[full_length]);
                 write_double_2D_data(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), bulk_conjugate_data_double);
 //                write_double_2D_data(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.conjugateDataDouble());
@@ -2421,8 +2421,8 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
         }
 
 
-        field_output_max_length = 0;
-        field_output_max_width = 0;
+        int field_output_max_length = 0;
+        int field_output_max_width = 0;
         set<string> field_data_names;
         const odb_SequenceFieldBulkData& field_bulk_values = field_output.bulkDataBlocks();
         for (int i=0; i<field_bulk_values.size(); i++) {  // There seems to be a "block" per element type and if the element type is the same per section point
@@ -2442,7 +2442,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
             string data_name;
             string base_element_type = "";
             base_element_type = field_bulk_value.baseElementType().CStr();
-            if (!base_elment_type.empty()) { 
+            if (!base_element_type.empty()) { 
                 data_name = field_bulk_value.baseElementType().CStr();
             } else {
                 data_name = position;
@@ -2456,7 +2456,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
             if (field_bulk_value.length() > field_output_max_length) {  field_output_max_length = field_bulk_value.length(); }
 
             string value_group_name = field_output_group_name + "/" + instance_name + "/" + data_name;
-            write_bulk_data(h5_file, value_group_name, field_bulk_value, field_bulk_value.isComplex(), write_mises);
+            write_bulk_data(h5_file, value_group_name, field_bulk_value, field_output.isComplex(), write_mises);
         }
 
         if (field_output_max_width > max_width) {  max_width = field_output_max_width; }
