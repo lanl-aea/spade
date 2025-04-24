@@ -1223,7 +1223,7 @@ void SpadeObject::write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_file) {
 
         // Read and write history output data
         write_history_data_h5 (odb, h5_file, current_step, step_group_name);
-        // Read and write history output data
+        // Read and write field output data
         write_frame_data_h5 (odb, h5_file, current_step, step_group_name);
     }
 }
@@ -1841,20 +1841,20 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
 //        float mises[field_bulk_data.numberOfElements()][number_of_integration_points];
         vector<float> mises;
         if (write_mises) {
-            mises.insert(mises.end(), &bulk_mises[0], &bulk_mises[field_bulk_data.length()]);
-            write_float_2D_data(bulk_group, "mises", field_bulk_data.numberOfElements(), field_bulk_data.width(), mises);
-//            write_float_2D_data(bulk_group, "mises", field_bulk_data.numberOfElements(), field_bulk_data.width(), field_bulk_data.mises());
+            write_float_2D_array(bulk_group, "mises", field_bulk_data.numberOfElements(), field_bulk_data.width(), field_bulk_data.mises());
         }
         vector<int> element_labels_vector;
         element_labels_vector.insert(element_labels_vector.end(), &element_labels[0], &element_labels[field_bulk_data.length()]);  // asign array to vector
         write_integer_2D_data(bulk_group, "elementLabels", field_bulk_data.numberOfElements(), number_of_integration_points, element_labels_vector);
 //        write_integer_2D_data(bulk_group, "elementLabels", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.elementLabels());
         if (field_bulk_data.integrationPoints()) {
+            /*
             int* integration_points = field_bulk_data.integrationPoints();
             vector<int> integration_points_vector;
             integration_points_vector.insert(integration_points_vector.end(), &integration_points[0], &integration_points[field_bulk_data.length()]);
             write_integer_2D_data(bulk_group, "integrationPoints", field_bulk_data.numberOfElements(), number_of_integration_points, integration_points_vector);
-//            write_integer_2D_data(bulk_group, "integrationPoints", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.integrationPoints());
+            */
+            write_integer_2D_array(bulk_group, "integrationPoints", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.integrationPoints());
         }
 
         if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
@@ -1902,32 +1902,40 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
         }
     } else {  // Nodes
         if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
+            /*
             data = field_bulk_data.data();
             vector<float> bulk_data;
             bulk_data.insert(bulk_data.end(), &data[0], &data[full_length]);
             write_float_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), bulk_data);
-//            write_float_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.data());
-            vector<float>().swap(bulk_data);  // Swap float vector with empty float vector (freeing memory of vector)
+            */
+            write_float_2D_array(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.data());
+//            vector<float>().swap(bulk_data);  // Swap float vector with empty float vector (freeing memory of vector)
             if (complex_data) {
+                /*
                 conjugate_data = field_bulk_data.conjugateData();
                 vector<float> bulk_conjugate_data;
                 bulk_conjugate_data.insert(bulk_conjugate_data.end(), &conjugate_data[0], &conjugate_data[full_length]);
                 write_float_2D_data(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), bulk_conjugate_data);
-//                write_float_2D_data(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.conjugateData());
+                */
+                write_float_2D_array(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.conjugateData());
             }
         } else {  // Double precision
+            /*
             data_double = field_bulk_data.dataDouble();
             vector<double> bulk_data_double;
             bulk_data_double.insert(bulk_data_double.end(), &data_double[0], &data_double[full_length]);
             write_double_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), bulk_data_double);
-//            write_double_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.dataDouble());
-            vector<double>().swap(bulk_data_double);  // Swap vector with empty vector (freeing memory of vector)
+            */
+            write_double_2D_array(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.dataDouble());
+//            vector<double>().swap(bulk_data_double);  // Swap vector with empty vector (freeing memory of vector)
             if (complex_data) {
+                /*
                 conjugate_data_double = field_bulk_data.conjugateDataDouble();
                 vector<double> bulk_conjugate_data_double;
                 bulk_conjugate_data_double.insert(bulk_conjugate_data_double.end(), &conjugate_data_double[0], &conjugate_data_double[full_length]);
                 write_double_2D_data(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), bulk_conjugate_data_double);
-//                write_double_2D_data(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.conjugateDataDouble());
+                */
+                write_double_2D_array(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.conjugateDataDouble());
             }
         }
 
