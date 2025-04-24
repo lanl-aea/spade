@@ -25,6 +25,8 @@ Internal Changes
 - Changing how field output is stored and written (:issue:`86`, :merge:`85`). By `Prabhu Khalsa`_.
 - Add checks to prevent writing of empty groups (:issue:`88`, :merge:`86`). By `Prabhu Khalsa`_.
 - Re-factor loops through maps to use named tuples instead of iterators (:issue:`87`, :merge:`87`). By `Prabhu Khalsa`_.
+- Check for command line input before writing history/field output data by instance (:issue:`93`, :merge:`91`). 
+  By `Prabhu Khalsa`_.
 
 Enhancements
 ============
