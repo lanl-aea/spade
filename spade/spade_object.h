@@ -390,22 +390,6 @@ struct field_data_type {
     vector<field_bulk_type> bulkValues;
 };
 
-struct field_output_type {
-    string name;
-    string description;
-    string type;
-    vector<string> componentLabels;
-    vector<string> validInvariants;
-    int dim;
-    int dim2;
-//    string isEngineeringTensor;  // Boolean
-    vector<field_location_type> locations;
-    map<string, field_data_type> values;  // String index is the name of the instance
-    int max_width;
-    int max_length;
-    bool isComplex;  // Flag indicating if there is conjugate data
-};
-
 struct frame_type {
     int incrementNumber;
     int cyclicModeNumber;
@@ -672,24 +656,6 @@ class SpadeObject {
           \return string representation of odb_Enum
         */
         string get_position_enum(odb_Enum::odb_ResultPositionEnum position_enum);
-        //! Process field bulk data from the odb file
-        /*!
-          Process a field bulk data object and store the results
-          \param field_bulk_data An odb field bulk data object
-          \param invariants An odb sequence invariant object
-          \param complex_data Boolean indicating if the data is complex
-          \return field_bulk_type with data stored from the odb
-          \sa process_odb()
-        */
-        field_bulk_type process_field_bulk_data(const odb_FieldBulkData &field_bulk_data, const odb_SequenceInvariant& invariants, bool complex_data);
-        //! Process field output from the odb file
-        /*!
-          Process a field output object and store the results
-          \param field_output An odb field output object
-          \return field_output_type with data stored from the odb
-          \sa process_odb()
-        */
-        field_output_type process_field_output (const odb_FieldOutput &field_output);
         //! Process a frame from the odb file
         /*!
           Process a frame object and store the results
@@ -846,15 +812,6 @@ class SpadeObject {
           \param step_group_name Name of current step
         */
         void create_extract_history_group(H5::H5File &h5_file, history_region_type &history_region, string &step_group_name);
-        //! Write field output in extract format to HDF5 file
-        /*!
-          Write field output in extract format for given step
-          \param h5_file Open h5_file object for writing
-          \param field_output Data to be written
-          \param step_name Name of step where data is to be written
-          \param frame_number Frame number where data is to be written given as a string
-        */
-        void write_extract_field_output(H5::H5File &h5_file, field_output_type &field_output, const string &step_name, const string &frame_number);
         //! Write parts data to an HDF5 file
         /*!
           Write parts data into an HDF5 file
@@ -876,18 +833,9 @@ class SpadeObject {
           \param group_name Name of the group where data is to be written
           \param field_bulk_data Data to be written
           \param complex_data Boolean indicating if the data is complex
-        */
-        void write_field_bulk_data(H5::H5File &h5_file, const string &group_name, field_bulk_type &field_bulk_data, bool complex_data);
-        //! Write field bulk data to an HDF5 file
-        /*!
-          Write field bulk data into an HDF5 file
-          \param h5_file Open h5_file object for writing
-          \param group_name Name of the group where data is to be written
-          \param field_bulk_data Data to be written
-          \param complex_data Boolean indicating if the data is complex
           \param write_mises Boolean indicating if mises data should be written
         */
-        void write_bulk_data(H5::H5File &h5_file, const string &group_name, const odb_FieldBulkData &field_bulk_data, bool complex_data, bool write_mises);
+        void write_field_bulk_data(H5::H5File &h5_file, const string &group_name, const odb_FieldBulkData &field_bulk_data, bool complex_data, bool write_mises);
         //! Write field value data to an HDF5 file
         /*!
           Write field value data into an HDF5 file
@@ -897,14 +845,6 @@ class SpadeObject {
           \param values Data to be written
         */
         void write_field_values(H5::H5File &h5_file, const string &group_name, H5::Group &group, field_value_type &values);
-        //! Write field output data to an HDF5 file
-        /*!
-          Write field output data into an HDF5 file
-          \param h5_file Open h5_file object for writing
-          \param group_name Name of the group where data is to be written
-          \param field_output Data to be written
-        */
-        void write_field_output(H5::H5File &h5_file, const string &group_name, field_output_type &field_output);
         //! Write all field output data to an HDF5 file
         /*!
           Write all field output data into an HDF5 file
