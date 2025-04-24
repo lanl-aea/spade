@@ -2030,13 +2030,6 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
             }
         }
 
-        for (auto [instance_name, field_output_value] : values_map) {
-            string instance_group_name = field_output_group_name + "/" + instance_name;
-            H5::Group instance_group = create_group(h5_file, instance_group_name);
-            write_field_values(h5_file, instance_group_name, instance_group, field_output_value);
-        }
-
-
         int field_output_max_length = 0;
         int field_output_max_width = 0;
         set<string> field_data_names;
@@ -2048,9 +2041,19 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
 
             // Skip instance if 'all' not specified and instance doesn't match user input
             string instance_name = field_bulk_value.instance().name().CStr();
+            bool instance_value_exists = false;
+            if (instance_names.find(instance_name) != instance_names.end()) {
+                instance_names.erase(instance_name);  // Remove from set to indicate it has already been processed
+                instance_value_exists = true;
+            }
             if (instance_name.empty()) { instance_name = this->default_instance_name; }
             if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance_name)) {
                 continue;
+            }
+            if (instance_value_exists) {
+                string instance_group_name = field_output_group_name + "/" + instance_name;
+                H5::Group instance_group = create_group(h5_file, instance_group_name);
+                write_field_values(h5_file, instance_group_name, instance_group, values_map[instance_name]);
             }
 
             // Get name of group where to write data
@@ -2077,6 +2080,15 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
 
         if (field_output_max_width > max_width) {  max_width = field_output_max_width; }
         if (field_output_max_length > max_length) {  max_length = field_output_max_length; }
+
+        for (const string& instance_name : instance_names) {
+            if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance_name)) {
+                continue;
+            }
+            string instance_group_name = field_output_group_name + "/" + instance_name;
+            H5::Group instance_group = create_group(h5_file, instance_group_name);
+            write_field_values(h5_file, instance_group_name, instance_group, values_map[instance_name]);
+        }
     }
 }
 
@@ -2140,11 +2152,33 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
             }
         }
 
-        for (auto [instance_name, field_output_value] : values_map) {
+        int field_output_max_length = 0;
+        int field_output_max_width = 0;
+        set<string> field_data_names;
+        const odb_SequenceFieldBulkData& field_bulk_values = field_output.bulkDataBlocks();
+        for (int i=0; i<field_bulk_values.size(); i++) {  // There seems to be a "block" per element type and if the element type is the same per section point
+                                                        // e.g. In one odb the "E" field values had three "blocks" One for element type B23 (section point 1)
+                                                        // one for element type B23 (section point 5), and one for element type GAPUNI
+            const odb_FieldBulkData& field_bulk_value = field_bulk_values[i];
+
+            // Skip instance if 'all' not specified and instance doesn't match user input
+            string instance_name = field_bulk_value.instance().name().CStr();
+            bool instance_value_exists = false;
+            if (instance_names.find(instance_name) != instance_names.end()) {
+                instance_names.erase(instance_name);  // Remove from set to indicate it has already been processed
+                instance_value_exists = true;
+            }
+            if (instance_name.empty()) { instance_name = this->default_instance_name; }
+            if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance_name)) {
+                continue;
+            }
+
             string field_output_group_name = instance_name + "/FieldOutputs/" + field_output_safe_name + "/" + step_name + "/" + frame_number;
             bool sub_group_exists = false;
             H5::Group field_output_group = open_subgroup(h5_file, field_output_group_name, sub_group_exists);
-            write_field_values(h5_file, field_output_group_name, field_output_group, field_output_value);
+            if (instance_value_exists) {
+                write_field_values(h5_file, field_output_group_name, field_output_group, values_map[instance_name]);
+            }
 
             write_string_dataset(field_output_group, "name", field_output_name);
             write_string_dataset(field_output_group, "description", field_output.description().CStr());
@@ -2177,24 +2211,6 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
                 }
             }
 
-        }
-
-        int field_output_max_length = 0;
-        int field_output_max_width = 0;
-        set<string> field_data_names;
-        const odb_SequenceFieldBulkData& field_bulk_values = field_output.bulkDataBlocks();
-        for (int i=0; i<field_bulk_values.size(); i++) {  // There seems to be a "block" per element type and if the element type is the same per section point
-                                                        // e.g. In one odb the "E" field values had three "blocks" One for element type B23 (section point 1)
-                                                        // one for element type B23 (section point 5), and one for element type GAPUNI
-            const odb_FieldBulkData& field_bulk_value = field_bulk_values[i];
-
-            // Skip instance if 'all' not specified and instance doesn't match user input
-            string instance_name = field_bulk_value.instance().name().CStr();
-            if (instance_name.empty()) { instance_name = this->default_instance_name; }
-            if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance_name)) {
-                continue;
-            }
-
             // Get name of group where to write data
             string position = get_position_enum(field_bulk_value.position());
             string data_name;
@@ -2213,12 +2229,54 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
             if (field_bulk_value.width() > field_output_max_width) {  field_output_max_width = field_bulk_value.width(); }
             if (field_bulk_value.length() > field_output_max_length) {  field_output_max_length = field_bulk_value.length(); }
 
-            string value_group_name = instance_name + "/FieldOutputs/" + field_output_safe_name + "/" + step_name + "/" + frame_number + "/" + data_name;
+            string value_group_name = field_output_group_name + "/" + data_name;
             write_field_bulk_data(h5_file, value_group_name, field_bulk_value, field_output.isComplex(), write_mises);
         }
 
         if (field_output_max_width > max_width) {  max_width = field_output_max_width; }
         if (field_output_max_length > max_length) {  max_length = field_output_max_length; }
+
+        // If there is an instance with field output data (not bulk data) that didn't get written, then write it here
+        for (const string& instance_name : instance_names) {
+            if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance_name)) {
+                continue;
+            }
+            string field_output_group_name = instance_name + "/FieldOutputs/" + field_output_safe_name + "/" + step_name + "/" + frame_number;
+            bool sub_group_exists = false;
+            H5::Group field_output_group = open_subgroup(h5_file, field_output_group_name, sub_group_exists);
+            write_field_values(h5_file, field_output_group_name, field_output_group, values_map[instance_name]);
+
+            write_string_dataset(field_output_group, "name", field_output_name);
+            write_string_dataset(field_output_group, "description", field_output.description().CStr());
+            write_string_dataset(field_output_group, "type", get_field_type_enum(field_output.type()));
+            write_integer_dataset(field_output_group, "dim", field_output.dim());
+            write_integer_dataset(field_output_group, "dim2", field_output.dim2());
+            // TODO: Maybe reach out to 3DS to determine if they plan to implement isEngineeringTensor() function
+            // string isEngineeringTensor = (field_output.isEngineeringTensor()) ? "true" : "false";
+            // write_string_dataset(field_output_group, "isEngineeringTensor", isEngineeringTensor);
+
+            write_c_string_vector_dataset(field_output_group, "componentLabels", component_labels);
+            write_string_vector_dataset(field_output_group, "validInvariants", valid_invariants);
+
+            if (field_locations.size() > 0) {
+                H5::Group locations_group = create_group(h5_file, field_output_group_name + "/locations");
+                for (int i=0; i<field_locations.size(); i++) {
+                    odb_FieldLocation field_location = field_locations.constGet(i);
+                    string location_group_name = field_output_group_name + "/locations/" + to_string(i);
+                    H5::Group location_group = create_group(h5_file, location_group_name);
+
+                    string position = get_position_enum(field_location.position());
+                    write_string_dataset(location_group, "position", position);
+                    if (field_location.sectionPoint().size() > 0) {
+                        H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint");
+                        for (int j=0; i<field_location.sectionPoint().size(); j++) {
+                            H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint/" + to_string(field_location.sectionPoint(j).number()));
+                            write_string_dataset(section_point_group, "description", field_location.sectionPoint(j).description().CStr());
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
