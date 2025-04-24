@@ -1837,113 +1837,47 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
             write_string_2D_vector(bulk_group, "faces", number_of_integration_points, faces_vector);
         }
 
-        float* bulk_mises = field_bulk_data.mises();
-//        float mises[field_bulk_data.numberOfElements()][number_of_integration_points];
-        vector<float> mises;
         if (write_mises) {
             write_float_2D_array(bulk_group, "mises", field_bulk_data.numberOfElements(), field_bulk_data.width(), field_bulk_data.mises());
         }
-        vector<int> element_labels_vector;
-        element_labels_vector.insert(element_labels_vector.end(), &element_labels[0], &element_labels[field_bulk_data.length()]);  // asign array to vector
-        write_integer_2D_data(bulk_group, "elementLabels", field_bulk_data.numberOfElements(), number_of_integration_points, element_labels_vector);
-//        write_integer_2D_data(bulk_group, "elementLabels", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.elementLabels());
+        write_integer_2D_array(bulk_group, "elementLabels", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.elementLabels());
         if (field_bulk_data.integrationPoints()) {
-            /*
-            int* integration_points = field_bulk_data.integrationPoints();
-            vector<int> integration_points_vector;
-            integration_points_vector.insert(integration_points_vector.end(), &integration_points[0], &integration_points[field_bulk_data.length()]);
-            write_integer_2D_data(bulk_group, "integrationPoints", field_bulk_data.numberOfElements(), number_of_integration_points, integration_points_vector);
-            */
             write_integer_2D_array(bulk_group, "integrationPoints", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.integrationPoints());
         }
 
         if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
-            data = field_bulk_data.data();
-            vector<float> bulk_data;
-            bulk_data.insert(bulk_data.end(), &data[0], &data[full_length]);
-            write_float_3D_data(bulk_group, "data", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), bulk_data);
-//            write_float_3D_data(bulk_group, "data", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.data());
-            vector<float>().swap(bulk_data);  // Swap float vector with empty float vector (freeing memory of vector)
+            write_float_3D_array(bulk_group, "data", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.data());
             if (complex_data) {
-                conjugate_data = field_bulk_data.conjugateData();
-                vector<float> bulk_conjugate_data;
-                bulk_conjugate_data.insert(bulk_conjugate_data.end(), &conjugate_data[0], &conjugate_data[full_length]);
-                write_float_3D_data(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), bulk_conjugate_data);
-//                write_float_3D_data(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.conjugateData());
+                write_float_3D_array(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.conjugateData());
             }
             local_coordinate_system = field_bulk_data.localCoordSystem();
             if ((local_coordinate_system) && (coord_length)) {
-                vector<float> bulk_coordinate_system;
-                bulk_coordinate_system.insert(bulk_coordinate_system.end(), &local_coordinate_system[0], &local_coordinate_system[full_length]);
-                write_float_3D_data(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), bulk_coordinate_system);
-//                write_float_3D_data(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), field_bulk_data.localCoordSystem());
+                write_float_3D_array(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), field_bulk_data.localCoordSystem());
             }
         } else {  // Double precision
-            data_double = field_bulk_data.dataDouble();
-            vector<double> bulk_data_double;
-            bulk_data_double.insert(bulk_data_double.end(), &data_double[0], &data_double[full_length]);
-            write_double_3D_data(bulk_group, "data", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), bulk_data_double);
-//            write_double_3D_data(bulk_group, "data", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.dataDouble());
-            vector<double>().swap(bulk_data_double);  // Swap vector with empty vector (freeing memory of vector)
+            write_double_3D_array(bulk_group, "data", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.dataDouble());
             if (complex_data) {
-                conjugate_data_double = field_bulk_data.conjugateDataDouble();
-                vector<double> bulk_conjugate_data_double;
-                bulk_conjugate_data_double.insert(bulk_conjugate_data_double.end(), &conjugate_data_double[0], &conjugate_data_double[full_length]);
-                write_double_3D_data(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), bulk_conjugate_data_double);
-//                write_double_3D_data(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.conjugateDataDouble());
+                write_double_3D_array(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.conjugateDataDouble());
             }
             local_coordinate_system_double = field_bulk_data.localCoordSystemDouble();
             if ((local_coordinate_system_double) && (coord_length)) {
-                vector<double> bulk_coordinate_system_double;
-                bulk_coordinate_system_double.insert(bulk_coordinate_system_double.end(), &local_coordinate_system_double[0], &local_coordinate_system_double[full_length]);
-                write_double_3D_data(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), bulk_coordinate_system_double);
-//                write_double_3D_data(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), field_bulk_data.localCoordSystemDouble());
+                write_double_3D_array(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), field_bulk_data.localCoordSystemDouble());
             }
         }
     } else {  // Nodes
         if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
-            /*
-            data = field_bulk_data.data();
-            vector<float> bulk_data;
-            bulk_data.insert(bulk_data.end(), &data[0], &data[full_length]);
-            write_float_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), bulk_data);
-            */
             write_float_2D_array(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.data());
-//            vector<float>().swap(bulk_data);  // Swap float vector with empty float vector (freeing memory of vector)
             if (complex_data) {
-                /*
-                conjugate_data = field_bulk_data.conjugateData();
-                vector<float> bulk_conjugate_data;
-                bulk_conjugate_data.insert(bulk_conjugate_data.end(), &conjugate_data[0], &conjugate_data[full_length]);
-                write_float_2D_data(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), bulk_conjugate_data);
-                */
                 write_float_2D_array(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.conjugateData());
             }
         } else {  // Double precision
-            /*
-            data_double = field_bulk_data.dataDouble();
-            vector<double> bulk_data_double;
-            bulk_data_double.insert(bulk_data_double.end(), &data_double[0], &data_double[full_length]);
-            write_double_2D_data(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), bulk_data_double);
-            */
             write_double_2D_array(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.dataDouble());
-//            vector<double>().swap(bulk_data_double);  // Swap vector with empty vector (freeing memory of vector)
             if (complex_data) {
-                /*
-                conjugate_data_double = field_bulk_data.conjugateDataDouble();
-                vector<double> bulk_conjugate_data_double;
-                bulk_conjugate_data_double.insert(bulk_conjugate_data_double.end(), &conjugate_data_double[0], &conjugate_data_double[full_length]);
-                write_double_2D_data(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), bulk_conjugate_data_double);
-                */
                 write_double_2D_array(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.conjugateDataDouble());
             }
         }
 
-        int* node_labels = field_bulk_data.nodeLabels();
-        vector<int> node_labels_vector;
-        node_labels_vector.insert(node_labels_vector.end(), &node_labels[0], &node_labels[field_bulk_data.length()]);
-        write_integer_vector_dataset(bulk_group, "nodeLabels", node_labels_vector);
-//        write_integer_vector_dataset(bulk_group, "nodeLabels", field_bulk_data.nodeLabels());
+        write_integer_array_dataset(bulk_group, "nodeLabels", field_bulk_data.length(), field_bulk_data.nodeLabels());
     }
 }
 
@@ -3109,6 +3043,20 @@ void SpadeObject::write_float_2D_array(const H5::Group& group, const string & da
     dataspace.close();
 }
 
+void SpadeObject::write_float_3D_array(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, float *float_array) {
+    if (!float_array) { return; }
+    hsize_t dimensions[] = {aisle_size, row_size, column_size};
+    H5::DataSpace dataspace(3, dimensions);  // three dimensional data
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_FLOAT, dataspace);
+        dataset.write(float_array, H5::PredType::NATIVE_FLOAT);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
+    dataspace.close();
+}
+
 void SpadeObject::write_float_2D_data(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, const vector<float> &float_data) {
     if (float_data.empty()) { return; }
     herr_t status;
@@ -3211,6 +3159,20 @@ void SpadeObject::write_double_2D_array(const H5::Group& group, const string & d
     if (!double_array) { return; }
     hsize_t dimensions[] = {row_size, column_size};
     H5::DataSpace dataspace(2, dimensions);  // two dimensional data
+    try {
+        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
+        dataset.write(double_array, H5::PredType::NATIVE_DOUBLE);
+        dataset.close();
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
+    }
+    dataspace.close();
+}
+
+void SpadeObject::write_double_3D_array(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, double *double_array) {
+    if (!double_array) { return; }
+    hsize_t dimensions[] = {aisle_size, row_size, column_size};
+    H5::DataSpace dataspace(3, dimensions);  // three dimensional data
     try {
         H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
         dataset.write(double_array, H5::PredType::NATIVE_DOUBLE);

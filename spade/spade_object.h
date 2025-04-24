@@ -1169,6 +1169,17 @@ class SpadeObject {
           \param float_array A pointer to the array of arrays of floats that should be written in the new dataset
         */
         void write_float_2D_array(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, float *float_array);
+        //! Write an array of arrays of arrays of floats as a dataset
+        /*!
+          Create a dataset with a three-dimensional array of floats using the passed-in values
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where a two-dimensional array is to be written
+          \param aisle_size Integer indicating the aisle dimension
+          \param row_size Integer indicating the row dimension
+          \param column_size Integer indicating the column dimension
+          \param float_array A pointer to the array of arrays of floats that should be written in the new dataset
+        */
+        void write_float_3D_array(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, float *float_array);
         //! Write an arrays of arrays of floats as a dataset
         /*!
           Create a dataset with a two-dimensional array of floats using the passed-in values
@@ -1235,6 +1246,17 @@ class SpadeObject {
           \param double_array A pointer to the array of arrays of doubles that should be written in the new dataset
         */
         void write_double_2D_array(const H5::Group &group, const string &dataset_name, const int &row_size, const int &column_size, double *double_array);
+        //! Write an array of arrays of arrays of doubles as a dataset
+        /*!
+          Create a dataset with a three-dimensional array of doubles using the passed-in values
+          \param group Name of HDF5 group in which to write the new dataset
+          \param dataset_name Name of the new dataset where a three-dimensional array is to be written
+          \param aisle_size Integer indicating the row dimension
+          \param row_size Integer indicating the row dimension
+          \param column_size Integer indicating the column dimension
+          \param double_array A pointer to the array of arrays of arrays of doubles that should be written in the new dataset
+        */
+        void write_double_3D_array(const H5::Group &group, const string &dataset_name, const int &aisle_size, const int &row_size, const int &column_size, double *double_array);
         //! Write an array of arrays of doubles as a dataset
         /*!
           Create a dataset with a two-dimensional array of doubles using the passed-in values
