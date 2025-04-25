@@ -27,6 +27,7 @@ Internal Changes
 - Re-factor loops through maps to use named tuples instead of iterators (:issue:`87`, :merge:`87`). By `Prabhu Khalsa`_.
 - Check for command line input before writing history/field output data by instance (:issue:`93`, :merge:`91`). 
   By `Prabhu Khalsa`_.
+- Remove function that writes xarray attributes (:issue:`94`, :merge:`93`). By `Prabhu Khalsa`_.
 
 Enhancements
 ============
