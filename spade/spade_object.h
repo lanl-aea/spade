@@ -1067,25 +1067,15 @@ class SpadeObject {
         */
         //! Write an array of arrays of integers as a dataset
         void write_integer_dataset(const H5::Group &group, const string &dataset_name, const int &int_value);
+        //! Write a two dimensional vector of C strings as a dataset
         /*!
           Create a dataset with a two-dimensional array of strings using the passed-in values
           \param group Name of HDF5 group in which to write the new dataset
           \param dataset_name Name of the new dataset where a two-dimensional array is to be written
-          \param max_row_size Integer indicating the row dimension
-          \param max_column_size Integer indicating the column dimension
-          \param string_array A pointer to the array of arrays of strings that should be written in the new dataset
-        */
-        void write_string_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, string *string_array);
-        //! Write a vector of vectors of strings as a dataset
-        /*!
-          Create a dataset with a two-dimensional array of strings using the passed-in values
-          \param group Name of HDF5 group in which to write the new dataset
-          \param dataset_name Name of the new dataset where a two-dimensional array is to be written
-          \param max_column_size Integer indicating the column dimension, row dimension is determined by size of data_array
+          \param column_size Integer indicating the column dimension, row dimension is determined by size of data_array
           \param string_data The vector of vectors of strings that should be written in the new dataset
-          \sa write_string_2D_array()
         */
-        void write_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<string>> & string_data);
+        void write_c_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & column_size, vector<const char*> & string_data);
         //! Write an integer array as a dataset
         /*!
           Create a dataset with an array of integers using the passed-in value

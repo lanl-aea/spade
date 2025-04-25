@@ -1788,17 +1788,8 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
     int full_length = field_bulk_data.length() * field_bulk_data.width();
     int coord_length = 0;
 
-    float* data = 0;
-    double* data_double = 0;
-    float* conjugate_data = 0;
-    double* conjugate_data_double = 0;
-    float* local_coordinate_system = 0;
-    double* local_coordinate_system_double = 0;
-
-    int* element_labels = field_bulk_data.elementLabels();
-
     write_string_dataset(bulk_group, "position", get_position_enum(field_bulk_data.position()));
-    if(field_bulk_data.numberOfElements() && element_labels) { // If elements
+    if(field_bulk_data.numberOfElements() && field_bulk_data.elementLabels()) { // If elements
 
         int number_of_integration_points = field_bulk_data.length()/field_bulk_data.numberOfElements();
         coord_length = field_bulk_data.length() * field_bulk_data.orientationWidth();
@@ -1823,18 +1814,15 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
 
 
         odb_Enum::odb_ElementFaceEnum* faces = field_bulk_data.faces();
-//        string faces[field_bulk_data.numberOfElements()][number_of_integration_points];
         if (faces) {
-            vector<vector<string>> faces_vector;
+            vector<const char*> faces_vector;
             int current_position = 0;
             for (int element=0; element<field_bulk_data.numberOfElements(); ++element) {
-                vector<string> current_faces;
                 for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
-                    current_faces.push_back(this->faces_enum_strings[faces[current_position]]);
+                    faces_vector.push_back(this->faces_enum_strings[faces[current_position]].c_str());
                 }
-                faces_vector.push_back(current_faces);
             }
-            write_string_2D_vector(bulk_group, "faces", number_of_integration_points, faces_vector);
+            write_c_string_2D_vector(bulk_group, "faces", number_of_integration_points, faces_vector);
         }
 
         if (write_mises) {
@@ -1850,8 +1838,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
             if (complex_data) {
                 write_float_3D_array(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.conjugateData());
             }
-            local_coordinate_system = field_bulk_data.localCoordSystem();
-            if ((local_coordinate_system) && (coord_length)) {
+            if ((field_bulk_data.localCoordSystem()) && (coord_length)) {
                 write_float_3D_array(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), field_bulk_data.localCoordSystem());
             }
         } else {  // Double precision
@@ -1859,8 +1846,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
             if (complex_data) {
                 write_double_3D_array(bulk_group, "conjugateData", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width(), field_bulk_data.conjugateDataDouble());
             }
-            local_coordinate_system_double = field_bulk_data.localCoordSystemDouble();
-            if ((local_coordinate_system_double) && (coord_length)) {
+            if ((field_bulk_data.localCoordSystemDouble()) && (coord_length)) {
                 write_double_3D_array(bulk_group, "localCoordSystem", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth(), field_bulk_data.localCoordSystemDouble());
             }
         }
@@ -2845,49 +2831,18 @@ void SpadeObject::write_c_string_vector_dataset(const H5::Group& group, const st
     dataspace.close();
 }
 
-
-void SpadeObject::write_string_2D_array(const H5::Group& group, const string & dataset_name, const int &row_size, const int &column_size, string *string_array) {
-    if (!string_array) { return; }
-    hsize_t dimensions[] = {row_size, column_size};
-    H5::DataSpace dataspace(2, dimensions);  // two dimensional data
-    try {
-        H5::DataSet dataset = group.createDataSet(dataset_name, H5::PredType::C_S1, dataspace);
-        dataset.write(string_array, H5::PredType::C_S1);
-        dataset.close();
-    } catch(H5::Exception& e) {
-        this->log_file->logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
-    }
-    dataspace.close();
-}
-
-void SpadeObject::write_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & max_column_size, vector<vector<string>> & string_data) {
+void SpadeObject::write_c_string_2D_vector(const H5::Group& group, const string & dataset_name, const int & column_size, vector<const char*> & string_data) {
     if (string_data.empty()) { return; }
-    hsize_t dimensions[] = {string_data.size(), max_column_size};
+    hsize_t dimensions[] {string_data.size(), column_size};
     H5::DataSpace  dataspace(2, dimensions);
     H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
-    H5::DataSet dataset;
     try {
-        dataset = group.createDataSet(dataset_name, string_type, dataspace);
+        H5::DataSet dataset = group.createDataSet(dataset_name, string_type, dataspace);
+        dataset.write(string_data.data(), string_type);
+        dataset.close();
     } catch(H5::Exception& e) {
         this->log_file->logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
-        dataset.close();
-        dataspace.close();
-        return;
     }
-
-    const char* c_array[string_data.size()][max_column_size];
-    string blank = "";
-    for (int i=0; i<string_data.size(); i++) {
-        for (int j=0; j<max_column_size; j++) {
-            if (j >= string_data[i].size()) {
-                c_array[i][j] = blank.c_str();
-            } else {
-                c_array[i][j] = string_data[i][j].c_str();
-            }
-        }
-    }
-    dataset.write(&c_array[0], string_type);
-    dataset.close();
     dataspace.close();
 }
 
