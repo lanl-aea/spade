@@ -38,6 +38,7 @@ Enhancements
 - Change odb-format command line option to format option (:issue:`90`, :merge:`89`). By `Prabhu Khalsa`_.
 - Re-factor code to write history and field output at the same time as it's being processed 
   (:issue:`91`, :merge:`90`). By `Prabhu Khalsa`_.
+- Re-factor code to write field output data in a more efficient manner (:issue:`92`, :merge:`92`). By `Prabhu Khalsa`_.
 
 *******************
 v0.3.7 (2025-02-06)
