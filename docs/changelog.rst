@@ -28,6 +28,7 @@ Internal Changes
 - Check for command line input before writing history/field output data by instance (:issue:`93`, :merge:`91`). 
   By `Prabhu Khalsa`_.
 - Remove function that writes xarray attributes (:issue:`94`, :merge:`93`). By `Prabhu Khalsa`_.
+- Store and clear memory differently for variable length datasets (:issue:`95`, :merge:`94`). By `Prabhu Khalsa`_.
 
 Enhancements
 ============
