@@ -21,6 +21,7 @@ Logging::Logging (string const &log_file_name, bool const &log_verbose, bool con
     *this->output_stream << "Started at time: " << dt;
     this->log_debug = log_debug;
     this->log_verbose = log_verbose;
+    if (log_debug) { this->log_verbose = true; }  // Print verbose output as well if debug output has been specified
 }
 
 Logging::~Logging () {

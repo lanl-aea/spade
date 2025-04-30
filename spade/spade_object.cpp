@@ -135,7 +135,6 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
             this->write_yaml_without_steps();
         }
         odb.close();
-        log_file.log("Odb Extract object successfully created.");
     }
     catch(odb_BaseException& exc) {
         string error_message = exc.UserReport().CStr();
@@ -1219,6 +1218,7 @@ void SpadeObject::write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_file) {
 
         string step_group_name = steps_group_name + "/" + replace_slashes(new_step.name);
         H5::Group step_group = create_group(h5_file, step_group_name);
+        this->log_file->logVerbose("Writing top level step data for " + new_step.name);
         write_step(h5_file, step_group, new_step);
 
         // Read and write history output data
@@ -1259,6 +1259,7 @@ void SpadeObject::write_history_data_h5 (odb_Odb &odb, H5::H5File &h5_file, cons
             for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
                 odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
                 string history_output_name = history_output.name().CStr();
+                this->log_file->logVerbose("Writing data for history output " + history_output_name);
                 if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output_name)) {
                     history_output_group_name = history_outputs_group_name + "/" + replace_slashes(history_output_name);
                     write_history_output(h5_file, history_output_group_name, history_output);
@@ -1276,7 +1277,6 @@ void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const 
     for (int f=0; f<frames.size(); f++) {
         const odb_Frame& frame = frames.constGet(f);
         string frame_number = to_string(frame.incrementNumber());
-        this->log_file->logVerbose("Reading frame " + frame_number);
         frame_type new_frame = process_frame(frame);
 
         if (!new_frame.skip) {
@@ -1285,9 +1285,6 @@ void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const 
             string frame_group_name = frames_group_name + "/" + frame_number;
             H5::Group frame_group = create_group(h5_file, frame_group_name);
             write_frame(h5_file, frame_group, new_frame);
-            write_attribute(frame_group, "max_width", to_string(new_frame.max_width));
-            write_attribute(frame_group, "max_length", to_string(new_frame.max_length));
-
 
             new_frame.max_length = 0;
             new_frame.max_width = 0;
@@ -1297,6 +1294,8 @@ void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const 
             } else if (this->command_line_arguments->get("format") == "extract") {
                 write_extract_field_outputs(h5_file, frame, step.name().CStr(), new_frame.max_width, new_frame.max_length);
             }
+            write_attribute(frame_group, "max_width", to_string(new_frame.max_width));
+            write_attribute(frame_group, "max_length", to_string(new_frame.max_length));
         }
     }
 
@@ -1841,6 +1840,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
         string field_output_name = field_output.name().CStr();
         string field_output_group_name = field_outputs_group_name + "/" + replace_slashes(field_output_name);
         H5::Group field_output_group = create_group(h5_file, field_output_group_name);
+        this->log_file->logVerbose("Writing field output data for " + field_output_name);
         write_string_dataset(field_output_group, "name", field_output_name);
         write_string_dataset(field_output_group, "description", field_output.description().CStr());
         write_string_dataset(field_output_group, "type", get_field_type_enum(field_output.type()));
@@ -1865,6 +1865,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
 
         odb_SequenceFieldLocation field_locations = field_output.locations();
         if (field_locations.size() > 0) {
+            this->log_file->logVerbose("Writing field location data for " + field_output_name);
             H5::Group locations_group = create_group(h5_file, field_output_group_name + "/locations");
             for (int i=0; i<field_locations.size(); i++) {
                 odb_FieldLocation field_location = field_locations.constGet(i);
@@ -1924,6 +1925,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
         int field_output_max_width = 0;
         set<string> field_data_names;
         const odb_SequenceFieldBulkData& field_bulk_values = field_output.bulkDataBlocks();
+        this->log_file->logDebug("Writing " + to_string(field_bulk_values.size()) + " blocks of bulk field output data for " + field_output_name);
         for (int i=0; i<field_bulk_values.size(); i++) {  // There seems to be a "block" per element type and if the element type is the same per section point
                                                         // e.g. In one odb the "E" field values had three "blocks" One for element type B23 (section point 1)
                                                         // one for element type B23 (section point 5), and one for element type GAPUNI
@@ -1992,6 +1994,7 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
 
         string field_output_name = field_output.name().CStr();
         string field_output_safe_name = replace_slashes(field_output_name);
+        this->log_file->logVerbose("Writing field output data for " + field_output_name);
 
         vector<const char*> component_labels;
         odb_SequenceString available_components = field_output.componentLabels();
@@ -2046,6 +2049,7 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
         int field_output_max_width = 0;
         set<string> field_data_names;
         const odb_SequenceFieldBulkData& field_bulk_values = field_output.bulkDataBlocks();
+        this->log_file->logDebug("Writing " + to_string(field_bulk_values.size()) + " blocks of bulk field output data for " + field_output_name);
         for (int i=0; i<field_bulk_values.size(); i++) {  // There seems to be a "block" per element type and if the element type is the same per section point
                                                         // e.g. In one odb the "E" field values had three "blocks" One for element type B23 (section point 1)
                                                         // one for element type B23 (section point 5), and one for element type GAPUNI
@@ -2260,6 +2264,7 @@ void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_
             output_data.push_back(data_dimension1.constGet(j));
         }
     }
+    this->log_file->logDebug("Writing " + to_string(row_size) + " rows of history output for " + history_output.name().CStr());
     write_float_2D_data(history_output_group, "data", row_size, 2, output_data);  // history output data has 2 columns: frameValue and value
 
     vector<float> output_conjugate_data;
@@ -2271,6 +2276,7 @@ void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_
             output_conjugate_data.push_back(conjugate_data_dimension1.constGet(j));
         }
     }
+    this->log_file->logDebug("Writing " + to_string(row_size_conjugate) + " rows of history output conjugate data for " + history_output.name().CStr());
     write_float_2D_data(history_output_group, "conjugateData", row_size_conjugate, 2, output_conjugate_data);
 }
 

@@ -43,7 +43,6 @@ int ABQmain(int argc, char **argv)
         log_file.logVerbose("Arguments given:" + command_line_arguments.verboseArguments());
         log_file.logDebug("Debug logging turned on");
         SpadeObject spade_object(command_line_arguments, log_file);
-        log_file.logDebug("OdbExtractObject object successfully created.");
         log_file.logVerbose("Successful completion of " + command_line_arguments.commandName());
     } catch (const std::runtime_error &err) {
         cerr << err.what() << std::endl;
