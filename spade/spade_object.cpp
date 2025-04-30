@@ -1500,14 +1500,7 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
         datatype_sets.close();
         dataset_sets.close();
         // Clean up allocated memory
-        int i = 0;
-        for (auto [node_id, node] : nodes) {
-            for (size_t j = 0; j < node.sets.size(); ++j) {
-                delete[] static_cast<char**>(variable_length_sets[i].p)[j];
-            }
-            delete[] static_cast<char**>(variable_length_sets[i].p);
-            i++;
-        }
+        H5Treclaim(datatype_sets.getId(), dataspace_sets.getId(), H5P_DEFAULT, variable_length_sets);
     } catch(H5::Exception& e) {
         this->log_file->logWarning("Unable to create dataset node_sets. " + e.getDetailMsg());
         dataspace_sets.close();
