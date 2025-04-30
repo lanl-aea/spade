@@ -29,6 +29,7 @@ Internal Changes
   By `Prabhu Khalsa`_.
 - Remove function that writes xarray attributes (:issue:`94`, :merge:`93`). By `Prabhu Khalsa`_.
 - Store and clear memory differently for variable length datasets (:issue:`95`, :merge:`94`). By `Prabhu Khalsa`_.
+- Added some verbose and debug log messages (:issue:`96`, :merge:`95`). By `Prabhu Khalsa`_.
 
 Enhancements
 ============
