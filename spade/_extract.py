@@ -165,7 +165,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--format",
         type=str,
-        choices=["extract", "odb"],  # Future choice will include vtk for Paraview opening
+        choices=["extract", "odb", "vtk"],
         default="extract",
         help='Specify the format of the data in the output file',
     )

@@ -124,8 +124,11 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
             }
             H5::H5File h5_file = *h5_file_pointer;
 
-            this->write_h5_without_steps(h5_file);
-            write_step_data_h5 (odb, h5_file);
+            if (command_line_arguments["format"] == "vtk") {
+            } else {
+                this->write_h5_without_steps(h5_file);
+                write_step_data_h5 (odb, h5_file);
+            }
 
             h5_file.close();  // Close the hdf5 file
             this->log_file->log("Closing hdf5 file.");
