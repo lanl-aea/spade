@@ -1876,7 +1876,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
                 write_string_dataset(location_group, "position", position);
                 if (field_location.sectionPoint().size() > 0) {
                     H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint");
-                    for (int j=0; i<field_location.sectionPoint().size(); j++) {
+                    for (int j=0; j<field_location.sectionPoint().size(); j++) {
                         H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint/" + to_string(field_location.sectionPoint(j).number()));
                         write_string_dataset(section_point_group, "description", field_location.sectionPoint(j).description().CStr());
                     }
@@ -1967,6 +1967,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
             if (field_bulk_value.length() > field_output_max_length) {  field_output_max_length = field_bulk_value.length(); }
 
             string value_group_name = field_output_group_name + "/" + instance_name + "/" + data_name;
+            this->log_file->logDebug("Write field bulk data " + data_name);
             write_field_bulk_data(h5_file, value_group_name, field_bulk_value, field_output.isComplex(), write_mises);
         }
 
@@ -2087,6 +2088,7 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
             write_string_vector_dataset(field_output_group, "validInvariants", valid_invariants);
 
             if (field_locations.size() > 0) {
+                this->log_file->logDebug("Write field location data");
                 H5::Group locations_group = create_group(h5_file, field_output_group_name + "/locations");
                 for (int i=0; i<field_locations.size(); i++) {
                     odb_FieldLocation field_location = field_locations.constGet(i);
@@ -2096,8 +2098,9 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
                     string position = get_position_enum(field_location.position());
                     write_string_dataset(location_group, "position", position);
                     if (field_location.sectionPoint().size() > 0) {
+                        this->log_file->logDebug("Write section point data for location " + to_string(i));
                         H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint");
-                        for (int j=0; i<field_location.sectionPoint().size(); j++) {
+                        for (int j=0; j<field_location.sectionPoint().size(); j++) {
                             H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint/" + to_string(field_location.sectionPoint(j).number()));
                             write_string_dataset(section_point_group, "description", field_location.sectionPoint(j).description().CStr());
                         }
@@ -2124,6 +2127,7 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
             if (field_bulk_value.length() > field_output_max_length) {  field_output_max_length = field_bulk_value.length(); }
 
             string value_group_name = field_output_group_name + "/" + data_name;
+            this->log_file->logDebug("Write field bulk data " + data_name);
             write_field_bulk_data(h5_file, value_group_name, field_bulk_value, field_output.isComplex(), write_mises);
         }
 
