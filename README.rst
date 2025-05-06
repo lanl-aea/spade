@@ -38,7 +38,7 @@ Description
 
 .. description-start-do-not-remove
 
-Serialized Proprietary Abaqus Data Extractor (SPADE) extracts data from an Abaqus ODB File into an HDF5 file
+Serialized Proprietary Abaqus Data Extractor (SPADE) extracts data from an Abaqus ODB File into serialized open source data formats.
 
 .. description-end-do-not-remove
 

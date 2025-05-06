@@ -12,6 +12,10 @@ Bug fixes
 =========
 - Fixed typo in for loop iterator (:issue:`98`, :merge:`98`). By `Prabhu Khalsa`_.
 
+Enhancements
+============
+- Write hdf5 file in VTKHDF format for opening natively in Paraview (:issue:`97`, :merge:`97`). By `Prabhu Khalsa`_.
+
 *******************
 v0.4.0 (2025-04-30)
 *******************
