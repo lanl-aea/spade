@@ -153,7 +153,13 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         string base_file_name = std::filesystem::path(this->command_line_arguments["odb-file"]).replace_extension("").generic_string();
 
         // Handle extracted file name
-        if (this->command_line_arguments["extracted-file"].empty()) { this->command_line_arguments["extracted-file"] = base_file_name + "." + this->command_line_arguments["extracted-file-type"]; }
+        if (this->command_line_arguments["extracted-file"].empty()) { 
+            if (this->command_line_arguments["format"] == "vtk") {
+                this->command_line_arguments["extracted-file"] = base_file_name + ".vtkhdf";
+            } else {
+                this->command_line_arguments["extracted-file"] = base_file_name + "." + this->command_line_arguments["extracted-file-type"]; 
+            }
+        }
         std::filesystem::path file_path = this->command_line_arguments["extracted-file"];
         std::filesystem::perms directory_permissions = std::filesystem::status(file_path.parent_path()).permissions();
         if (std::filesystem::perms::none == (std::filesystem::perms::owner_write & directory_permissions)) {  // If parent path is not writable, exit with error

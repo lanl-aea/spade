@@ -773,6 +773,13 @@ class SpadeObject {
           \sa SpadeObject()
         */
         void write_h5_without_steps (H5::H5File &h5_file);
+        //! Write non-step output to an HDF5 file formatted in the vtk format
+        /*!
+          Write the parsed odb data to an HDF5 vtk formatted file
+          \param h5_file Open h5_file object for writing
+          \sa SpadeObject()
+        */
+        void write_vtk_without_steps (H5::H5File &h5_file);
         //! Open hdf5 subgroup and create it and it's parent groups if they don't exist
         /*!
           Open and return hdf5 group, if it doesn't exist then create it, if it's parent groups don't exist create them
@@ -1012,7 +1019,16 @@ class SpadeObject {
           \param attribute_name Name of the new attribute where a string is to be written
           \param string_value The string that should be written in the new attribute
         */
-        void write_attribute(const H5::Group &group, const string &attribute_name, const string &string_value);
+        void write_string_attribute(const H5::Group &group, const string &attribute_name, const string &string_value);
+        //! Write an integer array as an attribute
+        /*!
+          Create an attribute with an integer array using the passed-in values
+          \param group Name of HDF5 group in which to write the new attribute
+          \param attribute_name Name of the new attribute where an integer array is to be written
+          \param array_size Size of integer array
+          \param int_array The integer array that should be written in the new attribute
+        */
+        void write_integer_array_attribute(const H5::Group &group, const string &attribute_name, const int array_size, const int* int_array);
         //! Write a vector of strings as an attribute
         /*!
           Create an attribute with a vector of strings using the passed-in values
@@ -1053,7 +1069,6 @@ class SpadeObject {
           \param dataset_name Name of the new dataset where an integer is to be written
           \param int_value The integer that should be written in the new dataset
         */
-        //! Write an array of arrays of integers as a dataset
         void write_integer_dataset(const H5::Group &group, const string &dataset_name, const int &int_value);
         //! Write a two dimensional vector of C strings as a dataset
         /*!

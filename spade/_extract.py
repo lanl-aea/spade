@@ -293,11 +293,9 @@ def cpp_wrapper(args) -> str:
     if args.extracted_file:
         full_command_line_arguments += f" --extracted-file {args.extracted_file}"
     if args.log_file:
-        full_command_line_arguments += f" --log-file {args.extracted_file}"
+        full_command_line_arguments += f" --log-file {args.log_file}"
 
     # String inputs
-    # if args.extracted_file_type:
-    #    full_command_line_arguments += f" --extracted-file-type {args.extracted_file_type}"
     if args.frame:
         full_command_line_arguments += f" --frame {args.frame}"
     if args.frame_value:

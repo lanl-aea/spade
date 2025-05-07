@@ -125,6 +125,7 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
             H5::H5File h5_file = *h5_file_pointer;
 
             if (command_line_arguments["format"] == "vtk") {
+                this->write_vtk_without_steps(h5_file);
             } else {
                 this->write_h5_without_steps(h5_file);
                 write_step_data_h5 (odb, h5_file);
@@ -1297,8 +1298,8 @@ void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const 
             } else if (this->command_line_arguments->get("format") == "extract") {
                 write_extract_field_outputs(h5_file, frame, step.name().CStr(), new_frame.max_width, new_frame.max_length);
             }
-            write_attribute(frame_group, "max_width", to_string(new_frame.max_width));
-            write_attribute(frame_group, "max_length", to_string(new_frame.max_length));
+            write_string_attribute(frame_group, "max_width", to_string(new_frame.max_width));
+            write_string_attribute(frame_group, "max_length", to_string(new_frame.max_length));
         }
     }
 
@@ -1310,22 +1311,22 @@ void SpadeObject::write_h5_without_steps (H5::H5File &h5_file) {
 
     this->log_file->logVerbose("Writing top level data to odb group.");
     H5::Group odb_group = create_group(h5_file, "/odb");
-    write_attribute(odb_group, "name", this->name);
-    write_attribute(odb_group, "analysisTitle", this->analysisTitle);
-    write_attribute(odb_group, "description", this->description);
-    write_attribute(odb_group, "path", this->path);
-    write_attribute(odb_group, "isReadOnly", this->isReadOnly);
+    write_string_attribute(odb_group, "name", this->name);
+    write_string_attribute(odb_group, "analysisTitle", this->analysisTitle);
+    write_string_attribute(odb_group, "description", this->description);
+    write_string_attribute(odb_group, "path", this->path);
+    write_string_attribute(odb_group, "isReadOnly", this->isReadOnly);
 
     this->log_file->logVerbose("Writing jobData.");
     H5::Group job_data_group = create_group(h5_file, "/odb/jobData");
-    write_attribute(job_data_group, "analysisCode", this->job_data.analysisCode);
-    write_attribute(job_data_group, "creationTime", this->job_data.creationTime);
-    write_attribute(job_data_group, "machineName", this->job_data.machineName);
-    write_attribute(job_data_group, "modificationTime", this->job_data.modificationTime);
-    write_attribute(job_data_group, "name", this->job_data.name);
-    write_attribute(job_data_group, "precision", this->job_data.precision);
+    write_string_attribute(job_data_group, "analysisCode", this->job_data.analysisCode);
+    write_string_attribute(job_data_group, "creationTime", this->job_data.creationTime);
+    write_string_attribute(job_data_group, "machineName", this->job_data.machineName);
+    write_string_attribute(job_data_group, "modificationTime", this->job_data.modificationTime);
+    write_string_attribute(job_data_group, "name", this->job_data.name);
+    write_string_attribute(job_data_group, "precision", this->job_data.precision);
     write_vector_attribute(job_data_group, "productAddOns", this->job_data.productAddOns);
-    write_attribute(job_data_group, "version", this->job_data.version);
+    write_string_attribute(job_data_group, "version", this->job_data.version);
 
     if ((this->sector_definition.numSectors) || (!this->sector_definition.start_point.empty()) || (!this->sector_definition.end_point.empty())) {
         this->log_file->logVerbose("Writing sector definition at time: " + this->command_line_arguments->getTimeStamp(false));
@@ -1381,6 +1382,17 @@ void SpadeObject::write_h5_without_steps (H5::H5File &h5_file) {
     write_parts(h5_file, "odb/parts");
     this->log_file->logVerbose("Writing assembly data at time: " + this->command_line_arguments->getTimeStamp(false));
     write_assembly(h5_file, "odb/rootAssembly");
+}
+
+void SpadeObject::write_vtk_without_steps (H5::H5File &h5_file) {
+
+    // Specification at: https://docs.vtk.org/en/latest/design_documents/VTKFileFormats.html#vtkhdf-file-format
+    this->log_file->logVerbose("Writing top level data to odb group.");
+    H5::Group vtkhdf_group = create_group(h5_file, "/VTKHDF");
+    write_string_attribute(vtkhdf_group, "Type", "UnstructuredGrid");  // Type can be: ImageData, PolyData, UnstructuredGrid, OverlappingAMR, PartitionedDataSetCollection or MultiBlockDataSet
+    int version[2] = {2, 2};
+    write_integer_array_attribute(vtkhdf_group, "Version", 2, version);
+
 }
 
 H5::Group SpadeObject::open_subgroup(H5::H5File &h5_file, const string &sub_group_name, bool &exists) {
@@ -2221,11 +2233,11 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
         write_string_dataset(section_point_group, "number", history_point.sectionPoint.number);
         write_string_dataset(section_point_group, "description", history_point.sectionPoint.description);
     } else {  // Extract format - write less groups and data
-        write_attribute(history_point_group, "face", history_point.face);
-        write_attribute(history_point_group, "position", history_point.position);
-        write_attribute(history_point_group, "assembly", history_point.assemblyName);
-        write_attribute(history_point_group, "instance", history_point.instanceName);
-        write_attribute(history_point_group, "ipNumber", to_string(history_point.ipNumber));
+        write_string_attribute(history_point_group, "face", history_point.face);
+        write_string_attribute(history_point_group, "position", history_point.position);
+        write_string_attribute(history_point_group, "assembly", history_point.assemblyName);
+        write_string_attribute(history_point_group, "instance", history_point.instanceName);
+        write_string_attribute(history_point_group, "ipNumber", to_string(history_point.ipNumber));
         if (history_point.hasElement) {   // Write just a dataset with the element type and label (e.g. element_CAX4T_1) and the element connectivity
             write_integer_vector_dataset(history_point_group, "element_" + history_point.elementType + "_" + to_string(history_point.element_label), history_point.element.connectivity);
         }
@@ -2235,16 +2247,16 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
         if (!history_point.region.name.empty()) {
             string set_group_name = history_point_group_name + "/" + replace_slashes(history_point.region.name);
             H5::Group set_group = create_group(h5_file, set_group_name);
-            write_attribute(set_group, "type", history_point.region.type);
+            write_string_attribute(set_group, "type", history_point.region.type);
             write_string_vector_dataset(set_group, "instanceNames", history_point.region.instanceNames);
             if (!history_point.region.faces.empty()) {
                 write_string_vector_dataset(set_group, "faces", history_point.region.faces);
             }
         }
         if (history_point.sectionPoint.number != "-1") { 
-            write_attribute(history_point_group, "section_point_number", history_point.sectionPoint.number);
+            write_string_attribute(history_point_group, "section_point_number", history_point.sectionPoint.number);
         }
-        write_attribute(history_point_group, "section_point_description", history_point.sectionPoint.description);
+        write_string_attribute(history_point_group, "section_point_description", history_point.sectionPoint.description);
     }
 
 }
@@ -2612,7 +2624,7 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
         // There is no reason to write a set named ' ALL NODES' when all the nodes can be found under the 'nodes' heading
         string set_group_name = group_name + "/" + replace_slashes(odb_set.name);
         H5::Group set_group = create_group(h5_file, set_group_name);
-        write_attribute(set_group, "type", odb_set.type);
+        write_string_attribute(set_group, "type", odb_set.type);
         write_string_vector_dataset(set_group, "instanceNames", odb_set.instanceNames);
         if (this->command_line_arguments->get("format") == "odb") {
             if (odb_set.type == "Node Set") {
@@ -2651,7 +2663,7 @@ void SpadeObject::write_section_category(H5::H5File &h5_file, const H5::Group &g
     }
 }
 
-void SpadeObject::write_attribute(const H5::Group &group, const string &attribute_name, const string &string_value) {
+void SpadeObject::write_string_attribute(const H5::Group &group, const string &attribute_name, const string &string_value) {
     if (string_value.empty()) { return; }
     H5::DataSpace attribute_space(H5S_SCALAR);
     int string_size = string_value.size();
@@ -2660,6 +2672,20 @@ void SpadeObject::write_attribute(const H5::Group &group, const string &attribut
     try {
         H5::Attribute attribute = group.createAttribute(attribute_name, string_type, attribute_space);
         attribute.write(string_type, string_value);
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Unable to create attribute " + attribute_name + ". " + e.getDetailMsg());
+    }
+    attribute_space.close();
+}
+
+void SpadeObject::write_integer_array_attribute(const H5::Group &group, const string &attribute_name, const int array_size, const int* int_array) {
+    if (!int_array) { return; }
+    hsize_t dimensions[1] = {array_size};
+    H5::DataSpace attribute_space(1, dimensions);
+    try {
+        H5::Attribute attribute = group.createAttribute(attribute_name, H5::PredType::NATIVE_INT, attribute_space);
+        attribute.write(H5::PredType::NATIVE_INT, int_array);
+        attribute.close();
     } catch(H5::Exception& e) {
         this->log_file->logWarning("Unable to create attribute " + attribute_name + ". " + e.getDetailMsg());
     }
