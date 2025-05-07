@@ -2167,7 +2167,7 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
                     write_string_dataset(location_group, "position", position);
                     if (field_location.sectionPoint().size() > 0) {
                         H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint");
-                        for (int j=0; i<field_location.sectionPoint().size(); j++) {
+                        for (int j=0; j<field_location.sectionPoint().size(); j++) {
                             H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint/" + to_string(field_location.sectionPoint(j).number()));
                             write_string_dataset(section_point_group, "description", field_location.sectionPoint(j).description().CStr());
                         }
