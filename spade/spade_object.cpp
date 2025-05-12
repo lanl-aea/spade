@@ -2116,19 +2116,19 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
             if (field_locations.size() > 0) {
                 this->log_file->logDebug("Write field location data");
                 H5::Group locations_group = create_group(h5_file, field_output_group_name + "/locations");
-                for (int i=0; i<field_locations.size(); i++) {
-                    odb_FieldLocation field_location = field_locations.constGet(i);
-                    string location_group_name = field_output_group_name + "/locations/" + to_string(i);
+                for (int j=0; j<field_locations.size(); j++) {
+                    odb_FieldLocation field_location = field_locations.constGet(j);
+                    string location_group_name = field_output_group_name + "/locations/" + to_string(j);
                     H5::Group location_group = create_group(h5_file, location_group_name);
 
                     string position = get_position_enum(field_location.position());
                     write_string_dataset(location_group, "position", position);
                     if (field_location.sectionPoint().size() > 0) {
-                        this->log_file->logDebug("Write section point data for location " + to_string(i));
+                        this->log_file->logDebug("Write section point data for location " + to_string(j));
                         H5::Group section_points_group = create_group(h5_file, location_group_name + "/sectionPoint");
-                        for (int j=0; j<field_location.sectionPoint().size(); j++) {
-                            H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint/" + to_string(field_location.sectionPoint(j).number()));
-                            write_string_dataset(section_point_group, "description", field_location.sectionPoint(j).description().CStr());
+                        for (int k=0; k<field_location.sectionPoint().size(); k++) {
+                            H5::Group section_point_group = create_group(h5_file, location_group_name + "/sectionPoint/" + to_string(field_location.sectionPoint(k).number()));
+                            write_string_dataset(section_point_group, "description", field_location.sectionPoint(k).description().CStr());
                         }
                     }
                 }
