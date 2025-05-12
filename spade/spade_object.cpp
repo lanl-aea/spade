@@ -381,6 +381,7 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
 elements_type* SpadeObject::process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name) {
     elements_type new_elements;
     string name;
+    this->log_file->logDebug("\t\tCall to process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     if (!part_name.empty()) { 
         try {  // If the element has been stored in elements, just return the address to it
             new_elements = this->part_mesh.at(part_name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
@@ -401,12 +402,14 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             this->instance_mesh[name].instance_index = -1;
         }
     }
+    this->log_file->logDebug("\t\tElements map retrieved in process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     for (int i=0; i < elements.size(); i++) { 
         odb_Element element = elements.element(i);
         int element_label = element.label();
         string type = element.type().CStr();
         map<int, element_type> new_elements_map;
         element_type new_element;
+        this->log_file->logDebug("\t\tProcessing element " + to_string(element_label) + " at time: " + this->command_line_arguments->getTimeStamp(true));
         try {
             new_elements_map = new_elements.elements.at(type);
             try {

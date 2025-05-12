@@ -24,6 +24,7 @@
 #include <filesystem>
 //#include <cctype>
 #include <algorithm>
+#include <chrono>  // For getting milliseconds on timestamps
 
 #include <cmd_line_arguments.h>
 
@@ -271,12 +272,21 @@ string CmdLineArguments::helpMessage () {
 }
 
 string CmdLineArguments::getTimeStamp(bool for_file) {
-    std::time_t t = std::time(nullptr);
-    std::tm tm = *std::localtime(&t);
     std::stringstream time_buffer;
     if (for_file) {
-        time_buffer << std::put_time(&tm, "%Y%m%d-%H%M%S");
+        auto now = std::chrono::system_clock::now();
+        auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+        auto epoch_ms = now_ms.time_since_epoch().count();
+        auto ms = epoch_ms % 1000;
+
+        // Convert to time_t for formatting
+        std::time_t t = std::chrono::system_clock::to_time_t(now);
+        std::tm* now_tm = std::localtime(&t);
+
+        time_buffer << std::put_time(now_tm, "%Y%m%d-%H%M%S") << "." << std::setfill('0') << std::setw(3) << ms;
     } else {
+        std::time_t t = std::time(nullptr);
+        std::tm tm = *std::localtime(&t);
         time_buffer << std::put_time(&tm, "%a %b %d %H:%M:%S %Y");
     }
     return time_buffer.str();
