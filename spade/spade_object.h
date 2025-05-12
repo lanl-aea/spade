@@ -779,7 +779,7 @@ class SpadeObject {
           \param h5_file Open h5_file object for writing
           \sa SpadeObject()
         */
-        void write_vtk_without_steps (H5::H5File &h5_file);
+        void write_vtk_data (H5::H5File &h5_file);
         //! Open hdf5 subgroup and create it and it's parent groups if they don't exist
         /*!
           Open and return hdf5 group, if it doesn't exist then create it, if it's parent groups don't exist create them

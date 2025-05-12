@@ -124,11 +124,12 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
             }
             H5::H5File h5_file = *h5_file_pointer;
 
-            if (command_line_arguments["format"] == "vtk") {
-                this->write_vtk_without_steps(h5_file);
-            } else {
-                this->write_h5_without_steps(h5_file);
+            this->write_h5_without_steps(h5_file);
+            if (command_line_arguments["format"] == "extract") {  //Write extract format
+                write_mesh(h5_file);
                 write_step_data_h5 (odb, h5_file);
+            } else if (command_line_arguments["format"] == "vtk") {  //Write vtk format
+                this->write_vtk_data(h5_file);
             }
 
             h5_file.close();  // Close the hdf5 file
@@ -420,8 +421,9 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
                 int element_connectivity_size;
                 const int* const connectivity = element.connectivity(element_connectivity_size);
                 for (int i=0; i < element_connectivity_size; i++) { new_element.connectivity.push_back(connectivity[i]); }
-                this->log_file->logDebug("\t\telement " + to_string(element_label) + ": connectivity count: " + to_string(new_element.connectivity.size()) + " instances count:" + to_string(new_element.instanceNames.size()));
+                this->log_file->logDebug("\t\telement " + to_string(element_label) + ": connectivity count: " + to_string(new_element.connectivity.size()) + " instances count:" + to_string(new_element.instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
                 new_element.sectionCategory = process_section_category(element.sectionCategory());
+                this->log_file->logDebug("\t\tfinished processing section category at time: " + this->command_line_arguments->getTimeStamp(true));
 
                 new_elements.elements[type][element_label] = new_element;
                 new_elements.elements[type][element_label].sets.insert(set_name);
@@ -434,8 +436,9 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             int element_connectivity_size;
             const int* const connectivity = element.connectivity(element_connectivity_size);
             for (int i=0; i < element_connectivity_size; i++) { new_element.connectivity.push_back(connectivity[i]); }
-            this->log_file->logDebug("\t\telement " + to_string(element_label) + ": connectivity count: " + to_string(new_element.connectivity.size()) + " instances count:" + to_string(new_element.instanceNames.size()));
+            this->log_file->logDebug("\t\telement " + to_string(element_label) + ": connectivity count: " + to_string(new_element.connectivity.size()) + " instances count:" + to_string(new_element.instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
             new_element.sectionCategory = process_section_category(element.sectionCategory());
+            this->log_file->logDebug("\t\tfinished processing section category at time: " + this->command_line_arguments->getTimeStamp(true));
 
             new_elements_map[element_label] = new_element;
             new_elements.elements[type] = new_elements_map;
@@ -471,6 +474,7 @@ set_type SpadeObject::process_set(const odb_Set &odb_set) {
     for (int i=0; i<names.size(); i++) {
         odb_String name = names.constGet(i);
         string instance_name = name.CStr();
+        this->log_file->logDebug("\t\t\tProcessing set for" + instance_name + " at time: " + this->command_line_arguments->getTimeStamp(true));
         if (!instance_name.empty()) { new_set.instanceNames.push_back(name.CStr()); }
         if (new_set.type == "Node Set") {
             const odb_SequenceNode& set_nodes = odb_set.nodes(name);
@@ -1367,9 +1371,6 @@ void SpadeObject::write_h5_without_steps (H5::H5File &h5_file) {
         }
     }
 
-    if (this->command_line_arguments->get("format") == "extract") {  // Write extract format
-        write_mesh(h5_file);
-    }
     if ((!this->constraints.ties.empty()) || (!this->constraints.display_bodies.empty()) || (!this->constraints.couplings.empty()) || (!this->constraints.mpc.empty()) || (!this->constraints.shell_solid_couplings.empty())) {
         this->log_file->logVerbose("Writing constraints data at time: " + this->command_line_arguments->getTimeStamp(false));
         H5::Group contraints_group = create_group(h5_file, "/odb/constraints");
@@ -1382,9 +1383,10 @@ void SpadeObject::write_h5_without_steps (H5::H5File &h5_file) {
     write_parts(h5_file, "odb/parts");
     this->log_file->logVerbose("Writing assembly data at time: " + this->command_line_arguments->getTimeStamp(false));
     write_assembly(h5_file, "odb/rootAssembly");
+
 }
 
-void SpadeObject::write_vtk_without_steps (H5::H5File &h5_file) {
+void SpadeObject::write_vtk_data (H5::H5File &h5_file) {
 
     // Specification at: https://docs.vtk.org/en/latest/design_documents/VTKFileFormats.html#vtkhdf-file-format
     this->log_file->logVerbose("Writing top level data to odb group.");
