@@ -403,9 +403,15 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
         }
     }
     this->log_file->logDebug("\t\tElements map retrieved in process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
+    int previous_label = -2;
     for (int i=0; i < elements.size(); i++) { 
         odb_Element element = elements.element(i);
         int element_label = element.label();
+        if (element_label == previous_label) {  // For a typical hex element we were processing it 6 times
+            continue;
+        } else {
+            previous_label = element_label;    // This will help ensure it's processed once
+        }
         string type = element.type().CStr();
         map<int, element_type> new_elements_map;
         element_type new_element;
@@ -420,10 +426,10 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             } catch (const std::out_of_range& oor) {
                 // Add element members to new_element
                 odb_SequenceString instance_names = element.instanceNames();
-                for (int i=0; i < instance_names.size(); i++) { new_element.instanceNames.push_back(instance_names[i].CStr()); }
+                for (int j=0; j < instance_names.size(); j++) { new_element.instanceNames.push_back(instance_names[j].CStr()); }
                 int element_connectivity_size;
                 const int* const connectivity = element.connectivity(element_connectivity_size);
-                for (int i=0; i < element_connectivity_size; i++) { new_element.connectivity.push_back(connectivity[i]); }
+                for (int j=0; j < element_connectivity_size; j++) { new_element.connectivity.push_back(connectivity[j]); }
                 this->log_file->logDebug("\t\telement " + to_string(element_label) + ": connectivity count: " + to_string(new_element.connectivity.size()) + " instances count:" + to_string(new_element.instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
                 new_element.sectionCategory = process_section_category(element.sectionCategory());
                 this->log_file->logDebug("\t\tfinished processing section category at time: " + this->command_line_arguments->getTimeStamp(true));
@@ -435,10 +441,10 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
         } catch (const std::out_of_range& oor) {
             // Add element members to new_element
             odb_SequenceString instance_names = element.instanceNames();
-            for (int i=0; i < instance_names.size(); i++) { new_element.instanceNames.push_back(instance_names[i].CStr()); }
+            for (int j=0; j < instance_names.size(); j++) { new_element.instanceNames.push_back(instance_names[j].CStr()); }
             int element_connectivity_size;
             const int* const connectivity = element.connectivity(element_connectivity_size);
-            for (int i=0; i < element_connectivity_size; i++) { new_element.connectivity.push_back(connectivity[i]); }
+            for (int j=0; j < element_connectivity_size; j++) { new_element.connectivity.push_back(connectivity[j]); }
             this->log_file->logDebug("\t\telement " + to_string(element_label) + ": connectivity count: " + to_string(new_element.connectivity.size()) + " instances count:" + to_string(new_element.instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
             new_element.sectionCategory = process_section_category(element.sectionCategory());
             this->log_file->logDebug("\t\tfinished processing section category at time: " + this->command_line_arguments->getTimeStamp(true));
