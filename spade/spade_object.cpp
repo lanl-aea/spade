@@ -1404,6 +1404,10 @@ void SpadeObject::write_vtk_data (H5::H5File &h5_file) {
     int version[2] = {2, 2};
     write_integer_array_attribute(vtkhdf_group, "Version", 2, version);
 
+    // Create groups: PointData, CellData and FieldData
+    H5::Group point_data_group = create_group(h5_file, "/VTKHDF/PointData");
+    H5::Group cell_data_group = create_group(h5_file, "/VTKHDF/CellData");
+    H5::Group field_data_group = create_group(h5_file, "/VTKHDF/FieldData");
 }
 
 H5::Group SpadeObject::open_subgroup(H5::H5File &h5_file, const string &sub_group_name, bool &exists) {
