@@ -407,15 +407,43 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
     for (int i=0; i < elements.size(); i++) { 
         odb_Element element = elements.element(i);
         int element_label = element.label();
+        /*
         if (element_label == previous_label) {  // For a typical hex element we were processing it 6 times
             continue;
         } else {
             previous_label = element_label;    // This will help ensure it's processed once
         }
+        */
         string type = element.type().CStr();
-        map<int, element_type> new_elements_map;
+//        map<int, element_type> new_elements_map;
         element_type new_element;
-        this->log_file->logDebug("\t\tProcessing element " + to_string(element_label) + " at time: " + this->command_line_arguments->getTimeStamp(true));
+//        this->log_file->logDebug("\t\tProcessing element " + to_string(element_label) + " at time: " + this->command_line_arguments->getTimeStamp(true));
+
+        // Re-factor
+//            new_elements_map = new_elements.elements[type];
+//            new_element = new_elements_map[element_label];
+            new_element = new_elements.elements[type][element_label];
+
+            if (new_element.instanceNames.empty()) {
+                odb_SequenceString instance_names = element.instanceNames();
+                for (int j=0; j < instance_names.size(); j++) { new_element.instanceNames.push_back(instance_names[j].CStr()); }
+            }
+            if (new_element.connectivity.empty()) {
+                int element_connectivity_size;
+                const int* const connectivity = element.connectivity(element_connectivity_size);
+                for (int j=0; j < element_connectivity_size; j++) { new_element.connectivity.push_back(connectivity[j]); }
+//                this->log_file->logDebug("\t\tElement " + to_string(element_label) + ": connectivity count: " + to_string(new_element.connectivity.size()) + " instances count:" + to_string(new_element.instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
+            }
+            if (new_element.sectionCategory.name.empty()) {
+                new_element.sectionCategory = process_section_category(element.sectionCategory());
+//                this->log_file->logDebug("\t\tprocessed section category at time: " + this->command_line_arguments->getTimeStamp(true));
+            }
+            new_elements.elements[type][element_label].sets.insert(set_name);
+            if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
+//            this->log_file->logDebug("\t\tFinished processing element at time: " + this->command_line_arguments->getTimeStamp(true));
+        // Re-factor
+
+        /*
         try {
             new_elements_map = new_elements.elements.at(type);
             try {
@@ -452,7 +480,9 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             new_elements.elements[type] = new_elements_map;
             this->log_file->logDebug("\t\tFinished processing element at time: " + this->command_line_arguments->getTimeStamp(true));
         }
+        */
     }
+    this->log_file->logDebug("\t\tFinished process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     if (!part_name.empty()) { 
             this->part_mesh[part_name].elements = new_elements;
             return &this->part_mesh[part_name].elements;
@@ -1392,7 +1422,6 @@ void SpadeObject::write_h5_without_steps (H5::H5File &h5_file) {
     write_parts(h5_file, "odb/parts");
     this->log_file->logVerbose("Writing assembly data at time: " + this->command_line_arguments->getTimeStamp(false));
     write_assembly(h5_file, "odb/rootAssembly");
-
 }
 
 void SpadeObject::write_vtk_data (H5::H5File &h5_file) {
@@ -1719,6 +1748,7 @@ void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name) {
 void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name) {
     string root_assembly_group_name = "/odb/rootAssembly " + replace_slashes(this->root_assembly.name);
     H5::Group root_assembly_group = create_group(h5_file, root_assembly_group_name);
+    this->log_file->logDebug("\tWriting instances in write_assembly at time: " + this->command_line_arguments->getTimeStamp(true));
     write_instances(h5_file, root_assembly_group_name);
     write_string_dataset(root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
     if (this->command_line_arguments->get("format") == "odb") {
@@ -1727,6 +1757,7 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name) 
         write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets);
         write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets);
     }
+    this->log_file->logDebug("\tWriting surface sets in write_assembly at time: " + this->command_line_arguments->getTimeStamp(true));
     write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
     if (this->root_assembly.connectorOrientations.size() > 0) {
         H5::Group connector_orientations_group = create_group(h5_file, root_assembly_group_name + "/connectorOrientations");
@@ -2346,6 +2377,7 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name)
     for (auto instance : this->root_assembly.instances) {
         string instance_group_name = instances_group_name + "/" + replace_slashes(instance.name);
         H5::Group instance_group = create_group(h5_file, instance_group_name);
+        this->log_file->logDebug("\t\tWriting instance: " + instance.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
         write_instance(h5_file, instance_group, instance_group_name, instance);
     }
 }
@@ -2353,9 +2385,13 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name)
 void SpadeObject::write_instance(H5::H5File &h5_file, H5::Group &group, const string &group_name, instance_type instance) {
     write_string_dataset(group, "embeddedSpace", instance.embeddedSpace);
     if (this->command_line_arguments->get("format") == "odb") {
+        this->log_file->logDebug("\t\tWriting nodes in instance: " + instance.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
         write_nodes(h5_file, group, group_name, instance.nodes, "");
+        this->log_file->logDebug("\t\tWriting elements in instance: " + instance.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
         write_elements(h5_file, group, group_name, instance.elements, "");
+        this->log_file->logDebug("\t\tWriting node sets in instance: " + instance.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
         write_sets(h5_file, group_name + "/nodeSets", instance.nodeSets);
+        this->log_file->logDebug("\t\tWriting element sets in instance: " + instance.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
         write_sets(h5_file, group_name + "/elementSets", instance.elementSets);
     }
     write_sets(h5_file, group_name + "/surfaces", instance.surfaces);
@@ -2635,6 +2671,7 @@ void SpadeObject::write_sets(H5::H5File &h5_file, const string &group_name, cons
 void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const set_type &odb_set) {
     std::regex nodes_pattern("\\s*ALL\\s*NODES\\s*");
     std::regex elements_pattern("\\s*ALL\\s*ELEMENTS\\s*");
+    this->log_file->logDebug("\tWriting set " + odb_set.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
     if ((!odb_set.name.empty()) && (!regex_match(odb_set.name, nodes_pattern)) && (!regex_match(odb_set.name, elements_pattern))) {
         // There is no reason to write a set named ' ALL NODES' when all the nodes can be found under the 'nodes' heading
         string set_group_name = group_name + "/" + replace_slashes(odb_set.name);
