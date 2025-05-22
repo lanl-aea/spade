@@ -1817,7 +1817,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
         }
 
         if (write_mises) {
-            write_float_2D_array(bulk_group, "mises", field_bulk_data.numberOfElements(), field_bulk_data.width(), field_bulk_data.mises());
+            write_float_2D_array(bulk_group, "mises", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.mises());
         }
         write_integer_2D_array(bulk_group, "elementLabels", field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.elementLabels());
         if (field_bulk_data.integrationPoints()) {
