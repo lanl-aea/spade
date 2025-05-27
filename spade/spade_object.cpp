@@ -416,9 +416,6 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
         }
         string type = element.type().CStr();
 
-        // Re-factor
-//        element_type new_element = new_elements.elements[type][element_label];
-
         if (new_elements.elements[type][element_label].instanceNames.empty()) {
             odb_SequenceString instance_names = element.instanceNames();
             for (int j=0; j < instance_names.size(); j++) { new_elements.elements[type][element_label].instanceNames.push_back(instance_names[j].CStr()); }
@@ -427,53 +424,13 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             int element_connectivity_size;
             const int* const connectivity = element.connectivity(element_connectivity_size);
             for (int j=0; j < element_connectivity_size; j++) { new_elements.elements[type][element_label].connectivity.push_back(connectivity[j]); }
-//            this->log_file->logDebug("\t\tElement " + to_string(element_label) + ": connectivity count: " + to_string(new_elements.elements[type][element_label].connectivity.size()) + " instances count:" + to_string(new_elements.elements[type][element_label].instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
+            this->log_file->logDebug("\t\tElement " + to_string(element_label) + ": connectivity count: " + to_string(new_elements.elements[type][element_label].connectivity.size()) + " instances count:" + to_string(new_elements.elements[type][element_label].instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
         }
         if (new_elements.elements[type][element_label].sectionCategory.name.empty()) {
             new_elements.elements[type][element_label].sectionCategory = process_section_category(element.sectionCategory());
         }
         new_elements.elements[type][element_label].sets.insert(set_name);
         if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
-        // Re-factor
-
-        /*
-        try {
-            new_elements_map = new_elements.elements.at(type);
-            try {
-                new_element = new_elements.elements[type].at(element_label);
-                new_elements.elements[type][element_label].sets.insert(set_name);
-                if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
-                this->log_file->logDebug("\t\tFound element " + to_string(element_label) + " of type " + type + " at time: " + this->command_line_arguments->getTimeStamp(true));
-                continue;
-            } catch (const std::out_of_range& oor) {
-                // Add element members to new_element
-                odb_SequenceString instance_names = element.instanceNames();
-                for (int j=0; j < instance_names.size(); j++) { new_element.instanceNames.push_back(instance_names[j].CStr()); }
-                int element_connectivity_size;
-                const int* const connectivity = element.connectivity(element_connectivity_size);
-                for (int j=0; j < element_connectivity_size; j++) { new_element.connectivity.push_back(connectivity[j]); }
-                this->log_file->logDebug("\t\tElement " + to_string(element_label) + ": connectivity count: " + to_string(new_element.connectivity.size()) + " instances count:" + to_string(new_element.instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
-                new_element.sectionCategory = process_section_category(element.sectionCategory());
-
-                new_elements.elements[type][element_label] = new_element;
-                new_elements.elements[type][element_label].sets.insert(set_name);
-                if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
-            }
-        } catch (const std::out_of_range& oor) {
-            // Add element members to new_element
-            odb_SequenceString instance_names = element.instanceNames();
-            for (int j=0; j < instance_names.size(); j++) { new_element.instanceNames.push_back(instance_names[j].CStr()); }
-            int element_connectivity_size;
-            const int* const connectivity = element.connectivity(element_connectivity_size);
-            for (int j=0; j < element_connectivity_size; j++) { new_element.connectivity.push_back(connectivity[j]); }
-            this->log_file->logDebug("\t\tElement " + to_string(element_label) + ": connectivity count: " + to_string(new_element.connectivity.size()) + " instances count:" + to_string(new_element.instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
-            new_element.sectionCategory = process_section_category(element.sectionCategory());
-
-            new_elements_map[element_label] = new_element;
-            new_elements.elements[type] = new_elements_map;
-            this->log_file->logDebug("\t\tFinished processing element at time: " + this->command_line_arguments->getTimeStamp(true));
-        }
-        */
     }
     this->log_file->logDebug("\t\tFinished process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     if (!part_name.empty()) { 
