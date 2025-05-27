@@ -19,6 +19,7 @@ odb_files = ["viewer_tutorial.odb", "w-reactor_global.odb"]
 inp_files = [
     "beamgap",
     "selfcontact_gask",
+    "erode_proj_and_plate",
 ]
 
 # If executing in repository, add package to PYTHONPATH
@@ -70,10 +71,14 @@ for odb_file in odb_files:
         )
     )
 for inp_file in inp_files:
+    if inp_file.startswith("erode"):
+        fetch_string = "erode_"
+    else:
+        fetch_string = inp_file
     system_tests.append(
         pytest.param(
             [
-                string.Template(f"${{abaqus_command}} fetch -job '{inp_file}*'"),
+                string.Template(f"${{abaqus_command}} fetch -job '{fetch_string}*'"),
                 string.Template(f"${{abaqus_command}} -job {inp_file} -interactive -ask_delete no"),
                 string.Template(
                     f"${{spade_command}} extract {inp_file}.odb --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
