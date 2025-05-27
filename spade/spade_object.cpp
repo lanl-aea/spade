@@ -388,6 +388,7 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New part elements for part: " + part_name);
             this->part_mesh[part_name].part_index = -1;
+            new_elements = this->part_mesh[part_name].elements;
         }
     } else {
         name = instance_name;
@@ -400,6 +401,7 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New elements for: " + name);
             this->instance_mesh[name].instance_index = -1;
+            new_elements = this->instance_mesh[name].elements;
         }
     }
     this->log_file->logDebug("\t\tElements map retrieved in process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
@@ -407,40 +409,31 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
     for (int i=0; i < elements.size(); i++) { 
         odb_Element element = elements.element(i);
         int element_label = element.label();
-        /*
         if (element_label == previous_label) {  // For a typical hex element we were processing it 6 times
             continue;
         } else {
             previous_label = element_label;    // This will help ensure it's processed once
         }
-        */
         string type = element.type().CStr();
-//        map<int, element_type> new_elements_map;
-        element_type new_element;
-//        this->log_file->logDebug("\t\tProcessing element " + to_string(element_label) + " at time: " + this->command_line_arguments->getTimeStamp(true));
 
         // Re-factor
-//            new_elements_map = new_elements.elements[type];
-//            new_element = new_elements_map[element_label];
-            new_element = new_elements.elements[type][element_label];
+//        element_type new_element = new_elements.elements[type][element_label];
 
-            if (new_element.instanceNames.empty()) {
-                odb_SequenceString instance_names = element.instanceNames();
-                for (int j=0; j < instance_names.size(); j++) { new_element.instanceNames.push_back(instance_names[j].CStr()); }
-            }
-            if (new_element.connectivity.empty()) {
-                int element_connectivity_size;
-                const int* const connectivity = element.connectivity(element_connectivity_size);
-                for (int j=0; j < element_connectivity_size; j++) { new_element.connectivity.push_back(connectivity[j]); }
-//                this->log_file->logDebug("\t\tElement " + to_string(element_label) + ": connectivity count: " + to_string(new_element.connectivity.size()) + " instances count:" + to_string(new_element.instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
-            }
-            if (new_element.sectionCategory.name.empty()) {
-                new_element.sectionCategory = process_section_category(element.sectionCategory());
-//                this->log_file->logDebug("\t\tprocessed section category at time: " + this->command_line_arguments->getTimeStamp(true));
-            }
-            new_elements.elements[type][element_label].sets.insert(set_name);
-            if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
-//            this->log_file->logDebug("\t\tFinished processing element at time: " + this->command_line_arguments->getTimeStamp(true));
+        if (new_elements.elements[type][element_label].instanceNames.empty()) {
+            odb_SequenceString instance_names = element.instanceNames();
+            for (int j=0; j < instance_names.size(); j++) { new_elements.elements[type][element_label].instanceNames.push_back(instance_names[j].CStr()); }
+        }
+        if (new_elements.elements[type][element_label].connectivity.empty()) {
+            int element_connectivity_size;
+            const int* const connectivity = element.connectivity(element_connectivity_size);
+            for (int j=0; j < element_connectivity_size; j++) { new_elements.elements[type][element_label].connectivity.push_back(connectivity[j]); }
+//            this->log_file->logDebug("\t\tElement " + to_string(element_label) + ": connectivity count: " + to_string(new_elements.elements[type][element_label].connectivity.size()) + " instances count:" + to_string(new_elements.elements[type][element_label].instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
+        }
+        if (new_elements.elements[type][element_label].sectionCategory.name.empty()) {
+            new_elements.elements[type][element_label].sectionCategory = process_section_category(element.sectionCategory());
+        }
+        new_elements.elements[type][element_label].sets.insert(set_name);
+        if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
         // Re-factor
 
         /*
@@ -1454,6 +1447,7 @@ H5::Group SpadeObject::open_subgroup(H5::H5File &h5_file, const string &sub_grou
 
 
 void SpadeObject::write_mesh(H5::H5File &h5_file) {
+    this->log_file->logDebug("\tCalled write_mesh at time: " + this->command_line_arguments->getTimeStamp(true));
     string embedded_space;
     for (auto [part_name, part] : this->part_mesh) {
         embedded_space = "";
@@ -1497,9 +1491,11 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
             }
         }
     }
+    this->log_file->logDebug("\tFinished write_mesh at time: " + this->command_line_arguments->getTimeStamp(true));
 }
 
 void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<int, node_type> nodes, const string embedded_space) {
+    this->log_file->logDebug("\t\tCalled write_mesh_nodes at time: " + this->command_line_arguments->getTimeStamp(true));
     vector<string> coordinates;
     if (embedded_space == "Two Dimensional Planar") {
         coordinates = {"x", "y"};
@@ -1513,7 +1509,7 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
     vector<int> node_labels;
     vector<float> node_coords;
     hsize_t dimension(nodes.size());
-    hvl_t variable_length_sets[dimension];
+    vector<hvl_t> variable_length_sets(dimension);
     int node_count = 0;
     for (auto [node_id, node] : nodes) {
         node_labels.push_back(node_id);
@@ -1553,20 +1549,27 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
     H5::VarLenType datatype_sets(H5::StrType(0, H5T_VARIABLE));
     try {
         H5::DataSet dataset_sets(group.createDataSet("node_sets", datatype_sets, dataspace_sets));
-        dataset_sets.write(variable_length_sets, datatype_sets);
+        dataset_sets.write(variable_length_sets.data(), datatype_sets);
         dataspace_sets.close();
         datatype_sets.close();
         dataset_sets.close();
         // Clean up allocated memory
-        H5Treclaim(datatype_sets.getId(), dataspace_sets.getId(), H5P_DEFAULT, variable_length_sets);
+        H5Treclaim(datatype_sets.getId(), dataspace_sets.getId(), H5P_DEFAULT, variable_length_sets.data());
     } catch(H5::Exception& e) {
         this->log_file->logWarning("Unable to create dataset node_sets. " + e.getDetailMsg());
         dataspace_sets.close();
         datatype_sets.close();
     }
+    // Clean up allocated memory
+    for (size_t i = 0; i < variable_length_sets[0].len; ++i) {
+         delete[] static_cast<char**>(variable_length_sets[0].p)[i];
+    }
+    H5free_memory(variable_length_sets[0].p);
+    this->log_file->logDebug("\t\tFinished write_mesh_nodes at time: " + this->command_line_arguments->getTimeStamp(true));
 }
 
 void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map<string, map<int, element_type>> elements) {
+    this->log_file->logDebug("\t\tCalled write_mesh_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     for (auto [type, element_members] : elements) {
 
         vector<int> element_labels;
@@ -1578,10 +1581,10 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
         for (int i=0; i<connectivity_size; i++) { node_indices.push_back(i); }
 
         hsize_t dimension(element_members.size());
-        hvl_t variable_length_sets[dimension];
-        hvl_t variable_length_instances[dimension];
-        hvl_t variable_length_section_point_numbers[dimension];
-        hvl_t variable_length_section_point_descriptions[dimension];
+        vector<hvl_t> variable_length_sets(dimension);
+        vector<hvl_t> variable_length_instances(dimension);
+        vector<hvl_t> variable_length_section_point_numbers(dimension);
+        vector<hvl_t> variable_length_section_point_descriptions(dimension);
         int element_count = 0;
         bool section_point_empty = true;
         for (auto [element_id, element] : element_members) {
@@ -1654,11 +1657,11 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
         H5::VarLenType datatype_sets(H5::StrType(0, H5T_VARIABLE));
         try {
             H5::DataSet dataset_sets(group.createDataSet(type + "_element_sets", datatype_sets, dataspace_sets));
-            dataset_sets.write(variable_length_sets, datatype_sets);
+            dataset_sets.write(variable_length_sets.data(), datatype_sets);
             dataspace_sets.close();
             datatype_sets.close();
             dataset_sets.close();
-            H5Treclaim(datatype_sets.getId(), dataspace_sets.getId(), H5P_DEFAULT, variable_length_sets);  // Clearing the memory
+            H5Treclaim(datatype_sets.getId(), dataspace_sets.getId(), H5P_DEFAULT, variable_length_sets.data());  // Clearing the memory
         } catch(H5::Exception& e) {
             this->log_file->logWarning("Unable to create dataset element_sets. " + e.getDetailMsg());
             dataspace_sets.close();
@@ -1669,11 +1672,11 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
         H5::VarLenType datatype_instances(H5::StrType(0, H5T_VARIABLE));
         try {
             H5::DataSet dataset_instances(group.createDataSet(type + "_element_instances", datatype_instances, dataspace_instances));
-            dataset_instances.write(variable_length_instances, datatype_instances);
+            dataset_instances.write(variable_length_instances.data(), datatype_instances);
             dataspace_instances.close();
             datatype_instances.close();
             dataset_instances.close();
-            H5Treclaim(datatype_instances.getId(), dataspace_instances.getId(), H5P_DEFAULT, variable_length_instances);  // Clearing the memory
+            H5Treclaim(datatype_instances.getId(), dataspace_instances.getId(), H5P_DEFAULT, variable_length_instances.data());  // Clearing the memory
         } catch(H5::Exception& e) {
             this->log_file->logWarning("Unable to create dataset element_instances. " + e.getDetailMsg());
             dataspace_instances.close();
@@ -1685,11 +1688,11 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
             H5::VarLenType datatype_section_point_numbers(H5::StrType(0, H5T_VARIABLE));
             try {
                 H5::DataSet dataset_section_point_numbers(group.createDataSet(type + "_section_point_numbers", datatype_section_point_numbers, dataspace_section_point_numbers));
-                dataset_section_point_numbers.write(variable_length_section_point_numbers, datatype_section_point_numbers);
+                dataset_section_point_numbers.write(variable_length_section_point_numbers.data(), datatype_section_point_numbers);
                 dataspace_section_point_numbers.close();
                 datatype_section_point_numbers.close();
                 dataset_section_point_numbers.close();
-                H5Treclaim(datatype_section_point_numbers.getId(), dataspace_section_point_numbers.getId(), H5P_DEFAULT, variable_length_section_point_numbers);  // Clearing the memory
+                H5Treclaim(datatype_section_point_numbers.getId(), dataspace_section_point_numbers.getId(), H5P_DEFAULT, variable_length_section_point_numbers.data());  // Clearing the memory
             } catch(H5::Exception& e) {
                 this->log_file->logWarning("Unable to create dataset section_point_numbers. " + e.getDetailMsg());
                 dataspace_section_point_numbers.close();
@@ -1700,11 +1703,11 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
             H5::VarLenType datatype_section_point_descriptions(H5::StrType(0, H5T_VARIABLE));
             try {
                 H5::DataSet dataset_section_point_descriptions(group.createDataSet(type + "_section_point_descriptions", datatype_section_point_descriptions, dataspace_section_point_descriptions));
-                dataset_section_point_descriptions.write(variable_length_section_point_descriptions, datatype_section_point_descriptions);
+                dataset_section_point_descriptions.write(variable_length_section_point_descriptions.data(), datatype_section_point_descriptions);
                 dataspace_section_point_descriptions.close();
                 datatype_section_point_descriptions.close();
                 dataset_section_point_descriptions.close();
-                H5Treclaim(datatype_section_point_descriptions.getId(), dataspace_section_point_descriptions.getId(), H5P_DEFAULT, variable_length_section_point_descriptions);  // Clearing the memory
+                H5Treclaim(datatype_section_point_descriptions.getId(), dataspace_section_point_descriptions.getId(), H5P_DEFAULT, variable_length_section_point_descriptions.data());  // Clearing the memory
             } catch(H5::Exception& e) {
                 this->log_file->logWarning("Unable to create dataset section_point_descriptions. " + e.getDetailMsg());
                 dataspace_section_point_descriptions.close();
@@ -1713,6 +1716,7 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
         }
 
     }
+    this->log_file->logDebug("\t\tFinished write_mesh_elements at time: " + this->command_line_arguments->getTimeStamp(true));
 }
 
 void SpadeObject::create_extract_history_group(H5::H5File &h5_file, history_region_type &history_region, string &step_group_name) {
@@ -1760,6 +1764,7 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name) 
     this->log_file->logDebug("\tWriting surface sets in write_assembly at time: " + this->command_line_arguments->getTimeStamp(true));
     write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
     if (this->root_assembly.connectorOrientations.size() > 0) {
+        this->log_file->logDebug("\tWriting connector orientations in write_assembly at time: " + this->command_line_arguments->getTimeStamp(true));
         H5::Group connector_orientations_group = create_group(h5_file, root_assembly_group_name + "/connectorOrientations");
         for (int i=0; i<this->root_assembly.connectorOrientations.size(); i++) {
             string connector_orientation_group_name = root_assembly_group_name + "/connectorOrientations/" + to_string(i);
@@ -1774,6 +1779,7 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name) 
             write_string_dataset(connector_orientation_group, "axis2", this->root_assembly.connectorOrientations[i].axis2);
         }
     }
+    this->log_file->logDebug("\tFinished write_assembly at time: " + this->command_line_arguments->getTimeStamp(true));
 }
 
 void SpadeObject::write_field_values(H5::H5File &h5_file, const string &group_name, H5::Group &group, field_value_type &values) {
@@ -2443,6 +2449,7 @@ void SpadeObject::write_instance(H5::H5File &h5_file, H5::Group &group, const st
 }
 
 void SpadeObject::write_analytic_surface(H5::H5File &h5_file, const string &group_name, analytic_surface_type &analytic_surface) {
+    this->log_file->logDebug("\t\tCalled write_analytic_surface at time: " + this->command_line_arguments->getTimeStamp(true));
     if ((analytic_surface.name.empty()) && (analytic_surface.type.empty()) && (!analytic_surface.filletRadius) && (analytic_surface.segments.size() == 0) && (analytic_surface.localCoordData.size() == 0)) { return; }
     string analytic_surface_group_name = group_name + "/analyticSurface";
     H5::Group surface_group = create_group(h5_file, analytic_surface_group_name);
@@ -2615,11 +2622,13 @@ void SpadeObject::write_interactions(H5::H5File &h5_file, const string &group_na
 
 void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const string &group_name, const elements_type* elements, const string &set_name) {
     elements_type all_elements = *elements;
+    this->log_file->logDebug("\t\tCall to write_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     if (!all_elements.elements.empty()) {
         if (set_name.empty()) {
             H5::Group elements_group = create_group(h5_file, group_name + "/elements");
             for (auto [type, element] : all_elements.elements) {
                 for (auto [element_id, element_members] : element) {
+//                    this->log_file->logDebug("\t\t\tWrite element: " + to_string(element_id) + " of type: " + type + " at time: " + this->command_line_arguments->getTimeStamp(true));
                     string elements_label_group_name = group_name + "/elements/" + to_string(element_id);
                     H5::Group elements_label_group = create_group(h5_file, elements_label_group_name);
                     write_string_dataset(elements_label_group, "type", type);
@@ -2639,6 +2648,7 @@ void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const st
             }
         }
     }
+    this->log_file->logDebug("\t\tFinished write_elements at time: " + this->command_line_arguments->getTimeStamp(true));
 }
 
 void SpadeObject::write_nodes(H5::H5File &h5_file, H5::Group &group, const string &group_name, const nodes_type* nodes, const string &set_name) {
@@ -2979,16 +2989,17 @@ void SpadeObject::write_float_2D_vector(const H5::Group& group, const string & d
     H5::VarLenType datatype(H5::PredType::NATIVE_FLOAT);
     try {
         H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
-        hvl_t variable_length[dimensions];
+        vector<hvl_t> variable_length(dimensions);
         for (hsize_t i = 0; i < dimensions; ++i)
         {
             variable_length[i].len = float_data[i].size();
             variable_length[i].p = &float_data[i][0];
         }
-        dataset.write(variable_length, datatype);
+        dataset.write(variable_length.data(), datatype);
         dataspace.close();
         datatype.close();
         dataset.close();
+        H5Treclaim(datatype.getId(), dataspace.getId(), H5P_DEFAULT, variable_length.data());  // Clearing the memory
     } catch(H5::Exception& e) {
         this->log_file->logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
         dataspace.close();
@@ -3074,16 +3085,17 @@ void SpadeObject::write_double_2D_vector(const H5::Group& group, const string & 
     H5::VarLenType datatype(H5::PredType::NATIVE_DOUBLE);
     try {
         H5::DataSet dataset(group.createDataSet(dataset_name, datatype, dataspace));
-        hvl_t variable_length[dimensions];
+        vector<hvl_t> variable_length(dimensions);
         for (hsize_t i = 0; i < dimensions; ++i)
         {
             variable_length[i].len = double_data[i].size();
             variable_length[i].p = &double_data[i][0];
         }
-        dataset.write(variable_length, datatype);
+        dataset.write(variable_length.data(), datatype);
         dataspace.close();
         datatype.close();
         dataset.close();
+        H5Treclaim(datatype.getId(), dataspace.getId(), H5P_DEFAULT, variable_length.data());  // Clearing the memory
     } catch(H5::Exception& e) {
         this->log_file->logWarning("Unable to create dataset " + dataset_name + ". " + e.getDetailMsg());
         dataspace.close();
