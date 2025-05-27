@@ -294,6 +294,7 @@ struct mesh_type {
     elements_type elements;
     int part_index;
     int instance_index;
+    int assembly_index;
 };
 
 struct connector_orientation_type {
@@ -1261,6 +1262,7 @@ class SpadeObject {
         assembly_type root_assembly;
         map<string, mesh_type> instance_mesh;
         map<string, mesh_type> part_mesh;
+        map<string, mesh_type> assembly_mesh;
         map<string, element_type> elements;
         map<string, string> node_links;
         map<string, string> element_links;

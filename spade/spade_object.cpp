@@ -330,19 +330,20 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
         try {  // If the node has been stored in nodes, just return the address to it
             new_nodes = this->part_mesh.at(part_name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
-            this->log_file->logDebug("New part nodes for part: " + part_name);
+            this->log_file->logDebug("New nodes for part: " + part_name);
             this->part_mesh[part_name].part_index = -1;
         }
+    } else if (!assembly_name.empty()) {
+        new_nodes = this->assembly_mesh[assembly_name].nodes;
     } else {
         name = instance_name;
         if (name.empty()) { 
-            name = assembly_name;
-            if (name.empty()) { name = "ALL"; }
+            name = "ALL";
         }
         try {
             new_nodes = this->instance_mesh.at(name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
-            this->log_file->logDebug("New nodes for: " + name);
+            this->log_file->logDebug("New nodes for instance: " + name);
             this->instance_mesh[name].instance_index = -1;
         }
     }
@@ -372,6 +373,9 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
     if (!part_name.empty()) { 
             this->part_mesh[part_name].nodes = new_nodes;
             return &this->part_mesh[part_name].nodes;
+    } else if (!assembly_name.empty()) {
+            this->assembly_mesh[assembly_name].nodes = new_nodes;
+            return &this->assembly_mesh[assembly_name].nodes;
     } else {
             this->instance_mesh[name].nodes = new_nodes;
             return &this->instance_mesh[name].nodes;
@@ -386,20 +390,21 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
         try {  // If the element has been stored in elements, just return the address to it
             new_elements = this->part_mesh.at(part_name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
-            this->log_file->logDebug("New part elements for part: " + part_name);
+            this->log_file->logDebug("New elements for part: " + part_name);
             this->part_mesh[part_name].part_index = -1;
             new_elements = this->part_mesh[part_name].elements;
         }
+    } else if (!assembly_name.empty()) {
+        new_elements = this->assembly_mesh[part_name].elements;
     } else {
         name = instance_name;
         if (name.empty()) { 
-            name = assembly_name;
-            if (name.empty()) { name = "ALL"; }
+            name = "ALL";
         }
         try {
             new_elements = this->instance_mesh.at(name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
-            this->log_file->logDebug("New elements for: " + name);
+            this->log_file->logDebug("New elements for instance: " + name);
             this->instance_mesh[name].instance_index = -1;
             new_elements = this->instance_mesh[name].elements;
         }
@@ -436,6 +441,9 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
     if (!part_name.empty()) { 
             this->part_mesh[part_name].elements = new_elements;
             return &this->part_mesh[part_name].elements;
+    } else if (!assembly_name.empty()) {
+            this->assembly_mesh[assembly_name].elements = new_elements;
+            return &this->assembly_mesh[assembly_name].elements;
     } else {
             this->instance_mesh[name].elements = new_elements;
             return &this->instance_mesh[name].elements;
@@ -463,14 +471,18 @@ set_type SpadeObject::process_set(const odb_Set &odb_set) {
     for (int i=0; i<names.size(); i++) {
         odb_String name = names.constGet(i);
         string instance_name = name.CStr();
-        this->log_file->logDebug("\t\t\tProcessing set for" + instance_name + " at time: " + this->command_line_arguments->getTimeStamp(true));
-        if (!instance_name.empty()) { new_set.instanceNames.push_back(name.CStr()); }
+        this->log_file->logDebug("\t\t\tProcessing set " + new_set.name + " of type " + new_set.type + " for" + instance_name + " at time: " + this->command_line_arguments->getTimeStamp(true));
+        if (!instance_name.empty()) { new_set.instanceNames.push_back(instance_name); }
         if (new_set.type == "Node Set") {
             const odb_SequenceNode& set_nodes = odb_set.nodes(name);
-            new_set.nodes = process_nodes(set_nodes, name.CStr(), "", new_set.name, "", 0);
+            if (!instance_name.empty()) {  // Don't process nodes or elements in set that doesn't belong to an instance
+                new_set.nodes = process_nodes(set_nodes, instance_name, "", new_set.name, "", 0);
+            }
         } else if (new_set.type == "Element Set") {
             const odb_SequenceElement& set_elements = odb_set.elements(name);
-            new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
+            if (!instance_name.empty()) {  // Don't process nodes or elements in set that doesn't belong to an instance
+                new_set.elements = process_elements(set_elements, instance_name, "", new_set.name, "");
+            }
         } else if (new_set.type == "Surface Set") {
             const odb_SequenceElement& set_elements = odb_set.elements(name);
             const odb_SequenceElementFace& set_faces = odb_set.faces(name);
@@ -481,11 +493,15 @@ set_type SpadeObject::process_set(const odb_Set &odb_set) {
                 for (int n=0; n<set_elements.size(); n++) {
                     new_set.faces.push_back(this->faces_enum_strings[set_faces.constGet(n)]);
                 }
-                new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
-            } else if(set_elements.size()) {
-                new_set.elements = process_elements(set_elements, name.CStr(), "", new_set.name, "");
+                if (!instance_name.empty()) {  // Don't process nodes or elements in set that doesn't belong to an instance
+                    new_set.elements = process_elements(set_elements, instance_name, "", new_set.name, "");
+                }
+            } else if((set_elements.size()) && (!instance_name.empty())) {
+                new_set.elements = process_elements(set_elements, instance_name, "", new_set.name, "");
             } else {
-                new_set.nodes = process_nodes(set_nodes, name.CStr(), "", new_set.name, "", 0);
+                if (!instance_name.empty()) {  // Don't process nodes or elements in set that doesn't belong to an instance
+                    new_set.nodes = process_nodes(set_nodes, instance_name, "", new_set.name, "", 0);
+                }
             }
 
         } else {
@@ -912,7 +928,9 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     this->log_file->log("\telement count: " + to_string(assembly.elements().size()));
 
     const odb_SequenceNode& nodes = assembly.nodes();
-    new_assembly.nodes = process_nodes(nodes, "", new_assembly.name, "", "", assembly.embeddedSpace());
+    string assembly_name = new_assembly.name;
+    if (assembly_name.empty()) { assembly_name = "rootAssembly"; }
+    new_assembly.nodes = process_nodes(nodes, "", assembly_name, "", "", assembly.embeddedSpace());
     const odb_SequenceElement& elements = assembly.elements();
     new_assembly.elements = process_elements(elements, "", new_assembly.name, "", "");
 
@@ -1425,6 +1443,21 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
             if (!part.elements.elements.empty()) {
                 write_mesh_elements(h5_file, part_mesh_group, part.elements.elements);
             }
+        }
+    }
+    string assembly_group_name = "/" + this->root_assembly.name;
+    H5::Group extract_assembly_group = create_group(h5_file, assembly_group_name);
+    if (!this->root_assembly.nodes->nodes.empty() || !this->root_assembly.elements->elements.empty()) {
+        if (!this->root_assembly.embeddedSpace.empty()) {
+            write_string_dataset(extract_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
+        }
+        string assembly_mesh_group_name = assembly_group_name + "/Mesh";
+        H5::Group assembly_mesh_group = create_group(h5_file, assembly_mesh_group_name);
+        if (!this->root_assembly.nodes->nodes.empty()) {
+            write_mesh_nodes(h5_file, assembly_mesh_group, this->root_assembly.nodes->nodes, this->root_assembly.embeddedSpace);
+        }
+        if (!this->root_assembly.elements->elements.empty()) {
+            write_mesh_elements(h5_file, assembly_mesh_group, this->root_assembly.elements->elements);
         }
     }
     for (auto [instance_name, instance] : this->instance_mesh) {
