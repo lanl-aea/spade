@@ -12,6 +12,8 @@ Bug fixes
 =========
 - Fixed writing of Mises data to match correct dimensions (:issue:`101`, :merge:`99`). By `Prabhu Khalsa`_.
 - Fixed typo in for loop iterator (:issue:`98`, :merge:`98`). By `Prabhu Khalsa`_.
+- Process elements differently for efficiency. Fix the code that writes variable length datasets into the hdf5 file
+  (:issue:`102`, :merge:`100`). By `Prabhu Khalsa`_.
 
 Enhancements
 ============
