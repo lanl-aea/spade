@@ -930,6 +930,7 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     const odb_SequenceNode& nodes = assembly.nodes();
     string assembly_name = new_assembly.name;
     if (assembly_name.empty()) { assembly_name = "rootAssembly"; }
+    this->default_instance_name = assembly_name;
     new_assembly.nodes = process_nodes(nodes, "", assembly_name, "", "", assembly.embeddedSpace());
     const odb_SequenceElement& elements = assembly.elements();
     new_assembly.elements = process_elements(elements, "", new_assembly.name, "", "");
@@ -1408,6 +1409,7 @@ void SpadeObject::write_vtk_data (H5::H5File &h5_file) {
 }
 
 H5::Group SpadeObject::open_subgroup(H5::H5File &h5_file, const string &sub_group_name, bool &exists) {
+    // Recursively call open_subgroup until all subgroups exist
     try {
         exists = true;
         return h5_file.openGroup(sub_group_name.c_str());
@@ -1426,8 +1428,9 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
     string embedded_space;
     for (auto [part_name, part] : this->part_mesh) {
         embedded_space = "";
-        string part_group_name = "/" + part_name;
-        H5::Group extract_part_group = create_group(h5_file, part_group_name);
+        string part_group_name = "/parts/" + part_name;
+        bool sub_group_exists = false;
+        H5::Group extract_part_group = open_subgroup(h5_file, part_group_name, sub_group_exists);
         if (!part.nodes.nodes.empty() || !part.elements.elements.empty()) {
             if (part.part_index >= 0) {
                 if (!this->parts[part.part_index].embeddedSpace.empty()) {
@@ -1445,8 +1448,9 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
             }
         }
     }
-    string assembly_group_name = "/" + this->root_assembly.name;
-    H5::Group extract_assembly_group = create_group(h5_file, assembly_group_name);
+    string assembly_group_name = "/assemblies/" + this->root_assembly.name;
+    bool sub_group_exists = false;
+    H5::Group extract_assembly_group = open_subgroup(h5_file, assembly_group_name, sub_group_exists);
     if (!this->root_assembly.nodes->nodes.empty() || !this->root_assembly.elements->elements.empty()) {
         if (!this->root_assembly.embeddedSpace.empty()) {
             write_string_dataset(extract_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
@@ -1462,8 +1466,9 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
     }
     for (auto [instance_name, instance] : this->instance_mesh) {
         embedded_space = "";
-        string instance_group_name = "/" + instance_name;
-        H5::Group extract_instance_group = create_group(h5_file, instance_group_name);
+        string instance_group_name = "/instances/" + instance_name;
+        bool sub_group_exists = false;
+        H5::Group extract_instance_group = open_subgroup(h5_file, instance_group_name, sub_group_exists);
         if (!instance.nodes.nodes.empty() || !instance.elements.elements.empty()) {
             if (instance.instance_index >= 0) {
                 string instance_sub_group_name = instance_group_name + "/instance_data";
@@ -1711,13 +1716,13 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
 
 void SpadeObject::create_extract_history_group(H5::H5File &h5_file, history_region_type &history_region, string &step_group_name) {
     // First grab the name of the instance or assembly or simply use "ASSEMBLY"
-    string instance_name = history_region.point.instanceName;
-    if (instance_name.empty()) {
-        instance_name = history_region.point.assemblyName;
-        if (instance_name.empty()) { instance_name = this->default_instance_name; }
+    string prefix_group = "/instances/" + history_region.point.instanceName;
+    if (history_region.point.instanceName.empty()) {
+        prefix_group = "/assemblies/" + history_region.point.assemblyName;
+        if (history_region.point.assemblyName.empty()) { prefix_group = "/assemblies/" + this->default_instance_name; }
     }
     // Next open the instance->HistoryOutputs->region group, and create the parent groups if they don't exist
-    string region_group_name = "/" + instance_name + "/HistoryOutputs/" + replace_slashes(history_region.name);
+    string region_group_name = prefix_group + "/HistoryOutputs/" + replace_slashes(history_region.name);
     bool sub_group_exists = true;
     H5::Group region_group = open_subgroup(h5_file, region_group_name, sub_group_exists);
     step_group_name = region_group_name + "/" + step_group_name;
@@ -2120,12 +2125,13 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
                 instance_names.erase(instance_name);  // Remove from set to indicate it has already been processed
                 instance_value_exists = true;
             }
-            if (instance_name.empty()) { instance_name = this->default_instance_name; }
+            string prefix = "/instances/";
+            if (instance_name.empty()) { instance_name = this->default_instance_name; prefix = "/assemblies/"; }
             if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance_name)) {
                 continue;
             }
 
-            string field_output_group_name = instance_name + "/FieldOutputs/" + field_output_safe_name + "/" + step_name + "/" + frame_number;
+            string field_output_group_name = prefix + instance_name + "/FieldOutputs/" + field_output_safe_name + "/" + step_name + "/" + frame_number;
             bool sub_group_exists = false;
             H5::Group field_output_group = open_subgroup(h5_file, field_output_group_name, sub_group_exists);
             if (instance_value_exists) {
@@ -2196,7 +2202,11 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
             if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance_name)) {
                 continue;
             }
-            string field_output_group_name = instance_name + "/FieldOutputs/" + field_output_safe_name + "/" + step_name + "/" + frame_number;
+            string prefix = "/instances/";
+            if (instance_name == this->default_instance_name) {
+                prefix = "/assemblies/";
+            }
+            string field_output_group_name = prefix + instance_name + "/FieldOutputs/" + field_output_safe_name + "/" + step_name + "/" + frame_number;
             bool sub_group_exists = false;
             H5::Group field_output_group = open_subgroup(h5_file, field_output_group_name, sub_group_exists);
             write_field_values(h5_file, field_output_group_name, field_output_group, values_map[instance_name]);
