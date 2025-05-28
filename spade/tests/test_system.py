@@ -73,15 +73,13 @@ for odb_file in odb_files:
 for inp_file in inp_files:
     if inp_file.startswith("erode"):
         fetch_string = "erode_"
-        job_string = ""
     else:
         fetch_string = inp_file
-        job_string = "-interactive -ask_delete no"
     system_tests.append(
         pytest.param(
             [
                 string.Template(f"${{abaqus_command}} fetch -job '{fetch_string}*'"),
-                string.Template(f"${{abaqus_command}} -job {inp_file} {job_string}"),
+                string.Template(f"${{abaqus_command}} -job {inp_file} -interactive -ask_delete no"),
                 string.Template(
                     f"${{spade_command}} extract {inp_file}.odb --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
                 ),
