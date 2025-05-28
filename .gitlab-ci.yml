@@ -64,7 +64,7 @@ environment:
     - aea
     - linux
 
-fast-test:
+aea-developer-test:
   stage: test
   variables:
     GIT_STRATEGY: clone
