@@ -19,6 +19,8 @@ Internal Changes
 ================
 - Create top level parts, instances, and assemblies groups in hdf5 file (:issue:`103`, :merge:`101`). 
   By `Prabhu Khalsa`_.
+- If element belongs to instance don't write list of instances under mesh (:issue:`106`, :merge:`104`). 
+  By `Prabhu Khalsa`_.
 
 Enhancements
 ============
