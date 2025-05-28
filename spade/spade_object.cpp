@@ -338,7 +338,7 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
     } else {
         name = instance_name;
         if (name.empty()) { 
-            name = "ALL";
+            name = this->default_instance_name;
         }
         try {
             new_nodes = this->instance_mesh.at(name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
@@ -399,7 +399,7 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
     } else {
         name = instance_name;
         if (name.empty()) { 
-            name = "ALL";
+            name = this->default_instance_name;
         }
         try {
             new_elements = this->instance_mesh.at(name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
@@ -421,9 +421,11 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
         }
         string type = element.type().CStr();
 
-        if (new_elements.elements[type][element_label].instanceNames.empty()) {
-            odb_SequenceString instance_names = element.instanceNames();
-            for (int j=0; j < instance_names.size(); j++) { new_elements.elements[type][element_label].instanceNames.push_back(instance_names[j].CStr()); }
+        if (instance_name.empty()) {
+            if (new_elements.elements[type][element_label].instanceNames.empty()) {
+                odb_SequenceString instance_names = element.instanceNames();
+                for (int j=0; j < instance_names.size(); j++) { new_elements.elements[type][element_label].instanceNames.push_back(instance_names[j].CStr()); }
+            }
         }
         if (new_elements.elements[type][element_label].connectivity.empty()) {
             int element_connectivity_size;
@@ -1574,6 +1576,7 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
         int connectivity_size = element_members.begin()->second.connectivity.size();
         vector<int> node_indices;
         for (int i=0; i<connectivity_size; i++) { node_indices.push_back(i); }
+        bool instances_empty = true;
 
         hsize_t dimension(element_members.size());
         vector<hvl_t> variable_length_sets(dimension);
@@ -1598,14 +1601,17 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
                 static_cast<char**>(variable_length_sets[element_count].p)[set_count] = c_str;
                 ++set_count;
             }
-            variable_length_instances[element_count].len = element.instanceNames.size();
-            variable_length_instances[element_count].p = new char*[element.instanceNames.size()];
-            size_t connectivity_count = 0;
-            for (const std::string& str : element.instanceNames) {
-                char* c_str = new char[str.size() + 1];  // Plus 1 for null terminator
-                std::strcpy(c_str, str.c_str());
-                static_cast<char**>(variable_length_instances[element_count].p)[connectivity_count] = c_str;
-                ++connectivity_count;
+            if (element.instanceNames.size() > 0) {
+                instances_empty = false;
+                variable_length_instances[element_count].len = element.instanceNames.size();
+                variable_length_instances[element_count].p = new char*[element.instanceNames.size()];
+                size_t instance_count = 0;
+                for (const std::string& str : element.instanceNames) {
+                    char* c_str = new char[str.size() + 1];  // Plus 1 for null terminator
+                    std::strcpy(c_str, str.c_str());
+                    static_cast<char**>(variable_length_instances[element_count].p)[instance_count] = c_str;
+                    ++instance_count;
+                }
             }
             if (element.sectionCategory.section_point_numbers.size()) {
                 section_point_empty = false;
@@ -1663,19 +1669,21 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
             datatype_sets.close();
         }
 
-        H5::DataSpace dataspace_instances(1, &dimension);
-        H5::VarLenType datatype_instances(H5::StrType(0, H5T_VARIABLE));
-        try {
-            H5::DataSet dataset_instances(group.createDataSet(type + "_element_instances", datatype_instances, dataspace_instances));
-            dataset_instances.write(variable_length_instances.data(), datatype_instances);
-            dataspace_instances.close();
-            datatype_instances.close();
-            dataset_instances.close();
-            H5Treclaim(datatype_instances.getId(), dataspace_instances.getId(), H5P_DEFAULT, variable_length_instances.data());  // Clearing the memory
-        } catch(H5::Exception& e) {
-            this->log_file->logWarning("Unable to create dataset element_instances. " + e.getDetailMsg());
-            dataspace_instances.close();
-            datatype_instances.close();
+        if (!instances_empty) {
+            H5::DataSpace dataspace_instances(1, &dimension);
+            H5::VarLenType datatype_instances(H5::StrType(0, H5T_VARIABLE));
+            try {
+                H5::DataSet dataset_instances(group.createDataSet(type + "_element_instances", datatype_instances, dataspace_instances));
+                dataset_instances.write(variable_length_instances.data(), datatype_instances);
+                dataspace_instances.close();
+                datatype_instances.close();
+                dataset_instances.close();
+                H5Treclaim(datatype_instances.getId(), dataspace_instances.getId(), H5P_DEFAULT, variable_length_instances.data());  // Clearing the memory
+            } catch(H5::Exception& e) {
+                this->log_file->logWarning("Unable to create dataset element_instances. " + e.getDetailMsg());
+                dataspace_instances.close();
+                datatype_instances.close();
+            }
         }
 
         if (!section_point_empty) {
