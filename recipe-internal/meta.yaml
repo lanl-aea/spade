@@ -38,15 +38,16 @@ requirements:
   build:
     - python {{ python }}
     - numpy
-    - sphinx >=5.1
+    - sphinx >=7.1
     - sphinx-argparse
     - sphinx-book-theme
     - sphinx-copybutton >=0.5.1
     - sphinxcontrib-bibtex
-    - setuptools_scm[toml] >=6.2
+    - setuptools >=77
+    - setuptools_scm >=8
     - {{ compiler('cxx') }}
     - hdf5
-    - scons
+    - scons >=4.6
     - sysroot_linux-64 >=2.28  # [linux]
     - ld_impl_linux-64         # [linux]
   host:
@@ -54,17 +55,17 @@ requirements:
     - numpy
     - python-build
     - pip
-    - setuptools >=62
-    - setuptools_scm[toml] >=6.2
+    - setuptools >=77
+    - setuptools_scm >=8
     - {{ compiler('cxx') }}
     - hdf5
-    - scons
+    - scons >=4.6
     - sysroot_linux-64 >=2.28  # [linux]
     - ld_impl_linux-64         # [linux]
   run:
     - python
     - {{ pin_compatible('numpy') }}
-    - scons
+    - scons >=4.6
     - {{ compiler('cxx') }}
     - hdf5
     - sysroot_linux-64 >=2.28  # [linux]

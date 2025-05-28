@@ -36,6 +36,7 @@ version = release
 copyright = f"2023-{datetime.date.today().year} Triad National Security, LLC. All Rights Reserved."
 
 # -- General configuration ---------------------------------------------------
+maximum_signature_line_length = 120
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
