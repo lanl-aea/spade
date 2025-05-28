@@ -1,4 +1,5 @@
 import os
+import re
 import shlex
 import string
 import typing
@@ -68,6 +69,7 @@ for odb_file in odb_files:
                 ),
             ],
             marks=pytest.mark.require_third_party,
+            id=odb_file,
         )
     )
 for inp_file in inp_files:
@@ -85,6 +87,7 @@ for inp_file in inp_files:
                 ),
             ],
             marks=pytest.mark.require_third_party,
+            id=inp_file,
         )
     )
 
