@@ -110,10 +110,10 @@ def test_system(
     :param request: pytest decorator with test case meta data
     :param commands: command string or list of strings for the system test
     """
-    # Attempt to construct a valid directory prefix from the test ID string printed by pytest
-    # Works best if there is only one test function in this module so there are no duplicate ids
+    module_name = pathlib.Path(__file__).stem
     test_id = request.node.callspec.id
-    test_prefix = f"{test_id}." if " " not in test_id else None
+    test_prefix = create_valid_identifier(test_id)
+    test_prefix = f"{module_name}.{test_prefix}."
 
     if system_test_directory is not None:
         system_test_directory.mkdir(parents=True, exist_ok=True)
@@ -141,3 +141,29 @@ def test_system(
         raise Exception
     else:
         temp_directory.cleanup()
+
+
+def create_valid_identifier(identifier: str) -> None:
+    """Create a valid Python identifier from an arbitray string by replacing invalid characters with underscores
+
+    :param identifier: String to convert to valid Python identifier
+    """
+    return re.sub(r"\W|^(?=\d)", "_", identifier)
+
+
+create_valid_identifier_tests = {
+    "leading digit": ("1word", "_1word"),
+    "leading space": (" word", "_word"),
+    "replace slashes and spaces": ("w o /rd", "w_o__rd"),
+    "replace special characters": ("w%o @rd", "w_o__rd"),
+}
+
+
+@pytest.mark.parametrize(
+    "identifier, expected",
+    create_valid_identifier_tests.values(),
+    ids=create_valid_identifier_tests.keys(),
+)
+def test_create_valid_identifier(identifier, expected) -> None:
+    returned = create_valid_identifier(identifier)
+    assert returned == expected
