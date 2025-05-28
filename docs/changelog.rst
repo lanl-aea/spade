@@ -15,6 +15,11 @@ Bug fixes
 - Process elements differently for efficiency. Fix the code that writes variable length datasets into the hdf5 file
   (:issue:`102`, :merge:`100`). By `Prabhu Khalsa`_.
 
+Internal Changes
+================
+- Create top level parts, instances, and assemblies groups in hdf5 file (:issue:`103`, :merge:`101`). 
+  By `Prabhu Khalsa`_.
+
 Enhancements
 ============
 - Write initial outline for VTKHDF format to eventually opening natively in Paraview (:issue:`97`, :merge:`97`). 
