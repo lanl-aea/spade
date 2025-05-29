@@ -85,10 +85,6 @@ struct element_type {
     set<string> sets;
 };
 
-struct elements_type {
-    map<string, map<int, element_type>> elements; // accessed like elements_type[type][label] (e.g. elements_type['CAX4T'][1])
-};
-
 struct node_type {
     vector<float> coordinates;
     set<string> sets;
@@ -104,7 +100,7 @@ struct set_type {
     int size;
     vector<string> instanceNames;
     nodes_type* nodes;
-    elements_type* elements;
+    map<string, map<int, element_type>>* elements; // accessed like elements[type][label] (e.g. elements['CAX4T'][1])
     vector<string> faces;
 };
 
@@ -223,7 +219,7 @@ struct part_type {
     string name;
     string embeddedSpace;
     nodes_type* nodes;
-    elements_type* elements;
+    map<string, map<int, element_type>>* elements; // accessed like elements[type][label] (e.g. elements['CAX4T'][1])
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -277,7 +273,7 @@ struct instance_type {
     string name;
     string embeddedSpace;
     nodes_type* nodes;
-    elements_type* elements;
+    map<string, map<int, element_type>>* elements; // accessed like elements[type][label] (e.g. elements['CAX4T'][1])
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -290,7 +286,7 @@ struct instance_type {
 
 struct mesh_type {
     nodes_type nodes;
-    elements_type elements;
+    map<string, map<int, element_type>> elements; // accessed like elements[type][label] (e.g. elements['CAX4T'][1])
     map <string, set<int>> element_sets;
     map <string, set<int>> node_sets;
     int part_index;
@@ -312,7 +308,7 @@ struct assembly_type {
     string name;
     string embeddedSpace;
     nodes_type* nodes;
-    elements_type* elements;
+    map<string, map<int, element_type>>* elements; // accessed like elements[type][label] (e.g. elements['CAX4T'][1])
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -507,10 +503,10 @@ class SpadeObject {
           \param assembly_name An assembly name where this node might be found
           \param set_name A set name where this node might be found
           \param part_name A part name where this node might be found
-          \return elements_type pointer to map that stores element data
+          \return pointer to map that stores element data
           \sa process_odb()
         */
-        elements_type* process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name);
+        map<string, map<int, element_type>>* process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name);
         //! Process odb set object from the odb file
         /*!
           Process odb set object and return the values in an set_type
@@ -975,7 +971,7 @@ class SpadeObject {
           \param group_name Name of the group where data is to be written
           \param elements Element data to be written
         */
-        void write_elements(H5::H5File &h5_file, H5::Group &group, const string &group_name, const elements_type* elements);
+        void write_elements(H5::H5File &h5_file, H5::Group &group, const string &group_name, map<string, map<int, element_type>>* elements);
         //! Write element set data to an HDF5 file
         /*!
           Write vector of element set data into an HDF5 file

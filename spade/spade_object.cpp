@@ -398,8 +398,8 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
     }
 }
 
-elements_type* SpadeObject::process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name) {
-    elements_type new_elements;
+map<string, map<int, element_type>>* SpadeObject::process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name) {
+    map<string, map<int, element_type>> new_elements;
     map <string, set<int>> new_element_sets;
     string name;
     this->log_file->logDebug("\t\tCall to process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
@@ -442,23 +442,23 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
         string type = element.type().CStr();
 
         if (instance_name.empty()) {
-            if (new_elements.elements[type][element_label].instanceNames.empty()) {
+            if (new_elements[type][element_label].instanceNames.empty()) {
                 odb_SequenceString instance_names = element.instanceNames();
-                for (int j=0; j < instance_names.size(); j++) { new_elements.elements[type][element_label].instanceNames.push_back(instance_names[j].CStr()); }
+                for (int j=0; j < instance_names.size(); j++) { new_elements[type][element_label].instanceNames.push_back(instance_names[j].CStr()); }
             }
         }
-        if (new_elements.elements[type][element_label].connectivity.empty()) {
+        if (new_elements[type][element_label].connectivity.empty()) {
             int element_connectivity_size;
             const int* const connectivity = element.connectivity(element_connectivity_size);
-            for (int j=0; j < element_connectivity_size; j++) { new_elements.elements[type][element_label].connectivity.push_back(connectivity[j]); }
-            this->log_file->logDebug("\t\tElement " + to_string(element_label) + ": connectivity count: " + to_string(new_elements.elements[type][element_label].connectivity.size()) + " instances count:" + to_string(new_elements.elements[type][element_label].instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
+            for (int j=0; j < element_connectivity_size; j++) { new_elements[type][element_label].connectivity.push_back(connectivity[j]); }
+            this->log_file->logDebug("\t\tElement " + to_string(element_label) + ": connectivity count: " + to_string(new_elements[type][element_label].connectivity.size()) + " instances count:" + to_string(new_elements[type][element_label].instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
         }
-        if (new_elements.elements[type][element_label].sectionCategory.name.empty()) {
-            new_elements.elements[type][element_label].sectionCategory = process_section_category(element.sectionCategory());
+        if (new_elements[type][element_label].sectionCategory.name.empty()) {
+            new_elements[type][element_label].sectionCategory = process_section_category(element.sectionCategory());
         }
         if (!set_name.empty()) { 
             new_element_sets[set_name].insert(element_label); 
-            new_elements.elements[type][element_label].sets.insert(set_name);
+            new_elements[type][element_label].sets.insert(set_name);
         }
     }
     this->log_file->logDebug("\t\tFinished process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
@@ -1457,7 +1457,7 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
         string part_group_name = "/parts/" + part_name;
         bool sub_group_exists = false;
         H5::Group extract_part_group = open_subgroup(h5_file, part_group_name, sub_group_exists);
-        if (!part.nodes.nodes.empty() || !part.elements.elements.empty()) {
+        if (!part.nodes.nodes.empty() || !part.elements.empty()) {
             if (part.part_index >= 0) {
                 if (!this->parts[part.part_index].embeddedSpace.empty()) {
                     embedded_space = this->parts[part.part_index].embeddedSpace;
@@ -1469,15 +1469,35 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
             if (!part.nodes.nodes.empty()) {
                 write_mesh_nodes(h5_file, part_mesh_group, part.nodes.nodes, embedded_space);
             }
-            if (!part.elements.elements.empty()) {
-                write_mesh_elements(h5_file, part_mesh_group, part.elements.elements);
+            if (!part.elements.empty()) {
+                write_mesh_elements(h5_file, part_mesh_group, part.elements);
+            }
+            if (!part.element_sets.empty()) {
+                H5::Group element_sets = create_group(h5_file, part_group_name + "/element_sets");
+                std::regex elements_pattern("\\s*ALL\\s*ELEMENTS\\s*");
+                for (auto [set_name, element_set] : part.element_sets) {
+                    if ((!element_set.empty()) && (!regex_match(set_name, elements_pattern))) {
+                        vector<int> element_labels(element_set.begin(), element_set.end());
+                        write_integer_vector_dataset(element_sets, set_name, element_labels);
+                    }
+                }
+            }
+            if (!part.node_sets.empty()) {
+                H5::Group node_sets = create_group(h5_file, part_group_name + "/node_sets");
+                std::regex nodes_pattern("\\s*ALL\\s*NODES\\s*");
+                for (auto [set_name, node_set] : part.node_sets) {
+                    if ((!node_set.empty()) && (!regex_match(set_name, nodes_pattern))) {
+                        vector<int> node_labels(node_set.begin(), node_set.end());
+                        write_integer_vector_dataset(node_sets, set_name, node_labels);
+                    }
+                }
             }
         }
     }
     string assembly_group_name = "/assemblies/" + this->root_assembly.name;
     bool sub_group_exists = false;
     H5::Group extract_assembly_group = open_subgroup(h5_file, assembly_group_name, sub_group_exists);
-    if (!this->root_assembly.nodes->nodes.empty() || !this->root_assembly.elements->elements.empty()) {
+    if (!this->root_assembly.nodes->nodes.empty() || !this->root_assembly.elements->empty()) {
         if (!this->root_assembly.embeddedSpace.empty()) {
             write_string_dataset(extract_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
         }
@@ -1486,8 +1506,8 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
         if (!this->root_assembly.nodes->nodes.empty()) {
             write_mesh_nodes(h5_file, assembly_mesh_group, this->root_assembly.nodes->nodes, this->root_assembly.embeddedSpace);
         }
-        if (!this->root_assembly.elements->elements.empty()) {
-            write_mesh_elements(h5_file, assembly_mesh_group, this->root_assembly.elements->elements);
+        if (!this->root_assembly.elements->empty()) {
+            write_mesh_elements(h5_file, assembly_mesh_group, *this->root_assembly.elements);
         }
     }
     for (auto [instance_name, instance] : this->instance_mesh) {
@@ -1495,7 +1515,7 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
         string instance_group_name = "/instances/" + instance_name;
         bool sub_group_exists = false;
         H5::Group extract_instance_group = open_subgroup(h5_file, instance_group_name, sub_group_exists);
-        if (!instance.nodes.nodes.empty() || !instance.elements.elements.empty()) {
+        if (!instance.nodes.nodes.empty() || !instance.elements.empty()) {
             if (instance.instance_index >= 0) {
                 string instance_sub_group_name = instance_group_name + "/instance_data";
                 H5::Group extract_instance_sub_group = create_group(h5_file, instance_sub_group_name);
@@ -1507,8 +1527,8 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
             if (!instance.nodes.nodes.empty()) {
                 write_mesh_nodes(h5_file, instance_mesh_group, instance.nodes.nodes, embedded_space);
             }
-            if (!instance.elements.elements.empty()) {
-                write_mesh_elements(h5_file, instance_mesh_group, instance.elements.elements);
+            if (!instance.elements.empty()) {
+                write_mesh_elements(h5_file, instance_mesh_group, instance.elements);
             }
             if (!instance.element_sets.empty()) {
                 H5::Group element_sets = create_group(h5_file, instance_group_name + "/element_sets");
@@ -2671,12 +2691,12 @@ void SpadeObject::write_interactions(H5::H5File &h5_file, const string &group_na
     }
 }
 
-void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const string &group_name, const elements_type* elements) {
-    elements_type all_elements = *elements;
+void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const string &group_name, map<string, map<int, element_type>>* elements) {
+    map<string, map<int, element_type>> all_elements = *elements;
     this->log_file->logDebug("\t\tCall to write_elements at time: " + this->command_line_arguments->getTimeStamp(true));
-    if (!all_elements.elements.empty()) {
+    if (!all_elements.empty()) {
         H5::Group elements_group = create_group(h5_file, group_name + "/elements");
-        for (auto [type, element] : all_elements.elements) {
+        for (auto [type, element] : all_elements) {
             for (auto [element_id, element_members] : element) {
 //                    this->log_file->logDebug("\t\t\tWrite element: " + to_string(element_id) + " of type: " + type + " at time: " + this->command_line_arguments->getTimeStamp(true));
                 string elements_label_group_name = group_name + "/elements/" + to_string(element_id);
@@ -2734,24 +2754,30 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
         write_string_attribute(set_group, "type", odb_set.type);
         write_string_vector_dataset(set_group, "instanceNames", odb_set.instanceNames);
         if (this->command_line_arguments->get("format") == "odb") {
-            if (odb_set.type == "Node Set") {
+            if ((odb_set.type == "Node Set") && (node_set.has_value())) {
                 write_node_set(h5_file, set_group, node_set.value());
-            } else if (odb_set.type == "Element Set") {
+            } else if ((odb_set.type == "Element Set") && (element_set.has_value())) {
                 write_element_set(h5_file, set_group, element_set.value());
             } else if (odb_set.type == "Surface Set") {
                 if (!odb_set.faces.empty()) {
                     write_string_vector_dataset(set_group, "faces", odb_set.faces);
                 }
-                if (odb_set.elements != nullptr && !odb_set.elements->elements.empty()) {
-                    write_element_set(h5_file, set_group, element_set.value());
+                if (odb_set.elements != nullptr && !odb_set.elements->empty()) {
+                    if (element_set.has_value()) {
+                        write_element_set(h5_file, set_group, element_set.value());
+                    }
                 } else {
-                    write_node_set(h5_file, set_group, node_set.value());
+                    if (node_set.has_value()) {
+                        write_node_set(h5_file, set_group, node_set.value());
+                    }
                 }
             }
         } else {
             if (odb_set.type == "Surface Set") { 
-                if (odb_set.elements != nullptr && !odb_set.elements->elements.empty()) {
-                    write_element_set(h5_file, set_group, element_set.value());
+                if (odb_set.elements != nullptr && !odb_set.elements->empty()) {
+                    if (element_set.has_value()) {
+                        write_element_set(h5_file, set_group, element_set.value());
+                    }
                 }
                 if (!odb_set.faces.empty()) {
                     write_string_vector_dataset(set_group, "faces", odb_set.faces);
