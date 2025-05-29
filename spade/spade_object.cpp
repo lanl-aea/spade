@@ -333,19 +333,19 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             this->log_file->logDebug("New nodes for part: " + part_name);
             this->part_mesh[part_name].part_index = -1;
         }
-    } else if (!assembly_name.empty()) {
-        new_nodes = this->assembly_mesh[assembly_name].nodes;
+    } else if (!instance_name.empty()) {
+        try {
+            new_nodes = this->instance_mesh.at(instance_name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+        } catch (const std::out_of_range& oor) {
+            this->log_file->logDebug("New nodes for instance: " + instance_name);
+            this->instance_mesh[instance_name].instance_index = -1;
+        }
     } else {
-        name = instance_name;
+        name = assembly_name;
         if (name.empty()) { 
             name = this->default_instance_name;
         }
-        try {
-            new_nodes = this->instance_mesh.at(name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
-        } catch (const std::out_of_range& oor) {
-            this->log_file->logDebug("New nodes for instance: " + name);
-            this->instance_mesh[name].instance_index = -1;
-        }
+        new_nodes = this->assembly_mesh[name].nodes;
     }
     for (int i=0; i < nodes.size(); i++) { 
         odb_Node node = nodes.node(i);
@@ -394,20 +394,20 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             this->part_mesh[part_name].part_index = -1;
             new_elements = this->part_mesh[part_name].elements;
         }
-    } else if (!assembly_name.empty()) {
-        new_elements = this->assembly_mesh[part_name].elements;
+    } else if (!instance_name.empty()) {
+        try {
+            new_elements = this->instance_mesh.at(instance_name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+        } catch (const std::out_of_range& oor) {
+            this->log_file->logDebug("New elements for instance: " + instance_name);
+            this->instance_mesh[instance_name].instance_index = -1;
+            new_elements = this->instance_mesh[instance_name].elements;
+        }
     } else {
-        name = instance_name;
+        name = assembly_name;
         if (name.empty()) { 
             name = this->default_instance_name;
         }
-        try {
-            new_elements = this->instance_mesh.at(name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
-        } catch (const std::out_of_range& oor) {
-            this->log_file->logDebug("New elements for instance: " + name);
-            this->instance_mesh[name].instance_index = -1;
-            new_elements = this->instance_mesh[name].elements;
-        }
+        new_elements = this->assembly_mesh[name].elements;
     }
     this->log_file->logDebug("\t\tElements map retrieved in process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     int previous_label = -2;
