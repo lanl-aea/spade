@@ -12,7 +12,7 @@ pytest_source_list = [
 ]
 
 # Common task options
-pytest_command = "cd ${package_dir} && pytest -n 4"
+pytest_command = "cd ${package_directory} && pytest -n 4"
 
 # Unit tests
 pytest_node = env.Command(
@@ -37,7 +37,7 @@ matrix = (
 )
 for extra_markers, alias_suffix, environments in matrix:
     for name, environment in environments.items():
-        source = pytest_source_list + [env["package_dir"] / "tests/test_system.py"]
+        source = pytest_source_list + [env["package_directory"] / "tests/test_system.py"]
         systemtest_node = environment.Command(
             target=[f"systemtest_{name}_results.xml"],
             source=source,

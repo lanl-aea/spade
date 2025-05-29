@@ -9,7 +9,7 @@ sys.dont_write_bytecode = True
 
 
 # -- Project information -----------------------------------------------------
-project_dir = pathlib.Path(r"@project_dir@").resolve()
+project_directory = pathlib.Path(r"@project_directory@").resolve()
 author_contact = [
     ("Prabhu S. Khalsa", "<pkhalsa@lanl.gov>"),
     ("Kyle Brindley", "<kbrindley@lanl.gov>"),
@@ -26,7 +26,7 @@ for mod_name in mock_modules:
     sys.modules[mod_name] = unittest.mock.Mock()
 
 # Add paths to API/CLI files
-sys.path.insert(0, str(project_dir))
+sys.path.insert(0, str(project_directory))
 
 from spade._settings import _project_name, _project_name_short
 

@@ -162,7 +162,7 @@ html = env.SphinxBuild(
 env.Clean(html, [Dir("html")] + sources)
 env.Alias("html", html)
 
-targets = ["man/turbo-turtle.1"]
+targets = ["man/spade.1"]
 sources = ["man_index.rst"] + sphinx_configuration_files
 man = env.SphinxBuild(
     target=targets,
@@ -173,7 +173,7 @@ man = env.SphinxBuild(
 env.Clean(man, [Dir("man")] + sources)
 env.Alias("man", man)
 
-targets = f"latex/turbo-turtle-{env['version']}.pdf"
+targets = f"latex/spade-{env['version']}.pdf"
 sources = sphinx_configuration_files + sphinx_source_files
 latexpdf = env.Command(
     target=targets,
