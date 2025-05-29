@@ -33,7 +33,7 @@ before_script:
   - conda info
   - conda_artifacts_directory='conda-bld'
 
-environment:
+aea-environment:
   stage: environment
   variables:
     GIT_STRATEGY: clone
@@ -86,7 +86,7 @@ aea-developer-test:
     - aea
     - linux
 
-style:
+aea-style:
   stage: test
   variables:
     GIT_STRATEGY: clone
@@ -100,7 +100,7 @@ style:
     - aea
     - linux
 
-conda-build:
+aea-conda-build:
   stage: test
   variables:
     GIT_STRATEGY: clone
@@ -140,7 +140,7 @@ aea-conda-deploy:
   variables:
     PARENT_CI_PROJECT_PATH: $CI_PROJECT_PATH
     PARENT_CI_COMMIT_BRANCH: $CI_COMMIT_BRANCH
-    AEA_CONDA_PACKAGE_JOB: conda-build
+    AEA_CONDA_PACKAGE_JOB: aea-conda-build
     AEA_CONDA_PACKAGE_ARTIFACTS: conda-bld/linux-64/spade-*-*.tar.bz2
   trigger:
     project: aea/developer-operations/aea-conda
