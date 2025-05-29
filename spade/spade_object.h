@@ -227,7 +227,6 @@ struct part_type {
     string embeddedSpace;
     nodes_type* nodes;
     elements_type* elements;
-    map <string, set<int>> element_label_sets;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -282,7 +281,6 @@ struct instance_type {
     string embeddedSpace;
     nodes_type* nodes;
     elements_type* elements;
-    map <string, set<int>> element_label_sets;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -317,7 +315,6 @@ struct assembly_type {
     string embeddedSpace;
     nodes_type* nodes;
     elements_type* elements;
-    map <string, set<int>> element_label_sets;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;

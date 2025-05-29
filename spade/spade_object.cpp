@@ -1497,8 +1497,9 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
             }
             if (!instance.element_sets.empty()) {
                 H5::Group element_sets = create_group(h5_file, instance_group_name + "/element_sets");
+                std::regex elements_pattern("\\s*ALL\\s*ELEMENTS\\s*");
                 for (auto [set_name, element_set] : instance.element_sets) {
-                    if (!element_set.empty()) {
+                    if ((!element_set.empty()) && (!regex_match(set_name, elements_pattern))) {
                         vector<int> element_labels(element_set.begin(), element_set.end());
                         write_integer_vector_dataset(element_sets, set_name, element_labels);
                     }
@@ -1763,10 +1764,10 @@ void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name) {
         if (this->command_line_arguments->get("format") == "odb") {
             write_nodes(h5_file, part_group, part_group_name, part.nodes, "");
             write_elements(h5_file, part_group, part_group_name, part.elements);
-            write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets, part.element_label_sets);
-            write_sets(h5_file, part_group_name + "/elementSets", part.elementSets, part.element_label_sets);
+            write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets, this->part_mesh[part.name].element_sets);
+            write_sets(h5_file, part_group_name + "/elementSets", part.elementSets, this->part_mesh[part.name].element_sets);
         }
-        write_sets(h5_file, part_group_name + "/surfaces", part.surfaces, part.element_label_sets);
+        write_sets(h5_file, part_group_name + "/surfaces", part.surfaces, this->part_mesh[part.name].element_sets);
     }
 }
 
@@ -1779,11 +1780,11 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name) 
     if (this->command_line_arguments->get("format") == "odb") {
         write_nodes(h5_file, root_assembly_group, root_assembly_group_name, this->root_assembly.nodes, "");
         write_elements(h5_file, root_assembly_group, root_assembly_group_name, this->root_assembly.elements);
-        write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets, this->root_assembly.element_label_sets);
-        write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets, this->root_assembly.element_label_sets);
+        write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets, this->assembly_mesh[this->root_assembly.name].element_sets);
+        write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets, this->assembly_mesh[this->root_assembly.name].element_sets);
     }
     this->log_file->logDebug("\tWriting surface sets in write_assembly at time: " + this->command_line_arguments->getTimeStamp(true));
-    write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces, this->root_assembly.element_label_sets);
+    write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces, this->assembly_mesh[this->root_assembly.name].element_sets);
     if (this->root_assembly.connectorOrientations.size() > 0) {
         this->log_file->logDebug("\tWriting connector orientations in write_assembly at time: " + this->command_line_arguments->getTimeStamp(true));
         H5::Group connector_orientations_group = create_group(h5_file, root_assembly_group_name + "/connectorOrientations");
@@ -2422,11 +2423,11 @@ void SpadeObject::write_instance(H5::H5File &h5_file, H5::Group &group, const st
         this->log_file->logDebug("\t\tWriting elements in instance: " + instance.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
         write_elements(h5_file, group, group_name, instance.elements);
         this->log_file->logDebug("\t\tWriting node sets in instance: " + instance.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
-        write_sets(h5_file, group_name + "/nodeSets", instance.nodeSets, instance.element_label_sets);
+        write_sets(h5_file, group_name + "/nodeSets", instance.nodeSets, this->instance_mesh[instance.name].element_sets);
         this->log_file->logDebug("\t\tWriting element sets in instance: " + instance.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
-        write_sets(h5_file, group_name + "/elementSets", instance.elementSets, instance.element_label_sets);
+        write_sets(h5_file, group_name + "/elementSets", instance.elementSets, this->instance_mesh[instance.name].element_sets);
     }
-    write_sets(h5_file, group_name + "/surfaces", instance.surfaces, instance.element_label_sets);
+    write_sets(h5_file, group_name + "/surfaces", instance.surfaces, this->instance_mesh[instance.name].element_sets);
     if (instance.sectionAssignments.size() > 0) {
         H5::Group section_assignments_group = create_group(h5_file, group_name + "/sectionAssignments");
         for (int i=0; i<instance.sectionAssignments.size(); i++) {
