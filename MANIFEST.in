@@ -1,0 +1,29 @@
+recursive-include spade/docs *
+recursive-include spade/tutorials *
+recursive-exclude spade/docs/.doctrees *
+recursive-exclude build *
+recursive-exclude */*/build *
+recursive-exclude */*/*/build* *
+recursive-exclude *cache* *
+recursive-exclude */*cache* *
+recursive-exclude */*/*cache* *
+recursive-exclude docs *
+recursive-exclude recipe* *
+recursive-exclude modulefiles *
+recursive-exclude .github *
+global-exclude *.pyc
+global-exclude config.log
+global-exclude .sconsign.dblite
+exclude spade/docs/.buildinfo*
+exclude .flake8
+exclude .git*
+exclude *.yml
+exclude spade/.coveragerc
+exclude import_package.py
+exclude SConstruct
+exclude style
+exclude mypy
+exclude cProfile
+exclude pytest
+include spade/README.rst
+include spade/pyproject.toml
