@@ -332,6 +332,7 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New nodes for part: " + part_name);
             this->part_mesh[part_name].part_index = -1;
+            new_nodes = this->part_mesh[part_name].nodes;
         }
     } else if (!instance_name.empty()) {
         try {
@@ -339,6 +340,7 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New nodes for instance: " + instance_name);
             this->instance_mesh[instance_name].instance_index = -1;
+            new_nodes = this->instance_mesh[instance_name].nodes;
         }
     } else {
         name = assembly_name;
@@ -373,12 +375,12 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
     if (!part_name.empty()) { 
             this->part_mesh[part_name].nodes = new_nodes;
             return &this->part_mesh[part_name].nodes;
-    } else if (!assembly_name.empty()) {
-            this->assembly_mesh[assembly_name].nodes = new_nodes;
-            return &this->assembly_mesh[assembly_name].nodes;
+    } else if (!instance_name.empty()) {
+            this->instance_mesh[instance_name].nodes = new_nodes;
+            return &this->instance_mesh[instance_name].nodes;
     } else {
-            this->instance_mesh[name].nodes = new_nodes;
-            return &this->instance_mesh[name].nodes;
+            this->assembly_mesh[name].nodes = new_nodes;
+            return &this->assembly_mesh[name].nodes;
     }
 }
 
@@ -443,12 +445,12 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
     if (!part_name.empty()) { 
             this->part_mesh[part_name].elements = new_elements;
             return &this->part_mesh[part_name].elements;
-    } else if (!assembly_name.empty()) {
-            this->assembly_mesh[assembly_name].elements = new_elements;
-            return &this->assembly_mesh[assembly_name].elements;
+    } else if (!instance_name.empty()) {
+            this->instance_mesh[instance_name].elements = new_elements;
+            return &this->instance_mesh[instance_name].elements;
     } else {
-            this->instance_mesh[name].elements = new_elements;
-            return &this->instance_mesh[name].elements;
+            this->assembly_mesh[name].elements = new_elements;
+            return &this->assembly_mesh[name].elements;
     }
 
 }
