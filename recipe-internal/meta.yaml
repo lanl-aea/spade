@@ -21,6 +21,7 @@ build:
 requirements:
   build:
     - python {{ python }}
+    - python-build
     - numpy
     - sphinx >=7.1
     - sphinx-argparse
