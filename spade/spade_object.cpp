@@ -2409,7 +2409,6 @@ void SpadeObject::write_instance(H5::H5File &h5_file, H5::Group &group, const st
         write_sets(h5_file, group_name + "/elementSets", instance.elementSets);
     }
     write_sets(h5_file, group_name + "/surfaces", instance.surfaces);
-    this->instance_links[instance.name] = group_name;
     if (instance.sectionAssignments.size() > 0) {
         H5::Group section_assignments_group = create_group(h5_file, group_name + "/sectionAssignments");
         for (int i=0; i<instance.sectionAssignments.size(); i++) {

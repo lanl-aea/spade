@@ -1264,9 +1264,6 @@ class SpadeObject {
         map<string, mesh_type> part_mesh;
         map<string, mesh_type> assembly_mesh;
         map<string, element_type> elements;
-        map<string, string> node_links;
-        map<string, string> element_links;
-        map<string, string> instance_links;
 
         string dimension_enum_strings[4];
         string faces_enum_strings[35];
