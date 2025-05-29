@@ -35,6 +35,7 @@ using namespace std;
 #include <cmath>
 #include <sys/stat.h>
 #include <filesystem>
+#include <optional>
 
 #include <odb_API.h>
 #include <odb_Coupling.h>
@@ -386,6 +387,7 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
 
 elements_type* SpadeObject::process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name) {
     elements_type new_elements;
+    map <string, set<int>> new_element_sets;
     string name;
     this->log_file->logDebug("\t\tCall to process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     if (!part_name.empty()) { 
@@ -396,6 +398,7 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             this->part_mesh[part_name].part_index = -1;
             new_elements = this->part_mesh[part_name].elements;
         }
+        new_element_sets = this->part_mesh[part_name].element_sets;
     } else if (!instance_name.empty()) {
         try {
             new_elements = this->instance_mesh.at(instance_name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
@@ -404,12 +407,14 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             this->instance_mesh[instance_name].instance_index = -1;
             new_elements = this->instance_mesh[instance_name].elements;
         }
+        new_element_sets = this->instance_mesh[instance_name].element_sets;
     } else {
         name = assembly_name;
         if (name.empty()) { 
             name = this->default_instance_name;
         }
         new_elements = this->assembly_mesh[name].elements;
+        new_element_sets = this->assembly_mesh[name].element_sets;
     }
     this->log_file->logDebug("\t\tElements map retrieved in process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     int previous_label = -2;
@@ -439,20 +444,22 @@ elements_type* SpadeObject::process_elements (const odb_SequenceElement &element
             new_elements.elements[type][element_label].sectionCategory = process_section_category(element.sectionCategory());
         }
         new_elements.elements[type][element_label].sets.insert(set_name);
-        if (!set_name.empty()) { new_elements.element_sets[set_name].insert(element_label); }
+        if (!set_name.empty()) { new_element_sets[set_name].insert(element_label); }
     }
     this->log_file->logDebug("\t\tFinished process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     if (!part_name.empty()) { 
             this->part_mesh[part_name].elements = new_elements;
+            this->part_mesh[part_name].element_sets = new_element_sets;
             return &this->part_mesh[part_name].elements;
     } else if (!instance_name.empty()) {
             this->instance_mesh[instance_name].elements = new_elements;
+            this->instance_mesh[instance_name].element_sets = new_element_sets;
             return &this->instance_mesh[instance_name].elements;
     } else {
             this->assembly_mesh[name].elements = new_elements;
+            this->assembly_mesh[name].element_sets = new_element_sets;
             return &this->assembly_mesh[name].elements;
     }
-
 }
 
 set_type SpadeObject::process_set(const odb_Set &odb_set) {
@@ -1488,6 +1495,15 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
             if (!instance.elements.elements.empty()) {
                 write_mesh_elements(h5_file, instance_mesh_group, instance.elements.elements);
             }
+            if (!instance.element_sets.empty()) {
+                H5::Group element_sets = create_group(h5_file, instance_group_name + "/element_sets");
+                for (auto [set_name, element_set] : instance.element_sets) {
+                    if (!element_set.empty()) {
+                        vector<int> element_labels(element_set.begin(), element_set.end());
+                        write_integer_vector_dataset(element_sets, set_name, element_labels);
+                    }
+                }
+            }
         }
     }
     this->log_file->logDebug("\tFinished write_mesh at time: " + this->command_line_arguments->getTimeStamp(true));
@@ -1746,11 +1762,11 @@ void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name) {
         write_string_dataset(part_group, "embeddedSpace", part.embeddedSpace);
         if (this->command_line_arguments->get("format") == "odb") {
             write_nodes(h5_file, part_group, part_group_name, part.nodes, "");
-            write_elements(h5_file, part_group, part_group_name, part.elements, "");
-            write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets);
-            write_sets(h5_file, part_group_name + "/elementSets", part.elementSets);
+            write_elements(h5_file, part_group, part_group_name, part.elements);
+            write_sets(h5_file, part_group_name + "/nodeSets", part.nodeSets, part.element_label_sets);
+            write_sets(h5_file, part_group_name + "/elementSets", part.elementSets, part.element_label_sets);
         }
-        write_sets(h5_file, part_group_name + "/surfaces", part.surfaces);
+        write_sets(h5_file, part_group_name + "/surfaces", part.surfaces, part.element_label_sets);
     }
 }
 
@@ -1762,19 +1778,19 @@ void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name) 
     write_string_dataset(root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
     if (this->command_line_arguments->get("format") == "odb") {
         write_nodes(h5_file, root_assembly_group, root_assembly_group_name, this->root_assembly.nodes, "");
-        write_elements(h5_file, root_assembly_group, root_assembly_group_name, this->root_assembly.elements, "");
-        write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets);
-        write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets);
+        write_elements(h5_file, root_assembly_group, root_assembly_group_name, this->root_assembly.elements);
+        write_sets(h5_file, root_assembly_group_name + "/nodeSets", this->root_assembly.nodeSets, this->root_assembly.element_label_sets);
+        write_sets(h5_file, root_assembly_group_name + "/elementSets", this->root_assembly.elementSets, this->root_assembly.element_label_sets);
     }
     this->log_file->logDebug("\tWriting surface sets in write_assembly at time: " + this->command_line_arguments->getTimeStamp(true));
-    write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces);
+    write_sets(h5_file, root_assembly_group_name + "/surfaces", this->root_assembly.surfaces, this->root_assembly.element_label_sets);
     if (this->root_assembly.connectorOrientations.size() > 0) {
         this->log_file->logDebug("\tWriting connector orientations in write_assembly at time: " + this->command_line_arguments->getTimeStamp(true));
         H5::Group connector_orientations_group = create_group(h5_file, root_assembly_group_name + "/connectorOrientations");
         for (int i=0; i<this->root_assembly.connectorOrientations.size(); i++) {
             string connector_orientation_group_name = root_assembly_group_name + "/connectorOrientations/" + to_string(i);
             H5::Group connector_orientation_group = create_group(h5_file, connector_orientation_group_name);
-            write_set(h5_file, connector_orientation_group_name, this->root_assembly.connectorOrientations[i].region);
+            write_set(h5_file, connector_orientation_group_name, this->root_assembly.connectorOrientations[i].region, nullopt);
             write_string_dataset(connector_orientation_group, "orient2sameAs1", this->root_assembly.connectorOrientations[i].orient2sameAs1);
             write_float_dataset(connector_orientation_group, "angle1", this->root_assembly.connectorOrientations[i].angle1);
             write_float_dataset(connector_orientation_group, "angle2", this->root_assembly.connectorOrientations[i].angle2);
@@ -2290,7 +2306,7 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
             H5::Group node_group = create_group(h5_file, node_group_name);
             write_float_array_dataset(node_group, to_string(history_point.node_label), 3, history_point.node_coordinates);
         }
-        write_set(h5_file, history_point_group_name, history_point.region);
+        write_set(h5_file, history_point_group_name, history_point.region, nullopt);
         H5::Group section_point_group = create_group(h5_file, history_point_group_name + "/sectionPoint");
         write_string_dataset(section_point_group, "number", history_point.sectionPoint.number);
         write_string_dataset(section_point_group, "description", history_point.sectionPoint.description);
@@ -2404,19 +2420,19 @@ void SpadeObject::write_instance(H5::H5File &h5_file, H5::Group &group, const st
         this->log_file->logDebug("\t\tWriting nodes in instance: " + instance.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
         write_nodes(h5_file, group, group_name, instance.nodes, "");
         this->log_file->logDebug("\t\tWriting elements in instance: " + instance.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
-        write_elements(h5_file, group, group_name, instance.elements, "");
+        write_elements(h5_file, group, group_name, instance.elements);
         this->log_file->logDebug("\t\tWriting node sets in instance: " + instance.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
-        write_sets(h5_file, group_name + "/nodeSets", instance.nodeSets);
+        write_sets(h5_file, group_name + "/nodeSets", instance.nodeSets, instance.element_label_sets);
         this->log_file->logDebug("\t\tWriting element sets in instance: " + instance.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
-        write_sets(h5_file, group_name + "/elementSets", instance.elementSets);
+        write_sets(h5_file, group_name + "/elementSets", instance.elementSets, instance.element_label_sets);
     }
-    write_sets(h5_file, group_name + "/surfaces", instance.surfaces);
+    write_sets(h5_file, group_name + "/surfaces", instance.surfaces, instance.element_label_sets);
     if (instance.sectionAssignments.size() > 0) {
         H5::Group section_assignments_group = create_group(h5_file, group_name + "/sectionAssignments");
         for (int i=0; i<instance.sectionAssignments.size(); i++) {
             string section_assignment_group_name = group_name + "/sectionAssignments/" + instance.sectionAssignments[i].sectionName;
             H5::Group section_assignment_group = create_group(h5_file, section_assignment_group_name);
-            write_set(h5_file, section_assignment_group_name, instance.sectionAssignments[i].region);
+            write_set(h5_file, section_assignment_group_name, instance.sectionAssignments[i].region, nullopt);
         }
     }
     if (instance.rigidBodies.size() > 0) {
@@ -2426,10 +2442,10 @@ void SpadeObject::write_instance(H5::H5File &h5_file, H5::Group &group, const st
             H5::Group rigid_body_group = create_group(h5_file, rigid_body_group_name);
             write_string_dataset(rigid_body_group, "position", instance.rigidBodies[i].position);
             write_string_dataset(rigid_body_group, "isothermal", instance.rigidBodies[i].isothermal);
-            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].referenceNode);
-            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].elements);
-            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].tieNodes);
-            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].pinNodes);
+            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].referenceNode, nullopt);
+            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].elements, nullopt);
+            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].tieNodes, nullopt);
+            write_set(h5_file, rigid_body_group_name, instance.rigidBodies[i].pinNodes, nullopt);
             write_analytic_surface(h5_file, rigid_body_group_name, instance.rigidBodies[i].analyticSurface);
         }
     }
@@ -2438,7 +2454,7 @@ void SpadeObject::write_instance(H5::H5File &h5_file, H5::Group &group, const st
         for (int i=0; i<instance.beamOrientations.size(); i++) {
             string beam_orientation_group_name = group_name + "/beamOrientations/" + to_string(i);
             H5::Group beam_orientation_group = create_group(h5_file, beam_orientation_group_name);
-            write_set(h5_file, beam_orientation_group_name, instance.beamOrientations[i].region);
+            write_set(h5_file, beam_orientation_group_name, instance.beamOrientations[i].region, nullopt);
             write_string_dataset(beam_orientation_group, "method", instance.beamOrientations[i].method);
             write_float_vector_dataset(beam_orientation_group, "vector", instance.beamOrientations[i].beam_vector);
         }
@@ -2450,7 +2466,7 @@ void SpadeObject::write_instance(H5::H5File &h5_file, H5::Group &group, const st
             H5::Group rebar_orientation_group = create_group(h5_file, rebar_orientation_group_name);
             write_string_dataset(rebar_orientation_group, "axis", instance.rebarOrientations[i].axis);
             write_float_dataset(rebar_orientation_group, "angle", instance.rebarOrientations[i].angle);
-            write_set(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].region);
+            write_set(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].region, nullopt);
             write_datum_csys(h5_file, rebar_orientation_group_name, instance.rebarOrientations[i].csys);
         }
     }
@@ -2494,8 +2510,8 @@ void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_nam
         for (int i=0; i<this->constraints.ties.size(); i++) {
             string tie_group_name = group_name + "/tie/" + to_string(i);
             H5::Group tie_group = create_group(h5_file, tie_group_name);
-            write_set(h5_file, tie_group_name, this->constraints.ties[i].main);
-            write_set(h5_file, tie_group_name, this->constraints.ties[i].secondary);
+            write_set(h5_file, tie_group_name, this->constraints.ties[i].main, nullopt);
+            write_set(h5_file, tie_group_name, this->constraints.ties[i].secondary, nullopt);
             write_string_dataset(tie_group, "adjust", this->constraints.ties[i].adjust);
             write_string_dataset(tie_group, "tieRotations", this->constraints.ties[i].tieRotations);
             write_string_dataset(tie_group, "positionToleranceMethod", this->constraints.ties[i].positionToleranceMethod);
@@ -2525,9 +2541,9 @@ void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_nam
         for (int i=0; i<this->constraints.couplings.size(); i++) {
             string coupling_group_name = group_name + "/coupling/" + to_string(i);
             H5::Group coupling_group = create_group(h5_file, coupling_group_name);
-            write_set(h5_file, coupling_group_name, this->constraints.couplings[i].surface);
-            write_set(h5_file, coupling_group_name, this->constraints.couplings[i].refPoint);
-            write_set(h5_file, coupling_group_name, this->constraints.couplings[i].nodes);
+            write_set(h5_file, coupling_group_name, this->constraints.couplings[i].surface, nullopt);
+            write_set(h5_file, coupling_group_name, this->constraints.couplings[i].refPoint, nullopt);
+            write_set(h5_file, coupling_group_name, this->constraints.couplings[i].nodes, nullopt);
             write_string_dataset(coupling_group, "couplingType", this->constraints.couplings[i].couplingType);
             write_string_dataset(coupling_group, "weightingMethod", this->constraints.couplings[i].weightingMethod);
             write_string_dataset(coupling_group, "influenceRadius", this->constraints.couplings[i].influenceRadius);
@@ -2544,8 +2560,8 @@ void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_nam
         for (int i=0; i<this->constraints.mpc.size(); i++) {
             string mpc_group_name = group_name + "/mpc/" + to_string(i);
             H5::Group mpc_group = create_group(h5_file, mpc_group_name);
-            write_set(h5_file, mpc_group_name, this->constraints.mpc[i].surface);
-            write_set(h5_file, mpc_group_name, this->constraints.mpc[i].refPoint);
+            write_set(h5_file, mpc_group_name, this->constraints.mpc[i].surface, nullopt);
+            write_set(h5_file, mpc_group_name, this->constraints.mpc[i].refPoint, nullopt);
             write_string_dataset(mpc_group, "mpcType", this->constraints.mpc[i].mpcType);
             write_string_dataset(mpc_group, "userMode", this->constraints.mpc[i].userMode);
             write_string_dataset(mpc_group, "userType", this->constraints.mpc[i].userType);
@@ -2556,8 +2572,8 @@ void SpadeObject::write_constraints(H5::H5File &h5_file, const string &group_nam
         for (int i=0; i<this->constraints.shell_solid_couplings.size(); i++) {
             string shell_solid_coupling_group_name = group_name + "/shellSolidCoupling/" + to_string(i);
             H5::Group shell_solid_coupling_group = create_group(h5_file, shell_solid_coupling_group_name);
-            write_set(h5_file, shell_solid_coupling_group_name, this->constraints.shell_solid_couplings[i].shellEdge);
-            write_set(h5_file, shell_solid_coupling_group_name, this->constraints.shell_solid_couplings[i].solidFace);
+            write_set(h5_file, shell_solid_coupling_group_name, this->constraints.shell_solid_couplings[i].shellEdge, nullopt);
+            write_set(h5_file, shell_solid_coupling_group_name, this->constraints.shell_solid_couplings[i].solidFace, nullopt);
             write_string_dataset(shell_solid_coupling_group, "positionToleranceMethod", this->constraints.shell_solid_couplings[i].positionToleranceMethod);
             write_string_dataset(shell_solid_coupling_group, "positionTolerance", this->constraints.shell_solid_couplings[i].positionTolerance);
             write_string_dataset(shell_solid_coupling_group, "influenceDistanceMethod", this->constraints.shell_solid_couplings[i].influenceDistanceMethod);
@@ -2623,41 +2639,38 @@ void SpadeObject::write_interactions(H5::H5File &h5_file, const string &group_na
             write_string_dataset(explicit_group, "contactControls", this->explicit_interactions[i].contactControls);
             write_double_dataset(explicit_group, "weightingFactor", this->explicit_interactions[i].weightingFactor);
             write_tangential_behavior(h5_file, explicit_group_name, this->explicit_interactions[i].interactionProperty);
-            write_set(h5_file, explicit_group_name, this->explicit_interactions[i].main);
-            write_set(h5_file, explicit_group_name, this->explicit_interactions[i].secondary);
+            write_set(h5_file, explicit_group_name, this->explicit_interactions[i].main, nullopt);
+            write_set(h5_file, explicit_group_name, this->explicit_interactions[i].secondary, nullopt);
         }
     }
 }
 
-void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const string &group_name, const elements_type* elements, const string &set_name) {
+void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const string &group_name, const elements_type* elements) {
     elements_type all_elements = *elements;
     this->log_file->logDebug("\t\tCall to write_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     if (!all_elements.elements.empty()) {
-        if (set_name.empty()) {
-            H5::Group elements_group = create_group(h5_file, group_name + "/elements");
-            for (auto [type, element] : all_elements.elements) {
-                for (auto [element_id, element_members] : element) {
+        H5::Group elements_group = create_group(h5_file, group_name + "/elements");
+        for (auto [type, element] : all_elements.elements) {
+            for (auto [element_id, element_members] : element) {
 //                    this->log_file->logDebug("\t\t\tWrite element: " + to_string(element_id) + " of type: " + type + " at time: " + this->command_line_arguments->getTimeStamp(true));
-                    string elements_label_group_name = group_name + "/elements/" + to_string(element_id);
-                    H5::Group elements_label_group = create_group(h5_file, elements_label_group_name);
-                    write_string_dataset(elements_label_group, "type", type);
-                    H5::Group section_category_group = create_group(h5_file, elements_label_group_name + "/sectionCategory");
-                    write_section_category(h5_file, section_category_group, elements_label_group_name + "/sectionCategory", element_members.sectionCategory);
-                    write_string_vector_dataset(elements_label_group, "instanceNames", element_members.instanceNames);
-                    write_integer_vector_dataset(elements_label_group, "connectivity", element_members.connectivity);
-                }
-            }
-        } else {
-            try {
-                set<int> element_label_set = all_elements.element_sets.at(set_name);
-                vector<int> element_labels(element_label_set.begin(), element_label_set.end());
-                write_integer_vector_dataset(group, "elements", element_labels);
-            } catch (const std::out_of_range& oor) {
-                this->log_file->logDebug("Element set could not be found for : " + set_name);
+                string elements_label_group_name = group_name + "/elements/" + to_string(element_id);
+                H5::Group elements_label_group = create_group(h5_file, elements_label_group_name);
+                write_string_dataset(elements_label_group, "type", type);
+                H5::Group section_category_group = create_group(h5_file, elements_label_group_name + "/sectionCategory");
+                write_section_category(h5_file, section_category_group, elements_label_group_name + "/sectionCategory", element_members.sectionCategory);
+                write_string_vector_dataset(elements_label_group, "instanceNames", element_members.instanceNames);
+                write_integer_vector_dataset(elements_label_group, "connectivity", element_members.connectivity);
             }
         }
     }
     this->log_file->logDebug("\t\tFinished write_elements at time: " + this->command_line_arguments->getTimeStamp(true));
+}
+
+void SpadeObject::write_element_set(H5::H5File &h5_file, H5::Group &group, set<int> element_set) {
+    if (!element_set.empty()) {
+        vector<int> element_labels(element_set.begin(), element_set.end());
+        write_integer_vector_dataset(group, "elements", element_labels);
+    }
 }
 
 void SpadeObject::write_nodes(H5::H5File &h5_file, H5::Group &group, const string &group_name, const nodes_type* nodes, const string &set_name) {
@@ -2680,14 +2693,14 @@ void SpadeObject::write_nodes(H5::H5File &h5_file, H5::Group &group, const strin
     }
 }
 
-void SpadeObject::write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets) {
+void SpadeObject::write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets, map<string, set<int>> element_sets) {
     if (!sets.empty()) {
         H5::Group sets_group = create_group(h5_file, group_name);
-        for (auto odb_set : sets) { write_set(h5_file, group_name, odb_set); }
+        for (auto odb_set : sets) { write_set(h5_file, group_name, odb_set, element_sets[odb_set.name]); }
     }
 }
 
-void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const set_type &odb_set) {
+void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const set_type &odb_set, optional<set <int>> element_set) {
     std::regex nodes_pattern("\\s*ALL\\s*NODES\\s*");
     std::regex elements_pattern("\\s*ALL\\s*ELEMENTS\\s*");
     this->log_file->logDebug("\tWriting set " + odb_set.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
@@ -2701,13 +2714,15 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
             if (odb_set.type == "Node Set") {
                 write_nodes(h5_file, set_group, set_group_name, odb_set.nodes, odb_set.name);
             } else if (odb_set.type == "Element Set") {
-                write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
+                write_element_set(h5_file, set_group, element_set.value());
             } else if (odb_set.type == "Surface Set") {
                 if (!odb_set.faces.empty()) {
                     write_string_vector_dataset(set_group, "faces", odb_set.faces);
                 }
                 if (odb_set.elements != nullptr && !odb_set.elements->elements.empty()) {
-                    write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
+                    if (element_set.has_value()) {
+                        write_element_set(h5_file, set_group, element_set.value());
+                    }
                 } else {
                     write_nodes(h5_file, set_group, set_group_name, odb_set.nodes, odb_set.name);
                 }
@@ -2715,7 +2730,7 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
         } else {
             if (odb_set.type == "Surface Set") { 
                 if (odb_set.elements != nullptr && !odb_set.elements->elements.empty()) {
-                    write_elements(h5_file, set_group, set_group_name, odb_set.elements, odb_set.name);
+                    write_element_set(h5_file, set_group, element_set.value());
                 }
                 if (!odb_set.faces.empty()) {
                     write_string_vector_dataset(set_group, "faces", odb_set.faces);

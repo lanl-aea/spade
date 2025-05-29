@@ -6,6 +6,7 @@
 #include "H5Cpp.h"
 using namespace H5;
 #include <odb_API.h>
+#include <optional>
 
 #include "cmd_line_arguments.h"
 #include "logging.h"
@@ -86,7 +87,7 @@ struct element_type {
 
 struct elements_type {
     map<string, map<int, element_type>> elements; // accessed like elements_type[type][label] (e.g. elements_type['CAX4T'][1])
-    map <string, set<int>> element_sets;
+//    map <string, set<int>> element_sets;
 };
 
 struct node_type {
@@ -106,6 +107,7 @@ struct set_type {
     vector<string> instanceNames;
     nodes_type* nodes;
     elements_type* elements;
+    map <string, set<int>> element_sets;
     vector<string> faces;
 };
 
@@ -225,6 +227,7 @@ struct part_type {
     string embeddedSpace;
     nodes_type* nodes;
     elements_type* elements;
+    map <string, set<int>> element_label_sets;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -279,6 +282,7 @@ struct instance_type {
     string embeddedSpace;
     nodes_type* nodes;
     elements_type* elements;
+    map <string, set<int>> element_label_sets;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -292,9 +296,9 @@ struct instance_type {
 struct mesh_type {
     nodes_type nodes;
     elements_type elements;
+    map <string, set<int>> element_sets;
     int part_index;
     int instance_index;
-    int assembly_index;
 };
 
 struct connector_orientation_type {
@@ -313,6 +317,7 @@ struct assembly_type {
     string embeddedSpace;
     nodes_type* nodes;
     elements_type* elements;
+    map <string, set<int>> element_label_sets;
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
     vector<set_type> surfaces;
@@ -974,9 +979,16 @@ class SpadeObject {
           \param group HDF5 group in which to write the new data
           \param group_name Name of the group where data is to be written
           \param elements Element data to be written
-          \param set_name String with the name of the set if given
         */
-        void write_elements(H5::H5File &h5_file, H5::Group &group, const string &group_name, const elements_type* elements, const string &set_name);
+        void write_elements(H5::H5File &h5_file, H5::Group &group, const string &group_name, const elements_type* elements);
+        //! Write element set data to an HDF5 file
+        /*!
+          Write vector of element set data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group HDF5 group in which to write the new data
+          \param element_set Element set data to be written
+        */
+        void write_element_set(H5::H5File &h5_file, H5::Group &group, set<int> element_set);
         //! Write node data to an HDF5 file
         //! Write nodes data to an HDF5 file
         /*!
@@ -994,16 +1006,18 @@ class SpadeObject {
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
           \param sets Vector of set data to be written
+          \param element_sets Map of element set data
         */
-        void write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets);
+        void write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets, map<string, set<int>> element_sets);
         //! Write set data to an HDF5 file
         /*!
           Write data from a set type into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param group_name Name of the group where data is to be written
           \param odb_set Set data to be written
+          \param element_set Set of element numbers
         */
-        void write_set(H5::H5File &h5_file, const string &group_name, const set_type &odb_set);
+        void write_set(H5::H5File &h5_file, const string &group_name, const set_type &odb_set, optional<set <int>> element_set);
         //! Write a section category type to an HDF5 file
         /*!
           Write data from section category type into an HDF5 file
