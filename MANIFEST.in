@@ -15,6 +15,7 @@ global-exclude *.pyc
 global-exclude config.log
 global-exclude .sconsign.dblite
 exclude spade/docs/.buildinfo*
+exclude find_shebang.py
 exclude .flake8
 exclude .git*
 exclude *.yml
