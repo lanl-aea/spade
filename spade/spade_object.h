@@ -87,7 +87,6 @@ struct element_type {
 
 struct elements_type {
     map<string, map<int, element_type>> elements; // accessed like elements_type[type][label] (e.g. elements_type['CAX4T'][1])
-//    map <string, set<int>> element_sets;
 };
 
 struct node_type {
@@ -97,7 +96,6 @@ struct node_type {
 
 struct nodes_type {
     map<int, node_type> nodes;
-    map <string, set<int>> node_sets;
 };
 
 struct set_type {
@@ -107,7 +105,6 @@ struct set_type {
     vector<string> instanceNames;
     nodes_type* nodes;
     elements_type* elements;
-    map <string, set<int>> element_sets;
     vector<string> faces;
 };
 
@@ -295,6 +292,7 @@ struct mesh_type {
     nodes_type nodes;
     elements_type elements;
     map <string, set<int>> element_sets;
+    map <string, set<int>> node_sets;
     int part_index;
     int instance_index;
 };
@@ -997,6 +995,14 @@ class SpadeObject {
           \param set_name String with the name of the set if given
         */
         void write_nodes(H5::H5File &h5_file, H5::Group &group, const string &group_name, const nodes_type* nodes, const string &set_name);
+        //! Write node set data to an HDF5 file
+        /*!
+          Write vector of node set data into an HDF5 file
+          \param h5_file Open h5_file object for writing
+          \param group HDF5 group in which to write the new data
+          \param node_set Node set data to be written
+        */
+        void write_node_set(H5::H5File &h5_file, H5::Group &group, set<int> node_set);
         //! Write sets data to an HDF5 file
         /*!
           Write vector of set data into an HDF5 file
@@ -1004,8 +1010,9 @@ class SpadeObject {
           \param group_name Name of the group where data is to be written
           \param sets Vector of set data to be written
           \param element_sets Map of element set data
+          \param node_sets Map of node set data
         */
-        void write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets, map<string, set<int>> element_sets);
+        void write_sets(H5::H5File &h5_file, const string &group_name, const vector<set_type> &sets, map<string, set<int>> element_sets, map<string, set<int>> node_sets);
         //! Write set data to an HDF5 file
         /*!
           Write data from a set type into an HDF5 file
@@ -1013,8 +1020,9 @@ class SpadeObject {
           \param group_name Name of the group where data is to be written
           \param odb_set Set data to be written
           \param element_set Set of element numbers
+          \param node_set Set of node numbers
         */
-        void write_set(H5::H5File &h5_file, const string &group_name, const set_type &odb_set, optional<set <int>> element_set);
+        void write_set(H5::H5File &h5_file, const string &group_name, const set_type &odb_set, optional<set <int>> element_set, optional<set <int>> node_set);
         //! Write a section category type to an HDF5 file
         /*!
           Write data from section category type into an HDF5 file
