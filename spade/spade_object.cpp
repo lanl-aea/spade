@@ -268,6 +268,7 @@ void SpadeObject::process_odb_without_steps(odb_Odb &odb) {
     this->log_file->logVerbose("Reading root assembly.");
     this->root_assembly = process_assembly(odb.rootAssembly(), odb);
 
+
 }
 
 section_category_type SpadeObject::process_section_category (const odb_SectionCategory &section_category) {
@@ -326,7 +327,7 @@ tangential_behavior_type SpadeObject::process_interaction_property (const odb_In
 
 nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, const int &embedded_space) {
     nodes_type new_nodes;
-    map <string, set<int>> new_node_sets;
+    set<int> new_node_set;
     string name;
     if (!part_name.empty()) { 
         try {  // If the node has been stored in nodes, just return the address to it
@@ -335,8 +336,8 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             this->log_file->logDebug("New nodes for part: " + part_name);
             this->part_mesh[part_name].part_index = -1;
             new_nodes = this->part_mesh[part_name].nodes;
-            new_node_sets = this->part_mesh[part_name].node_sets;
         }
+        name = part_name;
     } else if (!instance_name.empty()) {
         try {
             new_nodes = this->instance_mesh.at(instance_name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
@@ -344,29 +345,23 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
             this->log_file->logDebug("New nodes for instance: " + instance_name);
             this->instance_mesh[instance_name].instance_index = -1;
             new_nodes = this->instance_mesh[instance_name].nodes;
-            new_node_sets = this->instance_mesh[instance_name].node_sets;
         }
+        name = instance_name;
     } else {
         name = assembly_name;
         if (name.empty()) { 
             name = this->default_instance_name;
         }
         new_nodes = this->assembly_mesh[name].nodes;
-        new_node_sets = this->assembly_mesh[name].node_sets;
     }
     for (int i=0; i < nodes.size(); i++) { 
         odb_Node node = nodes.node(i);
         int node_label = node.label();
+        new_node_set.insert(node_label);
         node_type coords_sets;
         try {
             coords_sets = new_nodes.nodes.at(node_label);
             new_nodes.nodes[node_label].sets.insert(set_name);
-            if (this->command_line_arguments->get("format") == "odb") {  // Don't need to store separate instances if using extract format
-                if (!set_name.empty()) { 
-                    new_node_sets[set_name].insert(node_label);
-                    new_nodes.nodes[node_label].sets.insert(set_name); 
-                }
-            }
             continue;
         } catch (const std::out_of_range& oor) {
             if ((embedded_space == 2) || (embedded_space == 3)) {
@@ -375,32 +370,32 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
                 new_nodes.nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]};
             }
             new_nodes.nodes[node_label].sets.insert(set_name);
-            if (this->command_line_arguments->get("format") == "odb") {  // Don't need to store separate instances if using extract format
-                if (!set_name.empty()) { 
-                    new_node_sets[set_name].insert(node_label);
-                    new_nodes.nodes[node_label].sets.insert(set_name); 
-                }
-            }
         }
     }
     if (!part_name.empty()) { 
             this->part_mesh[part_name].nodes = new_nodes;
-            this->part_mesh[part_name].node_sets = new_node_sets;
+            if (!set_name.empty()) {
+                this->part_mesh[part_name].node_sets[set_name].insert(new_node_set.begin(), new_node_set.end());
+            }
             return &this->part_mesh[part_name].nodes;
     } else if (!instance_name.empty()) {
             this->instance_mesh[instance_name].nodes = new_nodes;
-            this->instance_mesh[instance_name].node_sets = new_node_sets;
+            if (!set_name.empty()) {
+                this->instance_mesh[instance_name].node_sets[set_name].insert(new_node_set.begin(), new_node_set.end());
+            }
             return &this->instance_mesh[instance_name].nodes;
     } else {
             this->assembly_mesh[name].nodes = new_nodes;
-            this->assembly_mesh[name].node_sets = new_node_sets;
+            if (!set_name.empty()) {
+                this->assembly_mesh[name].node_sets[set_name].insert(new_node_set.begin(), new_node_set.end());
+            }
             return &this->assembly_mesh[name].nodes;
     }
 }
 
 map<string, map<int, element_type>>* SpadeObject::process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name) {
     map<string, map<int, element_type>> new_elements;
-    map <string, set<int>> new_element_sets;
+    set<int> new_element_set;
     string name;
     this->log_file->logDebug("\t\tCall to process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     if (!part_name.empty()) { 
@@ -411,7 +406,6 @@ map<string, map<int, element_type>>* SpadeObject::process_elements (const odb_Se
             this->part_mesh[part_name].part_index = -1;
             new_elements = this->part_mesh[part_name].elements;
         }
-        new_element_sets = this->part_mesh[part_name].element_sets;
     } else if (!instance_name.empty()) {
         try {
             new_elements = this->instance_mesh.at(instance_name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
@@ -420,14 +414,12 @@ map<string, map<int, element_type>>* SpadeObject::process_elements (const odb_Se
             this->instance_mesh[instance_name].instance_index = -1;
             new_elements = this->instance_mesh[instance_name].elements;
         }
-        new_element_sets = this->instance_mesh[instance_name].element_sets;
     } else {
         name = assembly_name;
         if (name.empty()) { 
             name = this->default_instance_name;
         }
         new_elements = this->assembly_mesh[name].elements;
-        new_element_sets = this->assembly_mesh[name].element_sets;
     }
     this->log_file->logDebug("\t\tElements map retrieved in process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     int previous_label = -2;
@@ -440,6 +432,7 @@ map<string, map<int, element_type>>* SpadeObject::process_elements (const odb_Se
             previous_label = element_label;    // This will help ensure it's processed once
         }
         string type = element.type().CStr();
+        new_element_set.insert(element_label);
 
         if (instance_name.empty()) {
             if (new_elements[type][element_label].instanceNames.empty()) {
@@ -457,22 +450,27 @@ map<string, map<int, element_type>>* SpadeObject::process_elements (const odb_Se
             new_elements[type][element_label].sectionCategory = process_section_category(element.sectionCategory());
         }
         if (!set_name.empty()) { 
-            new_element_sets[set_name].insert(element_label); 
             new_elements[type][element_label].sets.insert(set_name);
         }
     }
     this->log_file->logDebug("\t\tFinished process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     if (!part_name.empty()) { 
             this->part_mesh[part_name].elements = new_elements;
-            this->part_mesh[part_name].element_sets = new_element_sets;
+            if (!set_name.empty()) { 
+                this->part_mesh[part_name].element_sets[set_name].insert(new_element_set.begin(), new_element_set.end());
+            }
             return &this->part_mesh[part_name].elements;
     } else if (!instance_name.empty()) {
             this->instance_mesh[instance_name].elements = new_elements;
-            this->instance_mesh[instance_name].element_sets = new_element_sets;
+            if (!set_name.empty()) { 
+                this->instance_mesh[instance_name].element_sets[set_name].insert(new_element_set.begin(), new_element_set.end());
+            }
             return &this->instance_mesh[instance_name].elements;
     } else {
             this->assembly_mesh[name].elements = new_elements;
-            this->assembly_mesh[name].element_sets = new_element_sets;
+            if (!set_name.empty()) { 
+                this->assembly_mesh[name].element_sets[set_name].insert(new_element_set.begin(), new_element_set.end());
+            }
             return &this->assembly_mesh[name].elements;
     }
 }
@@ -903,6 +901,9 @@ instance_type SpadeObject::process_instance (const odb_Instance &instance, odb_O
     for (surface_iter.first(); !surface_iter.isDone(); surface_iter.next()) {
         new_instance.surfaces.push_back(process_set(surface_iter.currentValue()));
     }
+for (auto [set_name, node_set] : this->instance_mesh["PART-1-1"].node_sets) {
+cout << set_name << " process_instance\n";
+}
     this->log_file->log("\tsurface count: " + to_string(new_instance.surfaces.size()));
     const odb_SequenceRigidBody& rigid_bodies = instance.rigidBodies();
     for (int i=0; i<rigid_bodies.size(); i++)  { new_instance.rigidBodies.push_back(process_rigid_body(rigid_bodies[i])); }
@@ -1472,24 +1473,24 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
             if (!part.elements.empty()) {
                 write_mesh_elements(h5_file, part_mesh_group, part.elements);
             }
-            if (!part.element_sets.empty()) {
-                H5::Group element_sets = create_group(h5_file, part_group_name + "/element_sets");
-                std::regex elements_pattern("\\s*ALL\\s*ELEMENTS\\s*");
-                for (auto [set_name, element_set] : part.element_sets) {
-                    if ((!element_set.empty()) && (!regex_match(set_name, elements_pattern))) {
-                        vector<int> element_labels(element_set.begin(), element_set.end());
-                        write_integer_vector_dataset(element_sets, set_name, element_labels);
-                    }
+        }
+        if (!part.element_sets.empty()) {
+            H5::Group element_sets = create_group(h5_file, part_group_name + "/element_sets");
+            std::regex elements_pattern("\\s*ALL\\s*ELEMENTS\\s*");
+            for (auto [set_name, element_set] : part.element_sets) {
+                if ((!element_set.empty()) && (!regex_match(set_name, elements_pattern))) {
+                    vector<int> element_labels(element_set.begin(), element_set.end());
+                    write_integer_vector_dataset(element_sets, set_name, element_labels);
                 }
             }
-            if (!part.node_sets.empty()) {
-                H5::Group node_sets = create_group(h5_file, part_group_name + "/node_sets");
-                std::regex nodes_pattern("\\s*ALL\\s*NODES\\s*");
-                for (auto [set_name, node_set] : part.node_sets) {
-                    if ((!node_set.empty()) && (!regex_match(set_name, nodes_pattern))) {
-                        vector<int> node_labels(node_set.begin(), node_set.end());
-                        write_integer_vector_dataset(node_sets, set_name, node_labels);
-                    }
+        }
+        if (!part.node_sets.empty()) {
+            H5::Group node_sets = create_group(h5_file, part_group_name + "/node_sets");
+            std::regex nodes_pattern("\\s*ALL\\s*NODES\\s*");
+            for (auto [set_name, node_set] : part.node_sets) {
+                if ((!node_set.empty()) && (!regex_match(set_name, nodes_pattern))) {
+                    vector<int> node_labels(node_set.begin(), node_set.end());
+                    write_integer_vector_dataset(node_sets, set_name, node_labels);
                 }
             }
         }
@@ -1508,6 +1509,31 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
         }
         if (!this->root_assembly.elements->empty()) {
             write_mesh_elements(h5_file, assembly_mesh_group, *this->root_assembly.elements);
+        }
+    }
+    for (auto [assembly_name, assembly] : this->assembly_mesh) {
+        string assembly_group_name = "/assemblies/" + assembly_name;
+        bool sub_group_exists = false;
+        H5::Group extract_assembly_group = open_subgroup(h5_file, assembly_group_name, sub_group_exists);
+        if (!assembly.element_sets.empty()) {
+            H5::Group element_sets = create_group(h5_file, assembly_group_name + "/element_sets");
+            std::regex elements_pattern("\\s*ALL\\s*ELEMENTS\\s*");
+            for (auto [set_name, element_set] : assembly.element_sets) {
+                if ((!element_set.empty()) && (!regex_match(set_name, elements_pattern))) {
+                    vector<int> element_labels(element_set.begin(), element_set.end());
+                    write_integer_vector_dataset(element_sets, set_name, element_labels);
+                }
+            }
+        }
+        if (!assembly.node_sets.empty()) {
+            H5::Group node_sets = create_group(h5_file, assembly_group_name + "/node_sets");
+            std::regex nodes_pattern("\\s*ALL\\s*NODES\\s*");
+            for (auto [set_name, node_set] : assembly.node_sets) {
+                if ((!node_set.empty()) && (!regex_match(set_name, nodes_pattern))) {
+                    vector<int> node_labels(node_set.begin(), node_set.end());
+                    write_integer_vector_dataset(node_sets, set_name, node_labels);
+                }
+            }
         }
     }
     for (auto [instance_name, instance] : this->instance_mesh) {
@@ -1530,24 +1556,24 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
             if (!instance.elements.empty()) {
                 write_mesh_elements(h5_file, instance_mesh_group, instance.elements);
             }
-            if (!instance.element_sets.empty()) {
-                H5::Group element_sets = create_group(h5_file, instance_group_name + "/element_sets");
-                std::regex elements_pattern("\\s*ALL\\s*ELEMENTS\\s*");
-                for (auto [set_name, element_set] : instance.element_sets) {
-                    if ((!element_set.empty()) && (!regex_match(set_name, elements_pattern))) {
-                        vector<int> element_labels(element_set.begin(), element_set.end());
-                        write_integer_vector_dataset(element_sets, set_name, element_labels);
-                    }
+        }
+        if (!instance.element_sets.empty()) {
+            H5::Group element_sets = create_group(h5_file, instance_group_name + "/element_sets");
+            std::regex elements_pattern("\\s*ALL\\s*ELEMENTS\\s*");
+            for (auto [set_name, element_set] : instance.element_sets) {
+                if ((!element_set.empty()) && (!regex_match(set_name, elements_pattern))) {
+                    vector<int> element_labels(element_set.begin(), element_set.end());
+                    write_integer_vector_dataset(element_sets, set_name, element_labels);
                 }
             }
-            if (!instance.node_sets.empty()) {
-                H5::Group node_sets = create_group(h5_file, instance_group_name + "/node_sets");
-                std::regex nodes_pattern("\\s*ALL\\s*NODES\\s*");
-                for (auto [set_name, node_set] : instance.node_sets) {
-                    if ((!node_set.empty()) && (!regex_match(set_name, nodes_pattern))) {
-                        vector<int> node_labels(node_set.begin(), node_set.end());
-                        write_integer_vector_dataset(node_sets, set_name, node_labels);
-                    }
+        }
+        if (!instance.node_sets.empty()) {
+            H5::Group node_sets = create_group(h5_file, instance_group_name + "/node_sets");
+            std::regex nodes_pattern("\\s*ALL\\s*NODES\\s*");
+            for (auto [set_name, node_set] : instance.node_sets) {
+                if ((!node_set.empty()) && (!regex_match(set_name, nodes_pattern))) {
+                    vector<int> node_labels(node_set.begin(), node_set.end());
+                    write_integer_vector_dataset(node_sets, set_name, node_labels);
                 }
             }
         }
