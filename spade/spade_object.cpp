@@ -394,32 +394,36 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
 }
 
 map<string, map<int, element_type>>* SpadeObject::process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name) {
-    map<string, map<int, element_type>> new_elements;
+    mesh_type* mesh;
+    map<string, map<int, element_type>>* new_elements;
     set<int> new_element_set;
     string name;
     this->log_file->logDebug("\t\tCall to process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     if (!part_name.empty()) { 
         try {  // If the element has been stored in elements, just return the address to it
-            new_elements = this->part_mesh.at(part_name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+            new_elements = &this->part_mesh.at(part_name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New elements for part: " + part_name);
             this->part_mesh[part_name].part_index = -1;
-            new_elements = this->part_mesh[part_name].elements;
+            new_elements = &this->part_mesh[part_name].elements;
         }
+        mesh = &this->part_mesh[part_name];
     } else if (!instance_name.empty()) {
         try {
-            new_elements = this->instance_mesh.at(instance_name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+            new_elements = &this->instance_mesh.at(instance_name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New elements for instance: " + instance_name);
             this->instance_mesh[instance_name].instance_index = -1;
-            new_elements = this->instance_mesh[instance_name].elements;
+            new_elements = &this->instance_mesh[instance_name].elements;
         }
+        mesh = &this->instance_mesh[instance_name];
     } else {
         name = assembly_name;
         if (name.empty()) { 
             name = this->default_instance_name;
         }
-        new_elements = this->assembly_mesh[name].elements;
+        new_elements = &this->assembly_mesh[name].elements;
+        mesh = &this->assembly_mesh[name];
     }
     this->log_file->logDebug("\t\tElements map retrieved in process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     int previous_label = -2;
@@ -435,44 +439,29 @@ map<string, map<int, element_type>>* SpadeObject::process_elements (const odb_Se
         new_element_set.insert(element_label);
 
         if (instance_name.empty()) {
-            if (new_elements[type][element_label].instanceNames.empty()) {
+            if ((*new_elements)[type][element_label].instanceNames.empty()) {
                 odb_SequenceString instance_names = element.instanceNames();
-                for (int j=0; j < instance_names.size(); j++) { new_elements[type][element_label].instanceNames.push_back(instance_names[j].CStr()); }
+                for (int j=0; j < instance_names.size(); j++) { (*new_elements)[type][element_label].instanceNames.push_back(instance_names[j].CStr()); }
             }
         }
-        if (new_elements[type][element_label].connectivity.empty()) {
+        if ((*new_elements)[type][element_label].connectivity.empty()) {
             int element_connectivity_size;
             const int* const connectivity = element.connectivity(element_connectivity_size);
-            for (int j=0; j < element_connectivity_size; j++) { new_elements[type][element_label].connectivity.push_back(connectivity[j]); }
-            this->log_file->logDebug("\t\tElement " + to_string(element_label) + ": connectivity count: " + to_string(new_elements[type][element_label].connectivity.size()) + " instances count:" + to_string(new_elements[type][element_label].instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
+            for (int j=0; j < element_connectivity_size; j++) { (*new_elements)[type][element_label].connectivity.push_back(connectivity[j]); }
+            this->log_file->logDebug("\t\tElement " + to_string(element_label) + ": connectivity count: " + to_string((*new_elements)[type][element_label].connectivity.size()) + " instances count:" + to_string((*new_elements)[type][element_label].instanceNames.size()) + " at time: " + this->command_line_arguments->getTimeStamp(true));
         }
-        if (new_elements[type][element_label].sectionCategory.name.empty()) {
-            new_elements[type][element_label].sectionCategory = process_section_category(element.sectionCategory());
+        if ((*new_elements)[type][element_label].sectionCategory.name.empty()) {
+            (*new_elements)[type][element_label].sectionCategory = process_section_category(element.sectionCategory());
         }
         if (!set_name.empty()) { 
-            new_elements[type][element_label].sets.insert(set_name);
+            (*new_elements)[type][element_label].sets.insert(set_name);
         }
     }
-    this->log_file->logDebug("\t\tFinished process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
-    if (!part_name.empty()) { 
-            this->part_mesh[part_name].elements = new_elements;
-            if (!set_name.empty()) { 
-                this->part_mesh[part_name].element_sets[set_name].insert(new_element_set.begin(), new_element_set.end());
-            }
-            return &this->part_mesh[part_name].elements;
-    } else if (!instance_name.empty()) {
-            this->instance_mesh[instance_name].elements = new_elements;
-            if (!set_name.empty()) { 
-                this->instance_mesh[instance_name].element_sets[set_name].insert(new_element_set.begin(), new_element_set.end());
-            }
-            return &this->instance_mesh[instance_name].elements;
-    } else {
-            this->assembly_mesh[name].elements = new_elements;
-            if (!set_name.empty()) { 
-                this->assembly_mesh[name].element_sets[set_name].insert(new_element_set.begin(), new_element_set.end());
-            }
-            return &this->assembly_mesh[name].elements;
+    if (!set_name.empty()) { 
+        mesh->element_sets[set_name].insert(new_element_set.begin(), new_element_set.end());
     }
+    this->log_file->logDebug("\t\tFinished process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
+    return new_elements;
 }
 
 set_type SpadeObject::process_set(const odb_Set &odb_set) {
@@ -901,9 +890,6 @@ instance_type SpadeObject::process_instance (const odb_Instance &instance, odb_O
     for (surface_iter.first(); !surface_iter.isDone(); surface_iter.next()) {
         new_instance.surfaces.push_back(process_set(surface_iter.currentValue()));
     }
-for (auto [set_name, node_set] : this->instance_mesh["PART-1-1"].node_sets) {
-cout << set_name << " process_instance\n";
-}
     this->log_file->log("\tsurface count: " + to_string(new_instance.surfaces.size()));
     const odb_SequenceRigidBody& rigid_bodies = instance.rigidBodies();
     for (int i=0; i<rigid_bodies.size(); i++)  { new_instance.rigidBodies.push_back(process_rigid_body(rigid_bodies[i])); }
