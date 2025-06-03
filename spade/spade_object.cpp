@@ -362,19 +362,15 @@ map<int, node_type>* SpadeObject::process_nodes (const odb_SequenceNode &nodes, 
         odb_Node node = nodes.node(i);
         int node_label = node.label();
         new_node_set.insert(node_label);
-        node_type coords_sets;
-        try {
-            coords_sets = (*new_nodes).at(node_label);
-            (*new_nodes)[node_label].sets.insert(set_name);
-            continue;
-        } catch (const std::out_of_range& oor) {
+        node_type coords_sets = (*new_nodes)[node_label];
+        if (coords_sets.coordinates.empty()) {
             if ((embedded_space == 2) || (embedded_space == 3)) {
                 (*new_nodes)[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1]};
             } else {
                 (*new_nodes)[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]};
             }
-            (*new_nodes)[node_label].sets.insert(set_name);
         }
+        (*new_nodes)[node_label].sets.insert(set_name);
     }
     if (!set_name.empty()) {
         mesh->node_sets[set_name].insert(new_node_set.begin(), new_node_set.end());
@@ -2699,7 +2695,6 @@ void SpadeObject::write_elements(H5::H5File &h5_file, H5::Group &group, const st
         H5::Group elements_group = create_group(h5_file, group_name + "/elements");
         for (auto [type, element] : all_elements) {
             for (auto [element_id, element_members] : element) {
-//                    this->log_file->logDebug("\t\t\tWrite element: " + to_string(element_id) + " of type: " + type + " at time: " + this->command_line_arguments->getTimeStamp(true));
                 string elements_label_group_name = group_name + "/elements/" + to_string(element_id);
                 H5::Group elements_label_group = create_group(h5_file, elements_label_group_name);
                 write_string_dataset(elements_label_group, "type", type);
