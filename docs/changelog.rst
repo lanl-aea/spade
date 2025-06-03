@@ -21,6 +21,8 @@ Internal Changes
   By `Prabhu Khalsa`_.
 - If element belongs to instance don't write list of instances under mesh (:issue:`106`, :merge:`104`). 
   By `Prabhu Khalsa`_.
+- Write node_sets and element_sets as their own groups instead of as a "dimension" of mesh (:issue:`105`, 
+  :merge:`105`).  By `Prabhu Khalsa`_.
 
 Enhancements
 ============
