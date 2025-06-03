@@ -90,16 +90,12 @@ struct node_type {
     set<string> sets;
 };
 
-struct nodes_type {
-    map<int, node_type> nodes;
-};
-
 struct set_type {
     string name;
     string type;  // Enum [NODE_SET, ELEMENT_SET, SURFACE_SET]
     int size;
     vector<string> instanceNames;
-    nodes_type* nodes;
+    map<int, node_type>* nodes;
     map<string, map<int, element_type>>* elements; // accessed like elements[type][label] (e.g. elements['CAX4T'][1])
     vector<string> faces;
 };
@@ -218,7 +214,7 @@ struct constraint_type {
 struct part_type {
     string name;
     string embeddedSpace;
-    nodes_type* nodes;
+    map<int, node_type>* nodes;
     map<string, map<int, element_type>>* elements; // accessed like elements[type][label] (e.g. elements['CAX4T'][1])
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
@@ -272,7 +268,7 @@ struct rigid_body_type {
 struct instance_type {
     string name;
     string embeddedSpace;
-    nodes_type* nodes;
+    map<int, node_type>* nodes;
     map<string, map<int, element_type>>* elements; // accessed like elements[type][label] (e.g. elements['CAX4T'][1])
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
@@ -285,7 +281,7 @@ struct instance_type {
 };
 
 struct mesh_type {
-    nodes_type nodes;
+    map<int, node_type> nodes;
     map<string, map<int, element_type>> elements; // accessed like elements[type][label] (e.g. elements['CAX4T'][1])
     map <string, set<int>> element_sets;
     map <string, set<int>> node_sets;
@@ -307,7 +303,7 @@ struct connector_orientation_type {
 struct assembly_type {
     string name;
     string embeddedSpace;
-    nodes_type* nodes;
+    map<int, node_type>* nodes;
     map<string, map<int, element_type>>* elements; // accessed like elements[type][label] (e.g. elements['CAX4T'][1])
     vector<set_type> nodeSets;
     vector<set_type> elementSets;
@@ -491,10 +487,10 @@ class SpadeObject {
           \param set_name A set name where this node might be found
           \param part_name A part name where this node might be found
           \param embedded_space An int indicating what type of dimenions are being used
-          \return nodes_type pointer to map that stores node data
+          \return pointer to map that stores node data
           \sa process_odb()
         */
-        nodes_type* process_nodes (const odb_SequenceNode &nodes, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, const int &embedded_space);
+        map<int, node_type>* process_nodes (const odb_SequenceNode &nodes, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, const int &embedded_space);
         //! Process odb_Element objects from the odb file
         /*!
           Process odb_Element objects, save element data in data map, return pointer to location in map
@@ -990,7 +986,7 @@ class SpadeObject {
           \param nodes Node data to be written
           \param set_name String with the name of the set if given
         */
-        void write_nodes(H5::H5File &h5_file, H5::Group &group, const string &group_name, const nodes_type* nodes, const string &set_name);
+        void write_nodes(H5::H5File &h5_file, H5::Group &group, const string &group_name, const map<int, node_type>* nodes, const string &set_name);
         //! Write node set data to an HDF5 file
         /*!
           Write vector of node set data into an HDF5 file
