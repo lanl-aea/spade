@@ -326,33 +326,37 @@ tangential_behavior_type SpadeObject::process_interaction_property (const odb_In
 }
 
 nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name, const int &embedded_space) {
-    nodes_type new_nodes;
+    nodes_type* new_nodes;
+    mesh_type* mesh;
     set<int> new_node_set;
     string name;
     if (!part_name.empty()) { 
         try {  // If the node has been stored in nodes, just return the address to it
-            new_nodes = this->part_mesh.at(part_name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+            new_nodes = &this->part_mesh.at(part_name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New nodes for part: " + part_name);
             this->part_mesh[part_name].part_index = -1;
-            new_nodes = this->part_mesh[part_name].nodes;
+            new_nodes = &this->part_mesh[part_name].nodes;
         }
         name = part_name;
+        mesh = &this->part_mesh[name];
     } else if (!instance_name.empty()) {
         try {
-            new_nodes = this->instance_mesh.at(instance_name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
+            new_nodes = &this->instance_mesh.at(instance_name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
             this->log_file->logDebug("New nodes for instance: " + instance_name);
             this->instance_mesh[instance_name].instance_index = -1;
-            new_nodes = this->instance_mesh[instance_name].nodes;
+            new_nodes = &this->instance_mesh[instance_name].nodes;
         }
         name = instance_name;
+        mesh = &this->instance_mesh[name];
     } else {
         name = assembly_name;
         if (name.empty()) { 
             name = this->default_instance_name;
         }
-        new_nodes = this->assembly_mesh[name].nodes;
+        new_nodes = &this->assembly_mesh[name].nodes;
+        mesh = &this->assembly_mesh[name];
     }
     for (int i=0; i < nodes.size(); i++) { 
         odb_Node node = nodes.node(i);
@@ -360,42 +364,27 @@ nodes_type* SpadeObject::process_nodes (const odb_SequenceNode &nodes, const str
         new_node_set.insert(node_label);
         node_type coords_sets;
         try {
-            coords_sets = new_nodes.nodes.at(node_label);
-            new_nodes.nodes[node_label].sets.insert(set_name);
+            coords_sets = (*new_nodes).nodes.at(node_label);
+            (*new_nodes).nodes[node_label].sets.insert(set_name);
             continue;
         } catch (const std::out_of_range& oor) {
             if ((embedded_space == 2) || (embedded_space == 3)) {
-                new_nodes.nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1]};
+                (*new_nodes).nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1]};
             } else {
-                new_nodes.nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]};
+                (*new_nodes).nodes[node_label].coordinates = {node.coordinates()[0], node.coordinates()[1], node.coordinates()[2]};
             }
-            new_nodes.nodes[node_label].sets.insert(set_name);
+            (*new_nodes).nodes[node_label].sets.insert(set_name);
         }
     }
-    if (!part_name.empty()) { 
-            this->part_mesh[part_name].nodes = new_nodes;
-            if (!set_name.empty()) {
-                this->part_mesh[part_name].node_sets[set_name].insert(new_node_set.begin(), new_node_set.end());
-            }
-            return &this->part_mesh[part_name].nodes;
-    } else if (!instance_name.empty()) {
-            this->instance_mesh[instance_name].nodes = new_nodes;
-            if (!set_name.empty()) {
-                this->instance_mesh[instance_name].node_sets[set_name].insert(new_node_set.begin(), new_node_set.end());
-            }
-            return &this->instance_mesh[instance_name].nodes;
-    } else {
-            this->assembly_mesh[name].nodes = new_nodes;
-            if (!set_name.empty()) {
-                this->assembly_mesh[name].node_sets[set_name].insert(new_node_set.begin(), new_node_set.end());
-            }
-            return &this->assembly_mesh[name].nodes;
+    if (!set_name.empty()) {
+        mesh->node_sets[set_name].insert(new_node_set.begin(), new_node_set.end());
     }
+   return new_nodes;
 }
 
 map<string, map<int, element_type>>* SpadeObject::process_elements (const odb_SequenceElement &elements, const string &instance_name, const string &assembly_name, const string &set_name, const string &part_name) {
-    mesh_type* mesh;
     map<string, map<int, element_type>>* new_elements;
+    mesh_type* mesh;
     set<int> new_element_set;
     string name;
     this->log_file->logDebug("\t\tCall to process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
