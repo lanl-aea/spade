@@ -1510,9 +1510,6 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
         H5::Group extract_instance_group = open_subgroup(h5_file, instance_group_name, sub_group_exists);
         if (!instance.nodes.empty() || !instance.elements.empty()) {
             if (instance.instance_index >= 0) {
-                string instance_sub_group_name = instance_group_name + "/instance_data";
-                H5::Group extract_instance_sub_group = create_group(h5_file, instance_sub_group_name);
-                write_instance(h5_file, extract_instance_sub_group, instance_sub_group_name, this->root_assembly.instances[instance.instance_index]);
                 if (!this->root_assembly.instances[instance.instance_index].embeddedSpace.empty()) { embedded_space = this->root_assembly.instances[instance.instance_index].embeddedSpace; }
             }
             string instance_mesh_group_name = instance_group_name + "/Mesh";
