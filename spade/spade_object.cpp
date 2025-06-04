@@ -1578,10 +1578,10 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, string
     H5::DataType datatype_coord(H5::PredType::NATIVE_FLOAT);
     H5::DataSet dataset_coord;
     try {
-        dataset_coord = group.createDataSet("node_location", datatype_coord, dataspace_coord);
+        dataset_coord = group.createDataSet("coordinates", datatype_coord, dataspace_coord);
         dataset_coord.write(node_coords.data(), datatype_coord);
     } catch(H5::Exception& e) {
-        this->log_file->logWarning("Unable to create dataset node_location. " + e.getDetailMsg());
+        this->log_file->logWarning("Unable to create dataset coordinates. " + e.getDetailMsg());
     }
     datatype_coord.close();
 
@@ -1590,13 +1590,13 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, string
     H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
     H5::DataSet label_dataset;
     try {
-        label_dataset = group.createDataSet("coordinates", string_type, label_dataspace);
+        label_dataset = group.createDataSet("coordinate_labels", string_type, label_dataspace);
         label_dataset.write(coordinates.data(), string_type);
         // Associate the coordinate datasets with the main dataset
-        H5DSset_scale(label_dataset.getId(), (group_name + "/coordinates").c_str());
+        H5DSset_scale(label_dataset.getId(), (group_name + "/coordinate_labels").c_str());
         H5DSattach_scale(dataset_coord.getId(), label_dataset.getId(), 1);
     } catch(H5::Exception& e) {
-        this->log_file->logWarning("Error creating dataset coordinates. " + e.getDetailMsg());
+        this->log_file->logWarning("Error creating dataset coordinate_labels. " + e.getDetailMsg());
     }
     string_type.close();
     label_dataset.close();
@@ -1628,13 +1628,16 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
     for (auto [type, element_members] : elements) {
 
         vector<int> element_labels;
-        vector<string> section_categories_names;
-        vector<string> section_categories_descriptions;
+        string category_name;
+        string category_description;
+        vector<const char*> section_categories_names;
+        vector<const char*> section_categories_descriptions;
         vector<int> element_connectivity;
         int connectivity_size = element_members.begin()->second.connectivity.size();
         vector<int> node_indices;
         for (int i=0; i<connectivity_size; i++) { node_indices.push_back(i); }
         bool instances_empty = true;
+
 
         hsize_t dimension(element_members.size());
         vector<hvl_t> variable_length_instances(dimension);
@@ -1644,8 +1647,10 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
         bool section_point_empty = true;
         for (auto [element_id, element] : element_members) {
             element_labels.push_back(element_id);
-            section_categories_names.push_back(element.sectionCategory.name);
-            section_categories_descriptions.push_back(element.sectionCategory.description);
+            category_name = element.sectionCategory.name;
+            category_description = element.sectionCategory.description;
+            section_categories_names.push_back(category_name.c_str());
+            section_categories_descriptions.push_back(category_description.c_str());
             for (const float& connectivity : element.connectivity) {
                 element_connectivity.push_back(connectivity);
             }
@@ -1682,10 +1687,6 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
             }
             element_count++;
         }
-        write_integer_vector_dataset(group, type, element_labels);
-        write_integer_vector_dataset(group, type + "_node", node_indices);
-        write_string_vector_dataset(group, type + "_section_category_names", section_categories_names);
-        write_string_vector_dataset(group, type + "_section_category_descriptions", section_categories_descriptions);
 
         hsize_t dims[2] = {element_members.size(), connectivity_size};
         H5::DataSpace dataspace_connectivity(2, dims);
@@ -1694,27 +1695,73 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
         try {
             dataset_connectivity = group.createDataSet(type + "_mesh", datatype_connectivity, dataspace_connectivity);
             dataset_connectivity.write(element_connectivity.data(), datatype_connectivity);
-            dataspace_connectivity.close();
-            datatype_connectivity.close();
         } catch(H5::Exception& e) {
             this->log_file->logWarning("Unable to create dataset " + type + "_mesh. " + e.getDetailMsg());
-            dataspace_connectivity.close();
-            datatype_connectivity.close();
         }
+        datatype_connectivity.close();
         this->xarray_datasets.push_back(group_name + "/" + type + "_mesh");
 
-        // Associate the coordinate datasets with the main dataset
-        H5::DataSet type_dataset = h5_file.openDataSet(group_name + "/" + type);
-        H5DSset_scale(type_dataset.getId(), (group_name + "/" + type).c_str());
-        H5DSattach_scale(dataset_connectivity.getId(), type_dataset.getId(), 0);
+        hsize_t type_dimensions[] = {element_labels.size()};
+        H5::DataSpace type_dataspace(1, type_dimensions);
+        H5::DataSet type_dataset;
+        try {
+            type_dataset = group.createDataSet(type, H5::PredType::NATIVE_INT, type_dataspace);
+            type_dataset.write(element_labels.data(), H5::PredType::NATIVE_INT);
+            // Associate the coordinate datasets with the main dataset
+            H5DSset_scale(type_dataset.getId(), (group_name + "/" + type).c_str());
+            H5DSattach_scale(dataset_connectivity.getId(), type_dataset.getId(), 0);
+        } catch(H5::Exception& e) {
+            this->log_file->logWarning("Error creating dataset " + type + ". " + e.getDetailMsg());
+        }
+        type_dataspace.close();
         type_dataset.close();
 
-        H5::DataSet type_node_dataset = h5_file.openDataSet(group_name + "/" + type + "_node");
-        H5DSset_scale(type_dataset.getId(), (group_name + "/" + type + "_node").c_str());
-        H5DSattach_scale(dataset_connectivity.getId(), type_node_dataset.getId(), 1);
+        hsize_t type_node_dimensions[] = {node_indices.size()};
+        H5::DataSpace type_node_dataspace(1, type_node_dimensions);
+        H5::DataSet type_node_dataset;
+        try {
+            type_node_dataset = group.createDataSet(type + "_node", H5::PredType::NATIVE_INT, type_node_dataspace);
+            type_node_dataset.write(node_indices.data(), H5::PredType::NATIVE_INT);
+            // Associate the coordinate datasets with the main dataset
+            H5DSset_scale(type_node_dataset.getId(), (group_name + "/" + type + "_node").c_str());
+            H5DSattach_scale(dataset_connectivity.getId(), type_node_dataset.getId(), 1);
+        } catch(H5::Exception& e) {
+            this->log_file->logWarning("Error creating dataset " + type + "_node. " + e.getDetailMsg());
+        }
+        type_node_dataspace.close();
         type_node_dataset.close();
 
-        dataset_connectivity.close();
+        hsize_t category_names_dimensions[1] {section_categories_names.size()};
+        H5::DataSpace  category_names_dataspace(1, category_names_dimensions);
+        H5::DataSet category_names_dataset;
+        H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
+        try {
+            category_names_dataset = group.createDataSet(type + "_section_category_names", string_type, category_names_dataspace);
+            category_names_dataset.write(section_categories_names.data(), string_type);
+            // Associate the coordinate datasets with the main dataset
+            H5DSset_scale(category_names_dataset.getId(), (group_name + "/" + type + "_section_category_names").c_str());
+            H5DSattach_scale(dataset_connectivity.getId(), category_names_dataset.getId(), 0);
+        } catch(H5::Exception& e) {
+            this->log_file->logWarning("Error creating dataset " + type + "_section_category_names. " + e.getDetailMsg());
+        }
+        category_names_dataset.close();
+        category_names_dataspace.close();
+
+        hsize_t category_descriptions_dimensions[1] {section_categories_descriptions.size()};
+        H5::DataSpace  category_descriptions_dataspace(1, category_descriptions_dimensions);
+        H5::DataSet category_descriptions_dataset;
+        H5::StrType string_type2(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
+        try {
+            category_descriptions_dataset = group.createDataSet(type + "_section_category_descriptions", string_type2, category_descriptions_dataspace);
+            category_descriptions_dataset.write(section_categories_descriptions.data(), string_type2);
+            // Associate the coordinate datasets with the main dataset
+            H5DSset_scale(category_descriptions_dataset.getId(), (group_name + "/" + type + "_section_category_descriptions").c_str());
+            H5DSattach_scale(dataset_connectivity.getId(), category_descriptions_dataset.getId(), 0);
+        } catch(H5::Exception& e) {
+            this->log_file->logWarning("Error creating dataset " + type + "_section_category_descriptions. " + e.getDetailMsg());
+        }
+        category_descriptions_dataset.close();
+        category_descriptions_dataspace.close();
 
         if (!instances_empty) {
             H5::DataSpace dataspace_instances(1, &dimension);
@@ -1765,6 +1812,8 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
             }
         }
 
+        dataspace_connectivity.close();
+        dataset_connectivity.close();
     }
     this->log_file->logDebug("\t\tFinished write_mesh_elements at time: " + this->command_line_arguments->getTimeStamp(true));
 }
