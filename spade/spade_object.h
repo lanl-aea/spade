@@ -792,18 +792,20 @@ class SpadeObject {
           Write mesh node data in an extract format
           \param h5_file Open h5_file object for writing
           \param group HDF5 group in which to write the new data
+          \param group_name Name of group for writing data
           \param nodes node data to be written
           \param embedded_space string indicating what type of embedded space, which indicates the dimensions
         */
-        void write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<int, node_type> nodes, const string embedded_space);
+        void write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, string &group_name, map<int, node_type> nodes, const string embedded_space);
         //! Write mesh element data to an HDF5 file
         /*!
           Write mesh element data in an extract format
           \param h5_file Open h5_file object for writing
           \param group HDF5 group in which to write the new data
+          \param group_name Name of group for writing data
           \param elements element data to be written
         */
-        void write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map<string, map<int, element_type>> elements);
+        void write_mesh_elements(H5::H5File &h5_file, H5::Group &group, string &group_name, map<string, map<int, element_type>> elements);
         //! Create the necessary group and parent groups for writing history region and output data in the hdf5 file
         /*!
           Create the necessary groups and store the name in the passed in group name argument
@@ -1274,6 +1276,7 @@ class SpadeObject {
         map<string, mesh_type> instance_mesh;
         map<string, mesh_type> part_mesh;
         map<string, mesh_type> assembly_mesh;
+        vector<string> xarray_datasets;  // Will keep strings of paths that can be loaded by xarray
 
         string dimension_enum_strings[4];
         string faces_enum_strings[35];

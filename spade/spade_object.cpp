@@ -45,6 +45,7 @@ using namespace std;
 #include <odb_SectionTypes.h>
 
 #include "H5Cpp.h"
+#include <hdf5_hl.h>
 using namespace H5;
 
 #include <spade_object.h>
@@ -1435,10 +1436,10 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
             string part_mesh_group_name = part_group_name + "/Mesh";
             H5::Group part_mesh_group = create_group(h5_file, part_mesh_group_name);
             if (!part.nodes.empty()) {
-                write_mesh_nodes(h5_file, part_mesh_group, part.nodes, embedded_space);
+                write_mesh_nodes(h5_file, part_mesh_group, part_mesh_group_name, part.nodes, embedded_space);
             }
             if (!part.elements.empty()) {
-                write_mesh_elements(h5_file, part_mesh_group, part.elements);
+                write_mesh_elements(h5_file, part_mesh_group, part_mesh_group_name, part.elements);
             }
         }
         if (!part.element_sets.empty()) {
@@ -1472,10 +1473,10 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
         string assembly_mesh_group_name = assembly_group_name + "/Mesh";
         H5::Group assembly_mesh_group = create_group(h5_file, assembly_mesh_group_name);
         if (!this->root_assembly.nodes->empty()) {
-            write_mesh_nodes(h5_file, assembly_mesh_group, *this->root_assembly.nodes, this->root_assembly.embeddedSpace);
+            write_mesh_nodes(h5_file, assembly_mesh_group, assembly_mesh_group_name, *this->root_assembly.nodes, this->root_assembly.embeddedSpace);
         }
         if (!this->root_assembly.elements->empty()) {
-            write_mesh_elements(h5_file, assembly_mesh_group, *this->root_assembly.elements);
+            write_mesh_elements(h5_file, assembly_mesh_group, assembly_mesh_group_name, *this->root_assembly.elements);
         }
     }
     for (auto [assembly_name, assembly] : this->assembly_mesh) {
@@ -1515,10 +1516,10 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
             string instance_mesh_group_name = instance_group_name + "/Mesh";
             H5::Group instance_mesh_group = create_group(h5_file, instance_mesh_group_name);
             if (!instance.nodes.empty()) {
-                write_mesh_nodes(h5_file, instance_mesh_group, instance.nodes, embedded_space);
+                write_mesh_nodes(h5_file, instance_mesh_group, instance_mesh_group_name, instance.nodes, embedded_space);
             }
             if (!instance.elements.empty()) {
-                write_mesh_elements(h5_file, instance_mesh_group, instance.elements);
+                write_mesh_elements(h5_file, instance_mesh_group, instance_mesh_group_name, instance.elements);
             }
         }
         if (!instance.element_sets.empty()) {
@@ -1545,7 +1546,7 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
     this->log_file->logDebug("\tFinished write_mesh at time: " + this->command_line_arguments->getTimeStamp(true));
 }
 
-void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<int, node_type> nodes, const string embedded_space) {
+void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, string &group_name, map<int, node_type> nodes, const string embedded_space) {
     this->log_file->logDebug("\t\tCalled write_mesh_nodes at time: " + this->command_line_arguments->getTimeStamp(true));
     vector<string> coordinates;
     if (embedded_space == "Two Dimensional Planar") {
@@ -1589,7 +1590,7 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, map<in
     this->log_file->logDebug("\t\tFinished write_mesh_nodes at time: " + this->command_line_arguments->getTimeStamp(true));
 }
 
-void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map<string, map<int, element_type>> elements) {
+void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, string &group_name, map<string, map<int, element_type>> elements) {
     this->log_file->logDebug("\t\tCalled write_mesh_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     for (auto [type, element_members] : elements) {
 
@@ -1656,17 +1657,31 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, map
         hsize_t dims[2] = {element_members.size(), connectivity_size};
         H5::DataSpace dataspace_connectivity(2, dims);
         H5::DataType datatype_connectivity(H5::PredType::NATIVE_INT);
+        H5::DataSet dataset_connectivity;
         try {
-            H5::DataSet dataset_connectivity = group.createDataSet(type + "_mesh", datatype_connectivity, dataspace_connectivity);
+            dataset_connectivity = group.createDataSet(type + "_mesh", datatype_connectivity, dataspace_connectivity);
             dataset_connectivity.write(element_connectivity.data(), datatype_connectivity);
             dataspace_connectivity.close();
             datatype_connectivity.close();
-            dataset_connectivity.close();
         } catch(H5::Exception& e) {
             this->log_file->logWarning("Unable to create dataset " + type + "_mesh. " + e.getDetailMsg());
             dataspace_connectivity.close();
             datatype_connectivity.close();
         }
+        this->xarray_datasets.push_back(group_name + "/" + type + "_mesh");
+
+        // Associate the coordinate datasets with the main dataset
+        H5::DataSet type_dataset = h5_file.openDataSet(group_name + "/" + type);
+        H5DSset_scale(type_dataset.getId(), (group_name + "/" + type).c_str());
+        H5DSattach_scale(dataset_connectivity.getId(), type_dataset.getId(), 0);
+        type_dataset.close();
+
+        H5::DataSet type_node_dataset = h5_file.openDataSet(group_name + "/" + type + "_node");
+        H5DSset_scale(type_dataset.getId(), (group_name + "/" + type + "_node").c_str());
+        H5DSattach_scale(dataset_connectivity.getId(), type_node_dataset.getId(), 1);
+        type_node_dataset.close();
+
+        dataset_connectivity.close();
 
         if (!instances_empty) {
             H5::DataSpace dataspace_instances(1, &dimension);
