@@ -1548,16 +1548,19 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
 
 void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, string &group_name, map<int, node_type> nodes, const string embedded_space) {
     this->log_file->logDebug("\t\tCalled write_mesh_nodes at time: " + this->command_line_arguments->getTimeStamp(true));
-    vector<string> coordinates;
+    vector<const char*> coordinates;
     if (embedded_space == "Two Dimensional Planar") {
-        coordinates = {"x", "y"};
+        coordinates.push_back("x");
+        coordinates.push_back("y");
     } else if (embedded_space == "AxiSymmetric") {
-        coordinates = {"r", "z"};
+        coordinates.push_back("r");
+        coordinates.push_back("z");
     } else {  // Assume it's 3 dimensional with these names
-        coordinates = {"x", "y", "z"};
+        coordinates.push_back("x");
+        coordinates.push_back("y");
+        coordinates.push_back("z");
     }
     int true_coord_size = nodes.begin()->second.coordinates.size();
-    write_string_vector_dataset(group, "coordinates", coordinates);
     vector<int> node_labels;
     vector<float> node_coords;
     hsize_t dimension(nodes.size());
@@ -1569,23 +1572,53 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, string
         }
         node_count++;
     }
-    write_integer_vector_dataset(group, "node", node_labels);
 
     hsize_t dims[2] = {nodes.size(), true_coord_size};
     H5::DataSpace dataspace_coord(2, dims);
     H5::DataType datatype_coord(H5::PredType::NATIVE_FLOAT);
-
+    H5::DataSet dataset_coord;
     try {
-        H5::DataSet dataset_coord = group.createDataSet("node_location", datatype_coord, dataspace_coord);
+        dataset_coord = group.createDataSet("node_location", datatype_coord, dataspace_coord);
         dataset_coord.write(node_coords.data(), datatype_coord);
-        dataspace_coord.close();
-        datatype_coord.close();
-        dataset_coord.close();
     } catch(H5::Exception& e) {
         this->log_file->logWarning("Unable to create dataset node_location. " + e.getDetailMsg());
-        dataspace_coord.close();
-        datatype_coord.close();
     }
+    datatype_coord.close();
+
+    hsize_t label_dimensions[1] {coordinates.size()};
+    H5::DataSpace  label_dataspace(1, label_dimensions);
+    H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
+    H5::DataSet label_dataset;
+    try {
+        label_dataset = group.createDataSet("coordinates", string_type, label_dataspace);
+        label_dataset.write(coordinates.data(), string_type);
+        // Associate the coordinate datasets with the main dataset
+        H5DSset_scale(label_dataset.getId(), (group_name + "/coordinates").c_str());
+        H5DSattach_scale(dataset_coord.getId(), label_dataset.getId(), 1);
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Error creating dataset coordinates. " + e.getDetailMsg());
+    }
+    string_type.close();
+    label_dataset.close();
+    label_dataspace.close();
+
+    hsize_t node_dimensions[] = {node_labels.size()};
+    H5::DataSpace node_dataspace(1, node_dimensions);
+    H5::DataSet node_dataset;
+    try {
+        node_dataset = group.createDataSet("node", H5::PredType::NATIVE_INT, node_dataspace);
+        node_dataset.write(node_labels.data(), H5::PredType::NATIVE_INT);
+        // Associate the coordinate datasets with the main dataset
+        H5DSset_scale(node_dataset.getId(), (group_name + "/node").c_str());
+        H5DSattach_scale(dataset_coord.getId(), node_dataset.getId(), 0);
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Error creating dataset node." + e.getDetailMsg());
+    }
+    node_dataspace.close();
+    node_dataset.close();
+
+    dataspace_coord.close();
+    dataset_coord.close();
 
     this->log_file->logDebug("\t\tFinished write_mesh_nodes at time: " + this->command_line_arguments->getTimeStamp(true));
 }
