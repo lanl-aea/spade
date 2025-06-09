@@ -114,7 +114,7 @@ def character_delimited_list(sequence: typing.Iterable, character: str = " ") ->
     return character.join(map(str, sequence))
 
 
-# Comes from WAVES internal utilities. Probably worth keeping a project specific version here.
+# Comes from WAVES scons extensions. Keep a SPADE specific version here because this project *must* be upstream of WAVES
 def search_commands(options: typing.Iterable[str]) -> typing.Optional[str]:
     """Return the first found command in the list of options. Return None if none are found.
 
@@ -127,7 +127,7 @@ def search_commands(options: typing.Iterable[str]) -> typing.Optional[str]:
     return command_abspath
 
 
-# Comes from WAVES internal utilities. Probably worth keeping a project specific version here.
+# Comes from WAVES scons extensions. Keep a SPADE specific version here because this project *must* be upstream of WAVES
 def find_command(options: typing.Iterable[str]) -> str:
     """Return first found command in list of options.
 

@@ -11,7 +11,6 @@ Import(["env", "project_variables_substitution"])
 
 
 # VVV Sphinx Builder prototype
-# TODO: Use WAVES from conda-forge as a build-time (NOT runtime) dependency
 def sphinx_build(
     program="sphinx-build",
     options="",
