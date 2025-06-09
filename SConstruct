@@ -72,13 +72,6 @@ env["ENV"]["PYTHONDONTWRITEBYTECODE"] = 1
 
 build_directory = pathlib.Path(GetOption("build_directory"))
 
-# Handle OS-aware tee output
-system = platform.system().lower()
-if system == "windows":  # Assume PowerShell
-    env["tee_suffix"] = "$(| Tee-Object -FilePath ${TARGETS[-1].abspath}$)"
-else:  # *Nix style tee
-    env["tee_suffix"] = "$(2>&1 | tee ${TARGETS[-1].abspath}$)"
-
 # Find third-party software
 abaqus_environments = dict()
 for command in env["abaqus_command"]:

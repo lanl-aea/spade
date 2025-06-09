@@ -14,8 +14,7 @@ env.Alias("flake8", target)
 target = env.Command(
     target=["black-check.txt"],
     source=["style"],
-    action=["black . $$(python find_shebang.py .) --check --verbose ${action_suffix}"],
-    action_suffix=env["tee_suffix"],
+    action=["black . $$(python find_shebang.py .) --check --verbose"],
 )
 env.AlwaysBuild(target)
 env.Alias("black-check", target)
@@ -25,8 +24,7 @@ env.Alias("black-check", target)
 target = env.Command(
     target=["black-format.txt"],
     source=["style"],
-    action=["black . $$(python find_shebang.py .) ${action_suffix}"],
-    action_suffix=env["tee_suffix"],
+    action=["black . $$(python find_shebang.py .)"],
 )
 env.AlwaysBuild(target)
 env.Alias("black-format", target)
