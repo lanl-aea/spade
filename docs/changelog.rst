@@ -17,16 +17,18 @@ Bug fixes
 
 Internal Changes
 ================
-- Create top level parts, instances, and assemblies groups in hdf5 file (:issue:`103`, :merge:`101`). 
+- Create top level parts, instances, and assemblies groups in hdf5 file (:issue:`103`, :merge:`101`).
   By `Prabhu Khalsa`_.
-- If element belongs to instance don't write list of instances under mesh (:issue:`106`, :merge:`104`). 
+- If element belongs to instance don't write list of instances under mesh (:issue:`106`, :merge:`104`).
   By `Prabhu Khalsa`_.
-- Write node_sets and element_sets as their own groups instead of as a "dimension" of mesh (:issue:`105`, 
+- Write node_sets and element_sets as their own groups instead of as a "dimension" of mesh (:issue:`105`,
   :merge:`105`).  By `Prabhu Khalsa`_.
+- Decide that this project _must_ be upstream of WAVES, remove WAVES developer/runtime dependency TODO notes and replace
+  with notes to never use WAVES as a depedency. By `Kyle Brindley`_.
 
 Enhancements
 ============
-- Write initial outline for VTKHDF format to eventually opening natively in Paraview (:issue:`97`, :merge:`97`). 
+- Write initial outline for VTKHDF format to eventually opening natively in Paraview (:issue:`97`, :merge:`97`).
   By `Prabhu Khalsa`_.
 
 *******************
@@ -37,20 +39,20 @@ Internal Changes
 ================
 - Create top level instance groups in hdf5 file (:issue:`68`, :merge:`65`). By `Prabhu Khalsa`_.
 - Refactor how nodes are stored for new extract format (:issue:`70`, :merge:`67`). By `Prabhu Khalsa`_.
-- Stop passing around log_file and command_line_options in favor of class member (:issue:`71`, :merge:`68`). 
+- Stop passing around log_file and command_line_options in favor of class member (:issue:`71`, :merge:`68`).
   By `Prabhu Khalsa`_.
 - Rename variables named 'set' since it's a reserved word (:issue:`72`, :merge:`69`). By `Prabhu Khalsa`_.
 - Remove duplicate code in command line options class (:issue:`73`, :merge:`70`). By `Prabhu Khalsa`_.
 - Wrapping write and create attribute in a try/catch statement (:issue:`77`, :merge:`75`). By `Prabhu Khalsa`_.
 - Refactor how elements are stored for new extract format (:issue:`75`, :merge:`73`). By `Prabhu Khalsa`_.
 - Write section point data under mesh group in extract format (:issue:`81`, :merge:`80`). By `Prabhu Khalsa`_.
-- Adjust some write functions to detect empty data before creating an empty hdf5 group (:issue:`82`, 
+- Adjust some write functions to detect empty data before creating an empty hdf5 group (:issue:`82`,
   :merge:`81`). By `Prabhu Khalsa`_.
 - Using section assignment name for name of hdf5 group (:issue:`85`, :merge:`84`). By `Prabhu Khalsa`_.
 - Changing how field output is stored and written (:issue:`86`, :merge:`85`). By `Prabhu Khalsa`_.
 - Add checks to prevent writing of empty groups (:issue:`88`, :merge:`86`). By `Prabhu Khalsa`_.
 - Re-factor loops through maps to use named tuples instead of iterators (:issue:`87`, :merge:`87`). By `Prabhu Khalsa`_.
-- Check for command line input before writing history/field output data by instance (:issue:`93`, :merge:`91`). 
+- Check for command line input before writing history/field output data by instance (:issue:`93`, :merge:`91`).
   By `Prabhu Khalsa`_.
 - Remove function that writes xarray attributes (:issue:`94`, :merge:`93`). By `Prabhu Khalsa`_.
 - Store and clear memory differently for variable length datasets (:issue:`95`, :merge:`94`). By `Prabhu Khalsa`_.
@@ -64,7 +66,7 @@ Enhancements
 - Create HistoryOutputs group in hdf5 file with data in extract format (:issue:`84`, :merge:`83`). By `Prabhu Khalsa`_.
 - Create FieldOutputs group in hdf5 file with data in extract format (:issue:`89`, :merge:`88`). By `Prabhu Khalsa`_.
 - Change odb-format command line option to format option (:issue:`90`, :merge:`89`). By `Prabhu Khalsa`_.
-- Re-factor code to write history and field output at the same time as it's being processed 
+- Re-factor code to write history and field output at the same time as it's being processed
   (:issue:`91`, :merge:`90`). By `Prabhu Khalsa`_.
 - Re-factor code to write field output data in a more efficient manner (:issue:`92`, :merge:`92`). By `Prabhu Khalsa`_.
 
@@ -78,7 +80,7 @@ Bug fixes
 
 Internal Changes
 ================
-- Create replace_slashes function and call it where ever it seems possible for a slash to be in a group name 
+- Create replace_slashes function and call it where ever it seems possible for a slash to be in a group name
   (:issue:`66`, :merge:`62`). By `Prabhu Khalsa`_.
 
 *******************
