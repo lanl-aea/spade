@@ -167,7 +167,7 @@ def get_parser() -> argparse.ArgumentParser:
         type=str,
         choices=["extract", "odb", "vtk"],
         default="extract",
-        help='Specify the format of the data in the output file',
+        help="Specify the format of the data in the output file",
     )
 
     # True or false inputs
