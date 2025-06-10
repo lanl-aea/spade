@@ -891,6 +891,14 @@ class SpadeObject {
           \param history_output Data to be written
         */
         void write_history_output(H5::H5File &h5_file, const string &group_name, const odb_HistoryOutput &history_output);
+        //! Write extract history output data to an HDF5 file
+        /*!
+          Write history output data into an HDF5 file in the extract format
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+          \param history_outputs Data to be written
+        */
+        void write_extract_history_output(H5::H5File &h5_file, const string &group_name, const odb_HistoryOutputRepository &history_outputs);
         //! Write history region data to an HDF5 file
         /*!
           Write history region data into an HDF5 file

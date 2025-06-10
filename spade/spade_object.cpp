@@ -1255,29 +1255,29 @@ void SpadeObject::write_history_data_h5 (odb_Odb &odb, H5::H5File &h5_file, cons
             this->log_file->logVerbose("Reading data for history region " + history_region_name);
             history_region_type new_history_region = process_history_region(history_region);
             string history_outputs_group_name;
-            string history_output_group_name;
             this->log_file->logVerbose("Writing data for history region " + history_region_name);
             string history_region_group_name = history_regions_group_name + "/" + replace_slashes(history_region_name);
             write_history_region(h5_file, history_region_group_name, new_history_region);
             if (this->command_line_arguments->get("format") == "odb") {
                 history_outputs_group_name = history_region_group_name + "/HistoryOutputs";
                 H5::Group history_outputs_group = create_group(h5_file, history_outputs_group_name);
+
+                const odb_HistoryOutputRepository& history_outputs = history_region.historyOutputs();
+                odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
+                for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
+                    odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
+                    string history_output_name = history_output.name().CStr();
+                    this->log_file->logVerbose("Writing data for history output " + history_output_name);
+                    if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output_name)) {
+                        write_history_output(h5_file, history_outputs_group_name + "/" + replace_slashes(history_output_name), history_output);
+                    }
+                }
             } else if (this->command_line_arguments->get("format") == "extract") {
                 history_outputs_group_name = step.name().CStr();  // Initialize group name
                 create_extract_history_group(h5_file, new_history_region, history_outputs_group_name);  // Modifies group name
+                write_extract_history_output(h5_file, history_outputs_group_name, history_region.historyOutputs());
             }
 
-            const odb_HistoryOutputRepository& history_outputs = history_region.historyOutputs();
-            odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
-            for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
-                odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
-                string history_output_name = history_output.name().CStr();
-                this->log_file->logVerbose("Writing data for history output " + history_output_name);
-                if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output_name)) {
-                    history_output_group_name = history_outputs_group_name + "/" + replace_slashes(history_output_name);
-                    write_history_output(h5_file, history_output_group_name, history_output);
-                }
-            }
         }
     }
 }
@@ -1587,7 +1587,7 @@ void SpadeObject::write_mesh_nodes(H5::H5File &h5_file, H5::Group &group, string
     }
     datatype_coord.close();
 
-    hsize_t label_dimensions[1] {coordinates.size()};
+    hsize_t label_dimensions[] = {coordinates.size()};
     H5::DataSpace  label_dataspace(1, label_dimensions);
     H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
     H5::DataSet label_dataset;
@@ -1632,10 +1632,10 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
     for (auto [type, element_members] : elements) {
 
         vector<int> element_labels;
-        string category_name;
-        string category_description;
         vector<const char*> section_categories_names;
         vector<const char*> section_categories_descriptions;
+        vector<string> section_categories_names_strings;
+        vector<string> section_categories_descriptions_strings;
         vector<int> element_connectivity;
         int connectivity_size = element_members.begin()->second.connectivity.size();
         vector<int> node_indices;
@@ -1651,10 +1651,10 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
         bool section_point_empty = true;
         for (auto [element_id, element] : element_members) {
             element_labels.push_back(element_id);
-            category_name = element.sectionCategory.name;
-            category_description = element.sectionCategory.description;
-            section_categories_names.push_back(category_name.c_str());
-            section_categories_descriptions.push_back(category_description.c_str());
+            section_categories_names_strings.push_back(element.sectionCategory.name);
+            section_categories_descriptions_strings.push_back(element.sectionCategory.description);
+            section_categories_names.push_back(section_categories_names_strings[section_categories_names_strings.size() - 1].c_str());
+            section_categories_descriptions.push_back(section_categories_descriptions_strings[section_categories_descriptions_strings.size() - 1].c_str());
             for (const float& connectivity : element.connectivity) {
                 element_connectivity.push_back(connectivity);
             }
@@ -1707,7 +1707,7 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
         datatype_connectivity.close();
 
         hsize_t type_dimensions[] = {element_labels.size()};
-        H5::DataSpace dataspace_type(1, &dims[0]);
+        H5::DataSpace dataspace_type(1, type_dimensions);
         H5::DataSet dataset_type;
         try {
             dataset_type = group.createDataSet(type, H5::PredType::NATIVE_INT, dataspace_type);
@@ -1736,7 +1736,7 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
         dataspace_type_node.close();
         dataset_type_node.close();
 
-        hsize_t category_names_dimensions[1] {section_categories_names.size()};
+        hsize_t category_names_dimensions[] = {section_categories_names.size()};
         H5::DataSpace  dataspace_category_names(1, category_names_dimensions);
         H5::DataSet dataset_category_names;
         H5::StrType datatype_category_names(H5::PredType::C_S1, H5T_VARIABLE);  // Variable length string
@@ -1754,7 +1754,7 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
         dataset_category_names.close();
         dataspace_category_names.close();
 
-        hsize_t category_descriptions_dimensions[1] {section_categories_descriptions.size()};
+        hsize_t category_descriptions_dimensions[] = {section_categories_descriptions.size()};
         H5::DataSpace  dataspace_category_descriptions(1, category_descriptions_dimensions);
         H5::DataSet dataset_category_descriptions;
         H5::StrType datatype_category_descriptions(H5::PredType::C_S1, H5T_VARIABLE);  // Variable length string
@@ -1840,7 +1840,7 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
 }
 
 void SpadeObject::create_extract_history_group(H5::H5File &h5_file, history_region_type &history_region, string &step_group_name) {
-    // First grab the name of the instance or assembly or simply use "ASSEMBLY"
+    // First grab the name of the instance or assembly or simply use the default isntance name (either ASSEMBLY or usually rootAssembly)
     string prefix_group = "/instances/" + history_region.point.instanceName;
     if (history_region.point.instanceName.empty()) {
         prefix_group = "/assemblies/" + history_region.point.assemblyName;
@@ -2476,6 +2476,229 @@ void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_
     write_float_2D_data(history_output_group, "conjugateData", row_size_conjugate, 2, output_conjugate_data);
 }
 
+void SpadeObject::write_extract_history_output(H5::H5File &h5_file, const string &group_name, const odb_HistoryOutputRepository &history_outputs) {
+    vector<const char*> names;
+    vector<const char*> types;
+    vector<const char*> descriptions;
+    vector<float> frame_data;
+    vector<float> conjugate_frame_data;
+    vector<vector<float>> all_output_data;
+    vector<vector<float>> all_conjugate_data;
+    bool frame_data_written = false;
+    bool conjugate_frame_data_written = false;
+    bool conjugate_data_exists = false;
+    odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
+    for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
+        odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
+        string history_output_name = history_output.name().CStr();
+        this->log_file->logVerbose("Processing data for history output " + history_output_name);
+        if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output_name)) {
+            names.push_back(history_output.name().CStr());
+            descriptions.push_back(history_output.description().CStr());
+            string history_output_type_name = "";
+            switch(history_output.type()) {
+                case odb_Enum::SCALAR: history_output_type_name = "Scalar"; break;
+            }
+            types.push_back(history_output_type_name.c_str());
+
+            vector<float> output_data;
+            const odb_SequenceSequenceFloat& data = history_output.data();
+            if (!frame_data_written) {
+                for (int i=0; i<data.size(); i++) {
+                    odb_SequenceFloat data_dimension1 = data.constGet(i);
+                    frame_data.push_back(data_dimension1.constGet(0));
+                    output_data.push_back(data_dimension1.constGet(1));
+                }
+            } else {
+                for (int i=0; i<data.size(); i++) {
+                    odb_SequenceFloat data_dimension1 = data.constGet(i);
+                    output_data.push_back(data_dimension1.constGet(1));
+                }
+            }
+            all_output_data.push_back(output_data);
+            frame_data_written = true;
+
+            vector<float> output_conjugate_data;
+            const odb_SequenceSequenceFloat& conjugate_data = history_output.conjugateData();
+            if (conjugate_data.size() != 0) {
+                conjugate_data_exists = true;
+                if (!conjugate_frame_data_written) {
+                    for (int i=0; i<conjugate_data.size(); i++) {
+                        odb_SequenceFloat conjugate_data_dimension1 = conjugate_data.constGet(i);
+                        conjugate_frame_data.push_back(conjugate_data_dimension1.constGet(0));
+                        output_conjugate_data.push_back(conjugate_data_dimension1.constGet(1));
+                    }
+                } else {
+                    for (int i=0; i<conjugate_data.size(); i++) {
+                        odb_SequenceFloat conjugate_data_dimension1 = conjugate_data.constGet(i);
+                        output_conjugate_data.push_back(conjugate_data_dimension1.constGet(1));
+                    }
+                }
+                all_conjugate_data.push_back(output_conjugate_data);
+                conjugate_frame_data_written = true;
+            }
+        }
+    }
+
+    H5::Group group = create_group(h5_file, group_name);
+    string coordinate_labels;
+    string string_names = "names";
+    string string_descriptions = "descriptions";
+    string string_types = "types";
+    string string_data = "data";
+    string string_conjugate_data = "conjugate_data";
+    string string_frame_values = "frame_values";
+
+    hsize_t dims[2] = {frame_data.size(), all_output_data.size()};
+    H5::DataSpace dataspace_data(2, dims);
+    H5::DataType datatype_data(H5::PredType::NATIVE_FLOAT);
+    H5::DataSet dataset_data;
+    try {
+        dataset_data = group.createDataSet(string_data, datatype_data, dataspace_data);
+        dataset_data.write(all_output_data.data(), datatype_data);
+        H5DSset_label(dataset_data.getId(), 0, string_frame_values.c_str());
+        H5DSset_label(dataset_data.getId(), 1, string_names.c_str());
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Error creating dataset data. " + e.getDetailMsg());
+    }
+    datatype_data.close();
+    this->log_file->logDebug("Writing history output data.");
+
+    hsize_t frame_data_dimensions[] = {frame_data.size()};
+    H5::DataSpace  dataspace_frame_data(1, frame_data_dimensions);
+    H5::DataType datatype_frame_data(H5::PredType::NATIVE_FLOAT);
+    H5::DataSet dataset_frame_data;
+    try {
+        dataset_frame_data = group.createDataSet(string_frame_values, datatype_frame_data, dataspace_frame_data);
+        dataset_frame_data.write(frame_data.data(), datatype_frame_data);
+        // Associate the coordinate datasets with the main dataset using dimension scales
+        H5DSset_scale(dataset_frame_data.getId(), string_frame_values.c_str());
+        H5DSattach_scale(dataset_data.getId(), dataset_frame_data.getId(), 0);
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Error creating dataset frameValues. " + e.getDetailMsg());
+    }
+    datatype_frame_data.close();
+    dataspace_frame_data.close();
+    dataset_frame_data.close();
+
+    H5::DataSet dataset_conjugate_data;
+    hsize_t conjugate_dims[2] = {conjugate_frame_data.size(), all_conjugate_data.size()};
+    H5::DataSpace dataspace_conjugate_data(2, conjugate_dims);
+    if (conjugate_data_exists) {
+
+        H5::DataType datatype_conjugate_data(H5::PredType::NATIVE_FLOAT);
+        try {
+            dataset_conjugate_data = group.createDataSet(string_conjugate_data, datatype_conjugate_data, dataspace_conjugate_data);
+            dataset_conjugate_data.write(all_conjugate_data.data(), datatype_conjugate_data);
+            H5DSset_label(dataset_conjugate_data.getId(), 0, string_conjugate_data.c_str());
+            H5DSset_label(dataset_conjugate_data.getId(), 1, string_names.c_str());
+        } catch(H5::Exception& e) {
+            this->log_file->logWarning("Error creating dataset data. " + e.getDetailMsg());
+        }
+        datatype_conjugate_data.close();
+        this->log_file->logDebug("Writing history output conjugate data.");
+
+        hsize_t conjugate_frame_data_dimensions[] = {conjugate_frame_data.size()};
+        H5::DataSpace  dataspace_conjugate_frame_data(1, conjugate_frame_data_dimensions);
+        H5::DataType datatype_conjugate_frame_data(H5::PredType::NATIVE_FLOAT);
+        H5::DataSet dataset_conjugate_frame_data;
+        try {
+            dataset_conjugate_frame_data = group.createDataSet("conjugateFrameValues", datatype_conjugate_frame_data, dataspace_conjugate_frame_data);
+            dataset_conjugate_frame_data.write(conjugate_frame_data.data(), datatype_conjugate_frame_data);
+            // Associate the coordinate datasets with the main dataset using dimension scales
+            H5DSset_scale(dataset_conjugate_frame_data.getId(), string_conjugate_data.c_str());
+            H5DSattach_scale(dataset_data.getId(), dataset_conjugate_frame_data.getId(), 0);
+        } catch(H5::Exception& e) {
+            this->log_file->logWarning("Error creating dataset conjugateFrameValues. " + e.getDetailMsg());
+        }
+        datatype_conjugate_frame_data.close();
+        dataspace_conjugate_frame_data.close();
+        dataset_conjugate_frame_data.close();
+    }
+
+    hsize_t names_dimensions[] = {names.size()};
+    H5::DataSpace  dataspace_names(1, names_dimensions);
+    H5::DataSet dataset_names;
+    H5::StrType datatype_names(H5::PredType::C_S1, H5T_VARIABLE);  // Variable length string
+    try {
+        dataset_names = group.createDataSet(string_names, datatype_names, dataspace_names);
+        dataset_names.write(names.data(), datatype_names);
+        // Associate the coordinate datasets with the main dataset using dimension scales
+        H5DSset_scale(dataset_names.getId(), string_names.c_str());
+        H5DSattach_scale(dataset_data.getId(), dataset_names.getId(), 1);
+        H5DSattach_scale(dataset_conjugate_data.getId(), dataset_names.getId(), 1);
+        coordinate_labels = coordinate_labels + " " + string_names;
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Error creating dataset names. " + e.getDetailMsg());
+    }
+    datatype_names.close();
+    dataset_names.close();
+    dataspace_names.close();
+
+    hsize_t descriptions_dimensions[] = {descriptions.size()};
+    H5::DataSpace  dataspace_descriptions(1, descriptions_dimensions);
+    H5::DataSet dataset_descriptions;
+    H5::StrType datatype_descriptions(H5::PredType::C_S1, H5T_VARIABLE);  // Variable length string
+    try {
+        dataset_descriptions = group.createDataSet(string_descriptions, datatype_descriptions, dataspace_descriptions);
+        dataset_descriptions.write(descriptions.data(), datatype_descriptions);
+        // Associate the coordinate datasets with the main dataset using labels
+        H5DSset_label(dataset_descriptions.getId(), 0, string_names.c_str());
+        coordinate_labels = coordinate_labels + " " + string_descriptions;
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Error creating dataset descriptions. " + e.getDetailMsg());
+    }
+    datatype_descriptions.close();
+    dataset_descriptions.close();
+    dataspace_descriptions.close();
+
+    hsize_t types_dimensions[] = {types.size()};
+    H5::DataSpace  dataspace_types(1, types_dimensions);
+    H5::DataSet dataset_types;
+    H5::StrType datatype_types(H5::PredType::C_S1, H5T_VARIABLE);  // Variable length string
+    try {
+        dataset_types = group.createDataSet(string_types, datatype_types, dataspace_types);
+        dataset_types.write(types.data(), datatype_types);
+        // Associate the coordinate datasets with the main dataset using labels
+        H5DSset_label(dataset_types.getId(), 0, string_names.c_str());
+        coordinate_labels = coordinate_labels + " " + string_types;
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Error creating dataset types. " + e.getDetailMsg());
+    }
+    datatype_types.close();
+    dataset_types.close();
+    dataspace_types.close();
+
+    // Write attribute data for coordinates
+    int string_size = (coordinate_labels.size()) ? coordinate_labels.size() : 1;  // If string length is 0, set size to 1
+    H5::StrType attribute_string_type(0, string_size);
+    attribute_string_type.setCset(H5T_CSET_UTF8);  // Set character set to UTF-8
+    H5::DataSpace attribute_space(H5S_SCALAR);
+    H5::Attribute attribute = dataset_data.createAttribute("coordinates", attribute_string_type, attribute_space);
+    attribute.write(attribute_string_type, coordinate_labels);
+    attribute_space.close();
+    attribute.close();
+    attribute_string_type.close();
+
+    if (conjugate_data_exists) {
+        int string_size = (coordinate_labels.size()) ? coordinate_labels.size() : 1;  // If string length is 0, set size to 1
+        H5::StrType attribute_conjugate_string_type(0, string_size);
+        attribute_conjugate_string_type.setCset(H5T_CSET_UTF8);  // Set character set to UTF-8
+        H5::DataSpace attribute_conjugate_space(H5S_SCALAR);
+        H5::Attribute attribute_conjugate = dataset_conjugate_data.createAttribute("coordinates", attribute_conjugate_string_type, attribute_conjugate_space);
+        attribute_conjugate.write(attribute_conjugate_string_type, coordinate_labels);
+        attribute_conjugate_space.close();
+        attribute_conjugate.close();
+        attribute_conjugate_string_type.close();
+    }
+
+    dataset_data.close();
+    dataspace_data.close();
+
+    dataset_conjugate_data.close();
+    dataspace_conjugate_data.close();
+}
+
 void SpadeObject::write_history_region(H5::H5File &h5_file, const string &group_name, history_region_type &history_region) {
     H5::Group history_region_group = create_group(h5_file, group_name);
     write_string_dataset(history_region_group, "description", history_region.description);
@@ -2865,7 +3088,7 @@ void SpadeObject::write_string_attribute(const H5::Group &group, const string &a
 
 void SpadeObject::write_integer_array_attribute(const H5::Group &group, const string &attribute_name, const int array_size, const int* int_array) {
     if (!int_array) { return; }
-    hsize_t dimensions[1] = {array_size};
+    hsize_t dimensions[] = {array_size};
     H5::DataSpace attribute_space(1, dimensions);
     try {
         H5::Attribute attribute = group.createAttribute(attribute_name, H5::PredType::NATIVE_INT, attribute_space);
@@ -2884,7 +3107,7 @@ void SpadeObject::write_vector_attribute(const H5::Group &group, const string &a
     for (size_t i = 0; i < string_values.size(); ++i) {
         c_string_array[i] = string_values[i].c_str();
     }
-    hsize_t dimensions[1] {string_values.size()};
+    hsize_t dimensions[] = {string_values.size()};
     H5::DataSpace  attribute_space(1, dimensions);
     H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
     try {
@@ -2922,7 +3145,7 @@ void SpadeObject::write_string_vector_dataset(const H5::Group& group, const stri
     for (int i = 0; i < string_values.size(); ++i) {
         c_string_array.push_back(string_values[i].c_str());
     }
-    hsize_t dimensions[1] {c_string_array.size()};
+    hsize_t dimensions[] = {c_string_array.size()};
     H5::DataSpace  dataspace(1, dimensions);
     H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
     try {
@@ -2937,7 +3160,7 @@ void SpadeObject::write_string_vector_dataset(const H5::Group& group, const stri
 
 void SpadeObject::write_c_string_vector_dataset(const H5::Group& group, const string & dataset_name, vector<const char*> & string_values) {
     if (string_values.empty()) { return; }
-    hsize_t dimensions[1] {string_values.size()};
+    hsize_t dimensions[] = {string_values.size()};
     H5::DataSpace  dataspace(1, dimensions);
     H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
     try {
