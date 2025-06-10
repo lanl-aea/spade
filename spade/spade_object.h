@@ -743,6 +743,15 @@ class SpadeObject {
           \param group_name Name of the group where data is to be written
         */
         void write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name);
+        //! Process and write the frame data from the odb in the extract format
+        /*!
+          With the odb and the h5 file open, loop through and read then write the frame data
+          \param odb An open odb object
+          \param step An odb step object
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of the group where data is to be written
+        */
+        void write_extract_frame_data (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name);
 
 
         //Functions for writing out the data
@@ -862,17 +871,18 @@ class SpadeObject {
           Write all field output data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param frame Frame with field output data to be written
+          \param processed_frame Frame data stored as strings
           \param step_name Name of step where data is to be written
           \param max_width Will store the max width of the frame
           \param max_length Will store the max length of the frame
         */
-        void write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &step_name, int max_width, int max_length);
+        void write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, frame_type &processed_frame, const string &step_name, int max_width, int max_length);
         //! Write frames data to an HDF5 file
         /*!
           Write frames data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param frame_group Group where data is to be written
-          \param frames Data to be written
+          \param frame Data to be written
         */
         void write_frame(H5::H5File &h5_file, H5::Group &frame_group, frame_type &frame);
         //! Write history point data to an HDF5 file

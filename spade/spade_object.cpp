@@ -1237,7 +1237,11 @@ void SpadeObject::write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_file) {
         // Read and write history output data
         write_history_data_h5 (odb, h5_file, current_step, step_group_name);
         // Read and write field output data
-        write_frame_data_h5 (odb, h5_file, current_step, step_group_name);
+        if (this->command_line_arguments->get("format") == "odb") {
+            write_frame_data_h5 (odb, h5_file, current_step, step_group_name);
+        } else if (this->command_line_arguments->get("format") == "extract") {
+            write_extract_frame_data (odb, h5_file, current_step, step_group_name);
+        }
     }
 }
 
@@ -1293,25 +1297,68 @@ void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const 
         frame_type new_frame = process_frame(frame);
 
         if (!new_frame.skip) {
+            this->log_file->logVerbose("Writing frame " + frame_number + " data");
+            string frame_group_name = frames_group_name + "/" + frame_number;
+            H5::Group frame_group = create_group(h5_file, frame_group_name);
+            write_frame(h5_file, frame_group, new_frame);
 
             new_frame.max_length = 0;
             new_frame.max_width = 0;
             this->log_file->logVerbose("Writing field outputs for " + new_frame.description + ".");
-            if (this->command_line_arguments->get("format") == "odb") {
-                this->log_file->logVerbose("Writing frame " + frame_number + " data");
-                string frame_group_name = frames_group_name + "/" + frame_number;
-                H5::Group frame_group = create_group(h5_file, frame_group_name);
-                write_frame(h5_file, frame_group, new_frame);
-
-                write_field_outputs(h5_file, frame, frame_group_name, new_frame.max_width, new_frame.max_length);
-                write_string_attribute(frame_group, "max_width", to_string(new_frame.max_width));
-                write_string_attribute(frame_group, "max_length", to_string(new_frame.max_length));
-            } else if (this->command_line_arguments->get("format") == "extract") {
-                write_extract_field_outputs(h5_file, frame, step.name().CStr(), new_frame.max_width, new_frame.max_length);
-            }
+            write_field_outputs(h5_file, frame, frame_group_name, new_frame.max_width, new_frame.max_length);
+            write_string_attribute(frame_group, "max_width", to_string(new_frame.max_width));
+            write_string_attribute(frame_group, "max_length", to_string(new_frame.max_length));
         }
     }
 
+}
+
+void SpadeObject::write_extract_frame_data (odb_Odb &odb, H5::H5File &h5_file, const odb_Step &step, const string &group_name) {
+    const odb_SequenceFrame& frames = step.frames();
+    /*
+    Need to create a map of datasets where field output name is one key and field_bulk_value.baseELementType() is another key and hdf5 datasets are the value
+    Additionally need a map for the dataspaces and datatypes
+    They can be opened with fixed dimensions since the number of frames is known, the number of field outputs is known and the number of bulk values is known
+    Once they are open frame data can be appeneded using selectHyperslab and they'll remain open until all loops through the frame data are finished
+
+    Google prompt for generating example code: "C++ create 4x4x4 hdf5 dataset where 4x4 element array is added inside of loop"
+    ***********
+    SAMPLE CODE:
+    ***********
+
+    hsize_t sub_dims[SUB_RANK] = {SUB_DIM1, SUB_DIM2};
+    H5::DataSpace sub_dataspace(SUB_RANK, sub_dims); // Dataspace for the 4x4 array in memory
+
+    for (int i = 0; i < DIM1; ++i) { // Loop through the layers
+        // Create a 4x4 array (you'll fill this with your data)
+        std::vector<std::vector<float>> layer_data(SUB_DIM1, std::vector<float>(SUB_DIM2));
+        // ... Populate layer_data ...
+
+        // Define the offset and count for the hyperslab in the file dataspace
+        hsize_t offset[RANK] = {i, 0, 0};
+        hsize_t count[RANK] = {1, DIM2, DIM3};
+        dataspace.selectHyperslab(H5S_SELECT_SET, count, offset);
+
+        // Write the data to the dataset
+        dataset.write(layer_data[0].data(), datatype, sub_dataspace, dataspace);
+    }
+    */
+    for (int f=0; f<frames.size(); f++) {
+        const odb_Frame& frame = frames.constGet(f);
+        string frame_number = to_string(frame.incrementNumber());
+        frame_type new_frame = process_frame(frame);
+
+        if (!new_frame.skip) {
+
+            new_frame.max_length = 0;
+            new_frame.max_width = 0;
+
+            write_extract_field_outputs(h5_file, frame, new_frame, step.name().CStr(), new_frame.max_width, new_frame.max_length);
+
+            write_string_attribute(frame_group, "max_width", to_string(new_frame.max_width));
+            write_string_attribute(frame_group, "max_length", to_string(new_frame.max_length));
+        }
+    }
 }
 
 void SpadeObject::write_h5_without_steps (H5::H5File &h5_file) {
@@ -2172,8 +2219,22 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
     }
 }
 
-void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &step_name, int max_width, int max_length) {
-    string frame_number = to_string(frame.incrementNumber());
+void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, frame_type &processed_frame, const string &step_name, int max_width, int max_length) {
+    string frame_number = to_string(processed_frame.incrementNumber);
+    /*
+struct frame_type {
+    int incrementNumber;
+    int cyclicModeNumber;
+    int mode;
+    string description;
+    string domain;
+    float frameValue;
+    float frequency;
+    string loadCase;
+    int max_width;
+    int max_length;
+};
+    */
 
     const odb_FieldOutputRepository& field_outputs = frame.fieldOutputs();
     odb_FieldOutputRepositoryIT field_outputs_iterator(field_outputs);
