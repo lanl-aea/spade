@@ -57,7 +57,6 @@ gpp_include = gpp_path / "include"
 env["odb_flags"] = (
     _settings._compiler_flags + f"-I{abaqus_code_include} -I{abaqus_installation} " + f"-I{gpp_include} -I. -I{gpp_lib}"
 )
-#env["abaqus_link_flags"] = _settings._link_flags + f"-L{gpp_lib} -L{gpp_include} -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib},-rpath,{gpp_include}"
 env["abaqus_link_flags"] = _settings._link_flags + f"-L{gpp_lib} -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
 # TODO: May wish to confirm that h5c++ is definitely in the same place as gpp (lib and include)
 h5_flags = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"

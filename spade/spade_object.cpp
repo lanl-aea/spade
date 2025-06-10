@@ -1294,21 +1294,21 @@ void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const 
 
         if (!new_frame.skip) {
 
-            this->log_file->logVerbose("Writing frame " + frame_number + " data");
-            string frame_group_name = frames_group_name + "/" + frame_number;
-            H5::Group frame_group = create_group(h5_file, frame_group_name);
-            write_frame(h5_file, frame_group, new_frame);
-
             new_frame.max_length = 0;
             new_frame.max_width = 0;
             this->log_file->logVerbose("Writing field outputs for " + new_frame.description + ".");
             if (this->command_line_arguments->get("format") == "odb") {
+                this->log_file->logVerbose("Writing frame " + frame_number + " data");
+                string frame_group_name = frames_group_name + "/" + frame_number;
+                H5::Group frame_group = create_group(h5_file, frame_group_name);
+                write_frame(h5_file, frame_group, new_frame);
+
                 write_field_outputs(h5_file, frame, frame_group_name, new_frame.max_width, new_frame.max_length);
+                write_string_attribute(frame_group, "max_width", to_string(new_frame.max_width));
+                write_string_attribute(frame_group, "max_length", to_string(new_frame.max_length));
             } else if (this->command_line_arguments->get("format") == "extract") {
                 write_extract_field_outputs(h5_file, frame, step.name().CStr(), new_frame.max_width, new_frame.max_length);
             }
-            write_string_attribute(frame_group, "max_width", to_string(new_frame.max_width));
-            write_string_attribute(frame_group, "max_length", to_string(new_frame.max_length));
         }
     }
 
