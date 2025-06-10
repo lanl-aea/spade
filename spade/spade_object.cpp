@@ -130,6 +130,8 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
             if (command_line_arguments["format"] == "extract") {  //Write extract format
                 write_mesh(h5_file);
                 write_step_data_h5 (odb, h5_file);
+            } else if (command_line_arguments["format"] == "odb") {
+                write_step_data_h5 (odb, h5_file);
             } else if (command_line_arguments["format"] == "vtk") {  //Write vtk format
                 this->write_vtk_data(h5_file);
             }
@@ -1703,72 +1705,71 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
             this->log_file->logWarning("Unable to create dataset " + type + "_mesh. " + e.getDetailMsg());
         }
         datatype_connectivity.close();
-        this->xarray_datasets.push_back(group_name + "/" + type + "_mesh");
 
         hsize_t type_dimensions[] = {element_labels.size()};
-        H5::DataSpace type_dataspace(1, &dims[0]);
-        H5::DataSet type_dataset;
+        H5::DataSpace dataspace_type(1, &dims[0]);
+        H5::DataSet dataset_type;
         try {
-            type_dataset = group.createDataSet(type, H5::PredType::NATIVE_INT, type_dataspace);
-            type_dataset.write(element_labels.data(), H5::PredType::NATIVE_INT);
+            dataset_type = group.createDataSet(type, H5::PredType::NATIVE_INT, dataspace_type);
+            dataset_type.write(element_labels.data(), H5::PredType::NATIVE_INT);
             // Associate the coordinate datasets with the main dataset using dimension scales
-            H5DSset_scale(type_dataset.getId(), type.c_str());
-            H5DSattach_scale(dataset_connectivity.getId(), type_dataset.getId(), 0);
+            H5DSset_scale(dataset_type.getId(), type.c_str());
+            H5DSattach_scale(dataset_connectivity.getId(), dataset_type.getId(), 0);
         } catch(H5::Exception& e) {
             this->log_file->logWarning("Error creating dataset " + type + ". " + e.getDetailMsg());
         }
-        type_dataspace.close();
-        type_dataset.close();
+        dataspace_type.close();
+        dataset_type.close();
 
         hsize_t type_node_dimensions[] = {node_indices.size()};
-        H5::DataSpace type_node_dataspace(1, type_node_dimensions);
-        H5::DataSet type_node_dataset;
+        H5::DataSpace dataspace_type_node(1, type_node_dimensions);
+        H5::DataSet dataset_type_node;
         try {
-            type_node_dataset = group.createDataSet(type + "_node", H5::PredType::NATIVE_INT, type_node_dataspace);
-            type_node_dataset.write(node_indices.data(), H5::PredType::NATIVE_INT);
+            dataset_type_node = group.createDataSet(type + "_node", H5::PredType::NATIVE_INT, dataspace_type_node);
+            dataset_type_node.write(node_indices.data(), H5::PredType::NATIVE_INT);
             // Associate the coordinate datasets with the main dataset using dimension scales
-            H5DSset_scale(type_node_dataset.getId(), (type + "_node").c_str());
-            H5DSattach_scale(dataset_connectivity.getId(), type_node_dataset.getId(), 1);
+            H5DSset_scale(dataset_type_node.getId(), (type + "_node").c_str());
+            H5DSattach_scale(dataset_connectivity.getId(), dataset_type_node.getId(), 1);
         } catch(H5::Exception& e) {
             this->log_file->logWarning("Error creating dataset " + type + "_node. " + e.getDetailMsg());
         }
-        type_node_dataspace.close();
-        type_node_dataset.close();
+        dataspace_type_node.close();
+        dataset_type_node.close();
 
         hsize_t category_names_dimensions[1] {section_categories_names.size()};
-        H5::DataSpace  category_names_dataspace(1, category_names_dimensions);
-        H5::DataSet category_names_dataset;
-        H5::StrType category_names_type(H5::PredType::C_S1, H5T_VARIABLE);  // Variable length string
+        H5::DataSpace  dataspace_category_names(1, category_names_dimensions);
+        H5::DataSet dataset_category_names;
+        H5::StrType datatype_category_names(H5::PredType::C_S1, H5T_VARIABLE);  // Variable length string
         string coordinate_labels;
         try {
-            category_names_dataset = group.createDataSet(type + "_section_category_names", category_names_type, category_names_dataspace);
-            category_names_dataset.write(section_categories_names.data(), category_names_type);
+            dataset_category_names = group.createDataSet(type + "_section_category_names", datatype_category_names, dataspace_category_names);
+            dataset_category_names.write(section_categories_names.data(), datatype_category_names);
             // Associate the coordinate datasets with the main dataset using labels
-            H5DSset_label(category_names_dataset.getId(), 0, type.c_str());
+            H5DSset_label(dataset_category_names.getId(), 0, type.c_str());
             coordinate_labels = (type + "_section_category_names");
         } catch(H5::Exception& e) {
             this->log_file->logWarning("Error creating dataset " + type + "_section_category_names. " + e.getDetailMsg());
         }
-        category_names_type.close();
-        category_names_dataset.close();
-        category_names_dataspace.close();
+        datatype_category_names.close();
+        dataset_category_names.close();
+        dataspace_category_names.close();
 
         hsize_t category_descriptions_dimensions[1] {section_categories_descriptions.size()};
-        H5::DataSpace  category_descriptions_dataspace(1, category_descriptions_dimensions);
-        H5::DataSet category_descriptions_dataset;
-        H5::StrType category_descriptions_type(H5::PredType::C_S1, H5T_VARIABLE);  // Variable length string
+        H5::DataSpace  dataspace_category_descriptions(1, category_descriptions_dimensions);
+        H5::DataSet dataset_category_descriptions;
+        H5::StrType datatype_category_descriptions(H5::PredType::C_S1, H5T_VARIABLE);  // Variable length string
         try {
-            category_descriptions_dataset = group.createDataSet(type + "_section_category_descriptions", category_descriptions_type, category_descriptions_dataspace);
-            category_descriptions_dataset.write(section_categories_descriptions.data(), category_descriptions_type);
+            dataset_category_descriptions = group.createDataSet(type + "_section_category_descriptions", datatype_category_descriptions, dataspace_category_descriptions);
+            dataset_category_descriptions.write(section_categories_descriptions.data(), datatype_category_descriptions);
             // Associate the coordinate datasets with the main dataset using labels
-            H5DSset_label(category_descriptions_dataset.getId(), 0, type.c_str());
+            H5DSset_label(dataset_category_descriptions.getId(), 0, type.c_str());
             coordinate_labels = coordinate_labels + " " + (type + "_section_category_descriptions");
         } catch(H5::Exception& e) {
             this->log_file->logWarning("Error creating dataset " + type + "_section_category_descriptions. " + e.getDetailMsg());
         }
-        category_descriptions_type.close();
-        category_descriptions_dataset.close();
-        category_descriptions_dataspace.close();
+        datatype_category_descriptions.close();
+        dataset_category_descriptions.close();
+        dataspace_category_descriptions.close();
 
         if (!instances_empty) {
             H5::DataSpace dataspace_instances(1, &dimension);
@@ -2440,7 +2441,7 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
 void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_name, const odb_HistoryOutput &history_output) {
     // Per Abaqus documentation the conjugate data specifies the imaginary portion of a specified complex variable at each 
     // frame value (time, frequency, or mode). Therefore it seems that data and conjugate data can be present at the same time
-    // So a group has to be created two handle two possible datasets, despite there usually being only one
+    // So a group has to be created to handle two possible datasets, despite there usually being only one
     H5::Group history_output_group = create_group(h5_file, group_name);
 
     write_string_dataset(history_output_group, "description", history_output.description().CStr());

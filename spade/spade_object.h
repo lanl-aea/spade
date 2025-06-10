@@ -1276,7 +1276,6 @@ class SpadeObject {
         map<string, mesh_type> instance_mesh;
         map<string, mesh_type> part_mesh;
         map<string, mesh_type> assembly_mesh;
-        vector<string> xarray_datasets;  // Will keep strings of paths that can be loaded by xarray
 
         string dimension_enum_strings[4];
         string faces_enum_strings[35];
