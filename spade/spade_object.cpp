@@ -1777,9 +1777,6 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
             try {
                 H5::DataSet dataset_instances(group.createDataSet(type + "_element_instances", datatype_instances, dataspace_instances));
                 dataset_instances.write(variable_length_instances.data(), datatype_instances);
-                // Associate the coordinate datasets with the main dataset using labels
-                H5DSset_label(dataset_instances.getId(), 0, type.c_str());
-                coordinate_labels = coordinate_labels + " " + (type + "_element_instances");
                 dataset_instances.close();
                 H5Treclaim(datatype_instances.getId(), dataspace_instances.getId(), H5P_DEFAULT, variable_length_instances.data());  // Clearing the memory
             } catch(H5::Exception& e) {
@@ -1795,9 +1792,6 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
             try {
                 H5::DataSet dataset_section_point_numbers(group.createDataSet(type + "_section_point_numbers", datatype_section_point_numbers, dataspace_section_point_numbers));
                 dataset_section_point_numbers.write(variable_length_section_point_numbers.data(), datatype_section_point_numbers);
-                // Associate the coordinate datasets with the main dataset using labels
-                H5DSset_label(dataset_section_point_numbers.getId(), 0, type.c_str());
-                coordinate_labels = coordinate_labels + " " + (type + "_section_point_numbers");
                 dataset_section_point_numbers.close();
                 H5Treclaim(datatype_section_point_numbers.getId(), dataspace_section_point_numbers.getId(), H5P_DEFAULT, variable_length_section_point_numbers.data());  // Clearing the memory
             } catch(H5::Exception& e) {
@@ -1811,9 +1805,6 @@ void SpadeObject::write_mesh_elements(H5::H5File &h5_file, H5::Group &group, str
             try {
                 H5::DataSet dataset_section_point_descriptions(group.createDataSet(type + "_section_point_descriptions", datatype_section_point_descriptions, dataspace_section_point_descriptions));
                 dataset_section_point_descriptions.write(variable_length_section_point_descriptions.data(), datatype_section_point_descriptions);
-                // Associate the coordinate datasets with the main dataset using labels
-                H5DSset_label(dataset_section_point_descriptions.getId(), 0, type.c_str());
-                coordinate_labels = coordinate_labels + " " + (type + "_section_point_descriptions");
                 dataset_section_point_descriptions.close();
                 H5Treclaim(datatype_section_point_descriptions.getId(), dataspace_section_point_descriptions.getId(), H5P_DEFAULT, variable_length_section_point_descriptions.data());  // Clearing the memory
             } catch(H5::Exception& e) {
