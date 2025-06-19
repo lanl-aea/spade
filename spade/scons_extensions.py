@@ -113,6 +113,11 @@ def cli_builder(
        ${cd_action_prefix} ${program} ${subcommand} ${required} ${options} --abaqus-commands ${abaqus_commands} ${redirect_action_postfix}
 
     .. code-block::
+       :caption: action string default expansion
+
+       cd ${TARGET.dir.abspath && spade ${subcommand} ${required} ${options} --abaqus-commands ${abaqus_commands} > ${TARGETS[-1].abspath} 2>&1
+
+    .. code-block::
        :caption: SConstruct
 
        import spade
@@ -194,6 +199,11 @@ def extract(
        :caption: action string construction
 
        ${cd_action_prefix} ${program} ${subcommand} ${required} ${options} --abaqus-commands ${abaqus_commands} ${redirect_action_postfix}
+
+    .. code-block::
+       :caption: action string default expansion
+
+       cd ${TARGET.dir.abspath && spade extract ${SOURCE.abspath} --extracted-file ${TARGET.abspath} --force-overwrite ${options} --abaqus-commands ${abaqus_commands} > ${TARGETS[-1].abspath} 2>&1
 
     .. code-block::
        :caption: SConstruct
