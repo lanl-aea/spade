@@ -2009,10 +2009,17 @@ void SpadeObject::write_extract_field_bulk_data(H5::H5File &h5_file, const strin
     bool sub_group_exists = false;
     H5::Group bulk_group = open_subgroup(h5_file, group_name, sub_group_exists);
 
+    vector<const char*> field_component_labels;
+    odb_SequenceString component_labels = field_bulk_data.componentLabels();
+    for (int i=0; i<field_bulk_data.componentLabels().size(); i++) {  // Usually just around 4 labels or less
+        field_component_labels.push_back(component_labels[i].CStr());
+    }
+
     int coord_length = 0;
     string component_labels_name = "componentLabels";
     string element_labels_name = "elementLabels";
     string elements_name = "elements";
+    string nodes_name = "nodes";
     string local_coordinate_name = "localCoordSystem";
     string position = get_position_enum(field_bulk_data.position());
     write_string_attribute(bulk_group, "position", position);
@@ -2061,7 +2068,7 @@ void SpadeObject::write_extract_field_bulk_data(H5::H5File &h5_file, const strin
                     H5DSset_label(dataset_conjugate_data.getId(), 2, elements_name.c_str());
                     conjugate_data_exists = true;
                 } catch(H5::Exception& e) {
-                    this->log_file->logWarning("Unable to create dataset data. " + e.getDetailMsg());
+                    this->log_file->logWarning("Unable to create dataset conjugateData. " + e.getDetailMsg());
                 }
             }
             if ((field_bulk_data.localCoordSystem()) && (coord_length)) {
@@ -2096,7 +2103,7 @@ void SpadeObject::write_extract_field_bulk_data(H5::H5File &h5_file, const strin
                     H5DSset_label(dataset_conjugate_data.getId(), 2, elements_name.c_str());
                     conjugate_data_exists = true;
                 } catch(H5::Exception& e) {
-                    this->log_file->logWarning("Unable to create dataset data. " + e.getDetailMsg());
+                    this->log_file->logWarning("Unable to create dataset conjugateData. " + e.getDetailMsg());
                 }
             }
             if ((field_bulk_data.localCoordSystemDouble()) && (coord_length)) {
@@ -2113,11 +2120,6 @@ void SpadeObject::write_extract_field_bulk_data(H5::H5File &h5_file, const strin
             }
         }
 
-        vector<const char*> field_component_labels;
-        odb_SequenceString component_labels = field_bulk_data.componentLabels();
-        for (int i=0; i<field_bulk_data.componentLabels().size(); i++) {  // Usually just around 4 labels or less
-            field_component_labels.push_back(component_labels[i].CStr());
-        }
         hsize_t dimensions_label[] = {field_component_labels.size()};
         H5::DataSpace  dataspace_label(1, dimensions_label);
         H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
@@ -2275,19 +2277,93 @@ void SpadeObject::write_extract_field_bulk_data(H5::H5File &h5_file, const strin
         dataset_element_labels.close();
 
     } else {  // Nodes
+        bool conjugate_data_exists = false;
+        hsize_t dimensions[] = {field_bulk_data.length(), field_bulk_data.width()};
+        H5::DataSpace dataspace_data(2, dimensions);
+        H5::DataSet dataset_data;
+        H5::DataSpace dataspace_conjugate_data(2, dimensions);
+        H5::DataSet dataset_conjugate_data;
+        hsize_t dimensions_node_labels[] = {field_bulk_data.length()};
+        H5::DataSpace dataspace_node_labels(1, dimensions_node_labels);
+        H5::DataSet dataset_node_labels;
+
         if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
-            write_float_2D_array(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.data());
+            try {
+                dataset_data = bulk_group.createDataSet("data", H5::PredType::NATIVE_FLOAT, dataspace_data);
+                dataset_data.write(field_bulk_data.data(), H5::PredType::NATIVE_FLOAT);
+                H5DSset_label(dataset_data.getId(), 0, nodes_name.c_str());
+                H5DSset_label(dataset_data.getId(), 1, component_labels_name.c_str());
+            } catch(H5::Exception& e) {
+                this->log_file->logWarning("Unable to create dataset data. " + e.getDetailMsg());
+            }
             if (complex_data) {
-                write_float_2D_array(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.conjugateData());
+                try {
+                    dataset_conjugate_data = bulk_group.createDataSet("conjugateData", H5::PredType::NATIVE_FLOAT, dataspace_conjugate_data);
+                    dataset_conjugate_data.write(field_bulk_data.conjugateData(), H5::PredType::NATIVE_FLOAT);
+                    H5DSset_label(dataset_conjugate_data.getId(), 0, nodes_name.c_str());
+                    H5DSset_label(dataset_conjugate_data.getId(), 1, component_labels_name.c_str());
+                    conjugate_data_exists = true;
+                } catch(H5::Exception& e) {
+                    this->log_file->logWarning("Unable to create dataset conjugateData. " + e.getDetailMsg());
+                }
             }
         } else {  // Double precision
-            write_double_2D_array(bulk_group, "data", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.dataDouble());
+            try {
+                dataset_data = bulk_group.createDataSet("data", H5::PredType::NATIVE_DOUBLE, dataspace_data);
+                dataset_data.write(field_bulk_data.data(), H5::PredType::NATIVE_DOUBLE);
+                H5DSset_label(dataset_data.getId(), 0, nodes_name.c_str());
+                H5DSset_label(dataset_data.getId(), 1, component_labels_name.c_str());
+            } catch(H5::Exception& e) {
+                this->log_file->logWarning("Unable to create dataset data. " + e.getDetailMsg());
+            }
             if (complex_data) {
-                write_double_2D_array(bulk_group, "conjugateData", field_bulk_data.length(), field_bulk_data.width(), field_bulk_data.conjugateDataDouble());
+                try {
+                    dataset_conjugate_data = bulk_group.createDataSet("conjugateData", H5::PredType::NATIVE_DOUBLE, dataspace_conjugate_data);
+                    dataset_conjugate_data.write(field_bulk_data.conjugateData(), H5::PredType::NATIVE_DOUBLE);
+                    H5DSset_label(dataset_conjugate_data.getId(), 0, nodes_name.c_str());
+                    H5DSset_label(dataset_conjugate_data.getId(), 1, component_labels_name.c_str());
+                    conjugate_data_exists = true;
+                } catch(H5::Exception& e) {
+                    this->log_file->logWarning("Unable to create dataset conjugateData. " + e.getDetailMsg());
+                }
             }
         }
 
-        write_integer_array_dataset(bulk_group, "nodeLabels", field_bulk_data.length(), field_bulk_data.nodeLabels());
+        hsize_t dimensions_label[] = {field_component_labels.size()};
+        H5::DataSpace  dataspace_label(1, dimensions_label);
+        H5::StrType string_type(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string
+        H5::DataSet dataset_label;
+        try {
+            dataset_label = bulk_group.createDataSet(component_labels_name, string_type, dataspace_label);
+            dataset_label.write(field_component_labels.data(), string_type);
+            H5DSset_scale(dataset_label.getId(), component_labels_name.c_str());
+            H5DSattach_scale(dataset_data.getId(), dataset_label.getId(), 0);
+            if(conjugate_data_exists) { H5DSattach_scale(dataset_conjugate_data.getId(), dataset_label.getId(), 0); }
+        } catch(H5::Exception& e) {
+            this->log_file->logWarning("Error creating dataset " + component_labels_name + ". " + e.getDetailMsg());
+        }
+        string_type.close();
+        dataset_label.close();
+        dataspace_label.close();
+
+
+        string labels_name = "nodeLabels";
+        try {
+            H5::DataSet dataset_node_labels = bulk_group.createDataSet(labels_name, H5::PredType::NATIVE_INT, dataspace_node_labels);
+            dataset_node_labels.write(field_bulk_data.nodeLabels(), H5::PredType::NATIVE_INT);
+            H5DSset_scale(dataset_node_labels.getId(), labels_name.c_str());
+            H5DSattach_scale(dataset_data.getId(), dataset_node_labels.getId(), 1);
+            if(conjugate_data_exists) { H5DSattach_scale(dataset_conjugate_data.getId(), dataset_node_labels.getId(), 1); }
+        } catch(H5::Exception& e) {
+            this->log_file->logWarning("Unable to create dataset " + labels_name + ". " + e.getDetailMsg());
+        }
+
+        dataspace_data.close();
+        dataset_data.close();
+        dataspace_conjugate_data.close();
+        dataset_conjugate_data.close();
+        dataspace_node_labels.close();
+        dataset_node_labels.close();
     }
 }
 
