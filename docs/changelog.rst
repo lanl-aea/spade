@@ -15,6 +15,10 @@ Bug fixes
 - Process elements differently for efficiency. Fix the code that writes variable length datasets into the hdf5 file
   (:issue:`102`, :merge:`100`). By `Prabhu Khalsa`_.
 
+Documentation
+=============
+- Add default action expansion to SCons builder docstrings. By `Kyle Brindley`_.
+
 Internal Changes
 ================
 - Allow for negative indexing of frame numbers and multiple frame numbers on the command line (:issue:`99`, 
