@@ -23,6 +23,7 @@ Internal Changes
   By `Prabhu Khalsa`_.
 - Write node_sets and element_sets as their own groups instead of as a "dimension" of mesh (:issue:`105`,
   :merge:`105`).  By `Prabhu Khalsa`_.
+- Write xarray datasets for mesh, history outputs, and field outputx (:issue:`107`, :merge:`108`).  By `Prabhu Khalsa`_.
 - Decide that this project _must_ be upstream of WAVES, remove WAVES developer/runtime dependency TODO notes and replace
   with notes to never use WAVES as a depedency. By `Kyle Brindley`_.
 
