@@ -180,9 +180,9 @@ void SpadeObject::create_string_sets () {
 set<string> SpadeObject::create_string_set (const string &string_value, bool &all_given) {
     set<string> values;
     string each_word;
-    stringstream string_stream_values(string_value);
+    stringstream string_stream(string_value);
     all_given = false;
-    while (string_stream_values >> each_word) {  // Loop through the stringstream, extracting words separated by spaces
+    while (std::getline(string_stream, each_word, ',')) { // Loop through the stringstream, extracting words separated by commas
         if (each_word == "all") {
             all_given = true;
             break;
@@ -1316,7 +1316,7 @@ void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const 
     string each_word;
     set<int> frame_numbers;
 
-    while (string_stream >> each_word) {  // Loop through the stringstream, extracting words separated by spaces
+    while (std::getline(string_stream, each_word, ',')) { // Loop through the stringstream, extracting words separated by commas
         if (each_word == "all") {
             all_frames = true;
             break;
@@ -1343,7 +1343,7 @@ void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const 
     bool all_frame_values = true;
     stringstream string_stream_values(this->command_line_arguments->get("frame-value"));
     set<float> frame_values;
-    while (string_stream_values >> each_word) {  // Loop through the stringstream, extracting words separated by spaces
+    while (std::getline(string_stream_values, each_word, ',')) { // Loop through the stringstream, extracting words separated by commas
         if (each_word == "all") {
             all_frame_values = true;
             break;
