@@ -879,7 +879,7 @@ class SpadeObject {
           \param max_width Will store the max width of the frame
           \param max_length Will store the max length of the frame
         */
-        void write_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &group_name, int max_width, int max_length);
+        void write_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &group_name, int &max_width, int &max_length);
         //! Write all field output data to an HDF5 file
         /*!
           Write all field output data into an HDF5 file
@@ -889,7 +889,7 @@ class SpadeObject {
           \param max_width Will store the max width of the frame
           \param max_length Will store the max length of the frame
         */
-        void write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &step_name, int max_width, int max_length);
+        void write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &step_name, int &max_width, int &max_length);
         //! Write frames data to an HDF5 file
         /*!
           Write frames data into an HDF5 file

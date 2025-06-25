@@ -2446,7 +2446,7 @@ void SpadeObject::write_extract_field_bulk_data(H5::H5File &h5_file, const strin
     }
 }
 
-void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &group_name, int max_width, int max_length) {
+void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &group_name, int &max_width, int &max_length) {
     string field_outputs_group_name = group_name + "/fieldOutputs";
     H5::Group field_outputs_group = create_group(h5_file, field_outputs_group_name);
 
@@ -2606,7 +2606,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
     }
 }
 
-void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &step_name, int max_width, int max_length) {
+void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &step_name, int &max_width, int &max_length) {
     string frame_number = to_string(frame.incrementNumber());
 
     const odb_FieldOutputRepository& field_outputs = frame.fieldOutputs();
