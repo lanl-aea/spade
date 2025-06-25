@@ -453,6 +453,20 @@ class SpadeObject {
           \sa process_odb_without_steps()
         */
         SpadeObject (CmdLineArguments &command_line_arguments, Logging &log_file);
+        //! Create sets of strings for arguments that can be given more than one string
+        /*!
+          Several command line options can have the value of 'all' or a single string or multiple strings. This function will build a set for each of those command line options. 
+        */
+        void create_string_sets ();
+        //! Create a set of strings by parsing the passed-in string value
+        /*!
+          Parse the string by spaces and add each value to a set
+          \param string_value The string holding the values to be added to the set
+          \param all_given boolean indicating whether "all" was specified
+          \return set with strings
+          \sa create_string_sets()
+        */
+        set<string> create_string_set (const string &string_value, bool all_given);
         //! Process all but the steps data from the open odb file and store the results
         /*!
           After the odb has been opened this function will do the parsing, including calling of other functions needed for parsing
@@ -1293,6 +1307,11 @@ class SpadeObject {
         map<string, mesh_type> instance_mesh;
         map<string, mesh_type> part_mesh;
         map<string, mesh_type> assembly_mesh;
+        set<string> instance_set;
+        set<string> step_set;
+        set<string> history_region_set;
+        set<string> history_set;
+        set<string> field_set;
 
         string dimension_enum_strings[4];
         string faces_enum_strings[35];

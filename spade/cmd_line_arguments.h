@@ -67,6 +67,14 @@ class CmdLineArguments {
           \sa CmdLineArguments()
         */
         string get(string const &str) const;
+        //! Setter for command line options
+        /*!
+          This function allows for a command line value to be set. Sometimes some values need to be corrected.
+          \param str string containing the command line option
+          \param new_value string for setting value
+          \sa CmdLineArguments()
+        */
+        void set(string const &str, string const &new_value);
         //! Return string with complete command line given.
         /*!
           Return the complete command line used by user. This is a getter method.

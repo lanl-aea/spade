@@ -105,6 +105,7 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
     this->default_instance_name = "ASSEMBLY";  // If the name of the instance is blank, it will be assigned this value
 
     this->command_line_arguments = &command_line_arguments;
+    create_string_sets();  // Create sets of strings for each command line option that can receive multiple strings
     this->log_file = &log_file;
     try {  // Since the odb object isn't recognized outside the scope of the try/except, block the processing has to be done within the try block
         odb_Odb& odb = openOdb(file_name, true);  // Open as read only
@@ -160,6 +161,38 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
     */
 
 
+}
+
+void SpadeObject::create_string_sets () {
+    bool all_given = false;
+    this->instance_set = create_string_set(this->command_line_arguments->get("instance"), all_given);
+    if (all_given) { this->command_line_arguments->set("instance", "all"); }
+    this->step_set = create_string_set(this->command_line_arguments->get("step"), all_given);
+    if (all_given) { this->command_line_arguments->set("step", "all"); }
+    this->history_region_set = create_string_set(this->command_line_arguments->get("history-region"), all_given);
+    if (all_given) { this->command_line_arguments->set("history-region", "all"); }
+    this->history_set = create_string_set(this->command_line_arguments->get("history"), all_given);
+    if (all_given) { this->command_line_arguments->set("history", "all"); }
+    this->field_set = create_string_set(this->command_line_arguments->get("field"), all_given);
+    if (all_given) { this->command_line_arguments->set("field", "all"); }
+//        if ((!all_frame_values) && (!frame_values.count(frame.frameValue()))) {
+}
+set<string> SpadeObject::create_string_set (const string &string_value, bool all_given) {
+    set<string> values;
+    string each_word;
+    stringstream string_stream_values(string_value);
+    all_given = false;
+    while (string_stream_values >> each_word) {  // Loop through the stringstream, extracting words separated by spaces
+        if (each_word == "all") {
+            all_given = true;
+            break;
+        }
+        values.insert(each_word); // Insert each word into the set
+    }
+    if (all_given) {  // If the word all appears then just 
+        return set<string>();
+    }
+    return values;
 }
 
 void SpadeObject::process_odb_without_steps(odb_Odb &odb) {

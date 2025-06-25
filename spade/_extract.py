@@ -119,37 +119,37 @@ def get_parser() -> argparse.ArgumentParser:
         "--frame-value",
         nargs="+",
         default="all",
-        help="Get information from the specified frame value (default: %(default)s)",
+        help="Get information from the specified frame value(s) (default: %(default)s)",
     )
     parser.add_argument(
         "--step",
-        type=str,
+        nargs="+",
         default="all",
-        help="Get information from the specified step (default: %(default)s)",
+        help="Get information from the specified step(s) (default: %(default)s)",
     )
     parser.add_argument(
         "--field",
-        type=str,
+        nargs="+",
         default="all",
-        help="Get information from the specified field (default: %(default)s)",
+        help="Get information from the specified field(s) (default: %(default)s)",
     )
     parser.add_argument(
         "--history",
-        type=str,
+        nargs="+",
         default="all",
-        help="Get information from the specified history value (default: %(default)s)",
+        help="Get information from the specified history value(s) (default: %(default)s)",
     )
     parser.add_argument(
         "--history-region",
-        type=str,
+        nargs="+",
         default="all",
-        help="Get information from the specified history region (default: %(default)s)",
+        help="Get information from the specified history region(s) (default: %(default)s)",
     )
     parser.add_argument(
         "--instance",
-        type=str,
+        nargs="+",
         default="all",
-        help="Get information from the specified instance (default: %(default)s)",
+        help="Get information from the specified instance(s) (default: %(default)s)",
     )
     parser.add_argument(
         "-a",
@@ -301,15 +301,15 @@ def cpp_wrapper(args) -> str:
     if args.frame_value:
         full_command_line_arguments += f" --frame-value {_utilities.quoted_string(args.frame_value)}"
     if args.step:
-        full_command_line_arguments += f" --step {args.step}"
+        full_command_line_arguments += f" --step {_utilities.quoted_string(args.step)}"
     if args.field:
-        full_command_line_arguments += f" --field {args.field}"
+        full_command_line_arguments += f" --field {_utilities.quoted_string(args.field)}"
     if args.history:
-        full_command_line_arguments += f" --history {args.history}"
+        full_command_line_arguments += f" --history {_utilities.quoted_string(args.history)}"
     if args.history_region:
-        full_command_line_arguments += f" --history-region {args.history_region}"
+        full_command_line_arguments += f" --history-region {_utilities.quoted_string(args.history_region)}"
     if args.instance:
-        full_command_line_arguments += f" --instance {args.instance}"
+        full_command_line_arguments += f" --instance {_utilities.quoted_string(args.instance)}"
     if args.format:
         full_command_line_arguments += f" --format {args.format}"
 

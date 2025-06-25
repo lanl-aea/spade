@@ -301,11 +301,19 @@ string CmdLineArguments::operator[](string const &str) const {
 string CmdLineArguments::get(string const &str) const {
     string blank = "";
     map<string, string>::const_iterator iter;
-    iter = command_line_arguments.find(str);
-    if (iter != command_line_arguments.end()) { return iter->second; }
+    iter = this->command_line_arguments.find(str);
+    if (iter != this->command_line_arguments.end()) { return iter->second; }
     else { return blank; }
 }
 
+// Setter
+void CmdLineArguments::set(string const &str, string const &new_value) {
+    map<string, string>::const_iterator iter;
+    iter = this->command_line_arguments.find(str);
+    if (iter != this->command_line_arguments.end()) { 
+        this->command_line_arguments[str] = new_value;
+    }
+}
 
 const string& CmdLineArguments::commandLine() const { return this->command_line; }
 const string& CmdLineArguments::commandName() const { return this->command_name; }
