@@ -117,7 +117,7 @@ def get_parser() -> argparse.ArgumentParser:
     )  # Lambda used to convert input into a string with double quotes on either side
     parser.add_argument(
         "--frame-value",
-        type=str,
+        nargs='+',
         default="all",
         help="Get information from the specified frame value (default: %(default)s)",
     )
@@ -299,7 +299,7 @@ def cpp_wrapper(args) -> str:
     if args.frame:
         full_command_line_arguments += f" --frame {_utilities.quoted_string(args.frame)}"
     if args.frame_value:
-        full_command_line_arguments += f" --frame-value {args.frame_value}"
+        full_command_line_arguments += f" --frame-value {_utilities.quoted_string(args.frame_value)}"
     if args.step:
         full_command_line_arguments += f" --step {args.step}"
     if args.field:
