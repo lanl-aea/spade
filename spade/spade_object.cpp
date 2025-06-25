@@ -154,12 +154,6 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
         // Catch any exception that inherits from std::exception
         std::cerr << "Exception caught: " << e.what() << std::endl;
     }
-    /*
-    catch(...) {
-        log_file.logErrorAndExit("Unknown exception ");
-    }
-    */
-
 
 }
 
@@ -1273,7 +1267,6 @@ void SpadeObject::write_history_data_h5 (odb_Odb &odb, H5::H5File &h5_file, cons
     {
         const odb_HistoryRegion& history_region = history_region_iterator.currentValue();
         string history_region_name = history_region.name().CStr();
-//        if ((this->command_line_arguments->get("history-region") == "all") || (this->command_line_arguments->get("history-region") == history_region_name)) {
         if ((this->command_line_arguments->get("history-region") == "all") || (this->history_region_set.count(history_region_name))) {
             this->log_file->logVerbose("Reading data for history region " + history_region_name);
             history_region_type new_history_region = process_history_region(history_region);
@@ -1291,7 +1284,7 @@ void SpadeObject::write_history_data_h5 (odb_Odb &odb, H5::H5File &h5_file, cons
                     odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
                     string history_output_name = history_output.name().CStr();
                     this->log_file->logVerbose("Writing data for history output " + history_output_name);
-                    if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output_name)) {
+                    if ((this->command_line_arguments->get("history") == "all") || (this->history_set.count(history_output_name))) {
                         write_history_output(h5_file, history_outputs_group_name + "/" + replace_slashes(history_output_name), history_output);
                     }
                 }
@@ -2452,6 +2445,9 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
         const odb_FieldOutput& field_output = field_outputs[field_outputs_iterator.currentKey()];
 
         string field_output_name = field_output.name().CStr();
+        if ((this->command_line_arguments->get("field") != "all") && (!this->field_set.count(field_output_name))) {
+            continue;
+        }
         string field_output_group_name = field_outputs_group_name + "/" + replace_slashes(field_output_name);
         H5::Group field_output_group = create_group(h5_file, field_output_group_name);
         this->log_file->logVerbose("Writing field output data for " + field_output_name);
@@ -2553,7 +2549,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
                 instance_value_exists = true;
             }
             if (instance_name.empty()) { instance_name = this->default_instance_name; }
-            if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance_name)) {
+            if ((this->command_line_arguments->get("instance") != "all") && (!this->instance_set.count(instance_name))) {
                 continue;
             }
             if (instance_value_exists) {
@@ -2589,7 +2585,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
         if (field_output_max_length > max_length) {  max_length = field_output_max_length; }
 
         for (const string& instance_name : instance_names) {
-            if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance_name)) {
+            if ((this->command_line_arguments->get("instance") != "all") && (!this->instance_set.count(instance_name))) {
                 continue;
             }
             string instance_group_name = field_output_group_name + "/" + instance_name;
@@ -2608,6 +2604,9 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
         const odb_FieldOutput& field_output = field_outputs[field_outputs_iterator.currentKey()];
 
         string field_output_name = field_output.name().CStr();
+        if ((this->command_line_arguments->get("field") != "all") && (!this->field_set.count(field_output_name))) {
+            continue;
+        }
         string field_output_safe_name = replace_slashes(field_output_name);
         this->log_file->logVerbose("Writing field output data for " + field_output_name);
 
@@ -2679,7 +2678,7 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
             }
             string prefix = "/instances/";
             if (instance_name.empty()) { instance_name = this->default_instance_name; prefix = "/assemblies/"; }
-            if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance_name)) {
+            if ((this->command_line_arguments->get("instance") != "all") && (!this->instance_set.count(instance_name))) {
                 continue;
             }
 
@@ -2751,7 +2750,7 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
 
         // If there is an instance with field output data (not bulk data) that didn't get written, then write it here
         for (const string& instance_name : instance_names) {
-            if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance_name)) {
+            if ((this->command_line_arguments->get("instance") != "all") && (!this->instance_set.count(instance_name))) {
                 continue;
             }
             string prefix = "/instances/";
@@ -2919,7 +2918,7 @@ void SpadeObject::write_extract_history_output(H5::H5File &h5_file, const string
         odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
         string history_output_name = history_output.name().CStr();
         this->log_file->logVerbose("Processing data for history output " + history_output_name);
-        if ((this->command_line_arguments->get("history") == "all") || (this->command_line_arguments->get("history") == history_output_name)) {
+        if ((this->command_line_arguments->get("history") == "all") || (this->history_set.count(history_output_name))) {
             names.push_back(history_output.name().CStr());
             descriptions.push_back(history_output.description().CStr());
             string history_output_type_name = "";
