@@ -1060,11 +1060,20 @@ class SpadeObject {
         //! Write a string as an attribute
         /*!
           Create an attribute with a string using the passed-in values
-          \param group Name of HDF5 group in which to write the new attribute
+          \param group HDF5 group in which to write the new attribute
           \param attribute_name Name of the new attribute where a string is to be written
           \param string_value The string that should be written in the new attribute
         */
         void write_string_attribute(const H5::Group &group, const string &attribute_name, const string &string_value);
+        //! Write a string as an attribute in a specified group name
+        /*!
+          Create an attribute with a string using the passed-in values
+          \param h5_file Open h5_file object for writing
+          \param group_name Name of HDF5 group in which to write the new attribute
+          \param attribute_name Name of the new attribute where a string is to be written
+          \param string_value The string that should be written in the new attribute
+        */
+        void write_string_attribute(H5::H5File &h5_file, const string &group_name, const string &attribute_name, const string &string_value);
         //! Write an integer array as an attribute
         /*!
           Create an attribute with an integer array using the passed-in values

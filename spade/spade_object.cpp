@@ -1247,6 +1247,7 @@ void SpadeObject::write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_file) {
 
         string step_group_name = steps_group_name + "/" + replace_slashes(new_step.name);
         H5::Group step_group = create_group(h5_file, step_group_name);
+        write_string_attribute(step_group, "name", new_step.name);
         this->log_file->logVerbose("Writing top level step data for " + new_step.name);
         write_step(h5_file, step_group, new_step);
 
@@ -1274,6 +1275,7 @@ void SpadeObject::write_history_data_h5 (odb_Odb &odb, H5::H5File &h5_file, cons
             this->log_file->logVerbose("Writing data for history region " + history_region_name);
             string history_region_group_name = history_regions_group_name + "/" + replace_slashes(history_region_name);
             write_history_region(h5_file, history_region_group_name, new_history_region);
+            write_string_attribute(h5_file, history_region_group_name, "name", history_region_name);
             if (this->command_line_arguments->get("format") == "odb") {
                 history_outputs_group_name = history_region_group_name + "/HistoryOutputs";
                 H5::Group history_outputs_group = create_group(h5_file, history_outputs_group_name);
@@ -1422,6 +1424,7 @@ void SpadeObject::write_h5_without_steps (H5::H5File &h5_file) {
         for (int i=0; i<this->section_categories.size(); i++) {
             string category_group_name = "/odb/sectionCategories/" + replace_slashes(this->section_categories[i].name);
             H5::Group section_category_group = create_group(h5_file, category_group_name);
+            write_string_attribute(section_category_group, "name", this->section_categories[i].name);
             write_section_category(h5_file, section_category_group, category_group_name, this->section_categories[i]);
         }
     }
@@ -1433,6 +1436,7 @@ void SpadeObject::write_h5_without_steps (H5::H5File &h5_file) {
             string user_xy_data_name = "/odb/userData/" + replace_slashes(this->user_xy_data[i].name);
             this->log_file->logVerbose("User data name:" + this->user_xy_data[i].name);
             H5::Group user_xy_data_group = create_group(h5_file, user_xy_data_name);
+            write_string_attribute(user_xy_data_group, "name", this->user_xy_data[i].name);
             write_string_dataset(user_xy_data_group, "sourceDescription", this->user_xy_data[i].sourceDescription);
             write_string_dataset(user_xy_data_group, "contentDescription", this->user_xy_data[i].contentDescription);
             write_string_dataset(user_xy_data_group, "positionDescription", this->user_xy_data[i].positionDescription);
@@ -1493,9 +1497,10 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
     string embedded_space;
     for (auto [part_name, part] : this->part_mesh) {
         embedded_space = "";
-        string part_group_name = "/parts/" + part_name;
+        string part_group_name = "/parts/" + replace_slashes(part_name);
         bool sub_group_exists = false;
         H5::Group extract_part_group = open_subgroup(h5_file, part_group_name, sub_group_exists);
+        write_string_attribute(extract_part_group, "name", part_name);
         if (!part.nodes.empty() || !part.elements.empty()) {
             if (part.part_index >= 0) {
                 if (!this->parts[part.part_index].embeddedSpace.empty()) {
@@ -1533,9 +1538,10 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
             }
         }
     }
-    string assembly_group_name = "/assemblies/" + this->root_assembly.name;
+    string assembly_group_name = "/assemblies/" + replace_slashes(this->root_assembly.name);
     bool sub_group_exists = false;
     H5::Group extract_assembly_group = open_subgroup(h5_file, assembly_group_name, sub_group_exists);
+    write_string_attribute(extract_assembly_group, "name", this->root_assembly.name);
     if (!this->root_assembly.nodes->empty() || !this->root_assembly.elements->empty()) {
         if (!this->root_assembly.embeddedSpace.empty()) {
             write_string_dataset(extract_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
@@ -1550,9 +1556,10 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
         }
     }
     for (auto [assembly_name, assembly] : this->assembly_mesh) {
-        string assembly_group_name = "/assemblies/" + assembly_name;
+        string assembly_group_name = "/assemblies/" + replace_slashes(assembly_name);
         bool sub_group_exists = false;
         H5::Group extract_assembly_group = open_subgroup(h5_file, assembly_group_name, sub_group_exists);
+        write_string_attribute(extract_assembly_group, "name", assembly_name);
         if (!assembly.element_sets.empty()) {
             H5::Group element_sets = create_group(h5_file, assembly_group_name + "/element_sets");
             std::regex elements_pattern("\\s*ALL\\s*ELEMENTS\\s*");
@@ -1576,9 +1583,10 @@ void SpadeObject::write_mesh(H5::H5File &h5_file) {
     }
     for (auto [instance_name, instance] : this->instance_mesh) {
         embedded_space = "";
-        string instance_group_name = "/instances/" + instance_name;
+        string instance_group_name = "/instances/" + replace_slashes(instance_name);
         bool sub_group_exists = false;
         H5::Group extract_instance_group = open_subgroup(h5_file, instance_group_name, sub_group_exists);
+        write_string_attribute(extract_instance_group, "name", instance_name);
         if (!instance.nodes.empty() || !instance.elements.empty()) {
             if (instance.instance_index >= 0) {
                 if (!this->root_assembly.instances[instance.instance_index].embeddedSpace.empty()) { embedded_space = this->root_assembly.instances[instance.instance_index].embeddedSpace; }
@@ -1909,6 +1917,7 @@ void SpadeObject::create_extract_history_group(H5::H5File &h5_file, history_regi
     string region_group_name = prefix_group + "/HistoryOutputs/" + replace_slashes(history_region.name);
     bool sub_group_exists = true;
     H5::Group region_group = open_subgroup(h5_file, region_group_name, sub_group_exists);
+    write_string_attribute(region_group, "name", history_region.name);
     step_group_name = region_group_name + "/" + step_group_name;
     H5::Group step_group = create_group(h5_file, step_group_name);
 }
@@ -1917,6 +1926,7 @@ void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name) {
     for (auto part : this->parts) {
         string part_group_name = group_name + "/" + replace_slashes(part.name);
         H5::Group part_group = create_group(h5_file, part_group_name);
+        write_string_attribute(part_group, "name", part.name);
         write_string_dataset(part_group, "embeddedSpace", part.embeddedSpace);
         if (this->command_line_arguments->get("format") == "odb") {
             write_nodes(h5_file, part_group, part_group_name, part.nodes, "");
@@ -1931,6 +1941,7 @@ void SpadeObject::write_parts(H5::H5File &h5_file, const string &group_name) {
 void SpadeObject::write_assembly(H5::H5File &h5_file, const string &group_name) {
     string root_assembly_group_name = "/odb/rootAssembly " + replace_slashes(this->root_assembly.name);
     H5::Group root_assembly_group = create_group(h5_file, root_assembly_group_name);
+    write_string_attribute(root_assembly_group, "name", this->root_assembly.name);
     this->log_file->logDebug("\tWriting instances in write_assembly at time: " + this->command_line_arguments->getTimeStamp(true));
     write_instances(h5_file, root_assembly_group_name);
     write_string_dataset(root_assembly_group, "embeddedSpace", this->root_assembly.embeddedSpace);
@@ -2450,8 +2461,8 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
         }
         string field_output_group_name = field_outputs_group_name + "/" + replace_slashes(field_output_name);
         H5::Group field_output_group = create_group(h5_file, field_output_group_name);
+        write_string_attribute(field_output_group, "name", field_output_name);
         this->log_file->logVerbose("Writing field output data for " + field_output_name);
-        write_string_dataset(field_output_group, "name", field_output_name);
         write_string_dataset(field_output_group, "description", field_output.description().CStr());
         write_string_dataset(field_output_group, "type", get_field_type_enum(field_output.type()));
         write_integer_dataset(field_output_group, "dim", field_output.dim());
@@ -2688,6 +2699,7 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
             if (instance_value_exists) {
                 write_field_values(h5_file, field_output_group_name, field_output_group, values_map[instance_name]);
             }
+            write_string_attribute(h5_file, prefix + instance_name + "/FieldOutputs/" + field_output_safe_name, "name", field_output_name);
 
             write_string_dataset(field_output_group, "name", field_output_name);
             write_string_dataset(field_output_group, "description", field_output.description().CStr());
@@ -2850,6 +2862,7 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
         if (!history_point.region.name.empty()) {
             string set_group_name = history_point_group_name + "/" + replace_slashes(history_point.region.name);
             H5::Group set_group = create_group(h5_file, set_group_name);
+            write_string_attribute(set_group, "name", history_point.region.name);
             write_string_attribute(set_group, "type", history_point.region.type);
             write_string_vector_dataset(set_group, "instanceNames", history_point.region.instanceNames);
             if (!history_point.region.faces.empty()) {
@@ -2871,6 +2884,7 @@ void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_
     H5::Group history_output_group = create_group(h5_file, group_name);
 
     write_string_dataset(history_output_group, "description", history_output.description().CStr());
+    write_string_attribute(history_output_group, "name", history_output.name().CStr());
     string history_output_type_name;
     switch(history_output.type()) {
         case odb_Enum::SCALAR: history_output_type_name = "Scalar"; break;
@@ -3157,6 +3171,7 @@ void SpadeObject::write_instances(H5::H5File &h5_file, const string &group_name)
     for (auto instance : this->root_assembly.instances) {
         string instance_group_name = instances_group_name + "/" + replace_slashes(instance.name);
         H5::Group instance_group = create_group(h5_file, instance_group_name);
+        write_string_attribute(instance_group, "name", instance.name);
         this->log_file->logDebug("\t\tWriting instance: " + instance.name + " at time: " + this->command_line_arguments->getTimeStamp(true));
         write_instance(h5_file, instance_group, instance_group_name, instance);
     }
@@ -3504,6 +3519,22 @@ void SpadeObject::write_string_attribute(const H5::Group &group, const string &a
     if (string_size == 0) { string_size++; }  // If the string is empty, make the string size equal to one, as StrType must have a positive size
     H5::StrType string_type (0, string_size);  // Use the length of the string or 1 if string is blank
     try {
+        H5::Attribute attribute = group.createAttribute(attribute_name, string_type, attribute_space);
+        attribute.write(string_type, string_value);
+    } catch(H5::Exception& e) {
+        this->log_file->logWarning("Unable to create attribute " + attribute_name + ". " + e.getDetailMsg());
+    }
+    attribute_space.close();
+}
+
+void SpadeObject::write_string_attribute(H5::H5File &h5_file, const string &group_name, const string &attribute_name, const string &string_value) {
+    if (string_value.empty()) { return; }
+    H5::DataSpace attribute_space(H5S_SCALAR);
+    int string_size = string_value.size();
+    if (string_size == 0) { string_size++; }  // If the string is empty, make the string size equal to one, as StrType must have a positive size
+    H5::StrType string_type (0, string_size);  // Use the length of the string or 1 if string is blank
+    try {
+        H5::Group group = h5_file.openGroup(group_name.c_str());
         H5::Attribute attribute = group.createAttribute(attribute_name, string_type, attribute_space);
         attribute.write(string_type, string_value);
     } catch(H5::Exception& e) {
