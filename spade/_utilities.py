@@ -123,7 +123,7 @@ def quoted_string(list_or_string) -> str:
     :returns: string with quotes on either side
     """
     return '"' + character_delimited_list(list_or_string, ' ') + '"' if isinstance(list_or_string, list) \
-        else '"' + str(list_or_string) + '"' 
+        else '"' + str(list_or_string) + '"'
 
 
 # Comes from WAVES scons extensions. Keep a SPADE specific version here because this project *must* be upstream of WAVES
