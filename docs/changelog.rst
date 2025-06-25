@@ -21,6 +21,8 @@ Documentation
 
 Internal Changes
 ================
+- Allow for multiple command line entries for instance, step, history-region, history, and field output (:issue:`100`, 
+  :merge:`112`). By `Prabhu Khalsa`_.
 - Allow for negative indexing of frame numbers and multiple frame numbers on the command line (:issue:`99`, 
   :merge:`111`). By `Prabhu Khalsa`_.
 - Create top level parts, instances, and assemblies groups in hdf5 file (:issue:`103`, :merge:`101`).
