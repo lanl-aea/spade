@@ -2701,7 +2701,6 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
             }
             write_string_attribute(h5_file, prefix + instance_name + "/FieldOutputs/" + field_output_safe_name, "name", field_output_name);
 
-            write_string_dataset(field_output_group, "name", field_output_name);
             write_string_dataset(field_output_group, "description", field_output.description().CStr());
             write_string_dataset(field_output_group, "type", get_field_type_enum(field_output.type()));
             write_integer_dataset(field_output_group, "dim", field_output.dim());
@@ -2773,8 +2772,8 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
             bool sub_group_exists = false;
             H5::Group field_output_group = open_subgroup(h5_file, field_output_group_name, sub_group_exists);
             write_field_values(h5_file, field_output_group_name, field_output_group, values_map[instance_name]);
+            write_string_attribute(h5_file, prefix + instance_name + "/FieldOutputs/" + field_output_safe_name, "name", field_output_name);
 
-            write_string_dataset(field_output_group, "name", field_output_name);
             write_string_dataset(field_output_group, "description", field_output.description().CStr());
             write_string_dataset(field_output_group, "type", get_field_type_enum(field_output.type()));
             write_integer_dataset(field_output_group, "dim", field_output.dim());
