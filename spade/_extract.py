@@ -111,13 +111,13 @@ def get_parser() -> argparse.ArgumentParser:
 
     parser.add_argument(
         "--frame",
-        nargs='+',
+        nargs="+",
         default="all",
         help="Get information from the specified frame(s) (default: %(default)s)",
     )  # Lambda used to convert input into a string with double quotes on either side
     parser.add_argument(
         "--frame-value",
-        nargs='+',
+        nargs="+",
         default="all",
         help="Get information from the specified frame value (default: %(default)s)",
     )

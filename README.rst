@@ -177,6 +177,18 @@ There is also a separate style guide check run as
 
     $ scons flake8 black-check
 
+If the CI job fails, you can run the following and commit the changes
+
+.. code-block::
+
+    $ scons black-format
+
+It is also possible to run ``flake8`` and ``black`` directly, but the SCons aliases do extra work with the
+``find_shebang.py`` script to identify files that should meet the style guide, but don't have the ``*.py`` extension,
+e.g. ``SConstruct`` and ``SConscript`` files. The ``find_shebang.py`` script relies on developers putting the Python
+shebang in SCons configuration files, which was previously done to help text editors and IDEs identify SCons
+configuration files as using the Python syntax highlighting.
+
 The full list of available aliases can be found as ``scons -h``.
 
 .. testing-end-do-not-remove
