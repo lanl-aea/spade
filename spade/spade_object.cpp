@@ -1098,7 +1098,6 @@ string SpadeObject::get_position_enum(odb_Enum::odb_ResultPositionEnum position_
 
 frame_type SpadeObject::process_frame (const odb_Frame &frame) {
     frame_type new_frame;
-    new_frame.skip = false;
     new_frame.description = frame.description().CStr();
     new_frame.loadCase = frame.loadCase().name().CStr();
     switch(frame.domain()) {
@@ -1107,20 +1106,10 @@ frame_type SpadeObject::process_frame (const odb_Frame &frame) {
         case odb_Enum::MODAL: new_frame.domain = "Modal"; break;
     }
     new_frame.incrementNumber = frame.incrementNumber();
-    if ((this->command_line_arguments->get("frame") != "all") && (this->command_line_arguments->get("frame") != to_string(new_frame.incrementNumber))) {
-        new_frame.skip = true;
-        return new_frame;
-    }
     new_frame.cyclicModeNumber = frame.cyclicModeNumber();
     new_frame.mode = frame.mode();
     new_frame.frameValue = frame.frameValue();
     new_frame.frequency = frame.frequency();
-    if (this->command_line_arguments->get("frame-value") != "all") {
-        if (to_string(new_frame.frameValue).find(this->command_line_arguments->get("frame-value")) == std::string::npos) {
-            new_frame.skip = true;
-            return new_frame;
-        }
-    }
 
     return new_frame;
 }
@@ -1287,29 +1276,81 @@ void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const 
     string frames_group_name = group_name + "/frames";
     H5::Group frames_group = create_group(h5_file, frames_group_name);
     const odb_SequenceFrame& frames = step.frames();
+
+    bool all_frames = true;
+    stringstream string_stream(this->command_line_arguments->get("frame"));
+    string each_word;
+    set<int> frame_numbers;
+
+    while (string_stream >> each_word) {  // Loop through the stringstream, extracting words separated by spaces
+        if (each_word == "all") {
+            all_frames = true;
+            break;
+        }
+        int converted_int;
+        try {
+            converted_int = std::stoi(each_word);
+        } catch(H5::Exception& e) {
+            this->log_file->logWarning("Invalid frame number specified.");
+            continue;
+        }
+        if (each_word[0] == '-') {  // Used for negative indexing 
+            int frame_index = frames.size() + converted_int;
+            if ((frame_index < 0) || (frame_index > frames.size())) {
+                this->log_file->logWarning("Invalid frame number specified.");
+                continue;
+            }
+            converted_int = frames.constGet(frame_index).incrementNumber();
+        }
+        all_frames = false;
+        frame_numbers.insert(converted_int); // Insert each integer into the set
+    }
+
+    bool all_frame_values = true;
+    stringstream string_stream_values(this->command_line_arguments->get("frame-value"));
+    set<float> frame_values;
+    while (string_stream_values >> each_word) {  // Loop through the stringstream, extracting words separated by spaces
+        if (each_word == "all") {
+            all_frame_values = true;
+            break;
+        }
+        float converted_value;
+        try {
+            converted_value = std::stof(each_word);
+        } catch(H5::Exception& e) {
+            this->log_file->logWarning("Invalid frame value specified.");
+            continue;
+        }
+        all_frame_values = false;
+        frame_values.insert(converted_value); // Insert each word into the set
+    }
+
     for (int f=0; f<frames.size(); f++) {
         const odb_Frame& frame = frames.constGet(f);
         string frame_number = to_string(frame.incrementNumber());
+        if ((!all_frames) && (!frame_numbers.count(frame.incrementNumber()))) {  // If frame number not in set of frames specified by user
+            continue;
+        }
+        if ((!all_frame_values) && (!frame_values.count(frame.frameValue()))) {
+            continue;
+        }
         frame_type new_frame = process_frame(frame);
 
-        if (!new_frame.skip) {
+        this->log_file->logVerbose("Writing frame " + frame_number + " data");
+        string frame_group_name = frames_group_name + "/" + frame_number;
+        H5::Group frame_group = create_group(h5_file, frame_group_name);
+        write_frame(h5_file, frame_group, new_frame);
 
-            this->log_file->logVerbose("Writing frame " + frame_number + " data");
-            string frame_group_name = frames_group_name + "/" + frame_number;
-            H5::Group frame_group = create_group(h5_file, frame_group_name);
-            write_frame(h5_file, frame_group, new_frame);
-
-            new_frame.max_length = 0;
-            new_frame.max_width = 0;
-            this->log_file->logVerbose("Writing field outputs for " + new_frame.description + ".");
-            if (this->command_line_arguments->get("format") == "odb") {
-                write_field_outputs(h5_file, frame, frame_group_name, new_frame.max_width, new_frame.max_length);
-            } else if (this->command_line_arguments->get("format") == "extract") {
-                write_extract_field_outputs(h5_file, frame, step.name().CStr(), new_frame.max_width, new_frame.max_length);
-            }
-            write_string_attribute(frame_group, "max_width", to_string(new_frame.max_width));
-            write_string_attribute(frame_group, "max_length", to_string(new_frame.max_length));
+        new_frame.max_length = 0;
+        new_frame.max_width = 0;
+        this->log_file->logVerbose("Writing field outputs for " + new_frame.description + ".");
+        if (this->command_line_arguments->get("format") == "odb") {
+            write_field_outputs(h5_file, frame, frame_group_name, new_frame.max_width, new_frame.max_length);
+        } else if (this->command_line_arguments->get("format") == "extract") {
+            write_extract_field_outputs(h5_file, frame, step.name().CStr(), new_frame.max_width, new_frame.max_length);
         }
+        write_string_attribute(frame_group, "max_width", to_string(new_frame.max_width));
+        write_string_attribute(frame_group, "max_length", to_string(new_frame.max_length));
     }
 
 }

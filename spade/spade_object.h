@@ -394,7 +394,6 @@ struct frame_type {
     string loadCase;
     int max_width;
     int max_length;
-    bool skip;  // Don't process if a frame-value is specified on the command line that approximately matches the frameValue or frequency
 };
 
 struct history_point_type {

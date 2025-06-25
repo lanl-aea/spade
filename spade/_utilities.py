@@ -114,6 +114,18 @@ def character_delimited_list(sequence: typing.Iterable, character: str = " ") ->
     return character.join(map(str, sequence))
 
 
+def quoted_string(list_or_string) -> str:
+    """Make a string with double quotes on either side from a list or string
+
+
+    :param list_or_string: list or string to be returned as a string with double quotes on either side
+
+    :returns: string with quotes on either side
+    """
+    return '"' + character_delimited_list(list_or_string, ' ') + '"' if isinstance(list_or_string, list) \
+        else '"' + str(list_or_string) + '"' 
+
+
 # Comes from WAVES scons extensions. Keep a SPADE specific version here because this project *must* be upstream of WAVES
 def search_commands(options: typing.Iterable[str]) -> typing.Optional[str]:
     """Return the first found command in the list of options. Return None if none are found.
