@@ -466,7 +466,7 @@ class SpadeObject {
           \return set with strings
           \sa create_string_sets()
         */
-        set<string> create_string_set (const string &string_value, bool all_given);
+        set<string> create_string_set (const string &string_value, bool &all_given);
         //! Process all but the steps data from the open odb file and store the results
         /*!
           After the odb has been opened this function will do the parsing, including calling of other functions needed for parsing

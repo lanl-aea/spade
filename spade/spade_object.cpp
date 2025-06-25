@@ -175,9 +175,9 @@ void SpadeObject::create_string_sets () {
     if (all_given) { this->command_line_arguments->set("history", "all"); }
     this->field_set = create_string_set(this->command_line_arguments->get("field"), all_given);
     if (all_given) { this->command_line_arguments->set("field", "all"); }
-//        if ((!all_frame_values) && (!frame_values.count(frame.frameValue()))) {
 }
-set<string> SpadeObject::create_string_set (const string &string_value, bool all_given) {
+
+set<string> SpadeObject::create_string_set (const string &string_value, bool &all_given) {
     set<string> values;
     string each_word;
     stringstream string_stream_values(string_value);
@@ -189,7 +189,7 @@ set<string> SpadeObject::create_string_set (const string &string_value, bool all
         }
         values.insert(each_word); // Insert each word into the set
     }
-    if (all_given) {  // If the word all appears then just 
+    if (all_given) {  // If the word all appears then just return emtpy set
         return set<string>();
     }
     return values;
@@ -989,7 +989,7 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
     for (instance_iter.first(); !instance_iter.isDone(); instance_iter.next()) {
         this->log_file->logVerbose("Reading instance: " + string(instance_iter.currentKey().CStr()));
         const odb_Instance& instance = instances[instance_iter.currentKey()];
-        if ((this->command_line_arguments->get("instance") != "all") && (this->command_line_arguments->get("instance") != instance.name().CStr())) {
+        if ((this->command_line_arguments->get("instance") != "all") && (!this->instance_set.count(instance.name().CStr()))) {
             continue;
         }
 
@@ -1246,7 +1246,7 @@ void SpadeObject::write_step_data_h5 (odb_Odb &odb, H5::H5File &h5_file) {
     {
         // Read and write step data
         const odb_Step& current_step = step_repository[step_iter.currentKey()];
-        if ((this->command_line_arguments->get("step") != "all") && (this->command_line_arguments->get("step") != current_step.name().CStr())) {
+        if ((this->command_line_arguments->get("step") != "all") && (!this->step_set.count(current_step.name().CStr()))) {
             continue;
         }
         step_type new_step = process_step(current_step, odb);  // Process and write step data that isn't history or field output
@@ -1273,7 +1273,8 @@ void SpadeObject::write_history_data_h5 (odb_Odb &odb, H5::H5File &h5_file, cons
     {
         const odb_HistoryRegion& history_region = history_region_iterator.currentValue();
         string history_region_name = history_region.name().CStr();
-        if ((this->command_line_arguments->get("history-region") == "all") || (this->command_line_arguments->get("history-region") == history_region_name)) {
+//        if ((this->command_line_arguments->get("history-region") == "all") || (this->command_line_arguments->get("history-region") == history_region_name)) {
+        if ((this->command_line_arguments->get("history-region") == "all") || (this->history_region_set.count(history_region_name))) {
             this->log_file->logVerbose("Reading data for history region " + history_region_name);
             history_region_type new_history_region = process_history_region(history_region);
             string history_outputs_group_name;
