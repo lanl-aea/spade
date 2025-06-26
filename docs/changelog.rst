@@ -8,6 +8,10 @@ Changelog
 v0.4.2 (unreleased)
 *******************
 
+Bug fixes
+=========
+- Add field output name if component labels dimension is empty (:issue:`118`, :merge:`118`). By `Prabhu Khalsa`_.
+
 Documentation
 =============
 - Grid style landing page with quick links to most used portions of documenttaion. By `Kyle Brindley`_.
