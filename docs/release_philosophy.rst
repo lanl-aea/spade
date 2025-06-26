@@ -6,8 +6,9 @@ Release Philosophy
 
 This section discusses topics related to |PROJECT| releases and version numbering.
 
+***************
 Version Numbers
-===============
+***************
 
 The |PROJECT| project follows the `PEP-440`_ standard for version numbering, as
 implemented by `setuptools_scm`_. The production release version number uses the
@@ -15,27 +16,21 @@ three component ("major.minor.micro") scheme. The production version numbers
 correspond to Git tags in the project `repository`_ which point to a static
 release of the |PROJECT| project.
 
-The developer (a.k.a. dev or aea-nightly) version number follows the production release
-number with an anticipated micro version bump ("major.minor.micro+1") and the
-appended ".dev" local version number. Because the developer version is
-constantly updated against development work, the version number found in the
-deployed release contains additional information. During deployment, the
-developer version number is appended with the Git information from the most
-recent build as described by the default versioning scheme for
-`setuptools_scm`_.
+Because the deployed release of the developer version is constantly updated
+against development work, the version number found in the developer version
+contains additional information. During deployment, the developer version number
+is appended with the git information from the most recent build. This
+information contains the most recent git tag ("major.minor.micro.dev") followed
+by the number of commits since the last production release and a short hash.
 
-************
 Major Number
-************
+============
 
-The major number is expected to increment infrequently. Incrementing the major
-number requires a version change announcement from the |PROJECT| development
-team. This project will follow `semantic versioning`_ after the version 1.0.0
-release.
+The major number is expected to increment infrequently. After the first major release, it is recommended that the major
+version number only increments for major breaking changes.
 
-************
 Minor Number
-************
+============
 
 .. warning::
 
@@ -43,25 +38,21 @@ Minor Number
 
 The minor number is updated for the following reasons:
 
-* New modules or major features
-* Features spanning multiple module dependencies
-* UX modifications
+* New features
+* Major internal implementation changes
+* Non-breaking interface updates
 
-Minor version number increments should be made after
-a decision from the |PROJECT| development team.
+Minor version number increments should be made after a decision from the |PROJECT| development team.
 
-************
 Micro Number
-************
+============
 
 The micro version number indicates the following changes:
 
 * Bug fixes
-* Existing feature enhancements
-* UI modifications
+* Minor internal implementation changes
 
-Micro releases are made at the discretion of the |project| lead developer and
-the development team.
+Micro releases are made at the discretion of the |project| lead developer and the development team.
 
 .. _releasebranchreq:
 
@@ -77,14 +68,9 @@ Steps needed for a release include:
 
 1. Create a release branch, e.g. ``release-0-4-1``.
 2. Modify ``docs/changelog.rst`` to move version number for release MR commit and add description as relevant.
-3. Commit changes and submit a merge request to the ``main`` branch at the upstream `repository`_.
-4. Solicit feedback and make any required changes.
-5. Immediately prior to merge, add the new version tag to the most recent commit.
-
-   .. code-block::
-
-      $ git tag 0.4.1
-      $ git push origin release-0-4-1 --tags
-
-6. Merge the release branch to ``main``
-7. Create a new release for the new tag: https://re-git.lanl.gov/aea/python-projects/spade/-/releases
+3. Check and update the ``CITATION.bib`` and ``CITATION.cff`` files to use the new version number and release date.
+4. Commit changes and submit a merge request to the ``main`` branch at the upstream `repository`_.
+5. Solicit feedback and make any required changes.
+6. Merge the release branch to ``main``.
+7. Create a new tag on the main branch from the CLI or web-interface:
+   https://re-git.lanl.gov/aea/python-projects/waves/-/tags.
