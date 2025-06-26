@@ -20,6 +20,7 @@ Documentation
 Internal Changes
 ================
 - Enforce more complete flake8 checks in CI jobs. By `Kyle Brindley`_.
+- Release using Gitlab-CI tag pipelines. By `Kyle Brindley`_.
 
 *******************
 v0.4.1 (2025-06-25)
