@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Khalsa"
+  given-names: "Prabhu"
+  orcid: "https://orcid.org/0000-0001-5928-646X"
+- family-names: "Brindley"
+  given-names: "Kyle"
+  orcid: "https://orcid.org/0000-0002-9637-4706"
+title: "spade"
+doi: 10.5281/zenodo.15747904
+url: "https://github.com/lanl-aea/spade"
+license: BSD-3-Clause
+date-released: 2025-06-26
+identifiers:
+  - description: "All versions"
+    type: doi
+    value: 10.5281/zenodo.15747904
