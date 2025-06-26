@@ -1,0 +1,15 @@
+channels:
+  - conda-forge
+
+dependencies:
+  - hdf5
+  - numpy
+  - scons >=4.6
+  - setuptools >=77
+  - setuptools_scm >=8
+  - sphinx >=7.1
+  - sphinx-argparse
+  - sphinx-book-theme
+  - sphinx-copybutton >=0.5.1
+  - sphinx-design
+  - sphinxcontrib-bibtex

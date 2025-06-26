@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+
+dependencies:
+  - boa
+  - pytest
+  - scons >=4.6
+  - setuptools >=77
+  - setuptools_scm >=8
