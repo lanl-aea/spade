@@ -1,5 +1,5 @@
 workflow:
-  rules:  # Do not create pipelines for tag updates
+  rules:
     - if: $CI_COMMIT_TAG
       when: never
     - when: always
@@ -46,7 +46,7 @@ aea-environment:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
     # Always build from the base/aea compute environment with boa/libmamba
     - module unload ${project_environment}
@@ -56,7 +56,7 @@ aea-environment:
     - if [[ $CI_PIPELINE_SOURCE == "merge_request_event" ]] && ${exists}; then exit 0; fi
     # Don't rebuild environment for main unless the environment file has changed or the environment doesn't exist
     - files=$(git diff --name-only ${CI_COMMIT_SHA} ${CI_COMMIT_BEFORE_SHA}) || true
-    - if [[ $CI_COMMIT_BRANCH == "main" ]]; then production=true; else production=false; fi
+    - if [[ $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH ]]; then production=true; else production=false; fi
     - if [[ "${files}" == *"environment.yml"* ]]; then modified=true; else modified=false; fi
     - if ${production} && ${exists} && ! ${modified}; then exit 0; fi
     # Re-build the Conda environment on changes to environment files
@@ -102,7 +102,7 @@ aea-conda-build:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
     # Only build one compiler variant during merge request testing
     - python_version="3.12"
@@ -126,7 +126,7 @@ aea-conda-deploy:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   variables:
     PARENT_CI_PROJECT_PATH: $CI_PROJECT_PATH
     PARENT_CI_COMMIT_BRANCH: $CI_COMMIT_BRANCH
@@ -146,7 +146,7 @@ pages:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
     - rm -rf public && mkdir -p public
     # Ensure the ``_version.py`` file is created
