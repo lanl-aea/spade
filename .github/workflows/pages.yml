@@ -1,0 +1,50 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy static content to Pages
+
+on:
+  push:
+    branches:
+     - "main"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: 'true'
+          fetch-depth: 0
+      - name: MiniConda setup
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-activate-base: true
+          activate-environment: ""
+          miniforge-version: latest
+      - name: Conda environment
+        shell: bash -el {0}
+        run: conda env update --file documentation.yml
+      - name: Build documentation
+        shell: bash -el {0}
+        run: repository_root=$(pwd) && mkdir -p ${repository_root}/pages && scons html && cp -r build/docs/html/* ${repository_root}/pages
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload Github documentation build
+          path: 'pages/'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

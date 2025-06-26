@@ -1,0 +1,55 @@
+name: Release on new tags
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+
+  pdf-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: 'true'
+          fetch-depth: 0
+      - name: Install latexmk
+        run: sudo apt-get update && sudo apt-get install -y texlive texlive-latex-extra latexmk
+      - name: MiniConda setup
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-activate-base: true
+          activate-environment: ""
+          miniforge-version: latest
+      - name: Conda environment
+        shell: bash -el {0}
+        run: conda env update --file documentation.yml
+      - name: Build PDF documentation
+        shell: bash -el {0}
+        run: scons latexpdf
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-documentation-artifact
+          path: build/docs/latex/spade-${{ github.ref_name }}.pdf
+
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs:
+      - pdf-build
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: pdf-documentation-artifact
+          path: build/docs/latex/spade-${{ github.ref_name }}.pdf
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            build/docs/latex/spade-${{ github.ref_name }}.pdf
+          body: "Changelog: https://lanl-aea.github.io/spade/changelog.html. Installation: https://lanl-aea.github.io/spade/installation.html"
