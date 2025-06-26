@@ -20,18 +20,10 @@
 Serialized Proprietary Abaqus Data Extractor (SPADE)
 ####################################################
 
-.. |pipeline| image:: https://re-git.lanl.gov/aea/python-projects/spade/badges/main/pipeline.svg?key_text=re-git+tests&key_width=80
-   :target: https://re-git.lanl.gov/aea/python-projects/spade/-/pipelines
-
-.. |release| image:: https://re-git.lanl.gov/aea/python-projects/spade/-/badges/release.svg?key_text=re-git+release
-   :target: https://re-git.lanl.gov/aea/python-projects/spade/-/releases
-
-|pipeline|
-
-|release|
-
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.15747904.svg
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.15747904.svg
    :target: https://doi.org/10.5281/zenodo.15747904
+
+|zenodo|
 
 .. inclusion-marker-do-not-remove
 
