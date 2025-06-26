@@ -9,6 +9,12 @@ stages:
   - test
   - deploy
 
+default:
+  tags:
+    - shell
+    - aea
+    - linux
+
 before_script:
   - package_name='spade'
   # Set the AEA compute environment deployment directory by host
@@ -59,10 +65,6 @@ aea-environment:
     - chmod -R 755 ${environment_path}
     # place the common modulefiles in an accessible location
     - cp ${PWD}/modulefiles/* ${aea_modulefiles}
-  tags:
-    - shell
-    - aea
-    - linux
 
 aea-developer-test:
   stage: test
@@ -81,10 +83,6 @@ aea-developer-test:
       coverage_report:
         coverage_format: cobertura
         path: build/pytest/coverage.xml
-  tags:
-    - shell
-    - aea
-    - linux
 
 aea-style:
   stage: test
@@ -95,10 +93,6 @@ aea-style:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
     - scons flake8 black-check
-  tags:
-    - shell
-    - aea
-    - linux
 
 aea-conda-build:
   stage: test
@@ -125,10 +119,6 @@ aea-conda-build:
     expire_in: '2 hrs'
     paths:
       - conda-bld/linux-64/spade-*-*.tar.bz2
-  tags:
-    - shell
-    - aea
-    - linux
 
 # https://re-git.lanl.gov/aea/developer-operations/aea-conda
 aea-conda-deploy:
@@ -168,7 +158,3 @@ pages:
     paths:
       # It MUST be called public
       - public
-  tags:
-    - shell
-    - aea
-    - linux
