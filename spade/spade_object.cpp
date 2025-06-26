@@ -2084,7 +2084,7 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
     }
 }
 
-void SpadeObject::write_extract_field_bulk_data(H5::H5File &h5_file, const string &group_name, const odb_FieldBulkData &field_bulk_data, bool complex_data, bool write_mises) {
+void SpadeObject::write_extract_field_bulk_data(H5::H5File &h5_file, const string &group_name, const odb_FieldBulkData &field_bulk_data, bool complex_data, bool write_mises, string field_output_safe_name) {
     bool sub_group_exists = false;
     H5::Group bulk_group = open_subgroup(h5_file, group_name, sub_group_exists);
 
@@ -2092,6 +2092,9 @@ void SpadeObject::write_extract_field_bulk_data(H5::H5File &h5_file, const strin
     odb_SequenceString component_labels = field_bulk_data.componentLabels();
     for (int i=0; i<field_bulk_data.componentLabels().size(); i++) {  // Usually just around 4 labels or less
         field_component_labels.push_back(component_labels[i].CStr());
+    }
+    if (field_component_labels.empty()) {
+        field_component_labels.push_back(field_output_safe_name.c_str());
     }
 
     int coord_length = 0;
@@ -2753,7 +2756,7 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
 
             string value_group_name = field_output_group_name + "/" + data_name;
             this->log_file->logDebug("Write field bulk data " + data_name);
-            write_extract_field_bulk_data(h5_file, value_group_name, field_bulk_value, field_output.isComplex(), write_mises);
+            write_extract_field_bulk_data(h5_file, value_group_name, field_bulk_value, field_output.isComplex(), write_mises, field_output_safe_name);
         }
 
         if (field_output_max_width > max_width) {  max_width = field_output_max_width; }

@@ -859,8 +859,9 @@ class SpadeObject {
           \param field_bulk_data Data to be written
           \param complex_data Boolean indicating if the data is complex
           \param write_mises Boolean indicating if mises data should be written
+          \param field_output_safe_name Safe name (i.e. no slashes) of field output data
         */
-        void write_extract_field_bulk_data(H5::H5File &h5_file, const string &group_name, const odb_FieldBulkData &field_bulk_data, bool complex_data, bool write_mises);
+        void write_extract_field_bulk_data(H5::H5File &h5_file, const string &group_name, const odb_FieldBulkData &field_bulk_data, bool complex_data, bool write_mises, string field_output_safe_name);
         //! Write field value data to an HDF5 file
         /*!
           Write field value data into an HDF5 file
