@@ -11,6 +11,7 @@ v0.4.2 (unreleased)
 Documentation
 =============
 - Grid style landing page with quick links to most used portions of documenttaion. By `Kyle Brindley`_.
+- Adding zenodo information into documentation (:issue:`112`, :merge:`117`). By `Prabhu Khalsa`_.
 
 Internal Changes
 ================
