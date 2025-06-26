@@ -12,6 +12,8 @@ Quick Start
    :start-after: user-start-do-not-remove
    :end-before: user-end-do-not-remove
 
+.. _tutorials:
+
 *******
 Example
 *******

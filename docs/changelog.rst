@@ -8,6 +8,10 @@ Changelog
 v0.4.2 (unreleased)
 *******************
 
+Documentation
+=============
+- Grid style landing page with quick links to most used portions of documenttaion. By `Kyle Brindley`_.
+
 Internal Changes
 ================
 - Enforce more complete flake8 checks in CI jobs. By `Kyle Brindley`_.

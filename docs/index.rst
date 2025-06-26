@@ -9,6 +9,7 @@
    \part{User Manual}
 
 .. toctree::
+   :hidden:
    :maxdepth: 2
    :caption: User Manual
 
@@ -22,6 +23,7 @@
    \part{Developer Manual}
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Developer Manual
 
@@ -33,6 +35,7 @@
    \part{Reference}
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Reference
 
@@ -43,15 +46,32 @@
    zreferences
    README
 
-.. raw:: latex
-
-   \part{Indices and Tables}
-
 .. only:: html
 
-   Indices and tables
-   ==================
+   .. grid:: 1 2 2 2
+      :gutter: 2
+      :margin: 2
 
-   * :ref:`genindex`
-   * :ref:`modindex`
-   * :ref:`search`
+      .. grid-item-card:: :octicon:`download` Installation
+         :link: installation
+         :link-type: ref
+
+         Installation with conda-forge or PyPI
+
+      .. grid-item-card:: :octicon:`mortar-board` Tutorials
+         :link: tutorials
+         :link-type: ref
+
+         Tutorials using the command line interface
+
+      .. grid-item-card:: :octicon:`code-square` API
+         :link: external_api
+         :link-type: ref
+
+         Public application program interface (API)
+
+      .. grid-item-card:: :octicon:`command-palette` CLI
+         :link: cli
+         :link-type: ref
+
+         Public command line interface (CLI)
