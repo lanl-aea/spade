@@ -30,6 +30,9 @@ Serialized Proprietary Abaqus Data Extractor (SPADE)
 
 |release|
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.15747904.svg
+   :target: https://doi.org/10.5281/zenodo.15747904
+
 .. inclusion-marker-do-not-remove
 
 ***********
