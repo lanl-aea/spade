@@ -10,6 +10,8 @@ stages:
   - deploy
 
 default:
+  variables:
+    GIT_STRATEGY: clone
   tags:
     - shell
     - aea
@@ -41,8 +43,6 @@ before_script:
 
 aea-environment:
   stage: environment
-  variables:
-    GIT_STRATEGY: clone
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -68,8 +68,6 @@ aea-environment:
 
 aea-developer-test:
   stage: test
-  variables:
-    GIT_STRATEGY: clone
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -86,8 +84,6 @@ aea-developer-test:
 
 aea-style:
   stage: test
-  variables:
-    GIT_STRATEGY: clone
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -96,8 +92,6 @@ aea-style:
 
 aea-conda-build:
   stage: test
-  variables:
-    GIT_STRATEGY: clone
   dependencies: []
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -140,8 +134,6 @@ aea-conda-deploy:
 # It MUST be called pages
 pages:
   stage: deploy
-  variables:
-    GIT_STRATEGY: clone
   dependencies: []
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
