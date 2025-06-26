@@ -48,6 +48,13 @@
 
 .. only:: html
 
+   .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.15747904.svg
+      :target: https://doi.org/10.5281/zenodo.15747904
+
+   |zenodo|                                       
+
+   |
+
    .. grid:: 1 2 2 2
       :gutter: 2
       :margin: 2
@@ -75,3 +82,4 @@
          :link-type: ref
 
          Public command line interface (CLI)
+
