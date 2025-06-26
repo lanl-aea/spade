@@ -27,6 +27,7 @@ requirements:
     - sphinx-argparse
     - sphinx-book-theme
     - sphinx-copybutton >=0.5.1
+    - sphinx-design
     - sphinxcontrib-bibtex
     - setuptools >=77
     - setuptools_scm >=8
