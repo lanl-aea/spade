@@ -7,7 +7,6 @@
 
 import typing
 import pathlib
-import argparse
 
 import SCons.Builder
 

@@ -59,12 +59,12 @@ def return_abaqus_code_paths(abaqus_program, code_directory="code"):
     if abaqus_paths:
         abaqus_installation = abaqus_paths[0]
     else:
-        print(f"Could not find Abaqus installation directory", file=sys.stderr)
+        print("Could not find Abaqus installation directory", file=sys.stderr)
         abaqus_installation = None
 
     try:
         abaqus_code_path = next(path for path in abaqus_paths if path.name == code_directory)
-    except StopIteration as err:
+    except StopIteration:
         print(f"Could not find Abaqus '{code_directory}' directory", file=sys.stderr)
         abaqus_code_bin = None
         abaqus_code_include = None

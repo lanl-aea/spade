@@ -235,7 +235,7 @@ def cpp_compile(
             scons_stdout = subprocess.PIPE
         print_debug(f"Compiling {_settings._project_name_short} with command {scons_command}")
         try:
-            scons_output = subprocess.run(
+            subprocess.run(
                 scons_command,
                 env=environment,
                 cwd=working_directory,

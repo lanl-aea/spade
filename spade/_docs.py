@@ -2,8 +2,6 @@ import sys
 import pathlib
 import argparse
 
-from spade import _settings
-
 
 _exclude_from_namespace = set(globals().keys())
 

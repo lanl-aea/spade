@@ -8,6 +8,10 @@ Changelog
 v0.4.2 (unreleased)
 *******************
 
+Internal Changes
+================
+- Enforce more complete flake8 checks in CI jobs. By `Kyle Brindley`_.
+
 *******************
 v0.4.1 (2025-06-25)
 *******************

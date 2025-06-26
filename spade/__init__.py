@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from importlib.metadata import version, PackageNotFoundError
 
-from spade import scons_extensions
+from spade import scons_extensions  # noqa: F401
 
 try:
     __version__ = version("spade")

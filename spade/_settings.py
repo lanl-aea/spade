@@ -1,5 +1,4 @@
 import pathlib
-import datetime
 
 # semi-private project meta variables for package internal use to avoid hard-coded duplication
 _project_root_abspath = pathlib.Path(__file__).parent.resolve()
@@ -23,7 +22,7 @@ _compiler_flags = (
     "-DMULTI_THREADING_ENABLED -D_REENTRANT -DABQ_MPI_SUPPORT -DBIT64 "
     "-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -static-libstdc++ "
 )
-_link_flags = f"-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -lstdc++ -lhdf5_hl "
+_link_flags = "-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -lstdc++ -lhdf5_hl "
 
 # Docs subcommand
 _installed_docs_index = _project_root_abspath / "docs/index.html"
