@@ -9,9 +9,10 @@ stages:
   - test
   - deploy
 
+variables:
+  GIT_STRATEGY: clone
+
 default:
-  variables:
-    GIT_STRATEGY: clone
   tags:
     - shell
     - aea
