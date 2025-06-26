@@ -68,9 +68,6 @@ aea-environment:
 
 aea-developer-test:
   stage: test
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
     - abaqus_command='--abaqus-command=/apps/abaqus/Commands/abq2024 --abaqus-command=/apps/abaqus/Commands/abq2023 --abaqus-command=/apps/abaqus/Commands/abq2022'
     - echo ${abaqus_command}
@@ -84,19 +81,12 @@ aea-developer-test:
 
 aea-style:
   stage: test
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
     - scons flake8 black-check
 
 aea-conda-build:
   stage: test
   dependencies: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
     # Only build one compiler variant during merge request testing
     - python_version="3.12"
