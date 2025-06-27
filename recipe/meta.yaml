@@ -35,7 +35,6 @@ requirements:
     - {{ stdlib('c') }}
     - hdf5
     - scons >=4.6
-    - sysroot_linux-64 >=2.28  # [linux]
     - ld_impl_linux-64         # [linux]
   host:
     - python {{ python }}
@@ -48,7 +47,6 @@ requirements:
     - {{ stdlib('c') }}
     - hdf5
     - scons >=4.6
-    - sysroot_linux-64 >=2.28  # [linux]
     - ld_impl_linux-64         # [linux]
   run:
     - python
@@ -57,7 +55,6 @@ requirements:
     - {{ compiler('cxx') }}
     - {{ stdlib('c') }}
     - hdf5
-    - sysroot_linux-64 >=2.28  # [linux]
     - ld_impl_linux-64         # [linux]
 
 test:
