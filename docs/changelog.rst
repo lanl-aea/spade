@@ -37,6 +37,7 @@ Documentation
 
 Internal Changes
 ================
+- Updating recipe files per suggestions from conda forge linter (:issue:`112`, :merge:`117`). By `Prabhu Khalsa`_.
 - Enforce more complete flake8 checks in CI jobs. By `Kyle Brindley`_.
 - Release using Gitlab-CI tag pipelines. By `Kyle Brindley`_.
 - Draft GitHub-Actions workflows. By `Kyle Brindley`_.
