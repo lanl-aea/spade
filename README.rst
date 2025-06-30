@@ -20,10 +20,20 @@
 Serialized Proprietary Abaqus Data Extractor (SPADE)
 ####################################################
 
+.. badges-start-do-not-remove
+
+.. |github-pages| image:: https://img.shields.io/github/actions/workflow/status/lanl-aea/spade/pages.yml?branch=main&label=GitHub-Pages
+   :target: https://lanl-aea.github.io/spade/
+
+.. |github-release| image:: https://img.shields.io/github/v/release/lanl-aea/spade?label=GitHub-Release
+   :target: https://github.com/lanl-aea/spade/releases
+
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.15747904.svg
    :target: https://doi.org/10.5281/zenodo.15747904
 
-|zenodo|
+|github-pages| |github-release| |zenodo|
+
+.. badges-end-do-not-remove
 
 .. inclusion-marker-do-not-remove
 
@@ -40,7 +50,8 @@ Serialized Proprietary Abaqus Data Extractor (SPADE) extracts data from an Abaqu
 Documentation
 =============
 
-* https://aea.re-pages.lanl.gov/python-projects/spade/
+* GitHub: https://lanl-aea.github.io/spade/index.html
+* LANL: https://aea.re-pages.lanl.gov/python-projects/spade/
 
 Author Info
 ===========

@@ -48,10 +48,9 @@
 
 .. only:: html
 
-   .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.15747904.svg
-      :target: https://doi.org/10.5281/zenodo.15747904
-
-   |zenodo|                                       
+   .. include:: README.txt
+      :start-after: badges-start-do-not-remove
+      :end-before: badges-end-do-not-remove
 
    |
 
