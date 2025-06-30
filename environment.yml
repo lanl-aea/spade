@@ -8,6 +8,7 @@ dependencies:
   - cxx-compiler
   - flake8
   - git-lfs>=3.6.1
+  - glab
   - hdf5
   - ld_impl_linux-64
   - pip
