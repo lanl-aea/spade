@@ -102,6 +102,12 @@ aea-conda-build:
     - mkdir ${conda_artifacts_directory}
     - croot="/scratch/$USER/$(basename $PWD)/${conda_artifacts_directory}"
     - VERSION=$(python -m setuptools_scm) conda mambabuild recipe --channel conda-forge --no-anaconda-upload --croot ${croot} --output-folder ${conda_artifacts_directory} ${variants}
+    # Help downstream deploy pipeline find this job by ID
+    - tag_job_file_root="/nettmp/aea_service"
+    - tag_job_file_parent="${tag_job_file_root}/${CI_PROJECT_PATH}"
+    - tag_job_file="${tag_job_file_parent}/tag_conda_build.txt"
+    - if [[ ! -z ${CI_COMMIT_TAG} ]] && [[ -d ${tag_job_file_root} ]]; then mkdir -p ${tag_job_file_parent}; echo ${CI_JOB_ID} > ${tag_job_file}; fi
+    # Cleanup
     - conda build purge --croot ${croot}
   artifacts:
     expire_in: '2 hrs'
