@@ -90,7 +90,7 @@ aea-style:
 
 .conda-build: &conda-build
   variables:
-    recipe-directory: "recipe"
+    recipe_directory: "recipe"
   script:
     # Only build one compiler variant during merge request testing
     - python_version="3.12"
