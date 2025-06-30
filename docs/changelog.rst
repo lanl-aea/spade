@@ -5,8 +5,17 @@ Changelog
 #########
 
 *******************
-v0.4.3 (unreleased)
+v0.4.4 (unreleased)
 *******************
+
+*******************
+v0.4.3 (2025-06-30)
+*******************
+
+Internal Changes
+================
+- Update environment for automated Gitlab releases and add missing logic for conda-build package job identity in
+  downstream deployment pipelines. By `Kyle Brindley`_.
 
 *******************
 v0.4.2 (2025-06-30)
