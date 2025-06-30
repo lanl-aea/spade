@@ -22,6 +22,7 @@ Internal Changes
 - Enforce more complete flake8 checks in CI jobs. By `Kyle Brindley`_.
 - Release using Gitlab-CI tag pipelines. By `Kyle Brindley`_.
 - Draft GitHub-Actions workflows. By `Kyle Brindley`_.
+- Use a tag release pipeline compatible internal deployment job (:issue:`122`, :merge:`122`). By `Kyle Brindley`_.
 
 *******************
 v0.4.1 (2025-06-25)
@@ -40,9 +41,9 @@ Documentation
 
 Internal Changes
 ================
-- Allow for multiple command line entries for instance, step, history-region, history, and field output (:issue:`100`, 
+- Allow for multiple command line entries for instance, step, history-region, history, and field output (:issue:`100`,
   :merge:`112`). By `Prabhu Khalsa`_.
-- Allow for negative indexing of frame numbers and multiple frame numbers on the command line (:issue:`99`, 
+- Allow for negative indexing of frame numbers and multiple frame numbers on the command line (:issue:`99`,
   :merge:`111`). By `Prabhu Khalsa`_.
 - Create top level parts, instances, and assemblies groups in hdf5 file (:issue:`103`, :merge:`101`).
   By `Prabhu Khalsa`_.
