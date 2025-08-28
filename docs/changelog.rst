@@ -8,6 +8,10 @@ Changelog
 v0.4.4 (unreleased)
 *******************
 
+Bug fixes
+=========
+- Fix incorrect dataset dimensions and labels (:issue:`120`, :merge:`124`). By `Prabhu Khalsa`_.
+
 Documentation
 =============
 - Add GitHub shields and GitHub-Pages URL to README and HTML documentation (:issue:`116`, :merge:`123`). By `Kyle
