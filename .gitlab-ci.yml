@@ -117,12 +117,6 @@ aea-conda-build:
   dependencies: []
   variables:
     recipe_directory: "recipe"
-
-aea-conda-build-internal:
-  extends:
-    - .conda-build
-  stage: test
-  dependencies: []
   artifacts:
     expire_in: '2 hrs'
     paths:
