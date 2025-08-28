@@ -6,7 +6,10 @@ package:
   version: {{ version }}
 
 source:
-  git_url: '..'
+  url: https://github.com/lanl-aea/spade/archive/refs/tags/0.4.1.tar.gz
+  sha256: e8509ff7891b7ca9ed3416ac6de05aa020e958b41bcb8c99652532a5d0b67c52
+  # Use command: curl -sL <URL above> | openssl sha256
+
 
 build:
   number: 0
