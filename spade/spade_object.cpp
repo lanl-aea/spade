@@ -2124,13 +2124,11 @@ void SpadeObject::write_extract_field_bulk_data(H5::H5File &h5_file, const strin
         bool conjugate_data_exists = false;
         bool coord_data_exists = false;
         hsize_t dimensions[] = {field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.width()};
-//        hsize_t dimensions[] = { field_bulk_data.width(), number_of_integration_points, field_bulk_data.numberOfElements() };
         H5::DataSpace dataspace_data(3, dimensions);
         H5::DataSet dataset_data;
         H5::DataSpace dataspace_conjugate_data(3, dimensions);
         H5::DataSet dataset_conjugate_data;
         hsize_t dimensions_coords[] = {field_bulk_data.numberOfElements(), number_of_integration_points, field_bulk_data.orientationWidth()};
-//        hsize_t dimensions_coords[] = { field_bulk_data.orientationWidth(), number_of_integration_points, field_bulk_data.numberOfElements() };
         H5::DataSpace dataspace_coords(3, dimensions_coords);
         H5::DataSet dataset_coords;
         if(field_bulk_data.precision() == odb_Enum::SINGLE_PRECISION) {
