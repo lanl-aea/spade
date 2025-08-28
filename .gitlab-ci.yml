@@ -88,9 +88,9 @@ aea-style:
   script:
     - scons flake8 black-check
 
-aea-conda-build:
-  stage: test
-  dependencies: []
+.conda-build: &conda-build
+  variables:
+    recipe_directory: "recipe"
   script:
     # Only build one compiler variant during merge request testing
     - python_version="3.12"
@@ -101,7 +101,7 @@ aea-conda-build:
     - umask 0022
     - mkdir ${conda_artifacts_directory}
     - croot="/scratch/$USER/$(basename $PWD)/${conda_artifacts_directory}"
-    - VERSION=$(python -m setuptools_scm) conda mambabuild recipe --channel conda-forge --no-anaconda-upload --croot ${croot} --output-folder ${conda_artifacts_directory} ${variants}
+    - VERSION=$(python -m setuptools_scm) conda mambabuild ${recipe_directory} --channel conda-forge --no-anaconda-upload --croot ${croot} --output-folder ${conda_artifacts_directory} ${variants}
     # Help downstream deploy pipeline find this job by ID
     - tag_job_file_root="/nettmp/aea_service"
     - tag_job_file_parent="${tag_job_file_root}/${CI_PROJECT_PATH}"
@@ -109,6 +109,14 @@ aea-conda-build:
     - if [[ ! -z ${CI_COMMIT_TAG} ]] && [[ -d ${tag_job_file_root} ]]; then mkdir -p ${tag_job_file_parent}; echo ${CI_JOB_ID} > ${tag_job_file}; fi
     # Cleanup
     - conda build purge --croot ${croot}
+
+aea-conda-build:
+  extends:
+    - .conda-build
+  stage: test
+  dependencies: []
+  variables:
+    recipe_directory: "recipe"
   artifacts:
     expire_in: '2 hrs'
     paths:
