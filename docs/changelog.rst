@@ -17,6 +17,10 @@ Documentation
 - Add GitHub shields and GitHub-Pages URL to README and HTML documentation (:issue:`116`, :merge:`123`). By `Kyle
   Brindley`_.
 
+Internal Changes
+================
+- Update package to use numpy greater than or equal to version 2 (:issue:`125`, :merge:`126`). By `Prabhu Khalsa`_.
+
 *******************
 v0.4.3 (2025-06-30)
 *******************
