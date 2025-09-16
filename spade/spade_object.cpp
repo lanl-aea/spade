@@ -1123,7 +1123,7 @@ string SpadeObject::get_position_enum(odb_Enum::odb_ResultPositionEnum position_
     return position;
 }
 
-frame_type SpadeObject::process_frame (const odb_Frame &frame) {
+frame_type SpadeObject::process_frame (const odb_Frame &frame, const int &number) {
     frame_type new_frame;
     new_frame.description = frame.description().CStr();
     new_frame.loadCase = frame.loadCase().name().CStr();
@@ -1137,6 +1137,7 @@ frame_type SpadeObject::process_frame (const odb_Frame &frame) {
     new_frame.mode = frame.mode();
     new_frame.frameValue = frame.frameValue();
     new_frame.frequency = frame.frequency();
+    new_frame.number = number;  // Frame number is different than increment number, which can repeat
 
     return new_frame;
 }
@@ -1329,7 +1330,7 @@ void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const 
                 this->log_file->logWarning("Invalid frame number specified.");
                 continue;
             }
-            converted_int = frames.constGet(frame_index).incrementNumber();
+            converted_int = frame_index;
         }
         all_frames = false;
         frame_numbers.insert(converted_int); // Insert each integer into the set
@@ -1356,14 +1357,14 @@ void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const 
 
     for (int f=0; f<frames.size(); f++) {
         const odb_Frame& frame = frames.constGet(f);
-        string frame_number = to_string(frame.incrementNumber());
-        if ((!all_frames) && (!frame_numbers.count(frame.incrementNumber()))) {  // If frame number not in set of frames specified by user
+        string frame_number = to_string(f);
+        if ((!all_frames) && (!frame_numbers.count(f))) {  // If frame number not in set of frames specified by user
             continue;
         }
         if ((!all_frame_values) && (!frame_values.count(frame.frameValue()))) {
             continue;
         }
-        frame_type new_frame = process_frame(frame);
+        frame_type new_frame = process_frame(frame, f);
 
         this->log_file->logVerbose("Writing frame " + frame_number + " data");
         string frame_group_name = frames_group_name + "/" + frame_number;
@@ -1376,7 +1377,7 @@ void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const 
         if (this->command_line_arguments->get("format") == "odb") {
             write_field_outputs(h5_file, frame, frame_group_name, new_frame.max_width, new_frame.max_length);
         } else if (this->command_line_arguments->get("format") == "extract") {
-            write_extract_field_outputs(h5_file, frame, step.name().CStr(), new_frame.max_width, new_frame.max_length);
+            write_extract_field_outputs(h5_file, frame, frame_number, step.name().CStr(), new_frame.max_width, new_frame.max_length);
         }
         write_string_attribute(frame_group, "max_width", to_string(new_frame.max_width));
         write_string_attribute(frame_group, "max_length", to_string(new_frame.max_length));
@@ -2609,8 +2610,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
     }
 }
 
-void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &step_name, int &max_width, int &max_length) {
-    string frame_number = to_string(frame.incrementNumber());
+void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &frame_number, const string &step_name, int &max_width, int &max_length) {
 
     const odb_FieldOutputRepository& field_outputs = frame.fieldOutputs();
     odb_FieldOutputRepositoryIT field_outputs_iterator(field_outputs);
@@ -2813,6 +2813,7 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
 void SpadeObject::write_frame(H5::H5File &h5_file, H5::Group &frame_group, frame_type &frame) {
     if (frame.cyclicModeNumber != -1) { write_integer_dataset(frame_group, "cyclicModeNumber", frame.cyclicModeNumber); }
     write_integer_dataset(frame_group, "mode", frame.mode);
+    write_integer_dataset(frame_group, "incrementNumber", frame.incrementNumber);
     write_string_dataset(frame_group, "description", frame.description);
     write_string_dataset(frame_group, "domain", frame.domain);
     write_string_dataset(frame_group, "loadCase", frame.loadCase);

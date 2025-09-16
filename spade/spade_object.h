@@ -384,6 +384,7 @@ struct field_data_type {
 };
 
 struct frame_type {
+    int number;
     int incrementNumber;
     int cyclicModeNumber;
     int mode;
@@ -666,10 +667,11 @@ class SpadeObject {
         /*!
           Process a frame object and store the results
           \param frame An odb frame object
+          \param number An integer storing the frame number
           \return frame_type with data stored from the odb
           \sa process_odb()
         */
-        frame_type process_frame (const odb_Frame &frame);
+        frame_type process_frame (const odb_Frame &frame, const int &number);
         //! Process a history point from the odb file
         /*!
           Process a history region point and store the results
@@ -886,11 +888,12 @@ class SpadeObject {
           Write all field output data into an HDF5 file
           \param h5_file Open h5_file object for writing
           \param frame Frame with field output data to be written
+          \param frame_number Frame number of frame with field output data to be written
           \param step_name Name of step where data is to be written
           \param max_width Will store the max width of the frame
           \param max_length Will store the max length of the frame
         */
-        void write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &step_name, int &max_width, int &max_length);
+        void write_extract_field_outputs(H5::H5File &h5_file, const odb_Frame &frame, const string &frame_number, const string &step_name, int &max_width, int &max_length);
         //! Write frames data to an HDF5 file
         /*!
           Write frames data into an HDF5 file
