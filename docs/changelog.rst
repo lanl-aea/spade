@@ -11,6 +11,8 @@ v0.4.4 (unreleased)
 Bug fixes
 =========
 - Fix incorrect dataset dimensions and labels (:issue:`120`, :merge:`124`). By `Prabhu Khalsa`_.
+- Replacing incrementNumber, which can repeat, with actual frame number (:issue:`126`, :merge:`127`). By `Prabhu 
+  Khalsa`_.
 
 Documentation
 =============
