@@ -13,6 +13,7 @@ Bug fixes
 - Fix incorrect dataset dimensions and labels (:issue:`120`, :merge:`124`). By `Prabhu Khalsa`_.
 - Replacing incrementNumber, which can repeat, with actual frame number (:issue:`126`, :merge:`127`). By `Prabhu 
   Khalsa`_.
+- Fix writing of history output data (:issue:`127`, :merge:`128`). By `Prabhu Khalsa`_.
 
 Documentation
 =============

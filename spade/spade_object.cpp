@@ -2925,14 +2925,31 @@ void SpadeObject::write_extract_history_output(H5::H5File &h5_file, const string
     vector<const char*> descriptions;
     vector<float> frame_data;
     vector<float> conjugate_frame_data;
-    vector<vector<float>> all_output_data;
-    vector<vector<float>> all_conjugate_data;
+//    vector<vector<float>> all_output_data;
+//    vector<vector<float>> all_conjugate_data;
+    vector<float> all_output_data;
+    vector<float> all_conjugate_data;
     bool frame_data_written = false;
     bool conjugate_frame_data_written = false;
     bool conjugate_data_exists = false;
     odb_HistoryOutputRepositoryIT history_outputs_iterator (history_outputs);
+
+    int rows;
+    if (this->command_line_arguments->get("history") == "all") {
+        rows = history_outputs.size();
+    } else {
+        rows = this->history_set.size();
+    }
+    bool first_output = true;
+    int columns;
     for (history_outputs_iterator.first(); !history_outputs_iterator.isDone(); history_outputs_iterator.next()) {
         odb_HistoryOutput history_output = history_outputs_iterator.currentValue();
+        if (first_output) {
+            columns = history_output.data().size();
+            all_output_data.reserve(rows * columns);
+            all_conjugate_data.reserve(rows * columns);
+        }
+        first_output = false;
         string history_output_name = history_output.name().CStr();
         this->log_file->logVerbose("Processing data for history output " + history_output_name);
         if ((this->command_line_arguments->get("history") == "all") || (this->history_set.count(history_output_name))) {
@@ -2958,9 +2975,8 @@ void SpadeObject::write_extract_history_output(H5::H5File &h5_file, const string
                     output_data.push_back(data_dimension1.constGet(1));
                 }
             }
-            all_output_data.push_back(output_data);
+            all_output_data.insert(all_output_data.end(), output_data.begin(), output_data.end());
             frame_data_written = true;
-
             vector<float> output_conjugate_data;
             const odb_SequenceSequenceFloat& conjugate_data = history_output.conjugateData();
             if (conjugate_data.size() != 0) {
@@ -2977,7 +2993,7 @@ void SpadeObject::write_extract_history_output(H5::H5File &h5_file, const string
                         output_conjugate_data.push_back(conjugate_data_dimension1.constGet(1));
                     }
                 }
-                all_conjugate_data.push_back(output_conjugate_data);
+                all_conjugate_data.insert(all_conjugate_data.end(), output_conjugate_data.begin(), output_conjugate_data.end());
                 conjugate_frame_data_written = true;
             }
         }
@@ -2992,15 +3008,15 @@ void SpadeObject::write_extract_history_output(H5::H5File &h5_file, const string
     string string_conjugate_data = "conjugate_data";
     string string_frame_values = "frame_values";
 
-    hsize_t dims[2] = {frame_data.size(), all_output_data.size()};
+    hsize_t dims[2] = {rows, columns};
     H5::DataSpace dataspace_data(2, dims);
     H5::DataType datatype_data(H5::PredType::NATIVE_FLOAT);
     H5::DataSet dataset_data;
     try {
         dataset_data = group.createDataSet(string_data, datatype_data, dataspace_data);
         dataset_data.write(all_output_data.data(), datatype_data);
-        H5DSset_label(dataset_data.getId(), 0, string_frame_values.c_str());
-        H5DSset_label(dataset_data.getId(), 1, string_names.c_str());
+        H5DSset_label(dataset_data.getId(), 0, string_names.c_str());
+        H5DSset_label(dataset_data.getId(), 1, string_frame_values.c_str());
     } catch(H5::Exception& e) {
         this->log_file->logWarning("Error creating dataset data. " + e.getDetailMsg());
     }
@@ -3025,7 +3041,7 @@ void SpadeObject::write_extract_history_output(H5::H5File &h5_file, const string
     dataset_frame_data.close();
 
     H5::DataSet dataset_conjugate_data;
-    hsize_t conjugate_dims[2] = {conjugate_frame_data.size(), all_conjugate_data.size()};
+    hsize_t conjugate_dims[2] = {rows, columns};
     H5::DataSpace dataspace_conjugate_data(2, conjugate_dims);
     if (conjugate_data_exists) {
 
@@ -3033,8 +3049,8 @@ void SpadeObject::write_extract_history_output(H5::H5File &h5_file, const string
         try {
             dataset_conjugate_data = group.createDataSet(string_conjugate_data, datatype_conjugate_data, dataspace_conjugate_data);
             dataset_conjugate_data.write(all_conjugate_data.data(), datatype_conjugate_data);
-            H5DSset_label(dataset_conjugate_data.getId(), 0, string_conjugate_data.c_str());
-            H5DSset_label(dataset_conjugate_data.getId(), 1, string_names.c_str());
+            H5DSset_label(dataset_conjugate_data.getId(), 0, string_names.c_str());
+            H5DSset_label(dataset_conjugate_data.getId(), 1, string_conjugate_data.c_str());
         } catch(H5::Exception& e) {
             this->log_file->logWarning("Error creating dataset data. " + e.getDetailMsg());
         }
