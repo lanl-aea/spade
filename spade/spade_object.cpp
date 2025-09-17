@@ -2925,8 +2925,6 @@ void SpadeObject::write_extract_history_output(H5::H5File &h5_file, const string
     vector<const char*> descriptions;
     vector<float> frame_data;
     vector<float> conjugate_frame_data;
-//    vector<vector<float>> all_output_data;
-//    vector<vector<float>> all_conjugate_data;
     vector<float> all_output_data;
     vector<float> all_conjugate_data;
     bool frame_data_written = false;
@@ -3032,7 +3030,7 @@ void SpadeObject::write_extract_history_output(H5::H5File &h5_file, const string
         dataset_frame_data.write(frame_data.data(), datatype_frame_data);
         // Associate the coordinate datasets with the main dataset using dimension scales
         H5DSset_scale(dataset_frame_data.getId(), string_frame_values.c_str());
-        H5DSattach_scale(dataset_data.getId(), dataset_frame_data.getId(), 0);
+        H5DSattach_scale(dataset_data.getId(), dataset_frame_data.getId(), 1);
     } catch(H5::Exception& e) {
         this->log_file->logWarning("Error creating dataset frameValues. " + e.getDetailMsg());
     }
@@ -3066,7 +3064,7 @@ void SpadeObject::write_extract_history_output(H5::H5File &h5_file, const string
             dataset_conjugate_frame_data.write(conjugate_frame_data.data(), datatype_conjugate_frame_data);
             // Associate the coordinate datasets with the main dataset using dimension scales
             H5DSset_scale(dataset_conjugate_frame_data.getId(), string_conjugate_data.c_str());
-            H5DSattach_scale(dataset_data.getId(), dataset_conjugate_frame_data.getId(), 0);
+            H5DSattach_scale(dataset_data.getId(), dataset_conjugate_frame_data.getId(), 1);
         } catch(H5::Exception& e) {
             this->log_file->logWarning("Error creating dataset conjugateFrameValues. " + e.getDetailMsg());
         }
@@ -3084,8 +3082,8 @@ void SpadeObject::write_extract_history_output(H5::H5File &h5_file, const string
         dataset_names.write(names.data(), datatype_names);
         // Associate the coordinate datasets with the main dataset using dimension scales
         H5DSset_scale(dataset_names.getId(), string_names.c_str());
-        H5DSattach_scale(dataset_data.getId(), dataset_names.getId(), 1);
-        H5DSattach_scale(dataset_conjugate_data.getId(), dataset_names.getId(), 1);
+        H5DSattach_scale(dataset_data.getId(), dataset_names.getId(), 0);
+        H5DSattach_scale(dataset_conjugate_data.getId(), dataset_names.getId(), 0);
         coordinate_labels = coordinate_labels + " " + string_names;
     } catch(H5::Exception& e) {
         this->log_file->logWarning("Error creating dataset names. " + e.getDetailMsg());
