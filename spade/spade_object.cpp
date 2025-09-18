@@ -77,7 +77,7 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
     this->faces_enum_strings[14] = "FACE4";
     this->faces_enum_strings[15] = "FACE5";
     this->faces_enum_strings[16] = "FACE6";
-    this->faces_enum_strings[101] = "EDGE1=101";
+    this->faces_enum_strings[101] = "EDGE1";
     this->faces_enum_strings[102] = "EDGE2";
     this->faces_enum_strings[103] = "EDGE3";
     this->faces_enum_strings[104] = "EDGE4";
