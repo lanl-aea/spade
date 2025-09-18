@@ -97,8 +97,8 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
     this->faces_enum_strings[118] = "EDGE18";
     this->faces_enum_strings[119] = "EDGE19";
     this->faces_enum_strings[120] = "EDGE20";
-    this->faces_enum_strings[1001] = "SIDE1/SPOS";
-    this->faces_enum_strings[1002] = "SIDE2/SNEG";
+    this->faces_enum_strings[1001] = "SIDE1|SPOS";
+    this->faces_enum_strings[1002] = "SIDE2|SNEG";
     this->faces_enum_strings[1003] = "DOUBLE_SIDED"; // = DOUBLE SIDED SHELLS
     this->default_instance_name = "ASSEMBLY";  // If the name of the instance is blank, it will be assigned this value
 
