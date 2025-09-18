@@ -14,6 +14,7 @@ Bug fixes
 - Replacing incrementNumber, which can repeat, with actual frame number (:issue:`126`, :merge:`127`). By `Prabhu 
   Khalsa`_.
 - Fix writing of history output data (:issue:`127`, :merge:`128`). By `Prabhu Khalsa`_.
+- Fix naming of faces including handling cases with unknown names (:issue:`128`, :merge:`130`). By `Prabhu Khalsa`_.
 
 Documentation
 =============

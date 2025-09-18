@@ -67,41 +67,39 @@ SpadeObject::SpadeObject (CmdLineArguments &command_line_arguments, Logging &log
     this->dimension_enum_strings[1] = "Three Dimensional";
     this->dimension_enum_strings[2] = "Two Dimensional Planar";
     this->dimension_enum_strings[3] = "AxiSymmetric";
-    this->faces_enum_strings[0] = "FACE_UNKNOWN=0";
-    this->faces_enum_strings[1] = "END1=1";
+    this->faces_enum_strings[0] = "FACE_UNKNOWN";
+    this->faces_enum_strings[1] = "END1";
     this->faces_enum_strings[2] = "END2";
     this->faces_enum_strings[3] = "END3";
-    this->faces_enum_strings[4] = "FACE1=11";
-    this->faces_enum_strings[5] = "FACE2";
-    this->faces_enum_strings[6] = "FACE3";
-    this->faces_enum_strings[7] = "FACE4";
-    this->faces_enum_strings[8] = "FACE5";
-    this->faces_enum_strings[9] = "FACE6";
-    this->faces_enum_strings[10] = "EDGE1=101";
-    this->faces_enum_strings[11] = "EDGE2";
-    this->faces_enum_strings[12] = "EDGE3";
-    this->faces_enum_strings[13] = "EDGE4";
-    this->faces_enum_strings[14] = "EDGE5";
-    this->faces_enum_strings[15] = "EDGE6";
-    this->faces_enum_strings[16] = "EDGE7";
-    this->faces_enum_strings[17] = "EDGE8";
-    this->faces_enum_strings[18] = "EDGE9";
-    this->faces_enum_strings[19] = "EDGE10";
-    this->faces_enum_strings[20] = "EDGE11";
-    this->faces_enum_strings[21] = "EDGE12";
-    this->faces_enum_strings[22] = "EDGE13";
-    this->faces_enum_strings[23] = "EDGE14";
-    this->faces_enum_strings[24] = "EDGE15";
-    this->faces_enum_strings[25] = "EDGE16";
-    this->faces_enum_strings[26] = "EDGE17";
-    this->faces_enum_strings[27] = "EDGE18";
-    this->faces_enum_strings[28] = "EDGE19";
-    this->faces_enum_strings[29] = "EDGE20";
-    this->faces_enum_strings[30] = "SPOS=1001";
-    this->faces_enum_strings[31] = "SNEG=1002";
-    this->faces_enum_strings[32] = "SIDE1=1001"; // = SPOS
-    this->faces_enum_strings[33] = "SIDE2=1002"; // = SNEG
-    this->faces_enum_strings[34] = "DOUBLE_SIDED=1003"; // = DOUBLE SIDED SHELLS
+    this->faces_enum_strings[11] = "FACE1";
+    this->faces_enum_strings[12] = "FACE2";
+    this->faces_enum_strings[13] = "FACE3";
+    this->faces_enum_strings[14] = "FACE4";
+    this->faces_enum_strings[15] = "FACE5";
+    this->faces_enum_strings[16] = "FACE6";
+    this->faces_enum_strings[101] = "EDGE1";
+    this->faces_enum_strings[102] = "EDGE2";
+    this->faces_enum_strings[103] = "EDGE3";
+    this->faces_enum_strings[104] = "EDGE4";
+    this->faces_enum_strings[105] = "EDGE5";
+    this->faces_enum_strings[106] = "EDGE6";
+    this->faces_enum_strings[107] = "EDGE7";
+    this->faces_enum_strings[108] = "EDGE8";
+    this->faces_enum_strings[109] = "EDGE9";
+    this->faces_enum_strings[110] = "EDGE10";
+    this->faces_enum_strings[111] = "EDGE11";
+    this->faces_enum_strings[112] = "EDGE12";
+    this->faces_enum_strings[113] = "EDGE13";
+    this->faces_enum_strings[114] = "EDGE14";
+    this->faces_enum_strings[115] = "EDGE15";
+    this->faces_enum_strings[116] = "EDGE16";
+    this->faces_enum_strings[117] = "EDGE17";
+    this->faces_enum_strings[118] = "EDGE18";
+    this->faces_enum_strings[119] = "EDGE19";
+    this->faces_enum_strings[120] = "EDGE20";
+    this->faces_enum_strings[1001] = "SIDE1|SPOS";
+    this->faces_enum_strings[1002] = "SIDE2|SNEG";
+    this->faces_enum_strings[1003] = "DOUBLE_SIDED"; // = DOUBLE SIDED SHELLS
     this->default_instance_name = "ASSEMBLY";  // If the name of the instance is blank, it will be assigned this value
 
     this->command_line_arguments = &command_line_arguments;
@@ -515,7 +513,14 @@ set_type SpadeObject::process_set(const odb_Set &odb_set) {
             if(set_elements.size() && set_faces.size())
             {
                 for (int n=0; n<set_elements.size(); n++) {
-                    new_set.faces.push_back(this->faces_enum_strings[set_faces.constGet(n)]);
+                    string face_name;
+                    int index = set_faces.constGet(n);
+                    try {
+                        face_name = this->faces_enum_strings.at(index);
+                    } catch (const std::out_of_range& e) {
+                        face_name = this->faces_enum_strings[0];
+                    }
+                    new_set.faces.push_back(face_name);
                 }
                 if (!instance_name.empty()) {  // Don't process nodes or elements in set that doesn't belong to an instance
                     new_set.elements = process_elements(set_elements, instance_name, "", new_set.name, "");
@@ -2037,7 +2042,14 @@ void SpadeObject::write_field_bulk_data(H5::H5File &h5_file, const string &group
             int current_position = 0;
             for (int element=0; element<field_bulk_data.numberOfElements(); ++element) {
                 for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
-                    faces_vector.push_back(this->faces_enum_strings[faces[current_position]].c_str());
+                    string face_name;
+                    int index = faces[current_position];
+                    try {
+                        face_name = this->faces_enum_strings.at(index);
+                    } catch (const std::out_of_range& e) {
+                        face_name = this->faces_enum_strings[0];
+                    }
+                    faces_vector.push_back(face_name.c_str());
                 }
             }
             write_c_string_2D_vector(bulk_group, "faces", number_of_integration_points, faces_vector);
@@ -2244,7 +2256,14 @@ void SpadeObject::write_extract_field_bulk_data(H5::H5File &h5_file, const strin
             int current_position = 0;
             for (int element=0; element<field_bulk_data.numberOfElements(); ++element) {
                 for (int integration_point=0; integration_point<number_of_integration_points; integration_point++, current_position++) {
-                    faces_vector.push_back(this->faces_enum_strings[faces[current_position]].c_str());
+                    string face_name;
+                    int index = faces[current_position];
+                    try {
+                        face_name = this->faces_enum_strings.at(index);
+                    } catch (const std::out_of_range& e) {
+                        face_name = this->faces_enum_strings[0];
+                    }
+                    faces_vector.push_back(face_name.c_str());
                 }
             }
             H5::StrType string_type_faces(H5::PredType::C_S1, H5T_VARIABLE); // Variable length string

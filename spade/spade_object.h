@@ -1327,7 +1327,7 @@ class SpadeObject {
         set<string> field_set;
 
         string dimension_enum_strings[4];
-        string faces_enum_strings[35];
+        map<int, string> faces_enum_strings;
         string default_instance_name;
         CmdLineArguments* command_line_arguments;
         Logging* log_file;
