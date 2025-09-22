@@ -11,11 +11,11 @@ title: "spade"
 doi: 10.5281/zenodo.15747904
 url: "https://github.com/lanl-aea/spade"
 license: BSD-3-Clause
-date-released: 2025-06-26
+date-released: 2025-09-22
 identifiers:
   - description: "All versions"
     type: doi
     value: 10.5281/zenodo.15747903
-  - description: "0.4.1"
+  - description: "0.4.4"
     type: doi
     value: 10.5281/zenodo.15747904
