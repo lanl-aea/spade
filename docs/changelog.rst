@@ -8,6 +8,10 @@ Changelog
 v0.4.5 (unreleased)
 *******************
 
+Internal Changes
+================
+- Update package to use numpy version 1 or version 2 (:issue:`129`, :merge:`132`). By `Prabhu Khalsa`_.
+
 *******************
 v0.4.4 (2025-09-22)
 *******************
