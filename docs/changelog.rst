@@ -8,6 +8,10 @@ Changelog
 v0.4.6 (unreleased)
 *******************
 
+Internal Changes
+================
+- Revert build settings from github settings accidentally introduced (:issue:`132`, :merge:`134`). By `Prabhu Khalsa`_.
+
 *******************
 v0.4.5 (2025-09-23)
 *******************
