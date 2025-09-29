@@ -32,6 +32,7 @@ dependencies = [
 [tool.setuptools]
 packages =[
     "spade",
+    "spade.docs",
     "spade.tests"
 ]
 zip-safe = false
