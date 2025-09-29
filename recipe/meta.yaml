@@ -6,9 +6,7 @@ package:
   version: {{ version }}
 
 source:
-  url: https://github.com/lanl-aea/spade/archive/refs/tags/0.4.1.tar.gz
-  sha256: e8509ff7891b7ca9ed3416ac6de05aa020e958b41bcb8c99652532a5d0b67c52
-  # Use command: curl -sL <URL above> | openssl sha256
+  git_url: '..'
 
 
 build:
@@ -67,17 +65,14 @@ test:
   imports:
     - spade
   commands:
+    # Test as-installed project unit tests
     - working_directory=${PWD}
     - cd $SP_DIR/$PKG_NAME
     - pytest -n 4 -vvv -m "not require_third_party"
+    - pytest -n 4 -v --no-showlocals -m "systemtest and require_third_party" --tb=short --system-test-dir=${working_directory} --abaqus-command=/apps/abaqus/Commands/abq2024
 
 about:
-  home: https://github.com/lanl-aea/spade
+  home: https://re-git.lanl.gov/aea/python-projects/spade
   summary: 'Tool for extracting data from an Abaqus output database (odb) file into a hierarchical data format (hdf5) file'
   license: BSD-3-Clause
   license_file: LICENSE.txt
-
-extra:
-  recipe-maintainers:
-    - Prabhu-LANL
-    - kbrindley
