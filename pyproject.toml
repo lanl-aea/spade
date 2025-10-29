@@ -10,7 +10,7 @@ authors = [
 ]
 description = "Tool for extracting data from an Abaqus output database (odb) file into a hierarchical data format (hdf5) file"
 readme = "README.rst"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = "BSD-3-Clause"
 license-files = ["LICENSE.txt"]
 classifiers = [
@@ -55,7 +55,7 @@ markers = [
 addopts = "--tb=long --showlocals --failed-first --strict-markers -m 'not systemtest'"
 
 [tool.black]
-target-version = ["py39", "py310", "py311", "py312", "py313"]
+target-version = ["py310", "py311", "py312", "py313"]
 extend-exclude = ".txt|.toml|.yaml|.csv"
 force-exclude = "build*/"
 line-length = 120
