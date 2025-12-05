@@ -22,11 +22,9 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "compilers",
     "hdf5",
     "numpy >=2",
     "scons",
-    "sysroot_linux-64 >=2.28",
 ]
 
 [tool.setuptools]
