@@ -39,7 +39,6 @@ requirements:
     - python
     - hdf5
     - scons >=4.6
-    - ld_impl_linux-64         # [linux]
 
 test:
   requires:
