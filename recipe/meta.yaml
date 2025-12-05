@@ -8,11 +8,10 @@ package:
 source:
   git_url: '..'
 
-
 build:
   number: 0
   script_env:
-    - SETUPTOOLS_SCM_PRETEND_VERSION={{ VERSION }}
+    - SETUPTOOLS_SCM_PRETEND_VERSION={{ version }}
   script:
     - scons install --prefix=${PREFIX}  # [unix]
     - scons install --prefix=%PREFIX%  # [win]
@@ -20,42 +19,26 @@ build:
     - spade = spade._main:main
 
 requirements:
-  build:
+  host:
     - python {{ python }}
-    - python-build
     - numpy
+    - pip
+    - python-build
+    - scons >=4.6
+    - setuptools >=77
+    - setuptools_scm >=8
     - sphinx >=7.1
     - sphinx-argparse
     - sphinx-book-theme
     - sphinx-copybutton >=0.5.1
     - sphinx-design
     - sphinxcontrib-bibtex
-    - setuptools >=77
-    - setuptools_scm >=8
-    - {{ compiler('cxx') }}
-    - {{ stdlib('c') }}
-    - hdf5
-    - scons >=4.6
-    - ld_impl_linux-64         # [linux]
-  host:
-    - python {{ python }}
-    - numpy
-    - python-build
-    - pip
-    - setuptools >=77
-    - setuptools_scm >=8
-    - {{ compiler('cxx') }}
-    - {{ stdlib('c') }}
-    - hdf5
-    - scons >=4.6
-    - ld_impl_linux-64         # [linux]
   run:
-    - python
-    - {{ pin_compatible('numpy') }}
-    - scons >=4.6
     - {{ compiler('cxx') }}
     - {{ stdlib('c') }}
+    - python
     - hdf5
+    - scons >=4.6
     - ld_impl_linux-64         # [linux]
 
 test:
