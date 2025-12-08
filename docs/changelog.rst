@@ -12,6 +12,12 @@ Internal Changes
 ================
 - Parametrize the system tests against command-line provided abaqus commands instead of repeat calls to pytest. Cuts a
   few minutes off of the full test suite execution time (:issue:`138`, :merge:`140`). By `Kyle Brindley`_.
+- Test against Abaqus 2025 (:issue:`137`, :merge:`141`). By `Kyle Brindley`_.
+
+Enhancements
+============
+- Update default Abaqus version when no abaqus command is provided from 2024 to 2025 (:issue:`137`, :merge:`141`). By
+  `Kyle Brindley`_.
 
 *******************
 v0.4.7 (2025-12-08)
@@ -102,6 +108,11 @@ Bug fixes
 - Process elements differently for efficiency. Fix the code that writes variable length datasets into the hdf5 file
   (:issue:`102`, :merge:`100`). By `Prabhu Khalsa`_.
 
+Enhancements
+============
+- Write initial outline for VTKHDF format to eventually opening natively in Paraview (:issue:`97`, :merge:`97`).
+  By `Prabhu Khalsa`_.
+
 Documentation
 =============
 - Add default action expansion to SCons builder docstrings. By `Kyle Brindley`_.
@@ -122,14 +133,21 @@ Internal Changes
 - Decide that this project _must_ be upstream of WAVES, remove WAVES developer/runtime dependency TODO notes and replace
   with notes to never use WAVES as a depedency. By `Kyle Brindley`_.
 
-Enhancements
-============
-- Write initial outline for VTKHDF format to eventually opening natively in Paraview (:issue:`97`, :merge:`97`).
-  By `Prabhu Khalsa`_.
-
 *******************
 v0.4.0 (2025-04-30)
 *******************
+
+Enhancements
+============
+- Add command line option to specify odb format (:issue:`67`, :merge:`64`). By `Prabhu Khalsa`_.
+- Write odb and jobData as hdf5 attributes instead of datasets (:issue:`76`, :merge:`74`). By `Prabhu Khalsa`_.
+- Create mesh group in hdf5 file with data in extract format (:issue:`69`, :merge:`77`). By `Prabhu Khalsa`_.
+- Create HistoryOutputs group in hdf5 file with data in extract format (:issue:`84`, :merge:`83`). By `Prabhu Khalsa`_.
+- Create FieldOutputs group in hdf5 file with data in extract format (:issue:`89`, :merge:`88`). By `Prabhu Khalsa`_.
+- Change odb-format command line option to format option (:issue:`90`, :merge:`89`). By `Prabhu Khalsa`_.
+- Re-factor code to write history and field output at the same time as it's being processed
+  (:issue:`91`, :merge:`90`). By `Prabhu Khalsa`_.
+- Re-factor code to write field output data in a more efficient manner (:issue:`92`, :merge:`92`). By `Prabhu Khalsa`_.
 
 Internal Changes
 ================
@@ -154,18 +172,6 @@ Internal Changes
 - Store and clear memory differently for variable length datasets (:issue:`95`, :merge:`94`). By `Prabhu Khalsa`_.
 - Added some verbose and debug log messages (:issue:`96`, :merge:`95`). By `Prabhu Khalsa`_.
 
-Enhancements
-============
-- Add command line option to specify odb format (:issue:`67`, :merge:`64`). By `Prabhu Khalsa`_.
-- Write odb and jobData as hdf5 attributes instead of datasets (:issue:`76`, :merge:`74`). By `Prabhu Khalsa`_.
-- Create mesh group in hdf5 file with data in extract format (:issue:`69`, :merge:`77`). By `Prabhu Khalsa`_.
-- Create HistoryOutputs group in hdf5 file with data in extract format (:issue:`84`, :merge:`83`). By `Prabhu Khalsa`_.
-- Create FieldOutputs group in hdf5 file with data in extract format (:issue:`89`, :merge:`88`). By `Prabhu Khalsa`_.
-- Change odb-format command line option to format option (:issue:`90`, :merge:`89`). By `Prabhu Khalsa`_.
-- Re-factor code to write history and field output at the same time as it's being processed
-  (:issue:`91`, :merge:`90`). By `Prabhu Khalsa`_.
-- Re-factor code to write field output data in a more efficient manner (:issue:`92`, :merge:`92`). By `Prabhu Khalsa`_.
-
 *******************
 v0.3.7 (2025-02-06)
 *******************
@@ -187,13 +193,13 @@ Bug fixes
 =========
 - Wrapped all create functions used for h5 file with try/catch (:issue:`62`, :merge:`57`). By `Prabhu Khalsa`_.
 
-Internal Changes
-================
-- Pass log file to all internal write functions (:issue:`63`, :merge:`58`). By `Prabhu Khalsa`_.
-
 Enhancements
 ============
 - Change soft links for node data to hard links (:issue:`64`, :merge:`59`). By `Prabhu Khalsa`_.
+
+Internal Changes
+================
+- Pass log file to all internal write functions (:issue:`63`, :merge:`58`). By `Prabhu Khalsa`_.
 
 *******************
 v0.3.5 (2025-01-31)
@@ -212,6 +218,10 @@ Enhancements
 v0.3.4 (2024-12-10)
 *******************
 
+Enhancements
+============
+- Provide Abaqus 2024 support (:issue:`57`, :merge:`52`). By `Kyle Brindley`_.
+
 Internal Changes
 ================
 - Removed Proxy Settings (:issue:`53`, :merge:`47`). By `Sergio Cordova`_.
@@ -220,13 +230,16 @@ Internal Changes
 - Update minimum glibc/sysroot version runtime requirement for Abaqus 2024. Add Abaqus 2024 to the system test matrix
   (:issue:`57`, :merge:`52`). By `Kyle Brindley`_.
 
-Enhancements
-============
-- Provide Abaqus 2024 support (:issue:`57`, :merge:`52`). By `Kyle Brindley`_.
-
 *******************
 v0.3.3 (2024-12-06)
 *******************
+
+Enhancements
+============
+- Print minimal program flow when verbose is requested. Unify logging for verbose and debugging output (:issue:`39`,
+  :merge:`35`). By `Kyle Brindley`_.
+- Print more useful output when docs subcommand fails to open a web browser (:issue:`48`, :merge:`43`). By `Kyle
+  Brindley`_.
 
 Documentation
 =============
@@ -250,16 +263,14 @@ Internal Changes
   By `Kyle Brindley`_.
 - Check style guide against both flake8 and black autoformatter (:issue:`52`, :merge:`49`). By `Kyle Brindley`_.
 
-Enhancements
-============
-- Print minimal program flow when verbose is requested. Unify logging for verbose and debugging output (:issue:`39`,
-  :merge:`35`). By `Kyle Brindley`_.
-- Print more useful output when docs subcommand fails to open a web browser (:issue:`48`, :merge:`43`). By `Kyle
-  Brindley`_.
-
 *******************
 v0.3.2 (2024-05-30)
 *******************
+
+Enhancements
+============
+- Always compile in a unique, user-writable directory. Has the side effect of always compiling, but this only takes ~20
+  seconds and avoids race conditions during parallel execution (:issue:`37`, :merge:`33`). By `Kyle Brindley`_.
 
 Documentation
 =============
@@ -272,11 +283,6 @@ Internal Changes
 - Store the SCons signatures file(s) with the associated build directory (:issue:`36`, :merge:`32`). By `Kyle
   Brindley`_.
 
-Enhancements
-============
-- Always compile in a unique, user-writable directory. Has the side effect of always compiling, but this only takes ~20
-  seconds and avoids race conditions during parallel execution (:issue:`37`, :merge:`33`). By `Kyle Brindley`_.
-
 *******************
 v0.3.1 (2024-05-28)
 *******************
@@ -284,6 +290,11 @@ v0.3.1 (2024-05-28)
 Bug fixes
 =========
 - Return a non-zero exit code on errors in internal c++ implementation (:issue:`28`, :merge:`26`). By `Kyle Brindley`_.
+
+Enhancements
+============
+- Apply file overwrite option to both extracted H5 file and log file (:issue:`9`, :merge:`25`). By `Kyle Brindley`_.
+- Stream STDOUT and STDERR instead of printing at the end of execution (:issue:`28`, :merge:`26`). By `Kyle Brindley`_.
 
 Internal Changes
 ================
@@ -295,11 +306,6 @@ Internal Changes
   constructed internally by Python wrapper (:issue:`28`, :merge:`26`). By `Kyle Brindley`_.
 - Common c++ exception handling and exit messages (:issue:`29`, :merge:`27`). By `Kyle Brindley`_.
 - Build, test, and package against multiple versions of hdf5 (:issue:`31`, :merge:`28`). By `Kyle Brindley`_.
-
-Enhancements
-============
-- Apply file overwrite option to both extracted H5 file and log file (:issue:`9`, :merge:`25`). By `Kyle Brindley`_.
-- Stream STDOUT and STDERR instead of printing at the end of execution (:issue:`28`, :merge:`26`). By `Kyle Brindley`_.
 
 *******************
 v0.3.0 (2024-05-24)
@@ -362,6 +368,9 @@ New Features
 Bug fixes
 =========
 
+Enhancements
+============
+
 Documentation
 =============
 - Add documentation template (:issue:`6`, :merge:`7`). By `Kyle Brindley`_.
@@ -369,6 +378,3 @@ Documentation
 
 Internal Changes
 ================
-
-Enhancements
-============

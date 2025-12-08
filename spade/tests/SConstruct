@@ -25,7 +25,7 @@ env.Command(
     target=["viewer_tutorial.odb"],
     source=["SConstruct"],
     # TODO: Find the abaqus command instead of hardcoding for CI server(s)
-    action=["/apps/abaqus/Commands/abq2024 fetch -job ${TARGET.file}"],
+    action=["/apps/abaqus/Commands/abq2025 fetch -job ${TARGET.file}"],
 )
 env.SpadeExtract(
     target=["viewer_tutorial.h5"],
