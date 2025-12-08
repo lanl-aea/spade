@@ -26,13 +26,3 @@ def pytest_addoption(parser):
 def system_test_directory(request: pytest.FixtureRequest) -> pathlib.Path:
     """Return the argument of custom pytest ``--system-test-dir`` command-line option."""
     return request.config.getoption("--system-test-dir")
-
-
-@pytest.fixture
-def abaqus_command(request: pytest.FixtureRequest) -> pathlib.Path:
-    """Return the argument of custom pytest ``--abaqus-command`` command-line option.
-
-    Returns an empty list if the getopts default ``None`` is provided (no command line argument specified)
-    """
-    command_list = request.config.getoption("--abaqus-command")
-    return command_list

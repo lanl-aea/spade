@@ -103,21 +103,20 @@ for inp_file in inp_files:
 def pytest_generate_tests(metafunc):
     if not metafunc.function.__name__ == "test_system":
         return
-    if "abaqus_command" in metafunc.fixturenames:
+    else:
         abaqus_commands = metafunc.config.getoption("abaqus_command")
-        marks = metafunc.function.pytestmark
-        parameters = next((mark for mark in marks if mark.name == "parametrize"), None)
-        require_third_party = [case for case in parameters.args[1] if hasattr(case, "marks") and any(["require_third_party" in mark.name for mark in case.marks])]
-        import pdb; pdb.set_trace()
+        if not abaqus_commands:
+            abaqus_commands=["abaqus"]
+        metafunc.parametrize("abaqus_command", abaqus_commands)
 
 
 @pytest.mark.systemtest
 @pytest.mark.parametrize("commands", system_tests)
 def test_system(
     system_test_directory,
-    abaqus_command,
     request,
     commands: typing.Iterable[str],
+    abaqus_command,
 ) -> None:
     """Run the system tests in a temporary directory
 
@@ -128,9 +127,9 @@ def test_system(
        pytest --system-test-dir=/my/systemtest/output
 
     :param system_test_directory: custom pytest decorator defined in conftest.py
-    :param abaqus_command: custom pytest decorator defined in conftest.py
     :param request: pytest decorator with test case meta data
     :param commands: command string or list of strings for the system test
+    :param abaqus_command: custom pytest decorator defined in conftest.py
     """
     module_name = pathlib.Path(__file__).stem
     test_id = request.node.callspec.id
