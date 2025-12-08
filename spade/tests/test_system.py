@@ -119,7 +119,7 @@ def test_system(
     :param system_test_directory: custom pytest decorator defined in conftest.py
     :param request: pytest decorator with test case meta data
     :param commands: command string or list of strings for the system test
-    :param abaqus_command: custom pytest decorator defined in conftest.py
+    :param abaqus_command: custom pytest fixture defined in conftest.py
     """
     module_name = pathlib.Path(__file__).stem
     test_id = request.node.callspec.id
