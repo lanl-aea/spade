@@ -3,8 +3,9 @@ channels:
   - nodefaults
 
 dependencies:
-  - boa
-  - pytest
+  - python
+  - black 
+  - flake8
   - scons >=4.6
   - setuptools >=77
   - setuptools_scm >=8

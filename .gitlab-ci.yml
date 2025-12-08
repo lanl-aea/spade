@@ -1,19 +1,16 @@
+# Do not create pipelines for non-default branches
 workflow:
   rules:
     - if: $CI_COMMIT_TAG
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
       when: never
 
 stages:
-  - environment
   - test
   - deploy
-
-variables:
-  GIT_STRATEGY: clone
 
 default:
   tags:
@@ -21,72 +18,45 @@ default:
     - aea
     - linux
 
-before_script:
-  - package_name='spade'
-  # Set the AEA compute environment deployment directory by host
-  - aea_projects="/projects"
-  - if [ $(hostname) == ??-rfe?.lanl.gov ]; then aea_projects="/usr/projects/ea"; fi
-  - aea_compute_path="${aea_projects}/aea_compute"
-  - aea_modulefiles="${aea_compute_path}/modulefiles"
-  - module use ${aea_modulefiles}
-  - module load texlive
-  # Start with an AEA environment to put Conda on PATH
-  - project_environment='spade-env'
-  - environment_choices="aea-nightly aea-quarterly aea-release"
-  - for env in ${environment_choices}; do if [[ -d "${aea_compute_path}/${env}" ]]; then environment=${env}; break; fi; done
-  - echo ${environment}
-  - module load ${environment}
-  # Activate CI environment if available. If not, rely on environment job running before other jobs.
-  - module use ${PWD}/modulefiles
-  - project_environment="${package_name}-env"
-  - environment_path="${aea_compute_path}/${project_environment}"
-  - echo ${environment_path}
-  - if [[ -d ${environment_path} ]]; then module unload ${environment}; module load ${project_environment}; fi
-  - conda info
-  - conda_artifacts_directory='conda-bld'
+.nix-job-environment: &nix-job-environment
+  variables:
+    GIT_STRATEGY: clone
+    conda_installation: "/apps/miniconda3/3.13-miniconda-25.5.1"
+    environment_file: "environment.yml"
+    conda_artifacts_directory: "conda-bld"
+  before_script:
+    - function check_directory_variable () { echo "$1"; if [[ -z $1 ]] || [[ ! -d $1 ]]; then exit 1; fi; }
+    - check_directory_variable "${conda_installation}"
+    - echo ${environment_file}
+    - if [[ -z ${environment_file} ]]; then exit 1; fi
+    - echo ${conda_artifacts_directory}
+    - if [[ -z ${conda_artifacts_directory} ]]; then exit 1; fi
+    # Common job variables
+    - prefix="$PWD/conda-environment"
+    - conda_pkgs_dirs="$PWD/conda-pkgs"
+    - echo ${prefix}
+    - echo ${conda_pkgs_dirs}
+    - if [[ -z ${prefix} ]]; then exit 1; fi
+    - if [[ -z ${conda_pkgs_dirs} ]]; then exit 1; fi
+    # Put texlive on PATH for AEA/HPC
+    - module load texlive || true
+    # Environment creation
+    - export CONDA_PKGS_DIRS="${conda_pkgs_dirs}"
+    - source ${conda_installation}/etc/profile.d/conda.sh
+    - conda info
+    - conda env create --prefix ${prefix} --file ${environment_file} --yes --solver=libmamba
+    - conda activate ${prefix}
+    - conda info
+    - conda env export
+  after_script:
+    - rm -r $PWD/conda-environment $PWD/conda-pkgs || true
 
-aea-environment:
-  stage: environment
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  script:
-    # Always build from the base/aea compute environment with boa/libmamba
-    - module unload ${project_environment}
-    - module load ${environment}
-    # Don't rebuild environment for merge request pipelines unless the environment is missing
-    - if [[ -d "${environment_path}" ]]; then exists=true; else exists=false; fi
-    - if [[ $CI_PIPELINE_SOURCE == "merge_request_event" ]] && ${exists}; then exit 0; fi
-    # Don't rebuild environment for main unless the environment file has changed or the environment doesn't exist
-    - files=$(git diff --name-only ${CI_COMMIT_SHA} ${CI_COMMIT_BEFORE_SHA}) || true
-    - if [[ $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH ]]; then production=true; else production=false; fi
-    - if [[ "${files}" == *"environment.yml"* ]]; then modified=true; else modified=false; fi
-    - if ${production} && ${exists} && ! ${modified}; then exit 0; fi
-    # Re-build the Conda environment on changes to environment files
-    - conda env create --prefix ${environment_path} --file environment.yml --solver=libmamba --force
-    # Remove write permissions from group to avoid accidental environment changes
-    - chmod -R 755 ${environment_path}
-    # place the common modulefiles in an accessible location
-    - cp ${PWD}/modulefiles/* ${aea_modulefiles}
-
-aea-developer-test:
-  stage: test
+.developer-test: &developer-test
   script:
     - abaqus_command='--abaqus-command=/apps/abaqus/Commands/abq2024 --abaqus-command=/apps/abaqus/Commands/abq2023 --abaqus-command=/apps/abaqus/Commands/abq2022'
     - echo ${abaqus_command}
     - scons regression ${abaqus_command}
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
-  artifacts:
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: build/pytest/coverage.xml
-
-aea-style:
-  stage: test
-  script:
-    - scons flake8 black-check
 
 .conda-build: &conda-build
   variables:
@@ -100,22 +70,43 @@ aea-style:
     # Override default permissions. Set group to rx with no write permissions.
     - umask 0022
     - mkdir ${conda_artifacts_directory}
-    - croot="/scratch/$USER/$(basename $PWD)/${conda_artifacts_directory}"
-    - VERSION=$(python -m setuptools_scm) conda mambabuild ${recipe_directory} --channel conda-forge --no-anaconda-upload --croot ${croot} --output-folder ${conda_artifacts_directory} ${variants}
+    - VERSION=$(python -m setuptools_scm) conda mambabuild ${recipe_directory} --channel conda-forge --no-anaconda-upload --output-folder ${conda_artifacts_directory} ${variants}
     # Help downstream deploy pipeline find this job by ID
     - tag_job_file_root="/nettmp/aea_service"
     - tag_job_file_parent="${tag_job_file_root}/${CI_PROJECT_PATH}"
     - tag_job_file="${tag_job_file_parent}/tag_conda_build.txt"
     - if [[ ! -z ${CI_COMMIT_TAG} ]] && [[ -d ${tag_job_file_root} ]]; then mkdir -p ${tag_job_file_parent}; echo ${CI_JOB_ID} > ${tag_job_file}; fi
-    # Cleanup
-    - conda build purge --croot ${croot}
+
+.style-guide: &style-guide
+  script:
+    - scons flake8 black-check
+
+aea-developer-test:
+  extends:
+    - .nix-job-environment
+    - .developer-test
+  stage: test
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/pytest/coverage.xml
+
+aea-style-guide:
+  extends:
+    - .nix-job-environment
+    - .style-guide
+  stage: test
+  variables:
+    environment_file: "style.yml"
 
 aea-conda-build:
   extends:
+    - .nix-job-environment
     - .conda-build
   stage: test
-  dependencies: []
   variables:
+    environment_file: "conda-build.yml"
     recipe_directory: "recipe"
   artifacts:
     expire_in: '2 hrs'
@@ -139,11 +130,15 @@ aea-conda-deploy:
     strategy: depend
 
 release:
+  extends:
+    - .nix-job-environment
   stage: deploy
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - if: $CI_COMMIT_TAG
+  variables:
+    environment_file: "release.yml"
   script:
     # Create the release notes. Assumes changelog contains section headers with version number in reverse chronological
     # order as:
@@ -175,18 +170,16 @@ release:
 # It MUST be called pages
 pages:
   stage: deploy
-  dependencies: []
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_COMMIT_TAG
+  dependencies:
+    - "aea-developer-test"
   script:
-    - rm -rf public && mkdir -p public
-    # Ensure the ``_version.py`` file is created
-    # TODO: I don't think the setuptools_scm call is necessary anymore
-    - python -m setuptools_scm
-    - scons html --clean && scons html
+    - rm -rf public
+    - mkdir -p public
     - cp -r build/docs/html/* public/
   artifacts:
     paths:

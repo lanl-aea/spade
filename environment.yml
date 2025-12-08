@@ -7,10 +7,8 @@ dependencies:
   - black
   - cxx-compiler
   - flake8
-  - git-lfs>=3.6.1
-  - glab
+  - git-lfs >=3.6.1
   - hdf5
-  - ld_impl_linux-64
   - pip
   - pytest
   - pytest-cov

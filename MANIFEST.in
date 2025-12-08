@@ -2,6 +2,9 @@ recursive-include spade/docs *
 recursive-include spade/tutorials *
 recursive-exclude spade/docs/.doctrees *
 recursive-exclude build *
+recursive-exclude install *
+recursive-exclude conda-environment *
+recursive-exclude conda-pkgs *
 recursive-exclude */*/build *
 recursive-exclude */*/*/build* *
 recursive-exclude *cache* *
