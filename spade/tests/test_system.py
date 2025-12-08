@@ -58,7 +58,7 @@ if installed:
 # System tests that require third-party software. These should be marked "pytest.mark.require_third_party".
 # TODO: add tutorials
 # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/22
-spade_options = "--recompile --force-overwrite"
+spade_options = "--recompile --force-overwrite --verbose --debug"
 for odb_file in odb_files:
     system_tests.append(
         pytest.param(
