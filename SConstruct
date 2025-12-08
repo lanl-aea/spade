@@ -48,7 +48,6 @@ AddOption(
     metavar="DIR",
     help="SCons installation pip prefix ``--prefix``. Relative or absolute path. (default: '%default')",
 )
-default_abaqus_command = "/apps/abaqus/Commands/abq2024"
 AddOption(
     "--abaqus-command",
     dest="abaqus_command",
@@ -56,7 +55,7 @@ AddOption(
     type="string",
     action="append",
     metavar="COMMAND",
-    help=f"Override for the Abaqus command. Repeat to specify more than one (default: '[{default_abaqus_command}]')",
+    help="Override for the Abaqus command. Repeat to specify more than one (default: ['abaqus'])",
 )
 
 env = Environment(
@@ -66,23 +65,12 @@ env = Environment(
 )
 for key, value in project_variables.items():
     env[key] = value
-env["abaqus_command"] = env["abaqus_command"] if env["abaqus_command"] is not None else [default_abaqus_command]
+# Set unspecified default to an empty list. Cannot default to an empty list, because lists are mutable objects.
+if env["abaqus_command"] is None:
+    env["abaqus_command"] = ["abaqus"]
 env["ENV"]["PYTHONDONTWRITEBYTECODE"] = 1
 
 build_directory = pathlib.Path(GetOption("build_directory"))
-
-# Find third-party software
-abaqus_environments = dict()
-for command in env["abaqus_command"]:
-    # TODO: more robust version/name recovery without CI server assumptions
-    version = pathlib.Path(command).name
-    abaqus_environments[version] = env.Clone()
-    conf = abaqus_environments[version].Configure()
-    found_command = conf.CheckProg(command)
-    conf.Finish()
-    abaqus_environments[version]["abaqus"] = found_command
-    if found_command is not None:
-        abaqus_environments[version].AppendENVPath("PATH", pathlib.Path(found_command).parent, delete_existing=False)
 
 # Build
 installed_documentation = package_directory / "docs"
@@ -152,7 +140,7 @@ for workflow in workflow_configurations:
     SConscript(
         f"{workflow}.scons",
         variant_dir=build_directory / workflow,
-        exports={"env": env, "abaqus_environments": abaqus_environments},
+        exports={"env": env},
         duplicate=False,
     )
 

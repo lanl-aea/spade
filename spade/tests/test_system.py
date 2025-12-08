@@ -104,9 +104,9 @@ for inp_file in inp_files:
 @pytest.mark.parametrize("commands", system_tests)
 def test_system(
     system_test_directory,
-    abaqus_command,
     request,
     commands: typing.Iterable[str],
+    abaqus_command,
 ) -> None:
     """Run the system tests in a temporary directory
 
@@ -117,9 +117,9 @@ def test_system(
        pytest --system-test-dir=/my/systemtest/output
 
     :param system_test_directory: custom pytest decorator defined in conftest.py
-    :param abaqus_command: custom pytest decorator defined in conftest.py
     :param request: pytest decorator with test case meta data
     :param commands: command string or list of strings for the system test
+    :param abaqus_command: custom pytest fixture defined in conftest.py
     """
     module_name = pathlib.Path(__file__).stem
     test_id = request.node.callspec.id
