@@ -19,11 +19,17 @@ pytest_node = env.Command(
     target=["coverage.xml", Dir("./coverage")],
     source=pytest_source_list,
     action=[
-        "${pytest_command} -vvv -m 'not systemtest' ${coverage}",
-        "${pytest_command} -m 'systemtest and not require_third_party'",
+        (
+            "${pytest_command} -vvv -m 'not systemtest'"
+            " --cov --cov-report=term --cov-report=xml:${TARGETS[0].abspath} --cov-report=html:${TARGETS[1].abspath}"
+        ),
+        (
+            "${pytest_command} -v --no-showlocals --tb=short -m 'systemtest and not require_third_party'"
+            " --system-test-dir=${system_test_directory}"
+        ),
     ],
     pytest_command=pytest_command,
-    coverage="--cov --cov-report=term --cov-report=xml:${TARGETS[0].abspath} --cov-report=html:${TARGETS[1].abspath}",
+    system_test_directory=build_directory,
 )
 env.Alias("pytest", pytest_node)
 env.Clean("pytest", Dir("./coverage"))
@@ -34,11 +40,11 @@ env.AlwaysBuild(pytest_node)
 # System tests
 source = pytest_source_list + [env["package_directory"] / "tests/test_system.py"]
 systemtest_node = env.Command(
-    target=[f"systemtest_results.xml"],
+    target=["systemtest_results.xml"],
     source=source,
     action=[
         (
-            "${pytest_command} -v --no-showlocals -m 'systemtest and require_third_party' --tb=short --cache-clear"
+            "${pytest_command} -v --no-showlocals --tb=short --cache-clear -m 'systemtest and require_third_party'"
             " --cov --cov-report=xml:${TARGET.abspath} "
             " --system-test-dir=${system_test_directory}"
             " ${abaqus_command}"
