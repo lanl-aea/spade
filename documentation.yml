@@ -3,7 +3,6 @@ channels:
 
 dependencies:
   - hdf5
-  - numpy
   - scons >=4.6
   - setuptools >=77
   - setuptools_scm >=8

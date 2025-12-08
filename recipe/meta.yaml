@@ -21,7 +21,6 @@ build:
 requirements:
   host:
     - python {{ python }}
-    - numpy
     - pip
     - python-build
     - scons >=4.6

@@ -23,7 +23,6 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "hdf5",
-    "numpy >=2",
     "scons",
 ]
 
