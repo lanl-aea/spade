@@ -17,7 +17,7 @@ def pytest_addoption(parser):
     parser.addoption(
         "--abaqus-command",
         action="append",
-        default=None,
+        default=[],
         help="Abaqus command for system test CLI pass through",
     )
 
@@ -35,6 +35,4 @@ def abaqus_command(request: pytest.FixtureRequest) -> pathlib.Path:
     Returns an empty list if the getopts default ``None`` is provided (no command line argument specified)
     """
     command_list = request.config.getoption("--abaqus-command")
-    if command_list is None:
-        command_list = []
     return command_list

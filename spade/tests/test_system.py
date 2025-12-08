@@ -100,6 +100,17 @@ for inp_file in inp_files:
     )
 
 
+def pytest_generate_tests(metafunc):
+    if not metafunc.function.__name__ == "test_system":
+        return
+    if "abaqus_command" in metafunc.fixturenames:
+        abaqus_commands = metafunc.config.getoption("abaqus_command")
+        marks = metafunc.function.pytestmark
+        parameters = next((mark for mark in marks if mark.name == "parametrize"), None)
+        require_third_party = [case for case in parameters.args[1] if hasattr(case, "marks") and any(["require_third_party" in mark.name for mark in case.marks])]
+        import pdb; pdb.set_trace()
+
+
 @pytest.mark.systemtest
 @pytest.mark.parametrize("commands", system_tests)
 def test_system(
