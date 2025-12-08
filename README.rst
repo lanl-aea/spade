@@ -139,21 +139,7 @@ Compute Environment
 
 .. compute-env-start-do-not-remove
 
-This repository requires Abaqus and Cubit to be installed and on the system ``PATH``. If you use an AEA linux computer,
-then the project continuous-integration environment is available as a development environment.
-
-On an AEA Linux Machine
------------------------
-
-.. code-block:: bash
-
-   [roppenheimer@sstbigbird spade]$ module use /projects/aea_compute/modulefiles
-   [roppenheimer@sstbigbird spade]$ module load spade-env
-
-Local development environment
------------------------------
-
-You can also create a local environment with the Conda package manager as
+You can create a local environment with the Conda package manager as
 
 .. code-block::
 
@@ -189,11 +175,8 @@ If the CI job fails, you can run the following and commit the changes
 
     $ scons black-format
 
-It is also possible to run ``flake8`` and ``black`` directly, but the SCons aliases do extra work with the
-``find_shebang.py`` script to identify files that should meet the style guide, but don't have the ``*.py`` extension,
-e.g. ``SConstruct`` and ``SConscript`` files. The ``find_shebang.py`` script relies on developers putting the Python
-shebang in SCons configuration files, which was previously done to help text editors and IDEs identify SCons
-configuration files as using the Python syntax highlighting.
+It is also possible to run ``flake8`` and ``black`` directly, but the SCons aliases include the canonical options for
+the continuous integration jobs.
 
 The full list of available aliases can be found as ``scons -h``.
 
