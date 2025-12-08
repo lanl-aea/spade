@@ -12,6 +12,7 @@ Internal Changes
 ================
 - Updated build and environment files to use python greater than or equal to 3.10 as 3.9 is end of life 
   (:issue:`131`, :merge:`136`).  By `Prabhu Khalsa`_.
+- Clean up conda-recipe for minimum build and runtime requirements (:merge:`138`). By `Kyle Brindley`_.
 
 *******************
 v0.4.6 (2025-09-29)

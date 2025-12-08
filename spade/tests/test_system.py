@@ -5,6 +5,7 @@ import string
 import typing
 import inspect
 import pathlib
+import platform
 import tempfile
 import subprocess
 from importlib.metadata import version, PackageNotFoundError
@@ -22,6 +23,7 @@ inp_files = [
     "selfcontact_gask",
     "erode_proj_and_plate",
 ]
+testing_macos = True if platform.system().lower() == "darwin" else False
 
 # If executing in repository, add package to PYTHONPATH
 try:
@@ -58,7 +60,7 @@ if installed:
 # System tests that require third-party software. These should be marked "pytest.mark.require_third_party".
 # TODO: add tutorials
 # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/22
-spade_options = "--recompile --force-overwrite"
+spade_options = "--recompile --force-overwrite --verbose --debug"
 for odb_file in odb_files:
     system_tests.append(
         pytest.param(
@@ -68,7 +70,10 @@ for odb_file in odb_files:
                     f"${{spade_command}} extract {odb_file} --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
                 ),
             ],
-            marks=pytest.mark.require_third_party,
+            marks=[
+                pytest.mark.require_third_party,
+                pytest.mark.skipif(testing_macos, reason="Abaqus does not install on macOS"),
+            ],
             id=odb_file,
         )
     )
@@ -86,7 +91,10 @@ for inp_file in inp_files:
                     f"${{spade_command}} extract {inp_file}.odb --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
                 ),
             ],
-            marks=pytest.mark.require_third_party,
+            marks=[
+                pytest.mark.require_third_party,
+                pytest.mark.skipif(testing_macos, reason="Abaqus does not install on macOS"),
+            ],
             id=inp_file,
         )
     )
@@ -141,7 +149,7 @@ def test_system(
             command = shlex.split(command)
             subprocess.check_output(command, env=env, cwd=temp_path).decode("utf-8")
     except Exception as err:
-        raise Exception
+        raise err
     else:
         temp_directory.cleanup()
 

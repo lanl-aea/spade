@@ -8,11 +8,10 @@ package:
 source:
   git_url: '..'
 
-
 build:
   number: 0
   script_env:
-    - SETUPTOOLS_SCM_PRETEND_VERSION={{ VERSION }}
+    - SETUPTOOLS_SCM_PRETEND_VERSION={{ version }}
   script:
     - scons install --prefix=${PREFIX}  # [unix]
     - scons install --prefix=%PREFIX%  # [win]
@@ -20,43 +19,25 @@ build:
     - spade = spade._main:main
 
 requirements:
-  build:
+  host:
     - python {{ python }}
+    - pip
     - python-build
-    - numpy
+    - scons >=4.6
+    - setuptools >=77
+    - setuptools_scm >=8
     - sphinx >=7.1
     - sphinx-argparse
     - sphinx-book-theme
     - sphinx-copybutton >=0.5.1
     - sphinx-design
     - sphinxcontrib-bibtex
-    - setuptools >=77
-    - setuptools_scm >=8
-    - {{ compiler('cxx') }}
-    - {{ stdlib('c') }}
-    - hdf5
-    - scons >=4.6
-    - ld_impl_linux-64         # [linux]
-  host:
-    - python {{ python }}
-    - numpy
-    - python-build
-    - pip
-    - setuptools >=77
-    - setuptools_scm >=8
-    - {{ compiler('cxx') }}
-    - {{ stdlib('c') }}
-    - hdf5
-    - scons >=4.6
-    - ld_impl_linux-64         # [linux]
   run:
-    - python
-    - {{ pin_compatible('numpy') }}
-    - scons >=4.6
     - {{ compiler('cxx') }}
     - {{ stdlib('c') }}
+    - python
     - hdf5
-    - ld_impl_linux-64         # [linux]
+    - scons >=4.6
 
 test:
   requires:
@@ -64,12 +45,6 @@ test:
     - pytest-xdist
   imports:
     - spade
-  commands:
-    # Test as-installed project unit tests
-    - working_directory=${PWD}
-    - cd $SP_DIR/$PKG_NAME
-    - pytest -n 4 -vvv -m "not require_third_party"
-    - pytest -n 4 -v --no-showlocals -m "systemtest and require_third_party" --tb=short --system-test-dir=${working_directory} --abaqus-command=/apps/abaqus/Commands/abq2024
 
 about:
   home: https://re-git.lanl.gov/aea/python-projects/spade
