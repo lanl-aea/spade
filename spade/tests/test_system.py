@@ -106,7 +106,7 @@ def pytest_generate_tests(metafunc):
     else:
         abaqus_commands = metafunc.config.getoption("abaqus_command")
         if not abaqus_commands:
-            abaqus_commands=["abaqus"]
+            abaqus_commands = ["abaqus"]
         metafunc.parametrize("abaqus_command", abaqus_commands)
 
 
