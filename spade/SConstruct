@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 import os
 import pathlib
+import shutil
+import sys
 
 import _utilities
 import _settings
@@ -50,9 +52,15 @@ abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_ab
 env["abaqus_make_command"] = f"{abaqus_command} make job={_settings._project_name_cpp}.cpp"
 
 # Compiler options and settings
-gpp_path = pathlib.Path(env["CXX"]).resolve().parent.parent
+compiler_string = shutil.which(env["CXX"], path=env["ENV"]["PATH"])
+if compiler_string is None:
+    sys.exit(f"Could not find CXX compiler '{env['CXX']}' on PATH '{env['ENV']['PATH']}'")
+else:
+    gpp_path = pathlib.Path(compiler_string).parent.parent
 gpp_lib = gpp_path / "lib"
 gpp_include = gpp_path / "include"
+if not gpp_lib.exists() or not gpp_include.exists():
+    sys.exit(f"Did not find 'lib' or 'include' for compiler '{compiler_path}' at '{gpp_lib}' or '{gpp_include}'")
 
 env["odb_flags"] = (
     _settings._compiler_flags + f"-I{abaqus_code_include} -I{abaqus_installation} " + f"-I{gpp_include} -I. -I{gpp_lib}"
