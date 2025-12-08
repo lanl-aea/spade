@@ -150,7 +150,7 @@ SConscript(
 workflow_configurations = ["pytest", "style"]
 for workflow in workflow_configurations:
     SConscript(
-        workflow,
+        f"{workflow}.scons",
         variant_dir=build_directory / workflow,
         exports={"env": env, "abaqus_environments": abaqus_environments},
         duplicate=False,

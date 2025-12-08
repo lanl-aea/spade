@@ -56,4 +56,4 @@ target-version = ["py310", "py311", "py312", "py313"]
 extend-exclude = ".txt|.toml|.yaml|.csv"
 force-exclude = "build*/|install*/|conda-environment/|conda-pkgs/"
 line-length = 120
-include = "SConstruct|SConscript|.py"
+include = ".py|SConstruct|SConscript|.scons"
