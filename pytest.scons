@@ -20,6 +20,7 @@ pytest_node = env.Command(
     source=pytest_source_list,
     action=[
         "${pytest_command} -vvv -m 'not systemtest' ${coverage}",
+        "${pytest_command} -m 'systemtest and not require_third_party'",
     ],
     pytest_command=pytest_command,
     coverage="--cov --cov-report=term --cov-report=xml:${TARGETS[0].abspath} --cov-report=html:${TARGETS[1].abspath}",
@@ -32,24 +33,22 @@ env.AlwaysBuild(pytest_node)
 
 # System tests
 source = pytest_source_list + [env["package_directory"] / "tests/test_system.py"]
-systemtest_node = environment.Command(
+systemtest_node = env.Command(
     target=[f"systemtest_results.xml"],
     source=source,
     action=[
         (
-            "${pytest_command} -v --no-showlocals -m 'systemtest ${extra_markers}' --tb=short --cache-clear"
+            "${pytest_command} -v --no-showlocals -m 'systemtest and require_third_party' --tb=short --cache-clear"
             " --cov --cov-report=xml:${TARGET.abspath} "
             " --system-test-dir=${system_test_directory}"
             " ${abaqus_command}"
         ),
     ],
     pytest_command=pytest_command,
-    extra_markers=extra_markers,
     system_test_directory=build_directory,
     abaqus_command=" ".join(f'--abaqus-command="{command}"' for command in env["abaqus_command"]),
 )
-environment.Alias("systemtest", systemtest_node)
-environment.Alias(f"systemtest_{alias_suffix}", systemtest_node)
-environment.Clean(systemtest_node, [Dir(build_directory)])
-environment.Alias("regression", systemtest_node)
-environment.AlwaysBuild(systemtest_node)
+env.Alias("systemtest", systemtest_node)
+env.Clean(systemtest_node, [Dir(build_directory)])
+env.Alias("regression", systemtest_node)
+env.AlwaysBuild(systemtest_node)
