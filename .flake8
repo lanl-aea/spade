@@ -1,4 +1,4 @@
 [flake8]
-exclude = build,tests,test_vertices.py
+exclude = build,tests,test_vertices.py,conda-environment,conda-pkgs
 extend-ignore = F821
 max-line-length = 120
