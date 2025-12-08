@@ -141,7 +141,7 @@ def test_system(
             command = shlex.split(command)
             subprocess.check_output(command, env=env, cwd=temp_path).decode("utf-8")
     except Exception as err:
-        raise Exception
+        raise err
     else:
         temp_directory.cleanup()
 
