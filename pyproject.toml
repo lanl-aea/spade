@@ -54,6 +54,6 @@ addopts = "--tb=long --showlocals --failed-first --strict-markers -m 'not system
 [tool.black]
 target-version = ["py310", "py311", "py312", "py313"]
 extend-exclude = ".txt|.toml|.yaml|.csv"
-force-exclude = "build*/"
+force-exclude = "build*/|install*/|conda-environment/|conda-pkgs/"
 line-length = 120
 include = "SConstruct|SConscript|.py"
