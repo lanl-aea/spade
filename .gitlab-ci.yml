@@ -53,9 +53,7 @@ default:
 
 .developer-test: &developer-test
   script:
-    - abaqus_command='--abaqus-command=/apps/abaqus/Commands/abq2024 --abaqus-command=/apps/abaqus/Commands/abq2023 --abaqus-command=/apps/abaqus/Commands/abq2022'
-    - echo ${abaqus_command}
-    - scons regression ${abaqus_command}
+    - scons regression --abaqus-command=/apps/abaqus/Commands/abq2024 --abaqus-command=/apps/abaqus/Commands/abq2023 --abaqus-command=/apps/abaqus/Commands/abq2022
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
 
 .conda-build: &conda-build
