@@ -22,7 +22,7 @@ Example
 
    .. code-block::
 
-      $ /apps/abaqus/Commands/abq2024 fetch -job viewer_tutorial.odb
+      $ /apps/abaqus/Commands/abq2025 fetch -job viewer_tutorial.odb
 
 2. Extract to H5 with |PROJECT|
 

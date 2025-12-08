@@ -12,7 +12,7 @@ _project_source = "src"
 _abaqus_environment_file = "abaqus_v6.env"
 _additional_abaqus_prefix = "SIMULIA/EstProducts/"
 _abaqus_suffix = "linux_a64/code/bin/"
-_default_abaqus_commands = [pathlib.Path("abaqus"), pathlib.Path("abq2024")]
+_default_abaqus_commands = [pathlib.Path("abaqus"), pathlib.Path("abq2025")]
 _compiler_flags = (
     "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE "
     "-DABQ_LINUX -DABQ_LNX86_64 -DSMA_GNUC -DFOR_TRAIL -DHAS_BOOL "
