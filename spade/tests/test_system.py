@@ -100,16 +100,6 @@ for inp_file in inp_files:
     )
 
 
-def pytest_generate_tests(metafunc):
-    if not metafunc.function.__name__ == "test_system":
-        return
-    else:
-        abaqus_commands = metafunc.config.getoption("abaqus_command")
-        if not abaqus_commands:
-            abaqus_commands = ["abaqus"]
-        metafunc.parametrize("abaqus_command", abaqus_commands)
-
-
 @pytest.mark.systemtest
 @pytest.mark.parametrize("commands", system_tests)
 def test_system(
