@@ -87,6 +87,8 @@ aea-developer-test:
     - .developer-test
   stage: test
   artifacts:
+    paths:
+      - build/docs/html
     reports:
       coverage_report:
         coverage_format: cobertura
