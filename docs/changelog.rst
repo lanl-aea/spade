@@ -8,6 +8,11 @@ Changelog
 v0.4.8 (unreleased)
 *******************
 
+Internal Changes
+================
+- Parametrize the system tests against command-line provided abaqus commands instead of repeat calls to pytest. Cuts a
+  few minutes off of the full test suite execution time (:issue:`138`, :merge:`140`). By `Kyle Brindley`_.
+
 *******************
 v0.4.7 (2025-12-08)
 *******************
