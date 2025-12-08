@@ -72,19 +72,6 @@ env["ENV"]["PYTHONDONTWRITEBYTECODE"] = 1
 
 build_directory = pathlib.Path(GetOption("build_directory"))
 
-# Find third-party software
-abaqus_environments = dict()
-for command in env["abaqus_command"]:
-    # TODO: more robust version/name recovery without CI server assumptions
-    version = pathlib.Path(command).name
-    abaqus_environments[version] = env.Clone()
-    conf = abaqus_environments[version].Configure()
-    found_command = conf.CheckProg(command)
-    conf.Finish()
-    abaqus_environments[version]["abaqus"] = found_command
-    if found_command is not None:
-        abaqus_environments[version].AppendENVPath("PATH", pathlib.Path(found_command).parent, delete_existing=False)
-
 # Build
 installed_documentation = package_directory / "docs"
 packages = env.Command(
@@ -153,7 +140,7 @@ for workflow in workflow_configurations:
     SConscript(
         f"{workflow}.scons",
         variant_dir=build_directory / workflow,
-        exports={"env": env, "abaqus_environments": abaqus_environments},
+        exports={"env": env},
         duplicate=False,
     )
 
