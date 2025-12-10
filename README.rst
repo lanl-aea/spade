@@ -140,16 +140,36 @@ Compute Environment
 
 .. compute-env-start-do-not-remove
 
-You can create a local developer environment with the Conda package manager as. When running the system tests with
-Abaqus, `spade`_ requires a higher minimum version of ``glibc`` than the standard ``2.17`` used by the `Conda`_ package
-manager and ``conda-forge`` channel. The current minimum version of ``glibc`` is found in the Gitlab-CI configuration.
-The ``glibc`` environment variable must be provided every time conda operates on the conda environment. For more details
-see the `Conda virtual packages`_ documentation.
+You can create a local developer environment with the Conda package manager as below.
+
+.. code-block::
+
+   [roppenheimer@mymachine spade]$ conda env create --file environment.yml --name spade-env
+   [roppenheimer@mymachine spade]$ conda activate spade-env
+
+When running the system tests with Abaqus on Linux, Abaqus (and therefore `spade`_) requires a higher minimum version of
+``glibc`` than the standard ``2.17`` used by the `Conda`_ package manager and ``conda-forge`` channel. The current
+minimum version of ``glibc`` is found in the Gitlab-CI configuration.
 
 .. code-block::
 
    [roppenheimer@mymachine spade]$ grep CONDA_OVERRIDE_GLIBC .gitlab-ci.yml *.yml
    .gitlab-ci.yml:    - export CONDA_OVERRIDE_GLIBC="2.28"
+
+As of 2025, most conda environments on Linux will install a new enough version of ``glibc`` without user intervention.
+You can check the current ``glibc`` version from an active conda environment with
+
+.. code-block::
+
+   [roppenheimer@mymachine spade]$ conda info | grep -i "glibc"
+                             __glibc=2.34=0
+
+If your conda environment reports an older version of ``glibc``, you can override the minimum ``glibc`` version with the
+``CONDA_OVERRIDE_GLIBC`` environment variable. This environment variable must be provided every time conda operates on
+the conda environment, so this is only recommended when conda does not install a new enough version of ``glibc`` by
+default. For more details see the `Conda virtual packages`_ documentation.
+
+.. code-block::
 
    [roppenheimer@mymachine spade]$ CONDA_OVERRIDE_GLIBC="2.28" conda env create --file environment.yml --name spade-env
    [roppenheimer@mymachine spade]$ conda activate spade-env
