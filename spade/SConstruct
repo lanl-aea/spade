@@ -38,7 +38,7 @@ AddOption(
 user_env = os.environ.copy()
 # VVV FIXME: figure out the official conda solution to finding c++ compiler on Windows
 if platform.system().lower() == "windows":
-    cxx = shutil.which("clang-cpp", path=user_env["PATH"])
+    cxx = pathlib.Path(shutil.which("clang-cpp", path=user_env["PATH"])).as_posix()
     cxxflags = "--target=x86_64-w64-windows-gnu"
 else:
     cxx = user_env["CXX"]
@@ -71,11 +71,11 @@ if not gpp_lib.exists() or not gpp_include.exists():
     sys.exit(f"Did not find 'lib' or 'include' for compiler '{compiler_path}' at '{gpp_lib}' or '{gpp_include}'")
 
 env["odb_flags"] = (
-    _settings._compiler_flags + f"-I{abaqus_code_include} -I{abaqus_installation} " + f"-I{gpp_include} -I. -I{gpp_lib}"
+    _settings._compiler_flags + f" -I{abaqus_code_include.as_posix()} -I{abaqus_installation.as_posix()} -I{gpp_include.as_posix()} -I. -I{gpp_lib.as_posix()}"
 )
-env["abaqus_link_flags"] = _settings._link_flags + f"-L{gpp_lib} -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
+env["abaqus_link_flags"] = _settings._link_flags + f" -L{gpp_lib.as_posix()} -Wl,-rpath,{abaqus_code_bin.as_posix()},-rpath,{gpp_lib.as_posix()}"
 # TODO: May wish to confirm that h5c++ is definitely in the same place as gpp (lib and include)
-h5_flags = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
+h5_flags = f" -fPIC -I{gpp_include.as_posix()} -I. -I{gpp_lib.as_posix()}"
 env["SPADEOBJECTCXXFLAGS"] = env.ParseFlags(env["odb_flags"] + h5_flags)
 
 # Configure tasks
