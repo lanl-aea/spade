@@ -36,4 +36,4 @@ def pytest_generate_tests(metafunc):
     if not metafunc.function.__name__ == "test_system_require_third_party":
         return
     else:
-        metafunc.parametrize("abaqus_command", abaqus_command)
+        metafunc.parametrize("abaqus_command", metafunc.config.getoption("abaqus_command"))
