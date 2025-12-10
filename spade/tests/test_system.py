@@ -160,7 +160,7 @@ system_tests = [
     pytest.param(
         [string.Template("${spade_command} docs --print-local-path")],
         marks=[pytest.mark.skipif(not installed, reason="The HTML docs path only exists in the as-installed packages")],
-    )
+    ),
 ]
 
 
@@ -206,7 +206,7 @@ for inp_file in inp_files:
                 string.Template(f"${{abaqus_command}} -job {inp_file} -interactive -ask_delete no"),
                 string.Template(
                     f"${{spade_command}} extract {inp_file}.odb"
-                    " --abaqus-commands ${abaqus_command} ${spade_options}"
+                    f" --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
                 ),
             ],
             marks=[
@@ -233,7 +233,7 @@ def run_system_test(
     system_test_directory: pathlib.Path | None,
     request: pytest.FixtureRequest,
     commands: typing.Iterable[str],
-    abaqus_command: str | None = None
+    abaqus_command: str | None = None,
 ) -> None:
     """Run shell commands as system tests in a temporary directory.
 
