@@ -17,10 +17,11 @@ def pytest_addoption(parser):
     parser.addoption(
         "--abaqus-command",
         action="append",
-        default=["abaqus"],
+        type=str,
+        default=None,
         help=(
             "Abaqus command for system test CLI pass through."
-            " Repeat to test against more than one Abaqus command (default %(default)s)"
+            " Repeat to test against more than one Abaqus command (default ['abaqus'])"
         ),
     )
 
@@ -36,4 +37,7 @@ def pytest_generate_tests(metafunc):
     if not metafunc.function.__name__ == "test_system_require_third_party":
         return
     else:
-        metafunc.parametrize("abaqus_command", metafunc.config.getoption("abaqus_command"))
+        abaqus_commands = metafunc.config.getoption("abaqus_command")
+        if abaqus_commands is None:
+            abaqus_commands = ["abaqus"]
+        metafunc.parametrize("abaqus_command", abaqus_commands)
