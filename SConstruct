@@ -65,7 +65,8 @@ env = Environment(
 )
 for key, value in project_variables.items():
     env[key] = value
-# Set unspecified default to an empty list. Cannot default to an empty list, because lists are mutable objects.
+# Set unspecified default to an empty list. Cannot default to a populated list with ``action=append`` because getops
+# will append to the default list instead of overriding the list.
 if env["abaqus_command"] is None:
     env["abaqus_command"] = ["abaqus"]
 env["ENV"]["PYTHONDONTWRITEBYTECODE"] = 1

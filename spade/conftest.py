@@ -17,8 +17,12 @@ def pytest_addoption(parser):
     parser.addoption(
         "--abaqus-command",
         action="append",
-        default=[],
-        help="Abaqus command for system test CLI pass through",
+        type=str,
+        default=None,
+        help=(
+            "Abaqus command for system test CLI pass through."
+            " Repeat to test against more than one Abaqus command (default ['abaqus'])"
+        ),
     )
 
 
@@ -30,10 +34,10 @@ def system_test_directory(request: pytest.FixtureRequest) -> pathlib.Path:
 
 def pytest_generate_tests(metafunc):
     """Parametrize systemt tests one per abaqus command"""
-    if not metafunc.function.__name__ == "test_system":
+    if not metafunc.function.__name__ == "test_system_require_third_party":
         return
     else:
         abaqus_commands = metafunc.config.getoption("abaqus_command")
-        if not abaqus_commands:
+        if abaqus_commands is None:
             abaqus_commands = ["abaqus"]
         metafunc.parametrize("abaqus_command", abaqus_commands)

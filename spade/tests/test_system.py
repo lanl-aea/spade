@@ -1,6 +1,5 @@
 import os
 import re
-import shlex
 import string
 import typing
 import inspect
@@ -9,11 +8,14 @@ import platform
 import tempfile
 import subprocess
 from importlib.metadata import version, PackageNotFoundError
+from unittest.mock import Mock, patch
 
 import pytest
 
 from spade import _settings
 
+MODULE_NAME = pathlib.Path(__file__).stem
+PACKAGE_PARENT_PATH = _settings._project_root_abspath.parent
 
 env = os.environ.copy()
 spade_command = "spade"
@@ -37,121 +39,11 @@ except PackageNotFoundError:
 
 if not installed:
     spade_command = "python -m spade._main"
-    package_parent_path = _settings._project_root_abspath.parent
     key = "PYTHONPATH"
     if key in env:
-        env[key] = f"{package_parent_path}:{env[key]}"
+        env[key] = f"{PACKAGE_PARENT_PATH}:{env[key]}"
     else:
-        env[key] = f"{package_parent_path}"
-
-# System tests that only require current project package
-system_tests = [
-    # CLI sign-of-life and help/usage
-    [string.Template("${spade_command} --help")],
-    [string.Template("${spade_command} docs --help")],
-    [string.Template("${spade_command} extract --help")],
-]
-if installed:
-    system_tests.append(
-        # The HTML docs path doesn't exist in the repository. Can only system test from an installed package.
-        [string.Template("${spade_command} docs --print-local-path")]
-    )
-
-# System tests that require third-party software. These should be marked "pytest.mark.require_third_party".
-# TODO: add tutorials
-# https://re-git.lanl.gov/aea/python-projects/spade/-/issues/22
-spade_options = "--recompile --force-overwrite --verbose --debug"
-for odb_file in odb_files:
-    system_tests.append(
-        pytest.param(
-            [
-                string.Template(f"${{abaqus_command}} fetch -job {odb_file}"),
-                string.Template(
-                    f"${{spade_command}} extract {odb_file} --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
-                ),
-            ],
-            marks=[
-                pytest.mark.require_third_party,
-                pytest.mark.skipif(testing_macos, reason="Abaqus does not install on macOS"),
-            ],
-            id=odb_file,
-        )
-    )
-for inp_file in inp_files:
-    if inp_file.startswith("erode"):
-        fetch_string = "erode_"
-    else:
-        fetch_string = inp_file
-    system_tests.append(
-        pytest.param(
-            [
-                string.Template(f"${{abaqus_command}} fetch -job '{fetch_string}*'"),
-                string.Template(f"${{abaqus_command}} -job {inp_file} -interactive -ask_delete no"),
-                string.Template(
-                    f"${{spade_command}} extract {inp_file}.odb --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
-                ),
-            ],
-            marks=[
-                pytest.mark.require_third_party,
-                pytest.mark.skipif(testing_macos, reason="Abaqus does not install on macOS"),
-            ],
-            id=inp_file,
-        )
-    )
-
-
-@pytest.mark.systemtest
-@pytest.mark.parametrize("commands", system_tests)
-def test_system(
-    system_test_directory,
-    request,
-    commands: typing.Iterable[str],
-    abaqus_command,
-) -> None:
-    """Run the system tests in a temporary directory
-
-    Accepts a custom pytest CLI option to re-direct the temporary system test root directory away from ``$TMPDIR`` as
-
-    .. code-block::
-
-       pytest --system-test-dir=/my/systemtest/output
-
-    :param system_test_directory: custom pytest decorator defined in conftest.py
-    :param request: pytest decorator with test case meta data
-    :param commands: command string or list of strings for the system test
-    :param abaqus_command: custom pytest fixture defined in conftest.py
-    """
-    module_name = pathlib.Path(__file__).stem
-    test_id = request.node.callspec.id
-    test_prefix = create_valid_identifier(test_id)
-    test_prefix = f"{module_name}.{test_prefix}."
-
-    if system_test_directory is not None:
-        system_test_directory.mkdir(parents=True, exist_ok=True)
-
-    kwargs = {}
-    temporary_directory_arguments = inspect.getfullargspec(tempfile.TemporaryDirectory).args
-    if "ignore_cleanup_errors" in temporary_directory_arguments and system_test_directory is not None:
-        kwargs.update({"ignore_cleanup_errors": True})
-    temp_directory = tempfile.TemporaryDirectory(dir=system_test_directory, prefix=test_prefix, **kwargs)
-    temp_path = pathlib.Path(temp_directory.name)
-    temp_path.mkdir(parents=True, exist_ok=True)
-    template_substitution = {
-        "spade_command": spade_command,
-        "spade_options": spade_options,
-        "abaqus_command": abaqus_command,
-        "temp_directory": temp_directory,
-    }
-    try:
-        for command in commands:
-            if isinstance(command, string.Template):
-                command = command.substitute(template_substitution)
-            command = shlex.split(command)
-            subprocess.check_output(command, env=env, cwd=temp_path).decode("utf-8")
-    except Exception as err:
-        raise err
-    else:
-        temp_directory.cleanup()
+        env[key] = f"{PACKAGE_PARENT_PATH}"
 
 
 def create_valid_identifier(identifier: str) -> None:
@@ -178,3 +70,214 @@ create_valid_identifier_tests = {
 def test_create_valid_identifier(identifier, expected) -> None:
     returned = create_valid_identifier(identifier)
     assert returned == expected
+
+
+def create_test_prefix(request: pytest.FixtureRequest, module_name: str = MODULE_NAME) -> str:
+    test_id = request.node.callspec.id
+    test_identifier = create_valid_identifier(test_id)
+    return f"{module_name}.{test_identifier}."
+
+
+test_create_test_prefix_cases = {
+    "test_identifier": ({}, "test_system.test_identifier."),
+    "test identifier": ({}, "test_system.test_identifier."),
+    "another_test_identifier": ({}, "test_system.another_test_identifier."),
+    "override_module_name": ({"module_name": "another_module_name"}, "another_module_name.override_module_name."),
+}
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "expected"),
+    test_create_test_prefix_cases.values(),
+    ids=test_create_test_prefix_cases.keys(),
+)
+def test_create_test_prefix(kwargs: dict[str, str], expected: str, request: pytest.FixtureRequest) -> None:
+    assert create_test_prefix(request, **kwargs) == expected
+
+
+def return_temporary_directory_kwargs(
+    system_test_directory: pathlib.Path | None,
+    keep_system_tests: bool,
+) -> dict:
+    kwargs = {}
+    temporary_directory_inspection = inspect.getfullargspec(tempfile.TemporaryDirectory)
+    temporary_directory_arguments = temporary_directory_inspection.args + temporary_directory_inspection.kwonlyargs
+    if "ignore_cleanup_errors" in temporary_directory_arguments and system_test_directory is not None:
+        kwargs.update({"ignore_cleanup_errors": True})
+    if keep_system_tests and "delete" in temporary_directory_arguments:
+        kwargs.update({"delete": False})
+    return kwargs
+
+
+test_return_temporary_directory_kwargs_cases = {
+    "no arguments": (None, False, [], [], {}),
+    "directory": (pathlib.Path("dummy/path"), False, [], [], {}),
+    "directory and keep": (pathlib.Path("dummy/path"), True, [], [], {}),
+    "directory: matching directory kwarg": (
+        pathlib.Path("dummy/path"),
+        False,
+        ["ignore_cleanup_errors"],
+        [],
+        {"ignore_cleanup_errors": True},
+    ),
+    "directory and keep: matching keep kwarg": (pathlib.Path("dummy/path"), True, [], ["delete"], {"delete": False}),
+    "directory and keep: matching both kwargs": (
+        pathlib.Path("dummy/path"),
+        True,
+        ["ignore_cleanup_errors"],
+        ["delete"],
+        {"ignore_cleanup_errors": True, "delete": False},
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("system_test_directory", "keep_system_tests", "available_args", "available_kwargs", "expected"),
+    test_return_temporary_directory_kwargs_cases.values(),
+    ids=test_return_temporary_directory_kwargs_cases.keys(),
+)
+def test_return_temporary_directory_kwargs(
+    system_test_directory: pathlib.Path,
+    keep_system_tests: bool,
+    available_args: list[str],
+    available_kwargs: list[str],
+    expected: dict[str, bool],
+) -> None:
+    mock_inspection = Mock()
+    mock_inspection.args = available_args
+    mock_inspection.kwonlyargs = available_kwargs
+    with patch("inspect.getfullargspec", return_value=mock_inspection):
+        kwargs = return_temporary_directory_kwargs(system_test_directory, keep_system_tests)
+        assert kwargs == expected
+
+
+# System tests that only require current project package
+system_tests = [
+    # CLI sign-of-life and help/usage
+    [string.Template("${spade_command} --help")],
+    [string.Template("${spade_command} docs --help")],
+    [string.Template("${spade_command} extract --help")],
+    pytest.param(
+        [string.Template("${spade_command} docs --print-local-path")],
+        marks=[pytest.mark.skipif(not installed, reason="The HTML docs path only exists in the as-installed packages")],
+    ),
+]
+
+
+@pytest.mark.systemtest
+@pytest.mark.parametrize("commands", system_tests)
+def test_system(
+    system_test_directory: pathlib.Path | None,
+    request: pytest.FixtureRequest,
+    commands: typing.Iterable[str],
+) -> None:
+    run_system_test(system_test_directory, request, commands)
+
+
+# System tests that require third-party software, e.g. Abaqus.
+# TODO: add tutorials
+# https://re-git.lanl.gov/aea/python-projects/spade/-/issues/22
+spade_options = "--recompile --force-overwrite --verbose --debug"
+system_tests_require_third_party = []
+for odb_file in odb_files:
+    system_tests_require_third_party.append(
+        pytest.param(
+            [
+                string.Template(f"${{abaqus_command}} fetch -job {odb_file}"),
+                string.Template(
+                    f"${{spade_command}} extract {odb_file} --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
+                ),
+            ],
+            marks=[
+                pytest.mark.skipif(testing_macos, reason="Abaqus does not install on macOS"),
+            ],
+            id=odb_file,
+        )
+    )
+for inp_file in inp_files:
+    if inp_file.startswith("erode"):
+        fetch_string = "erode_"
+    else:
+        fetch_string = inp_file
+    system_tests_require_third_party.append(
+        pytest.param(
+            [
+                string.Template(f"${{abaqus_command}} fetch -job '{fetch_string}*'"),
+                string.Template(f"${{abaqus_command}} -job {inp_file} -interactive -ask_delete no"),
+                string.Template(
+                    f"${{spade_command}} extract {inp_file}.odb"
+                    f" --abaqus-commands ${{abaqus_command}} ${{spade_options}}"
+                ),
+            ],
+            marks=[
+                pytest.mark.skipif(testing_macos, reason="Abaqus does not install on macOS"),
+            ],
+            id=inp_file,
+        )
+    )
+
+
+@pytest.mark.systemtest
+@pytest.mark.require_third_party
+@pytest.mark.parametrize("commands", system_tests_require_third_party)
+def test_system_require_third_party(
+    system_test_directory: pathlib.Path | None,
+    request: pytest.FixtureRequest,
+    commands: typing.Iterable[str],
+    abaqus_command: str | None,
+) -> None:
+    run_system_test(system_test_directory, request, commands, abaqus_command=abaqus_command)
+
+
+def run_system_test(
+    system_test_directory: pathlib.Path | None,
+    request: pytest.FixtureRequest,
+    commands: typing.Iterable[str],
+    abaqus_command: str | None = None,
+) -> None:
+    """Run shell commands as system tests in a temporary directory.
+
+    Test directory name is constructed from test ID string, with character replacements to create a valid Python
+    identifier as a conservative estimate of a valid directory name. Failed tests persist on disk.
+
+    Accepts a custom pytest CLI option to re-direct the temporary system test root directory away from ``$TMPDIR`` as
+
+    .. code-block::
+
+       pytest --system-test-dir=/my/systemtest/output
+
+    :param system_test_directory: custom pytest decorator defined in conftest.py
+    :param request: pytest decorator with test case meta data
+    :param commands: command string or list of strings for the system test
+    :param abaqus_command: custom pytest fixture defined in conftest.py
+    """
+    if system_test_directory is not None:
+        system_test_directory.mkdir(parents=True, exist_ok=True)
+
+    # TODO: Move to common test utility VVV
+    # Naive move to waves/_tests/common.py resulted in every test failing with FileNotFoundError.
+    # Probably tempfile is handling some scope existence that works when inside the function but not when it's outside.
+    temporary_directory = tempfile.TemporaryDirectory(
+        dir=system_test_directory,
+        prefix=create_test_prefix(request),
+        **return_temporary_directory_kwargs(system_test_directory, False),
+    )
+    temporary_path = pathlib.Path(temporary_directory.name)
+    temporary_path.mkdir(parents=True, exist_ok=True)
+    # Move to common test utility ^^^
+
+    template_substitution = {
+        "spade_command": spade_command,
+        "spade_options": spade_options,
+        "abaqus_command": abaqus_command,
+        "temporary_directory": temporary_path,
+    }
+    try:
+        for command in commands:
+            if isinstance(command, string.Template):
+                command = command.substitute(template_substitution)
+            subprocess.check_output(command, env=env, cwd=temporary_path, text=True, shell=True)
+    except Exception as err:
+        raise err
+    else:
+        temporary_directory.cleanup()
