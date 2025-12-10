@@ -38,12 +38,11 @@ user_env = os.environ.copy()
 env = Environment(
     ENV=user_env,
     CXX=user_env["CXX"],
-    build_dir=GetOption("build_dir"),
-    abaqus_command=GetOption("abaqus_command"),
     recompile=GetOption("recompile"),
     project_name_cpp=_settings._project_name_cpp,
 )
-abaqus_command = env["abaqus_command"]
+build_directory=pathlib.Path(GetOption("build_dir"))
+abaqus_command = shutil.which(GetOption("abaqus_command"), path=env["ENV"]["PATH"])
 
 # Abaqus and system settings
 abaqus_version = _utilities.abaqus_official_version(abaqus_command)
@@ -70,9 +69,9 @@ h5_flags = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
 env["SPADEOBJECTCXXFLAGS"] = env.ParseFlags(env["odb_flags"] + h5_flags)
 
 # Configure tasks
-sconsign_file = pathlib.Path(env["build_dir"]) / ".sconsign.dblite"
+sconsign_file = build_directory / ".sconsign.dblite"
 env.SConsignFile(sconsign_file)
-env.SConscript("SConscript", variant_dir=env["build_dir"], exports="env", duplicate=True)
+env.SConscript("SConscript", variant_dir=build_directory, exports="env", duplicate=True)
 
 # Add aliases to help message so users know what build target options are available
 # This must come *after* all expected Alias definitions and SConscript files.
