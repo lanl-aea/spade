@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import os
 import pathlib
+import platform
 import shutil
 import sys
 
@@ -35,9 +36,15 @@ AddOption(
 
 # Project environment
 user_env = os.environ.copy()
+# VVV FIXME: figure out the official conda solution to finding c++ compiler on Windows
+if platform.system().lower() == "windows":
+    cxx = shutil.which("clang", path=user_env["PATH"])
+else:
+    cxx = user_env["CXX"]
+# ^^^ FIXME: figure out the official conda solution to finding c++ compiler on Windows
 env = Environment(
     ENV=user_env,
-    CXX=user_env["CXX"],
+    CXX=cxx,
     recompile=GetOption("recompile"),
     project_name_cpp=_settings._project_name_cpp,
 )
