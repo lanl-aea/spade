@@ -71,9 +71,13 @@ if not gpp_lib.exists() or not gpp_include.exists():
     sys.exit(f"Did not find 'lib' or 'include' for compiler '{compiler_path}' at '{gpp_lib}' or '{gpp_include}'")
 
 env["odb_flags"] = (
-    _settings._compiler_flags + f" -I{abaqus_code_include.as_posix()} -I{abaqus_installation.as_posix()} -I{gpp_include.as_posix()} -I. -I{gpp_lib.as_posix()}"
+    _settings._compiler_flags
+    + f" -I{abaqus_code_include.as_posix()} -I{abaqus_installation.as_posix()} -I{gpp_include.as_posix()} -I. -I{gpp_lib.as_posix()}"
 )
-env["abaqus_link_flags"] = _settings._link_flags + f" -L{gpp_lib.as_posix()} -Wl,-rpath,{abaqus_code_bin.as_posix()},-rpath,{gpp_lib.as_posix()}"
+env["abaqus_link_flags"] = (
+    _settings._link_flags
+    + f" -L{gpp_lib.as_posix()} -Wl,-rpath,{abaqus_code_bin.as_posix()},-rpath,{gpp_lib.as_posix()}"
+)
 # VVV FIXME: figure out how to better determine compiler compatible flags
 if platform.system().lower() == "windows":
     env["odb_flags"] = env["odb_flags"].replace("-fPIC", "")
