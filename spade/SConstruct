@@ -75,7 +75,7 @@ env["odb_flags"] = (
 )
 env["abaqus_link_flags"] = _settings._link_flags + f" -L{gpp_lib.as_posix()} -Wl,-rpath,{abaqus_code_bin.as_posix()},-rpath,{gpp_lib.as_posix()}"
 # TODO: May wish to confirm that h5c++ is definitely in the same place as gpp (lib and include)
-h5_flags = f" -fPIC -I{gpp_include.as_posix()} -I. -I{gpp_lib.as_posix()}"
+h5_flags = f" -I{gpp_include.as_posix()} -I. -I{gpp_lib.as_posix()}"
 env["SPADEOBJECTCXXFLAGS"] = env.ParseFlags(env["odb_flags"] + h5_flags)
 
 # Configure tasks
