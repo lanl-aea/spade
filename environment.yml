@@ -23,4 +23,3 @@ dependencies:
   - sphinx-copybutton >=0.5.1
   - sphinx-design
   - sphinxcontrib-bibtex
-  - sysroot_linux-64 >=2.28

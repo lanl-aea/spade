@@ -9,6 +9,7 @@
 .. _Conda: https://docs.conda.io/en/latest/
 .. _Conda installation: https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html
 .. _Conda environment management: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+.. _`Conda virtual packages`: https://docs.conda.io/projects/conda/en/stable/user-guide/tasks/manage-virtual.html#environment-variables
 
 .. _`Prabhu Khalsa`: pkhalsa@lanl.gov
 .. _`Kyle Brindley`: kbrindley@lanl.gov
@@ -139,11 +140,18 @@ Compute Environment
 
 .. compute-env-start-do-not-remove
 
-You can create a local environment with the Conda package manager as
+You can create a local developer environment with the Conda package manager as. When running the system tests with
+Abaqus, `spade`_ requires a higher minimum version of ``glibc`` than the standard ``2.17`` used by the `Conda`_ package
+manager and ``conda-forge`` channel. The current minimum version of ``glibc`` is found in the Gitlab-CI configuration.
+The ``glibc`` environment variable must be provided every time conda operates on the conda environment. For more details
+see the `Conda virtual packages`_ documentation.
 
 .. code-block::
 
-   [roppenheimer@mymachine spade]$ conda env create --file environment.yml --name spade-env
+   [roppenheimer@mymachine spade]$ grep CONDA_OVERRIDE_GLIBC .gitlab-ci.yml *.yml
+   .gitlab-ci.yml:    - export CONDA_OVERRIDE_GLIBC="2.28"
+
+   [roppenheimer@mymachine spade]$ CONDA_OVERRIDE_GLIBC="2.28" conda env create --file environment.yml --name spade-env
    [roppenheimer@mymachine spade]$ conda activate spade-env
 
 .. compute-env-end-do-not-remove
