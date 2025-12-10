@@ -154,6 +154,9 @@ see the `Conda virtual packages`_ documentation.
    [roppenheimer@mymachine spade]$ CONDA_OVERRIDE_GLIBC="2.28" conda env create --file environment.yml --name spade-env
    [roppenheimer@mymachine spade]$ conda activate spade-env
 
+This is not required when installing `spade`_ from ``conda-forge`` because the as-built package is distributed with the
+correct ``glibc`` minimum runtime requirement.
+
 .. compute-env-end-do-not-remove
 
 Testing
