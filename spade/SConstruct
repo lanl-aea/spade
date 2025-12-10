@@ -37,7 +37,6 @@ AddOption(
 user_env = os.environ.copy()
 env = Environment(
     ENV=user_env,
-    CC=user_env["CC"],
     CXX=user_env["CXX"],
     build_dir=GetOption("build_dir"),
     abaqus_command=GetOption("abaqus_command"),
