@@ -48,7 +48,7 @@ env = Environment(
     recompile=GetOption("recompile"),
     project_name_cpp=_settings._project_name_cpp,
 )
-build_directory=pathlib.Path(GetOption("build_dir"))
+build_directory = pathlib.Path(GetOption("build_dir"))
 abaqus_command = shutil.which(GetOption("abaqus_command"), path=env["ENV"]["PATH"])
 
 # Abaqus and system settings
