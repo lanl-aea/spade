@@ -13,7 +13,7 @@ _abaqus_environment_file = "abaqus_v6.env"
 _additional_abaqus_prefix = "SIMULIA/EstProducts/"
 _abaqus_suffix = "linux_a64/code/bin/"
 _default_abaqus_commands = [pathlib.Path("abaqus"), pathlib.Path("abq2025")]
-_compiler_flags = (
+_compiler_flags_gcc = (
     "-c -fPIC -w -Wno-deprecated -DTYPENAME=typename -D_LINUX_SOURCE "
     "-DABQ_LINUX -DABQ_LNX86_64 -DSMA_GNUC -DFOR_TRAIL -DHAS_BOOL "
     "-DASSERT_ENABLED -D_BSD_TYPES -D_BSD_SOURCE -D_GNU_SOURCE "
@@ -22,7 +22,18 @@ _compiler_flags = (
     "-DMULTI_THREADING_ENABLED -D_REENTRANT -DABQ_MPI_SUPPORT -DBIT64 "
     "-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -static-libstdc++ "
 )
-_link_flags = "-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -lstdc++ -lhdf5_hl "
+_link_flags_gcc = "-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -lstdc++ -lhdf5_hl "
+_compiler_flags_msvc = (
+    "/c /W0 /MD /TP /EHsc /DNDEBUG /DWIN32 /DTP_IP /D_CONSOLE /DNTI /DFLT_LIC /DOL_DOC /D__LIB__ /DHKS_NT "
+    "/D_WINDOWS_SOURCE /DFAR= /D_WINDOWS /DABQ_WIN86_64 %P /I%I "
+)
+_link_flags_msvc = (
+    "/nologo /INCREMENTAL:NO /subsystem:console /machine:AMD64 /STACK:20000000 /NODEFAULTLIB:LIBC.LIB "
+    "/NODEFAULTLIB:LIBCMT.LIB /DEFAULTLIB:OLDNAMES.LIB /DEFAULTLIB:LIBIFCOREMD.LIB /DEFAULTLIB:LIBIFPORTMD.LIB "
+    "/DEFAULTLIB:LIBMMD.LIB /DEFAULTLIB:kernel32.lib /DEFAULTLIB:user32.lib /DEFAULTLIB:advapi32.lib /FIXED:NO "
+    "/LARGEADDRESSAWARE /out:%J %F %M %L %B %O oldnames.lib user32.lib ws2_32.lib netapi32.lib advapi32.lib "
+    "msvcrt.lib vcruntime.lib ucrt.lib "
+)
 
 # Docs subcommand
 _installed_docs_index = _project_root_abspath / "docs/index.html"

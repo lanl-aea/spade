@@ -38,9 +38,14 @@ AddOption(
 user_env = os.environ.copy()
 # VVV FIXME: figure out the official conda solution to finding c++ compiler on Windows
 if platform.system().lower() == "windows":
-    cxx = pathlib.Path(shutil.which("x86_64-w64-mingw32-c++", path=user_env["PATH"])).as_posix()
+    msvc_compiler = shutil.which("cl", path=user_env["PATH"])
+    cxx = pathlib.Path(msvc_compiler).as_posix() if msvc_compiler is not None else "cl"
+    _compiler_flags = _settings._compiler_flags_msvc
+    _link_flags = _settings._link_flags_msvc
 else:
     cxx = user_env["CXX"]
+    _compiler_flags = _settings._compiler_flags_gcc
+    _link_flags = _settings._link_flags_gcc
 # ^^^ FIXME: figure out the official conda solution to finding c++ compiler on Windows
 env = Environment(
     ENV=user_env,
@@ -69,14 +74,20 @@ if not compiler_lib.exists() or not compiler_include.exists():
         f"Did not find 'lib' or 'include' for compiler '{compiler_path}' at '{compiler_lib}' or '{compiler_include}'"
     )
 
-env["odb_flags"] = (
-    _settings._compiler_flags
-    + f" -I{abaqus_code_include.as_posix()} -I{abaqus_installation.as_posix()} -I{compiler_include.as_posix()} -I. -I{compiler_lib.as_posix()}"
-)
-env["abaqus_link_flags"] = (
-    _settings._link_flags
-    + f" -L{compiler_lib.as_posix()} -Wl,-rpath,{abaqus_code_bin.as_posix()},-rpath,{compiler_lib.as_posix()}"
-)
+if platform.system().lower() == "windows":
+    env["odb_flags"] = (
+        _compiler_flags
+        + f" /I{abaqus_installation.as_posix()} "
+    )
+else:
+    env["odb_flags"] = (
+        _compiler_flags
+        + f" -I{abaqus_code_include.as_posix()} -I{abaqus_installation.as_posix()} -I{compiler_include.as_posix()} -I. -I{compiler_lib.as_posix()}"
+    )
+    env["abaqus_link_flags"] = (
+        _link_flags
+        + f" -L{compiler_lib.as_posix()} -Wl,-rpath,{abaqus_code_bin.as_posix()},-rpath,{compiler_lib.as_posix()}"
+    )
 # TODO: May wish to confirm that h5c++ is definitely in the same place as gpp (lib and include)
 h5_flags = f" -I{compiler_include.as_posix()} -I. -I{compiler_lib.as_posix()}"
 env["SPADEOBJECTCXXFLAGS"] = env.ParseFlags(env["odb_flags"] + h5_flags)
