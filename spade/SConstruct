@@ -91,7 +91,7 @@ else:
         + f" -L{compiler_lib.as_posix()} -Wl,-rpath,{abaqus_code_bin.as_posix()},-rpath,{compiler_lib.as_posix()}"
     )
 # TODO: May wish to confirm that h5c++ is definitely in the same place as gpp (lib and include)
-h5_header_file = "h5cpp.h"
+h5_header_file = "H5Cpp.h"
 h5_include_path = next((path.parent for path in conda_prefix.rglob(f"**/{h5_header_file}")), None)
 if h5_include_path is None:
     sys.exit(f"Could not find H5 header file '{h5_header_file}' in '{conda_prefix}'")
