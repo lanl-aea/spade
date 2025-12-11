@@ -38,16 +38,13 @@ AddOption(
 user_env = os.environ.copy()
 # VVV FIXME: figure out the official conda solution to finding c++ compiler on Windows
 if platform.system().lower() == "windows":
-    cxx = pathlib.Path(shutil.which("clang-cpp", path=user_env["PATH"])).as_posix()
-    cxxflags = "--target=x86_64-w64-windows-gnu"
+    cxx = pathlib.Path(shutil.which("c++", path=user_env["PATH"])).as_posix()
 else:
     cxx = user_env["CXX"]
-    cxxflags = ""
 # ^^^ FIXME: figure out the official conda solution to finding c++ compiler on Windows
 env = Environment(
     ENV=user_env,
     CXX=cxx,
-    CXXFLAGS=cxxflags,
     recompile=GetOption("recompile"),
     project_name_cpp=_settings._project_name_cpp,
 )
