@@ -77,11 +77,6 @@ env["abaqus_link_flags"] = (
     _settings._link_flags
     + f" -L{compiler_lib.as_posix()} -Wl,-rpath,{abaqus_code_bin.as_posix()},-rpath,{compiler_lib.as_posix()}"
 )
-# VVV FIXME: figure out how to better determine compiler compatible flags
-if platform.system().lower() == "windows":
-    env["odb_flags"] = env["odb_flags"].replace("-fPIC", "")
-    env["abaqus_link_flags"] = env["abaqus_link_flags"].replace("-fPIC", "")
-# ^^^ FIXME: figure out how to better determine compiler compatible flags
 # TODO: May wish to confirm that h5c++ is definitely in the same place as gpp (lib and include)
 h5_flags = f" -I{compiler_include.as_posix()} -I. -I{compiler_lib.as_posix()}"
 env["SPADEOBJECTCXXFLAGS"] = env.ParseFlags(env["odb_flags"] + h5_flags)
