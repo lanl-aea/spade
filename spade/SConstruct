@@ -75,10 +75,7 @@ if not compiler_lib.exists() or not compiler_include.exists():
     )
 
 if platform.system().lower() == "windows":
-    env["odb_flags"] = (
-        _compiler_flags
-        + f" /I{abaqus_installation.as_posix()} "
-    )
+    env["odb_flags"] = _compiler_flags + f" /I{abaqus_installation.as_posix()} "
 else:
     env["odb_flags"] = (
         _compiler_flags
