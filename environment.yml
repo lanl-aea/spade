@@ -6,7 +6,7 @@ dependencies:
   - black
   - boa
   - flake8
-  - gcc
+  - gxx
   - hdf5
   - pip
   - pytest
