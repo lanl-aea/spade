@@ -64,19 +64,21 @@ compiler_string = shutil.which(env["CXX"], path=env["ENV"]["PATH"])
 if compiler_string is None:
     sys.exit(f"Could not find CXX compiler '{env['CXX']}' on PATH '{env['ENV']['PATH']}'")
 else:
-    gpp_path = pathlib.Path(compiler_string).parent.parent
-gpp_lib = gpp_path / "lib"
-gpp_include = gpp_path / "include"
-if not gpp_lib.exists() or not gpp_include.exists():
-    sys.exit(f"Did not find 'lib' or 'include' for compiler '{compiler_path}' at '{gpp_lib}' or '{gpp_include}'")
+    compiler_prefix = pathlib.Path(compiler_string).parent.parent
+compiler_lib = compiler_prefix / "lib"
+compiler_include = compiler_prefix / "include"
+if not compiler_lib.exists() or not compiler_include.exists():
+    sys.exit(
+        f"Did not find 'lib' or 'include' for compiler '{compiler_path}' at '{compiler_lib}' or '{compiler_include}'"
+    )
 
 env["odb_flags"] = (
     _settings._compiler_flags
-    + f" -I{abaqus_code_include.as_posix()} -I{abaqus_installation.as_posix()} -I{gpp_include.as_posix()} -I. -I{gpp_lib.as_posix()}"
+    + f" -I{abaqus_code_include.as_posix()} -I{abaqus_installation.as_posix()} -I{compiler_include.as_posix()} -I. -I{compiler_lib.as_posix()}"
 )
 env["abaqus_link_flags"] = (
     _settings._link_flags
-    + f" -L{gpp_lib.as_posix()} -Wl,-rpath,{abaqus_code_bin.as_posix()},-rpath,{gpp_lib.as_posix()}"
+    + f" -L{compiler_lib.as_posix()} -Wl,-rpath,{abaqus_code_bin.as_posix()},-rpath,{compiler_lib.as_posix()}"
 )
 # VVV FIXME: figure out how to better determine compiler compatible flags
 if platform.system().lower() == "windows":
@@ -84,7 +86,7 @@ if platform.system().lower() == "windows":
     env["abaqus_link_flags"] = env["abaqus_link_flags"].replace("-fPIC", "")
 # ^^^ FIXME: figure out how to better determine compiler compatible flags
 # TODO: May wish to confirm that h5c++ is definitely in the same place as gpp (lib and include)
-h5_flags = f" -I{gpp_include.as_posix()} -I. -I{gpp_lib.as_posix()}"
+h5_flags = f" -I{compiler_include.as_posix()} -I. -I{compiler_lib.as_posix()}"
 env["SPADEOBJECTCXXFLAGS"] = env.ParseFlags(env["odb_flags"] + h5_flags)
 
 # Configure tasks
