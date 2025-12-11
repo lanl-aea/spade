@@ -3,11 +3,10 @@ channels:
 
 dependencies:
   - python
-  - boa
   - black
-  - cxx-compiler
+  - boa
   - flake8
-  - git-lfs >=3.6.1
+  - gcc
   - hdf5
   - pip
   - pytest
