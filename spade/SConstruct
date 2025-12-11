@@ -38,21 +38,21 @@ AddOption(
 user_env = os.environ.copy()
 # VVV FIXME: figure out the official conda solution to finding c++ compiler on Windows
 if platform.system().lower() == "windows":
-    msvc_compiler = shutil.which("cl", path=user_env["PATH"])
-    cxx = pathlib.Path(msvc_compiler).as_posix() if msvc_compiler is not None else "cl"
     _compiler_flags = _settings._compiler_flags_msvc
     _link_flags = _settings._link_flags_msvc
 else:
-    cxx = user_env["CXX"]
     _compiler_flags = _settings._compiler_flags_gcc
     _link_flags = _settings._link_flags_gcc
 # ^^^ FIXME: figure out the official conda solution to finding c++ compiler on Windows
 env = Environment(
     ENV=user_env,
-    CXX=cxx,
     recompile=GetOption("recompile"),
     project_name_cpp=_settings._project_name_cpp,
 )
+if "CXX" in user_env and not "CXX" in env:
+    env["CXX"] = user_env["CXX"]
+if env["CXX"] == "$CC":
+    env["CXX"] = env["CC"]
 build_directory = pathlib.Path(GetOption("build_dir"))
 abaqus_command = shutil.which(GetOption("abaqus_command"), path=env["ENV"]["PATH"])
 
@@ -62,21 +62,21 @@ abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_ab
 env["abaqus_make_command"] = f"{abaqus_command} make job={_settings._project_name_cpp}.cpp"
 
 # Compiler options and settings
-compiler_string = shutil.which(env["CXX"], path=env["ENV"]["PATH"])
-if compiler_string is None:
-    sys.exit(f"Could not find CXX compiler '{env['CXX']}' on PATH '{env['ENV']['PATH']}'")
-else:
-    compiler_prefix = pathlib.Path(compiler_string).parent.parent
-compiler_lib = compiler_prefix / "lib"
-compiler_include = compiler_prefix / "include"
-if not compiler_lib.exists() or not compiler_include.exists():
-    sys.exit(
-        f"Did not find 'lib' or 'include' for compiler '{compiler_path}' at '{compiler_lib}' or '{compiler_include}'"
-    )
-
 if platform.system().lower() == "windows":
     env["odb_flags"] = _compiler_flags + f" /I{abaqus_installation.as_posix()} "
+    env["abaqus_link_flags"] = _link_flags
 else:
+    compiler_string = shutil.which(env["CXX"], path=env["ENV"]["PATH"])
+    if compiler_string is None:
+        sys.exit(f"Could not find CXX compiler '{env['CXX']}' on PATH '{env['ENV']['PATH']}'")
+    else:
+        compiler_prefix = pathlib.Path(compiler_string).parent.parent
+    compiler_lib = compiler_prefix / "lib"
+    compiler_include = compiler_prefix / "include"
+    if not compiler_lib.exists() or not compiler_include.exists():
+        sys.exit(
+            f"Did not find 'lib' or 'include' for compiler '{env['CXX']}' at '{compiler_lib}' or '{compiler_include}'"
+        )
     env["odb_flags"] = (
         _compiler_flags
         + f" -I{abaqus_code_include.as_posix()} -I{abaqus_installation.as_posix()} -I{compiler_include.as_posix()} -I. -I{compiler_lib.as_posix()}"
@@ -86,7 +86,12 @@ else:
         + f" -L{compiler_lib.as_posix()} -Wl,-rpath,{abaqus_code_bin.as_posix()},-rpath,{compiler_lib.as_posix()}"
     )
 # TODO: May wish to confirm that h5c++ is definitely in the same place as gpp (lib and include)
-h5_flags = f" -I{compiler_include.as_posix()} -I. -I{compiler_lib.as_posix()}"
+h5_header_file = "h5cpp.h"
+h5_search_path = pathlib.Path(env["ENV"]["CONDA_PREFIX"])
+h5_include_path = next((path.parent for path in h5_search_path.rglob(f"**/{h5_header_file}")), None)
+if h5_include_path is None:
+    sys.exit(f"Could not find H5 header file '{h5_header_file}' in '{h5_search_path}'")
+h5_flags = f" -I{h5_include_path.as_posix()}"
 env["SPADEOBJECTCXXFLAGS"] = env.ParseFlags(env["odb_flags"] + h5_flags)
 
 # Configure tasks
