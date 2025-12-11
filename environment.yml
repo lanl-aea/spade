@@ -5,6 +5,7 @@ dependencies:
   - python
   - black
   - boa
+  - cxx-compiler
   - flake8
   - gxx
   - hdf5
