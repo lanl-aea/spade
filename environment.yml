@@ -7,7 +7,6 @@ dependencies:
   - boa
   - cxx-compiler
   - flake8
-  - gxx
   - hdf5
   - pip
   - pytest
