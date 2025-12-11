@@ -31,7 +31,6 @@ using namespace std;
 #include <iterator>
 #include <regex>
 #include <stdlib.h>
-#include <dirent.h>
 #include <cmath>
 #include <sys/stat.h>
 #include <filesystem>

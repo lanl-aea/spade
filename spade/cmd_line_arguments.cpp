@@ -15,7 +15,6 @@
 #include <sstream>
 #include <fstream>
 #include <stdlib.h>
-#include <dirent.h>
 #include <sys/stat.h>
 #include <stdio.h>     /* for printf */
 #include <getopt.h>
