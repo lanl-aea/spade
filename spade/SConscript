@@ -8,7 +8,7 @@ objects = []
 env.MergeFlags("-I.")
 objects.extend(env.Object("cmd_line_arguments.cpp"))
 objects.extend(env.Object("logging.cpp"))
-objects.extend(env.Object("spade_object.cpp", parse_flags=env["SPADEOBJECTCXXFLAGS"]))
+objects.extend(env.Object("spade_object.cpp", CXXFLAGS=env["SPADEOBJECTCXXFLAGS"]))
 
 # Write build abaqus environment file
 compile_cpp = f"{env['CXX']} {env['odb_flags']}"
