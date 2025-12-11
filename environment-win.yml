@@ -1,0 +1,25 @@
+channels:
+  - conda-forge
+
+dependencies:
+  - python
+  - black
+  - boa
+  - cxx-compiler
+  - flake8
+  - getopt-win32
+  - hdf5
+  - pip
+  - pytest
+  - pytest-cov
+  - pytest-xdist
+  - python-build
+  - scons >=4.6
+  - setuptools >=77
+  - setuptools_scm >=8
+  - sphinx >=7.1
+  - sphinx-argparse
+  - sphinx-book-theme
+  - sphinx-copybutton >=0.5.1
+  - sphinx-design
+  - sphinxcontrib-bibtex
