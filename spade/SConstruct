@@ -70,7 +70,7 @@ env["abaqus_make_command"] = f"{abaqus_command} make job={_settings._project_nam
 # Compiler options and settings
 if platform.system().lower() == "windows":
     env["odb_flags"] = _compiler_flags + f" /I{abaqus_code_include.as_posix()} /I{abaqus_installation.as_posix()}"
-    env["abaqus_link_flags"] = _link_flags
+    env["abaqus_link_flags"] = _link_flags + f" LIBPATH:{compiler_lib.as_posix()}"
 else:
     compiler_string = shutil.which(env["CXX"], path=env["ENV"]["PATH"])
     if compiler_string is None:
