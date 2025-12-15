@@ -15,6 +15,7 @@ object_string = " ".join(target.name for target in objects)
 template_substitution = {
     "CXX": env["CXX"],
     "ABAQUSCXXFLAGS": env["ABAQUSCXXFLAGS"],
+    "ABAQUSLINKFLAGS": env["ABAQUSLINKFLAGS"],
     "objects": object_string,
 }
 env.Substfile(
