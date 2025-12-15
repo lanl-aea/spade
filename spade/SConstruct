@@ -67,7 +67,7 @@ if conda_include_path is None or conda_lib_path is None:
 
 # Construct OS-specific flags
 if platform.system().lower() == "windows":
-    env["CXXFLAGS"] = f" /MD /I{conda_include_path.as_posix()} /std:c++17 /EHsc "
+    env["CXXFLAGS"] = f"  /TP /MD /I{conda_include_path.as_posix()} /std:c++17 /EHsc "
     env["ABAQUSCXXFLAGS"] = (
         env["CXXFLAGS"]
         + _settings._compiler_flags_msvc

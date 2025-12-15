@@ -21,7 +21,7 @@ _compiler_flags_gcc = (
 )
 _link_flags_gcc = "-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -lstdc++ -lhdf5_hl "
 _compiler_flags_msvc = (
-    "/c /W0 /TP /DNDEBUG /DWIN32 /DTP_IP /D_CONSOLE /DNTI /DFLT_LIC /DOL_DOC /D__LIB__ /DHKS_NT "
+    "/c /W0 /DNDEBUG /DWIN32 /DTP_IP /D_CONSOLE /DNTI /DFLT_LIC /DOL_DOC /D__LIB__ /DHKS_NT "
     "/D_WINDOWS_SOURCE /DFAR= /D_WINDOWS /DABQ_WIN86_64 "
 )
 _link_flags_msvc = (
