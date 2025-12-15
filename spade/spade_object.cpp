@@ -2309,7 +2309,7 @@ void SpadeObject::write_extract_field_bulk_data(H5::H5File &h5_file, const strin
 
         // Creating blank dataset to use as dimension scale
         hsize_t dimensions_position[] = {number_of_integration_points};
-        vector<float> zeroes(number_of_integration_points, 0.0);
+        double* zeroes = new double[number_of_integration_points];
         H5::DataSpace dataspace_position(1, dimensions_position);
         H5::DataSet dataset_position;
         try {
