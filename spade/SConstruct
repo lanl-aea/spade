@@ -72,7 +72,7 @@ abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_ab
 # Compiler options and settings
 if platform.system().lower() == "windows":
     env["odb_flags"] = _compiler_flags + f" /I{abaqus_code_include.as_posix()} /I{abaqus_installation.as_posix()}"
-    env["abaqus_link_flags"] = _link_flags + f" LIBPATH:{compiler_lib.as_posix()}"
+    env["abaqus_link_flags"] = _link_flags + f" LIBPATH:{conda_lib_path.as_posix()}"
 else:
     compiler_string = shutil.which(env["CXX"], path=env["ENV"]["PATH"])
     if compiler_string is None:
