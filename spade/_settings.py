@@ -4,7 +4,7 @@ import pathlib
 _project_root_abspath = pathlib.Path(__file__).parent.resolve()
 _project_name = "Serialized Proprietary Abaqus Data Extractor"
 _project_description = (
-    "Tool for extracting data from an Abaqus output database (odb) file into a hierarchical data " "format (hdf5) file"
+    "Tool for extracting data from an Abaqus output database (odb) file into a hierarchical data format (hdf5) file"
 )
 _project_name_short = "spade"
 _project_name_cpp = "spade"
