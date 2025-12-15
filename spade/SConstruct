@@ -49,12 +49,13 @@ if env["CXX"] == "$CC":
 if platform.system().lower() == "windows":
     conda_include_path = next((path for path in conda_prefix.rglob("**/Library/Include")), None)
     if conda_include_path is not None:
-        env["CXXFLAGS"] = env["CXXFLAGS"] + f" /I{conda_include_path.as_posix()} /std:c++17"
+        env["CXXFLAGS"] = env["CXXFLAGS"] + f" /I{conda_include_path.as_posix()} /std:c++17 "
     else:
         sys.exit("Could not find the expected Windows CONDA_PREFIX include path")
     _compiler_flags = _settings._compiler_flags_msvc
     _link_flags = _settings._link_flags_msvc
 else:
+    env["CXXFLAGS"] = env.ParseFlags(env["CXXFLAGS"] + f" -I{conda_include_path.as_posix()} -std=c++17 ")
     _compiler_flags = _settings._compiler_flags_gcc
     _link_flags = _settings._link_flags_gcc
 
@@ -95,10 +96,11 @@ h5_header_file = "H5Cpp.h"
 h5_include_path = next((path.parent for path in conda_prefix.rglob(f"**/{h5_header_file}")), None)
 if h5_include_path is None:
     sys.exit(f"Could not find H5 header file '{h5_header_file}' in '{conda_prefix}'")
-h5_flags = f" -I{h5_include_path.as_posix()}"
 if platform.system().lower() == "windows":
+    h5_flags = f" /I{h5_include_path.as_posix()}"
     env["SPADEOBJECTCXXFLAGS"] = env["odb_flags"] + h5_flags + " /std:c++17"
 else:
+    h5_flags = f" -I{h5_include_path.as_posix()}"
     env["SPADEOBJECTCXXFLAGS"] = env.ParseFlags(env["odb_flags"] + h5_flags)
 
 # Configure tasks
