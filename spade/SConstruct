@@ -67,7 +67,7 @@ if conda_include_path is None or conda_lib_path is None:
 
 # Construct OS-specific flags
 if platform.system().lower() == "windows":
-    env["CXXFLAGS"] = f"  /TP /MD /I{conda_include_path.as_posix()} /std:c++17 /EHsc "
+    env["CXXFLAGS"] = f"  /TP /MD /I{conda_include_path.as_posix()} /std:c++17 /EHsc /DH5_BUILT_AS_DYNAMIC_LIB "
     env["ABAQUSCXXFLAGS"] = (
         env["CXXFLAGS"]
         + _settings._compiler_flags_msvc
@@ -79,8 +79,9 @@ if platform.system().lower() == "windows":
         " /nologo /INCREMENTAL:NO /subsystem:console /machine:AMD64 /STACK:20000000 /NODEFAULTLIB:LIBC.LIB"
         " /NODEFAULTLIB:LIBCMT.LIB /DEFAULTLIB:OLDNAMES.LIB /DEFAULTLIB:kernel32.lib /DEFAULTLIB:user32.lib"
         " /DEFAULTLIB:advapi32.lib /FIXED:NO /LARGEADDRESSAWARE"
-        " /Fe:%J %F %M ${objects} %L %B %O"
+        " /Fe:%J %L"
         f" /LIBPATH:{conda_lib_path.as_posix()}"
+        " %F %M ${objects} %B %O"
         " oldnames.lib user32.lib ws2_32.lib netapi32.lib advapi32.lib"
         " msvcrt.lib vcruntime.lib ucrt.lib"
         " getopt.lib hdf5.lib hdf5_cpp.lib hdf5_hl.lib"
