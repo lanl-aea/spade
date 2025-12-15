@@ -19,17 +19,9 @@ _compiler_flags_gcc = (
     "-DMULTI_THREADING_ENABLED -D_REENTRANT -DABQ_MPI_SUPPORT -DBIT64 "
     "-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -static-libstdc++ "
 )
-_link_flags_gcc = "-fPIC -Wl,-Bdynamic -Wl,--add-needed -o %J %F %M %L %B %O -lhdf5 -lhdf5_cpp -lstdc++ -lhdf5_hl "
 _compiler_flags_msvc = (
     "/c /W0 /DNDEBUG /DWIN32 /DTP_IP /D_CONSOLE /DNTI /DFLT_LIC /DOL_DOC /D__LIB__ /DHKS_NT "
     "/D_WINDOWS_SOURCE /DFAR= /D_WINDOWS /DABQ_WIN86_64 "
-)
-_link_flags_msvc = (
-    "/nologo /INCREMENTAL:NO /subsystem:console /machine:AMD64 /STACK:20000000 /NODEFAULTLIB:LIBC.LIB "
-    "/NODEFAULTLIB:LIBCMT.LIB /DEFAULTLIB:OLDNAMES.LIB /DEFAULTLIB:kernel32.lib /DEFAULTLIB:user32.lib "
-    "/DEFAULTLIB:advapi32.lib /FIXED:NO "
-    "/LARGEADDRESSAWARE /Fe:%J %F %M %L %B %O oldnames.lib user32.lib ws2_32.lib netapi32.lib advapi32.lib "
-    "msvcrt.lib vcruntime.lib ucrt.lib getopt.lib hdf5.lib hdf5_cpp.lib hdf5_hl.lib "
 )
 
 # Docs subcommand

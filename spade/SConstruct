@@ -73,9 +73,18 @@ if platform.system().lower() == "windows":
         + _settings._compiler_flags_msvc
         + f" /I{abaqus_code_include.as_posix()} /I{abaqus_installation.as_posix()}"
     )
-    env["ABAQUSLINKFLAGS"] = _settings._link_flags_msvc + f" /LIBPATH:{conda_lib_path.as_posix()}"
     compile_cpp = string.Template("${CXX} ${ABAQUSCXXFLAGS}")
-    link_exe = string.Template("link ${ABAQUSLINKFLAGS} ${objects}")
+    link_exe = string.Template(
+        "link"
+        " /nologo /INCREMENTAL:NO /subsystem:console /machine:AMD64 /STACK:20000000 /NODEFAULTLIB:LIBC.LIB"
+        " /NODEFAULTLIB:LIBCMT.LIB /DEFAULTLIB:OLDNAMES.LIB /DEFAULTLIB:kernel32.lib /DEFAULTLIB:user32.lib"
+        " /DEFAULTLIB:advapi32.lib /FIXED:NO /LARGEADDRESSAWARE"
+        " /Fe:%J %F %M ${objects} %L %B %O"
+        f" /LIBPATH:{conda_lib_path.as_posix()}"
+        " oldnames.lib user32.lib ws2_32.lib netapi32.lib advapi32.lib"
+        " msvcrt.lib vcruntime.lib ucrt.lib"
+        " getopt.lib hdf5.lib hdf5_cpp.lib hdf5_hl.lib"
+     )
 else:
     env["CXXFLAGS"] = env["CXXFLAGS"] + f" -I{conda_include_path.as_posix()} -std=c++17 "
     env["ABAQUSCXXFLAGS"] = (
@@ -83,12 +92,14 @@ else:
         + _settings._compiler_flags_gcc
         + f" -I{abaqus_code_include.as_posix()} -I{abaqus_installation.as_posix()}"
     )
-    env["ABAQUSLINKFLAGS"] = (
-        _settings._link_flags_gcc
-        + f" -L{compiler_lib.as_posix()} -Wl,-rpath,{abaqus_code_bin.as_posix()},-rpath,{compiler_lib.as_posix()}"
-    )
     compile_cpp = string.Template("${CXX} ${ABAQUSCXXFLAGS}")
-    link_exe = string.Template("${CXX} ${ABAQUSLINKFLAGS} ${objects}")
+    link_exe = string.Template(
+        "${CXX}"
+        " -fPIC -Wl,-Bdynamic -Wl,--add-needed"
+        " -o %J %F %M ${objects} %L %B %O"
+        f" -L{conda_lib_path.as_posix()} -Wl,-rpath,{abaqus_code_bin.as_posix()},-rpath,{conda_lib_path.as_posix()}"
+        " -lhdf5 -lhdf5_cpp -lstdc++ -lhdf5_hl "
+    )
 
 # Configure tasks
 build_directory = pathlib.Path(GetOption("build_dir"))
