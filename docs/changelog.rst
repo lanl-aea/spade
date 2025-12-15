@@ -14,6 +14,7 @@ Internal Changes
   few minutes off of the full test suite execution time (:issue:`138`, :merge:`140`). By `Kyle Brindley`_.
 - Test against Abaqus 2025 (:issue:`137`, :merge:`141`). By `Kyle Brindley`_.
 - Limit Abaqus system test parameterization to tests that require Abaqus (:merge:`142`). By `Kyle Brindley`_.
+- Convert to a ``noarch`` conda package with OS-specific dependencies (:merge:`145`). By `Kyle Brindley`_.
 
 Enhancements
 ============

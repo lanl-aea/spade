@@ -1,5 +1,6 @@
 {% set name = "spade" %}
 {% set version = VERSION %}
+{% set python_min = "3.10" %}
 
 package:
   name: {{ name|lower }}
@@ -10,6 +11,7 @@ source:
 
 build:
   number: 0
+  noarch: python
   script_env:
     - SETUPTOOLS_SCM_PRETEND_VERSION={{ version }}
   script:
@@ -20,7 +22,7 @@ build:
 
 requirements:
   host:
-    - python {{ python }}
+    - python
     - pip
     - python-build
     - scons >=4.6
@@ -33,11 +35,14 @@ requirements:
     - sphinx-design
     - sphinxcontrib-bibtex
   run:
-    - {{ compiler('cxx') }}
-    - {{ stdlib('c') }}
-    - python
-    - hdf5
+    - python >={{ python_min }}
+    - cxx-compiler # [linux or win]
+    - hdf5  # [linux or win]
     - scons >=4.6
+    - __linux  # [linux]
+    - __glibc >=2.28  # [linux]
+    - __osx  # [osx]
+    - __win  # [win]
 
 test:
   requires:
