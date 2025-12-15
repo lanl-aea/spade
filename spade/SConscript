@@ -1,25 +1,28 @@
 #! /usr/bin/env python
-import platform
 
 # Inherit the parent construction environment
-Import("env")
+Import("env", "compile_cpp", "link_exe")
 
 # Build static objects
 objects = []
 env.MergeFlags("-I.")
 objects.extend(env.Object("cmd_line_arguments.cpp"))
 objects.extend(env.Object("logging.cpp"))
-objects.extend(env.Object("spade_object.cpp", CXXFLAGS=env["SPADEOBJECTCXXFLAGS"]))
+objects.extend(env.Object("spade_object.cpp", CXXFLAGS=env["ABAQUSCXXFLAGS"]))
 
 # Write build abaqus environment file
-compile_cpp = f"{env['CXX']} {env['odb_flags']}"
-if platform.system().lower() == "windows":
-    link_exe = f"link {env['abaqus_link_flags']} " + " ".join([target.name for target in objects])
-else:
-    link_exe = f"{env['CXX']} {env['abaqus_link_flags']} " + " ".join([target.name for target in objects])
+object_string = " ".join(target.name for target in objects)
+template_substitution = {
+    "CXX": env["CXX"],
+    "ABAQUSCXXFLAGS": env["ABAQUSCXXFLAGS"],
+    "objects": object_string,
+}
 env.Substfile(
     "abaqus_v6.env.in",
-    SUBST_DICT={"@compile_cpp@": compile_cpp, "@link_exe@": link_exe},
+    SUBST_DICT={
+        "@compile_cpp@": compile_cpp.safe_substitute(template_substitution),
+        "@link_exe@": link_exe.safe_substitute(template_substitution)
+    },
 )
 
 # Build executable with Abaqus make
