@@ -29,7 +29,7 @@ _link_flags_msvc = (
     "/NODEFAULTLIB:LIBCMT.LIB /DEFAULTLIB:OLDNAMES.LIB /DEFAULTLIB:kernel32.lib /DEFAULTLIB:user32.lib "
     "/DEFAULTLIB:advapi32.lib /FIXED:NO "
     "/LARGEADDRESSAWARE /Fe:%J %F %M %L %B %O oldnames.lib user32.lib ws2_32.lib netapi32.lib advapi32.lib "
-    "msvcrt.lib vcruntime.lib ucrt.lib hdf5.lib hdf5_cpp.lib hdf5_hl.lib "
+    "msvcrt.lib vcruntime.lib ucrt.lib getopt.lib hdf5.lib hdf5_cpp.lib hdf5_hl.lib "
 )
 
 # Docs subcommand
