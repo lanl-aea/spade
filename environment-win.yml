@@ -23,3 +23,4 @@ dependencies:
   - sphinx-copybutton >=0.5.1
   - sphinx-design
   - sphinxcontrib-bibtex
+  - vs2022_win-64
