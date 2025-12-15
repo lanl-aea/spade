@@ -56,6 +56,8 @@ if platform.system().lower() == "windows":
     _compiler_flags = _settings._compiler_flags_msvc
     _link_flags = _settings._link_flags_msvc
 else:
+    conda_include_path = next((path for path in conda_prefix.rglob("**/include")), None)
+    conda_lib_path = next((path for path in conda_prefix.rglob("**/lib")), None)
     env["CXXFLAGS"] = env.ParseFlags(env["CXXFLAGS"] + f" -I{conda_include_path.as_posix()} -std=c++17 ")
     _compiler_flags = _settings._compiler_flags_gcc
     _link_flags = _settings._link_flags_gcc
