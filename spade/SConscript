@@ -21,7 +21,7 @@ env.Substfile(
     "abaqus_v6.env.in",
     SUBST_DICT={
         "@compile_cpp@": compile_cpp.safe_substitute(template_substitution),
-        "@link_exe@": link_exe.safe_substitute(template_substitution)
+        "@link_exe@": link_exe.safe_substitute(template_substitution),
     },
 )
 
