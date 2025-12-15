@@ -43,6 +43,7 @@ requirements:
     - __glibc >=2.28  # [linux]
     - __osx  # [osx]
     - __win  # [win]
+    - getopt-win32  # [win]
 
 test:
   requires:
