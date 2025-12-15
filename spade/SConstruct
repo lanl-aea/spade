@@ -50,7 +50,7 @@ if platform.system().lower() == "windows":
     conda_include_path = next((path for path in conda_prefix.rglob("**/Library/include")), None)
     conda_lib_path = next((path for path in conda_prefix.rglob("**/Library/lib")), None)
     if conda_include_path is not None:
-        env["CXXFLAGS"] = env["CXXFLAGS"] + f" /I{conda_include_path.as_posix()} /std:c++17 /EHsc"
+        env["CXXFLAGS"] = env["CXXFLAGS"] + f" /MD /I{conda_include_path.as_posix()} /std:c++17 /EHsc"
     else:
         sys.exit("Could not find the expected Windows CONDA_PREFIX include path")
     _compiler_flags = _settings._compiler_flags_msvc
@@ -75,7 +75,7 @@ if platform.system().lower() == "windows":
         _compiler_flags
         + f" /I{abaqus_code_include.as_posix()} /I{abaqus_installation.as_posix()} /I{conda_include_path.as_posix()} /std:c++17"
     )
-    env["abaqus_link_flags"] = _link_flags + f" LIBPATH:{conda_lib_path.as_posix()}"
+    env["abaqus_link_flags"] = _link_flags + f" /LIBPATH:{conda_lib_path.as_posix()}"
 else:
     compiler_string = shutil.which(env["CXX"], path=env["ENV"]["PATH"])
     if compiler_string is None:

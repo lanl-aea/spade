@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import platform
 
 # Inherit the parent construction environment
 Import("env")
@@ -12,7 +13,10 @@ objects.extend(env.Object("spade_object.cpp", CXXFLAGS=env["SPADEOBJECTCXXFLAGS"
 
 # Write build abaqus environment file
 compile_cpp = f"{env['CXX']} {env['odb_flags']}"
-link_exe = f"{env['CXX']} {env['abaqus_link_flags']} " + " ".join([target.name for target in objects])
+if platform.system().lower() == "windows":
+    link_exe = f"link {env['abaqus_link_flags']} " + " ".join([target.name for target in objects])
+else:
+    link_exe = f"{env['CXX']} {env['abaqus_link_flags']} " + " ".join([target.name for target in objects])
 env.Substfile(
     "abaqus_v6.env.in",
     SUBST_DICT={"@compile_cpp@": compile_cpp, "@link_exe@": link_exe},
