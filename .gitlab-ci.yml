@@ -112,7 +112,7 @@ aea-conda-build:
   artifacts:
     expire_in: '2 hrs'
     paths:
-      - conda-bld/noarch-64/spade-*-*.tar.bz2
+      - conda-bld/noarch/spade-*-*.tar.bz2
 
 # https://re-git.lanl.gov/aea/developer-operations/aea-conda
 aea-conda-deploy:
@@ -124,7 +124,7 @@ aea-conda-deploy:
     AEA_CONDA_DEPLOY_JOB: aea-conda-deploy-curl-jobid
     PARENT_CI_PROJECT_ID: $CI_PROJECT_ID
     AEA_CONDA_PACKAGE_JOB: aea-conda-build
-    AEA_CONDA_PACKAGE_ARTIFACTS: conda-bld/noarch-64/spade-*-*.tar.bz2
+    AEA_CONDA_PACKAGE_ARTIFACTS: conda-bld/noarch/spade-*-*.tar.bz2
   trigger:
     project: aea/developer-operations/aea-conda
     branch: main
