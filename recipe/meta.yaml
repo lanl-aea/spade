@@ -36,7 +36,7 @@ requirements:
     - sphinxcontrib-bibtex
   run:
     - python >={{ python_min }}
-    - cxx-compiler # [linux or win]
+    - cxx-compiler  # [linux or win]
     - hdf5  # [linux or win]
     - scons >=4.6
     - __linux  # [linux]
