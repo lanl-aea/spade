@@ -201,10 +201,11 @@ system_tests = [
 @pytest.mark.parametrize("commands", system_tests)
 def test_system(
     system_test_directory: pathlib.Path | None,
+    keep_system_tests: bool,
     request: pytest.FixtureRequest,
     commands: typing.Iterable[str],
 ) -> None:
-    run_system_test(system_test_directory, request, commands)
+    run_system_test(system_test_directory, keep_system_tests, request, commands)
 
 
 # System tests that require third-party software, e.g. Abaqus.
@@ -266,18 +267,20 @@ for inp_file in inp_files:
 @pytest.mark.require_third_party
 @pytest.mark.parametrize("commands", system_tests_require_third_party)
 def test_system_require_third_party(
-    system_test_directory: pathlib.Path | None,
+    system_test_directory: typing.Optional[pathlib.Path],
+    keep_system_tests: bool,
     request: pytest.FixtureRequest,
     commands: typing.Iterable[str],
     abaqus_command: str | None,
 ) -> None:
-    run_system_test(system_test_directory, request, commands, abaqus_command=abaqus_command)
+    run_system_test(system_test_directory, keep_system_tests, request, commands, abaqus_command=abaqus_command)
 
 
 def run_system_test(
     system_test_directory: pathlib.Path | None,
+    keep_system_tests: bool,
     request: pytest.FixtureRequest,
-    commands: typing.Iterable[str],
+    commands: typing.Iterable[str | string.Template],
     abaqus_command: str | None = None,
 ) -> None:
     """Run shell commands as system tests in a temporary directory.
@@ -292,6 +295,7 @@ def run_system_test(
        pytest --system-test-dir=/my/systemtest/output
 
     :param system_test_directory: custom pytest decorator defined in conftest.py
+    :param keep_system_tests: custom pytest decorator defined in conftest.py
     :param request: pytest decorator with test case meta data
     :param commands: command string or list of strings for the system test
     :param abaqus_command: custom pytest fixture defined in conftest.py
@@ -305,7 +309,7 @@ def run_system_test(
     temporary_directory = tempfile.TemporaryDirectory(
         dir=system_test_directory,
         prefix=create_test_prefix(request),
-        **return_temporary_directory_kwargs(system_test_directory, False),
+        **return_temporary_directory_kwargs(system_test_directory, keep_system_tests),
     )
     temporary_path = pathlib.Path(temporary_directory.name)
     temporary_path.mkdir(parents=True, exist_ok=True)
@@ -325,4 +329,5 @@ def run_system_test(
     except Exception as err:
         raise err
     else:
-        temporary_directory.cleanup()
+        if not keep_system_tests:
+            temporary_directory.cleanup()
