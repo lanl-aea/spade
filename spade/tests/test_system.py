@@ -205,6 +205,7 @@ def test_system(
 ) -> None:
     run_system_test(system_test_directory, request, commands)
 
+
 # System tests that require third-party software, e.g. Abaqus.
 # TODO: add tutorials
 # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/22
@@ -252,6 +253,7 @@ for inp_file in inp_files:
             id=inp_file,
         )
     )
+
 
 # TODO: Remove user check when Windows CI Gitlab-Runner account can access the Abaqus license server
 # https://re-git.lanl.gov/aea/python-projects/waves/-/issues/984
