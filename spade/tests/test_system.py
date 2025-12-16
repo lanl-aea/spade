@@ -1,3 +1,5 @@
+import getpass
+import importlib
 import os
 import re
 import string
@@ -7,7 +9,6 @@ import pathlib
 import platform
 import tempfile
 import subprocess
-from importlib.metadata import version, PackageNotFoundError
 from unittest.mock import Mock, patch
 
 import pytest
