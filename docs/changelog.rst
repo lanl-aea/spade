@@ -4,9 +4,17 @@
 Changelog
 #########
 
+********************
+v0.4.10 (unreleased)
+********************
+
 *******************
-v0.4.9 (unreleased)
+v0.4.9 (2025-12-16)
 *******************
+
+Bug fixes
+=========
+- Fix the artifacts paths for internal conda channel deployment. By `Kyle Brindley`_.
 
 *******************
 v0.4.8 (2025-12-16)
