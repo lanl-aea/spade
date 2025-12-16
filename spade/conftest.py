@@ -32,7 +32,7 @@ def system_test_directory(request: pytest.FixtureRequest) -> pathlib.Path:
     return request.config.getoption("--system-test-dir")
 
 
-def pytest_generate_tests(metafunc):
+def pytest_generate_tests(metafunc) -> None:
     """Parametrize systemt tests one per abaqus command"""
     if not metafunc.function.__name__ == "test_system_require_third_party":
         return
