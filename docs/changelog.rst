@@ -8,6 +8,11 @@ Changelog
 v0.4.10 (unreleased)
 ********************
 
+Internal Changes
+================
+- Separate conda recipes to allow full system tests on AEA servers where Abaqus is available and package only tests
+  where Abaqus is unavailable (:issue:`142`, :merge:`146`). By `Kyle Brindley`_.
+
 *******************
 v0.4.9 (2025-12-16)
 *******************
