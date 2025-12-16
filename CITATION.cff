@@ -19,3 +19,6 @@ identifiers:
   - description: "0.4.6"
     type: doi
     value: 10.5281/zenodo.15747904
+  - description: "0.4.7"
+    type: doi
+    value: 10.5281/zenodo.17860134

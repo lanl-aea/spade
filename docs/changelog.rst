@@ -5,12 +5,16 @@ Changelog
 #########
 
 *******************
-v0.4.8 (unreleased)
+v0.4.9 (unreleased)
+*******************
+
+*******************
+v0.4.8 (2025-12-16)
 *******************
 
 Bug fixes
 =========
-- Fix Windows support and add Windows CI tests (:merge:`144`). By `Kyle Brindley`_.
+- Preliminary Windows support and add Windows CI tests (:merge:`144`). By `Kyle Brindley`_.
 
 Internal Changes
 ================
