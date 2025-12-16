@@ -8,6 +8,10 @@ Changelog
 v0.4.8 (unreleased)
 *******************
 
+Bug fixes
+=========
+- Fix Windows support and add Windows CI tests (:merge:`144`). By `Kyle Brindley`_.
+
 Internal Changes
 ================
 - Parametrize the system tests against command-line provided abaqus commands instead of repeat calls to pytest. Cuts a
