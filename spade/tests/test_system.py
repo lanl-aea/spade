@@ -173,9 +173,6 @@ testing_macos = True if system == "darwin" else False
 testing_ci_user = check_ci_user()
 installed = check_installed()
 if not installed:
-    # TODO: Recover from the SCons task definition?
-    build_directory = _settings._project_root_abspath.parent / "build" / "systemtests"
-    build_directory.mkdir(parents=True, exist_ok=True)
     spade_command = "python -m spade._main"
     key = "PYTHONPATH"
     if key in env:
