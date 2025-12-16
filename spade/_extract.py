@@ -3,6 +3,7 @@ import sys
 import errno
 import shlex
 import pathlib
+import platform
 import argparse
 import tempfile
 import subprocess
@@ -265,10 +266,13 @@ def cpp_execute(
     :raises RuntimeError: If the spade c++ command raises a ``subprocess.CalledProcessError``
     """
     full_command_line_arguments = f"{spade_executable.resolve()}" + cpp_wrapper(args)
-    try:
-        environment["LD_LIBRARY_PATH"] = f"{abaqus_bin}:{environment['LD_LIBRARY_PATH']}"
-    except KeyError:
-        environment["LD_LIBRARY_PATH"] = f"{abaqus_bin}"
+    if platform.system().lower() == "windows":
+        environment["PATH"] = f"{abaqus_bin};{abaqus_bin}32;{environment['PATH']}"
+    else:
+        try:
+            environment["LD_LIBRARY_PATH"] = f"{abaqus_bin}:{environment['LD_LIBRARY_PATH']}"
+        except KeyError:
+            environment["LD_LIBRARY_PATH"] = f"{abaqus_bin}"
     command_line_arguments = shlex.split(full_command_line_arguments, posix=(os.name == "posix"))
     print_debug(f"Running {_settings._project_name_short} with command {command_line_arguments}")
     try:

@@ -59,6 +59,8 @@ AddOption(
 )
 
 env = Environment(
+    CC="",
+    CXX="",
     ENV=os.environ.copy(),
     prefix=pathlib.Path(GetOption("prefix")),
     abaqus_command=GetOption("abaqus_command"),

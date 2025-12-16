@@ -1,7 +1,9 @@
 #! /usr/bin/env python
 import os
 import pathlib
+import platform
 import shutil
+import string
 import sys
 
 import _utilities
@@ -34,46 +36,83 @@ AddOption(
 )
 
 # Project environment
+windows_system = True if platform.system().lower() == "windows" else False
 user_env = os.environ.copy()
 env = Environment(
     ENV=user_env,
-    CC=user_env["CC"],
-    CXX=user_env["CXX"],
-    build_dir=GetOption("build_dir"),
-    abaqus_command=GetOption("abaqus_command"),
     recompile=GetOption("recompile"),
     project_name_cpp=_settings._project_name_cpp,
 )
-abaqus_command = env["abaqus_command"]
 
 # Abaqus and system settings
-abaqus_version = _utilities.abaqus_official_version(abaqus_command)
-abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_abaqus_code_paths(abaqus_command)
-env["abaqus_make_command"] = f"{abaqus_command} make job={_settings._project_name_cpp}.cpp"
+env["ABAQUS_PROGRAM"] = shutil.which(GetOption("abaqus_command"), path=env["ENV"]["PATH"])
+abaqus_version = _utilities.abaqus_official_version(env["ABAQUS_PROGRAM"])
+abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_abaqus_code_paths(env["ABAQUS_PROGRAM"])
 
-# Compiler options and settings
-compiler_string = shutil.which(env["CXX"], path=env["ENV"]["PATH"])
-if compiler_string is None:
-    sys.exit(f"Could not find CXX compiler '{env['CXX']}' on PATH '{env['ENV']['PATH']}'")
+# Add CXX if missing; Use compiler name directly instead of inheriting from $CC
+if "CXX" in user_env and not "CXX" in env:
+    env["CXX"] = user_env["CXX"]
+if env["CXX"] == "$CC":
+    env["CXX"] = env["CC"]
+
+# Search for OS-specific include and library paths
+conda_prefix = pathlib.Path(user_env["CONDA_PREFIX"])
+if windows_system:
+    conda_include_path = next((path for path in conda_prefix.rglob("**/Library/include")), None)
+    conda_lib_path = next((path for path in conda_prefix.rglob("**/Library/lib")), None)
 else:
-    gpp_path = pathlib.Path(compiler_string).parent.parent
-gpp_lib = gpp_path / "lib"
-gpp_include = gpp_path / "include"
-if not gpp_lib.exists() or not gpp_include.exists():
-    sys.exit(f"Did not find 'lib' or 'include' for compiler '{compiler_path}' at '{gpp_lib}' or '{gpp_include}'")
+    conda_include_path = next((path for path in conda_prefix.rglob("**/include")), None)
+    conda_lib_path = next((path for path in conda_prefix.rglob("**/lib")), None)
+if conda_include_path is None or conda_lib_path is None:
+    sys.exit("Could not find the expected Windows CONDA_PREFIX 'include' or 'lib' path")
 
-env["odb_flags"] = (
-    _settings._compiler_flags + f"-I{abaqus_code_include} -I{abaqus_installation} " + f"-I{gpp_include} -I. -I{gpp_lib}"
-)
-env["abaqus_link_flags"] = _settings._link_flags + f"-L{gpp_lib} -Wl,-rpath,{abaqus_code_bin},-rpath,{gpp_lib}"
-# TODO: May wish to confirm that h5c++ is definitely in the same place as gpp (lib and include)
-h5_flags = f"-fPIC -I{gpp_include} -I. -I{gpp_lib}"
-env["SPADEOBJECTCXXFLAGS"] = env.ParseFlags(env["odb_flags"] + h5_flags)
+# Construct OS-specific flags
+if windows_system:
+    env["CXXFLAGS"] = f"  /TP /MD /I{conda_include_path.as_posix()} /std:c++17 /EHsc /DH5_BUILT_AS_DYNAMIC_LIB "
+    env["ABAQUSCXXFLAGS"] = (
+        env["CXXFLAGS"]
+        + _settings._compiler_flags_msvc
+        + f" /I{abaqus_code_include.as_posix()} /I{abaqus_installation.as_posix()}"
+    )
+    compile_cpp = string.Template("${CXX} ${ABAQUSCXXFLAGS}")
+    link_exe = string.Template(
+        "link"
+        " /nologo /INCREMENTAL:NO /subsystem:console /machine:AMD64 /STACK:20000000 /NODEFAULTLIB:LIBC.LIB"
+        " /NODEFAULTLIB:LIBCMT.LIB /DEFAULTLIB:OLDNAMES.LIB /DEFAULTLIB:kernel32.lib /DEFAULTLIB:user32.lib"
+        " /DEFAULTLIB:advapi32.lib /FIXED:NO /LARGEADDRESSAWARE"
+        " /Fe:%J %L"
+        f" /LIBPATH:{conda_lib_path.as_posix()}"
+        " %F %M ${objects} %B %O"
+        " oldnames.lib user32.lib ws2_32.lib netapi32.lib advapi32.lib"
+        " msvcrt.lib vcruntime.lib ucrt.lib"
+        " getopt.lib hdf5.lib hdf5_cpp.lib hdf5_hl.lib"
+    )
+else:
+    env["CXXFLAGS"] = env["CXXFLAGS"] + f" -I{conda_include_path.as_posix()} -std=c++17 "
+    env["ABAQUSCXXFLAGS"] = (
+        env["CXXFLAGS"]
+        + _settings._compiler_flags_gcc
+        + f" -I{abaqus_code_include.as_posix()} -I{abaqus_installation.as_posix()}"
+    )
+    compile_cpp = string.Template("${CXX} ${ABAQUSCXXFLAGS}")
+    link_exe = string.Template(
+        "${CXX}"
+        " -fPIC -Wl,-Bdynamic -Wl,--add-needed"
+        " -o %J %F %M ${objects} %L %B %O"
+        f" -L{conda_lib_path.as_posix()} -Wl,-rpath,{abaqus_code_bin.as_posix()},-rpath,{conda_lib_path.as_posix()}"
+        " -lhdf5 -lhdf5_cpp -lstdc++ -lhdf5_hl "
+    )
 
 # Configure tasks
-sconsign_file = pathlib.Path(env["build_dir"]) / ".sconsign.dblite"
+build_directory = pathlib.Path(GetOption("build_dir"))
+sconsign_file = build_directory / ".sconsign.dblite"
 env.SConsignFile(sconsign_file)
-env.SConscript("SConscript", variant_dir=env["build_dir"], exports="env", duplicate=True)
+env.SConscript(
+    "SConscript",
+    variant_dir=build_directory,
+    exports={"env": env, "compile_cpp": compile_cpp, "link_exe": link_exe},
+    duplicate=True,
+)
 
 # Add aliases to help message so users know what build target options are available
 # This must come *after* all expected Alias definitions and SConscript files.

@@ -1,28 +1,35 @@
 #! /usr/bin/env python
 
 # Inherit the parent construction environment
-Import("env")
+Import("env", "compile_cpp", "link_exe")
 
 # Build static objects
 objects = []
 env.MergeFlags("-I.")
 objects.extend(env.Object("cmd_line_arguments.cpp"))
 objects.extend(env.Object("logging.cpp"))
-objects.extend(env.Object("spade_object.cpp", parse_flags=env["SPADEOBJECTCXXFLAGS"]))
+objects.extend(env.Object("spade_object.cpp", CXXFLAGS=env["ABAQUSCXXFLAGS"]))
 
 # Write build abaqus environment file
-compile_cpp = f"{env['CXX']} {env['odb_flags']}"
-link_exe = f"{env['CXX']} {env['abaqus_link_flags']} " + " ".join([target.name for target in objects])
+object_string = " ".join(target.name for target in objects)
+template_substitution = {
+    "CXX": env["CXX"],
+    "ABAQUSCXXFLAGS": env["ABAQUSCXXFLAGS"],
+    "objects": object_string,
+}
 env.Substfile(
     "abaqus_v6.env.in",
-    SUBST_DICT={"@compile_cpp@": compile_cpp, "@link_exe@": link_exe},
+    SUBST_DICT={
+        "@compile_cpp@": compile_cpp.safe_substitute(template_substitution),
+        "@link_exe@": link_exe.safe_substitute(template_substitution),
+    },
 )
 
 # Build executable with Abaqus make
 env.Command(
     target=[env["project_name_cpp"]],
     source=[f"{env['project_name_cpp']}.cpp"] + objects,
-    action=[env["abaqus_make_command"]],
+    action=["${ABAQUS_PROGRAM} make job=${project_name_cpp}.cpp"],
     # FIXME: If we can use SCons to re-build the compile_cpp string with the SCons controlled arguments we won't have to
     # change directory. SCons parses ``-I.`` to correct for the build directory, but we're writing odb_flags string
     # without adjustment to abaqus_v6.env. There's probably an additional complication that abaqus make needs to run

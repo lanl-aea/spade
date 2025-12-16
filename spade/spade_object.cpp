@@ -31,7 +31,6 @@ using namespace std;
 #include <iterator>
 #include <regex>
 #include <stdlib.h>
-#include <dirent.h>
 #include <cmath>
 #include <sys/stat.h>
 #include <filesystem>
@@ -358,7 +357,7 @@ map<int, node_type>* SpadeObject::process_nodes (const odb_SequenceNode &nodes, 
     mesh_type* mesh;
     set<int> new_node_set;
     string name;
-    if (!part_name.empty()) { 
+    if (!part_name.empty()) {
         try {  // If the node has been stored in nodes, just return the address to it
             new_nodes = &this->part_mesh.at(part_name).nodes;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
@@ -380,13 +379,13 @@ map<int, node_type>* SpadeObject::process_nodes (const odb_SequenceNode &nodes, 
         mesh = &this->instance_mesh[name];
     } else {
         name = assembly_name;
-        if (name.empty()) { 
+        if (name.empty()) {
             name = this->default_instance_name;
         }
         new_nodes = &this->assembly_mesh[name].nodes;
         mesh = &this->assembly_mesh[name];
     }
-    for (int i=0; i < nodes.size(); i++) { 
+    for (int i=0; i < nodes.size(); i++) {
         odb_Node node = nodes.node(i);
         int node_label = node.label();
         new_node_set.insert(node_label);
@@ -411,7 +410,7 @@ map<string, map<int, element_type>>* SpadeObject::process_elements (const odb_Se
     set<int> new_element_set;
     string name;
     this->log_file->logDebug("\t\tCall to process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
-    if (!part_name.empty()) { 
+    if (!part_name.empty()) {
         try {  // If the element has been stored in elements, just return the address to it
             new_elements = &this->part_mesh.at(part_name).elements;  // Use 'at' member function instead of brackets to get exception raised instead of creating blank value for key in map
         } catch (const std::out_of_range& oor) {
@@ -431,7 +430,7 @@ map<string, map<int, element_type>>* SpadeObject::process_elements (const odb_Se
         mesh = &this->instance_mesh[instance_name];
     } else {
         name = assembly_name;
-        if (name.empty()) { 
+        if (name.empty()) {
             name = this->default_instance_name;
         }
         new_elements = &this->assembly_mesh[name].elements;
@@ -439,7 +438,7 @@ map<string, map<int, element_type>>* SpadeObject::process_elements (const odb_Se
     }
     this->log_file->logDebug("\t\tElements map retrieved in process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
     int previous_label = -2;
-    for (int i=0; i < elements.size(); i++) { 
+    for (int i=0; i < elements.size(); i++) {
         odb_Element element = elements.element(i);
         int element_label = element.label();
         if (element_label == previous_label) {  // For a typical hex element we were processing it 6 times
@@ -466,7 +465,7 @@ map<string, map<int, element_type>>* SpadeObject::process_elements (const odb_Se
             (*new_elements)[type][element_label].sectionCategory = process_section_category(element.sectionCategory());
         }
     }
-    if (!set_name.empty()) { 
+    if (!set_name.empty()) {
         mesh->element_sets[set_name].insert(new_element_set.begin(), new_element_set.end());
     }
     this->log_file->logDebug("\t\tFinished process_elements at time: " + this->command_line_arguments->getTimeStamp(true));
@@ -1010,20 +1009,20 @@ assembly_type SpadeObject::process_assembly (odb_Assembly &assembly, odb_Odb &od
 
 void SpadeObject::process_field_values(const odb_FieldValue &field_value, const odb_SequenceInvariant& invariants, field_value_type &values) {
     int elementLabel = field_value.elementLabel();
-    if (elementLabel != -1) { 
+    if (elementLabel != -1) {
         values.elementEmpty = false;
     }
     values.elementLabel.push_back(elementLabel);
     int nodeLabel = field_value.nodeLabel();
-    if (nodeLabel != -1) { 
+    if (nodeLabel != -1) {
         values.nodeEmpty = false;
     }
     values.nodeLabel.push_back(nodeLabel);
     int integrationPoint = field_value.integrationPoint();
-    if (integrationPoint != -1) { 
+    if (integrationPoint != -1) {
         values.integrationPointEmpty = false;
     }
-    values.integrationPoint.push_back(integrationPoint); 
+    values.integrationPoint.push_back(integrationPoint);
     string value_type = get_field_type_enum(field_value.type());
     values.type.push_back(value_type);
     if (value_type != "") { values.typeEmpty = false; }
@@ -1068,16 +1067,16 @@ void SpadeObject::process_field_values(const odb_FieldValue &field_value, const 
         values.outOfPlanePrincipalEmpty = false;
     } else { values.outOfPlanePrincipal.push_back(NAN); }
     string section_point_number =  to_string(field_value.sectionPoint().number());
-    if (section_point_number != "-1") { 
-        values.sectionPointNumber.push_back(section_point_number); 
-        values.sectionPointNumberEmpty = false; 
+    if (section_point_number != "-1") {
+        values.sectionPointNumber.push_back(section_point_number);
+        values.sectionPointNumberEmpty = false;
     } else { values.sectionPointNumber.push_back(""); }
     string section_point_description = "";
     section_point_description =  field_value.sectionPoint().description().CStr();
-    if (section_point_description != "") { 
+    if (section_point_description != "") {
         values.sectionPointDescriptionEmpty = false;
     }
-    values.sectionPointDescription.push_back(section_point_description); 
+    values.sectionPointDescription.push_back(section_point_description);
 }
 
 string SpadeObject::get_field_type_enum(odb_Enum::odb_DataTypeEnum type_enum) {
@@ -1329,7 +1328,7 @@ void SpadeObject::write_frame_data_h5 (odb_Odb &odb, H5::H5File &h5_file, const 
             this->log_file->logWarning("Invalid frame number specified.");
             continue;
         }
-        if (each_word[0] == '-') {  // Used for negative indexing 
+        if (each_word[0] == '-') {  // Used for negative indexing
             int frame_index = frames.size() + converted_int;
             if ((frame_index < 0) || (frame_index > frames.size())) {
                 this->log_file->logWarning("Invalid frame number specified.");
@@ -2310,8 +2309,8 @@ void SpadeObject::write_extract_field_bulk_data(H5::H5File &h5_file, const strin
 
         // Creating blank dataset to use as dimension scale
         hsize_t dimensions_position[] = {number_of_integration_points};
-        float zeroes[number_of_integration_points] = {};  // Should initialize all values with zero
-        H5::DataSpace  dataspace_position(1, dimensions_position);
+        double* zeroes = new double[number_of_integration_points];
+        H5::DataSpace dataspace_position(1, dimensions_position);
         H5::DataSet dataset_position;
         try {
             dataset_position = bulk_group.createDataSet(position, H5::PredType::NATIVE_FLOAT, dataspace_position);
@@ -2597,7 +2596,7 @@ void SpadeObject::write_field_outputs(H5::H5File &h5_file, const odb_Frame &fram
             string data_name;
             string base_element_type = "";
             base_element_type = field_bulk_value.baseElementType().CStr();
-            if (!base_element_type.empty()) { 
+            if (!base_element_type.empty()) {
                 data_name = field_bulk_value.baseElementType().CStr();
             } else {
                 data_name = position;
@@ -2760,7 +2759,7 @@ void SpadeObject::write_extract_field_outputs(H5::H5File &h5_file, const odb_Fra
             string data_name;
             string base_element_type = "";
             base_element_type = field_bulk_value.baseElementType().CStr();
-            if (!base_element_type.empty()) { 
+            if (!base_element_type.empty()) {
                 data_name = field_bulk_value.baseElementType().CStr();
             } else {
                 data_name = position;
@@ -2891,7 +2890,7 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
                 write_string_vector_dataset(set_group, "faces", history_point.region.faces);
             }
         }
-        if (history_point.sectionPoint.number != "-1") { 
+        if (history_point.sectionPoint.number != "-1") {
             write_string_attribute(history_point_group, "section_point_number", history_point.sectionPoint.number);
         }
         write_string_attribute(history_point_group, "section_point_description", history_point.sectionPoint.description);
@@ -2900,7 +2899,7 @@ void SpadeObject::write_history_point(H5::H5File &h5_file, const string &group_n
 }
 
 void SpadeObject::write_history_output(H5::H5File &h5_file, const string &group_name, const odb_HistoryOutput &history_output) {
-    // Per Abaqus documentation the conjugate data specifies the imaginary portion of a specified complex variable at each 
+    // Per Abaqus documentation the conjugate data specifies the imaginary portion of a specified complex variable at each
     // frame value (time, frequency, or mode). Therefore it seems that data and conjugate data can be present at the same time
     // So a group has to be created to handle two possible datasets, despite there usually being only one
     H5::Group history_output_group = create_group(h5_file, group_name);
@@ -3525,7 +3524,7 @@ void SpadeObject::write_set(H5::H5File &h5_file, const string &group_name, const
                 }
             }
         } else {
-            if (odb_set.type == "Surface Set") { 
+            if (odb_set.type == "Surface Set") {
                 if (odb_set.elements != nullptr && !odb_set.elements->empty()) {
                     if (element_set.has_value()) {
                         write_element_set(h5_file, set_group, element_set.value());

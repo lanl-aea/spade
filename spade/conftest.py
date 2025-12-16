@@ -15,6 +15,12 @@ def pytest_addoption(parser):
         help="system test build directory root",
     )
     parser.addoption(
+        "--keep-system-tests",
+        action="store_true",
+        default=False,
+        help="flag to skip system test directory cleanup",
+    )
+    parser.addoption(
         "--abaqus-command",
         action="append",
         type=str,
@@ -32,7 +38,13 @@ def system_test_directory(request: pytest.FixtureRequest) -> pathlib.Path:
     return request.config.getoption("--system-test-dir")
 
 
-def pytest_generate_tests(metafunc):
+@pytest.fixture
+def keep_system_tests(request: pytest.FixtureRequest) -> bool:
+    """Return the argument of custom pytest ``--keep-system-tests`` command-line option."""
+    return request.config.getoption("--keep-system-tests")
+
+
+def pytest_generate_tests(metafunc) -> None:
     """Parametrize systemt tests one per abaqus command"""
     if not metafunc.function.__name__ == "test_system_require_third_party":
         return

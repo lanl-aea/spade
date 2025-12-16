@@ -15,7 +15,6 @@
 #include <sstream>
 #include <fstream>
 #include <stdlib.h>
-#include <dirent.h>
 #include <sys/stat.h>
 #include <stdio.h>     /* for printf */
 #include <getopt.h>
@@ -164,7 +163,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         std::filesystem::path file_path = this->command_line_arguments["extracted-file"];
         std::filesystem::perms directory_permissions = std::filesystem::status(file_path.parent_path()).permissions();
         if (std::filesystem::perms::none == (std::filesystem::perms::owner_write & directory_permissions)) {  // If parent path is not writable, exit with error
-            throw std::runtime_error("Do not have write permission for: " + string(file_path.parent_path()));
+            throw std::runtime_error("Do not have write permission for: " + string(file_path.parent_path().string()));
         }
 
         // Check if extracted file already exists
@@ -187,7 +186,7 @@ CmdLineArguments::CmdLineArguments (int &argc, char **argv) {
         if (std::filesystem::exists(log_file)) {
             if (!this->force_overwrite) {
                 cerr << this->command_line_arguments["log-file"] << " already exists. Appending time stamp to log file\n";
-                string log_extension = log_file.extension();
+                string log_extension = log_file.extension().string();
                 string log_base_name = log_file.replace_extension("").generic_string();
                 this->command_line_arguments["log-file"] = log_base_name + "_" + this->start_time + log_extension;
             } else {

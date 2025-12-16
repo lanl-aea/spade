@@ -98,6 +98,20 @@ and `Conda environment management`_ documentation for more details about using `
 
    $ conda install --channel /projects/aea_compute/aea-conda --channel conda-forge spade
 
+Windows
+=======
+
+Windows users must install a version of Microsoft Visual C++ that is compatible with their Abaqus installation. The
+project tests against Microsoft Visual Studio 2022 and Microsoft C++ Compiler Version 19. You can read more about
+installation instructions and background at: https://wiki.python.org/moin/WindowsCompilers.
+
+macOS
+=====
+
+Abaqus does not support macOS and the ``spade extract`` command-line utility does not work on macOS. The macOS package
+provides the SPADE Python API for convenience of users developing workflows across multiple operating systems. This
+allows developers to run non-Abaqus workflows on macOS without import errors related to SPADE.
+
 .. installation-end-do-not-remove
 
 ****************
