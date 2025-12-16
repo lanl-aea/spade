@@ -21,11 +21,11 @@ pytest_node = env.Command(
     source=pytest_source_list,
     action=[
         (
-            "${pytest_command} -vvv -m 'not systemtest'"
+            '${pytest_command} -vvv -m "not systemtest"'
             " --cov --cov-report=term --cov-report=xml:${TARGETS[0].abspath} --cov-report=html:${TARGETS[1].abspath}"
         ),
         (
-            "${pytest_command} -v --no-showlocals --tb=short -m 'systemtest and not require_third_party'"
+            '${pytest_command} -v --no-showlocals --tb=short -m "systemtest and not require_third_party"'
             " --system-test-dir=${system_test_directory}"
         ),
     ],
@@ -45,7 +45,7 @@ systemtest_node = env.Command(
     source=source,
     action=[
         (
-            "${pytest_command} -v --no-showlocals --tb=short --cache-clear -m 'systemtest and require_third_party'"
+            '${pytest_command} -v --no-showlocals --tb=short --cache-clear -m "systemtest and require_third_party"'
             " --cov --cov-report=xml:${TARGET.abspath} "
             " --system-test-dir=${system_test_directory}"
             " ${abaqus_command}"
