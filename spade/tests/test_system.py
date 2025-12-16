@@ -17,33 +17,46 @@ from spade import _settings
 MODULE_NAME = pathlib.Path(__file__).stem
 PACKAGE_PARENT_PATH = _settings._project_root_abspath.parent
 
-env = os.environ.copy()
-spade_command = "spade"
-odb_files = ["viewer_tutorial.odb", "w-reactor_global.odb"]
-inp_files = [
-    "beamgap",
-    "selfcontact_gask",
-    "erode_proj_and_plate",
-]
-testing_macos = True if platform.system().lower() == "darwin" else False
 
-# If executing in repository, add package to PYTHONPATH
-try:
-    version("spade")
-    installed = True
-except PackageNotFoundError:
-    # TODO: Recover from the SCons task definition?
-    build_directory = _settings._project_root_abspath.parent / "build" / "systemtests"
-    build_directory.mkdir(parents=True, exist_ok=True)
-    installed = False
+# TODO: Remove user check when Windows CI server Gitlab-Runner account has access to the Abaqus license server
+# https://re-git.lanl.gov/aea/python-projects/waves/-/issues/984
+def check_ci_user() -> bool:
+    user = getpass.getuser().lower()
+    return "pn2606796" in user or user == "gitlab-runner"
 
-if not installed:
-    spade_command = "python -m spade._main"
-    key = "PYTHONPATH"
-    if key in env:
-        env[key] = f"{PACKAGE_PARENT_PATH}:{env[key]}"
-    else:
-        env[key] = f"{PACKAGE_PARENT_PATH}"
+
+test_check_ci_user_cases = {
+    "windows ci user": ("PN2606796$", True),
+    "windows ci user without trailing service account character": ("PN2606796", True),
+    "macos ci user": ("gitlab-runner", True),
+    "player character": ("roppenheimer", False),
+}
+
+
+@pytest.mark.parametrize(
+    ("mock_user", "expected"),
+    test_check_ci_user_cases.values(),
+    ids=test_check_ci_user_cases.keys(),
+)
+def test_check_ci_user(mock_user: str, expected: bool) -> None:
+    with patch("getpass.getuser", return_value=mock_user):
+        testing_ci_user = check_ci_user()
+    assert testing_ci_user is expected
+
+
+def check_installed(package_name: str = "spade") -> bool:
+    try:
+        importlib.metadata.version(package_name)
+        return True
+    except importlib.metadata.PackageNotFoundError:
+        return False
+
+
+def test_check_installed() -> None:
+    with patch("importlib.metadata.version", return_value="0.0.0"):
+        assert check_installed()
+    with patch("importlib.metadata.version", side_effect=importlib.metadata.PackageNotFoundError):
+        assert not check_installed()
 
 
 def create_valid_identifier(identifier: str) -> None:
@@ -151,6 +164,25 @@ def test_return_temporary_directory_kwargs(
         assert kwargs == expected
 
 
+env = os.environ.copy()
+spade_command = "spade"
+system = platform.system().lower()
+testing_windows = True if system == "windows" else False
+testing_macos = True if system == "darwin" else False
+testing_ci_user = check_ci_user()
+installed = check_installed()
+if not installed:
+    # TODO: Recover from the SCons task definition?
+    build_directory = _settings._project_root_abspath.parent / "build" / "systemtests"
+    build_directory.mkdir(parents=True, exist_ok=True)
+    spade_command = "python -m spade._main"
+    key = "PYTHONPATH"
+    if key in env:
+        env[key] = f"{PACKAGE_PARENT_PATH}:{env[key]}"
+    else:
+        env[key] = f"{PACKAGE_PARENT_PATH}"
+
+
 # System tests that only require current project package
 system_tests = [
     # CLI sign-of-life and help/usage
@@ -173,10 +205,15 @@ def test_system(
 ) -> None:
     run_system_test(system_test_directory, request, commands)
 
-
 # System tests that require third-party software, e.g. Abaqus.
 # TODO: add tutorials
 # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/22
+odb_files = ["viewer_tutorial.odb", "w-reactor_global.odb"]
+inp_files = [
+    "beamgap",
+    "selfcontact_gask",
+    "erode_proj_and_plate",
+]
 spade_options = "--recompile --force-overwrite --verbose --debug"
 system_tests_require_third_party = []
 for odb_file in odb_files:
@@ -216,7 +253,12 @@ for inp_file in inp_files:
         )
     )
 
-
+# TODO: Remove user check when Windows CI Gitlab-Runner account can access the Abaqus license server
+# https://re-git.lanl.gov/aea/python-projects/waves/-/issues/984
+@pytest.mark.skipif(
+    testing_windows and testing_ci_user,
+    reason="Windows CI server Gitlab-Runner user does not have access to Abaqus license server",
+)
 @pytest.mark.systemtest
 @pytest.mark.require_third_party
 @pytest.mark.parametrize("commands", system_tests_require_third_party)
