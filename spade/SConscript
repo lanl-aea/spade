@@ -9,8 +9,8 @@ Import("env", "compile_cpp", "link_exe")
 compilation_database = env.CompilationDatabase()
 clang_tidy = env.Command(
     target=["dummy"],
-    source=[compilation_database],
-    action=["clang-tidy @parameters_file *.cpp"]
+    source=[compilation_database, "cmd_line_arguments.cpp", "logging.cpp", "spade_object.cpp", "spade.cpp"],
+    action=["clang-tidy ${SOURCES[1:]}"]
 )
 env.Alias("clang-tidy", clang_tidy)
 
