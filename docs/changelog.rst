@@ -8,10 +8,19 @@ Changelog
 v0.4.10 (unreleased)
 ********************
 
+Bug fixes
+=========
+- Fix command-line behavior when no subcommand is provided. Print the help message instead of raising an exception
+  (:issue:`135`, :merge:`147`). By `Kyle Brindley`_.
+
 Internal Changes
 ================
 - Separate conda recipes to allow full system tests on AEA servers where Abaqus is available and package only tests
   where Abaqus is unavailable (:issue:`142`, :merge:`146`). By `Kyle Brindley`_.
+- Convert from flake8/black to ruff for more consistent and comprehensive linting, formatting, and style enforcement
+  (:issue:`135`, :merge:`147`). By `Kyle Brindley`_.
+- Fix unit test behaviors where some test cases overrode others and some expectations were unused (:issue:`135`,
+  :merge:`147`). By `Kyle Brindley`_.
 
 *******************
 v0.4.9 (2025-12-16)
