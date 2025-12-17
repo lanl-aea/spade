@@ -1,4 +1,5 @@
 """Test spade SCons builders and support functions."""
+import pathlib
 
 import pytest
 import SCons
@@ -95,7 +96,7 @@ test_builders = {
         {
             "program": "spade",
             "subcommand": "extract",
-            "abaqus_commands": _settings._default_abaqus_commands,
+            "abaqus_commands": " ".join([str(path) for path in _settings._default_abaqus_commands]),
             "required": "${SOURCE.abspath} --extracted-file ${TARGET.abspath} --force-overwrite",
         },
     ),
@@ -103,11 +104,19 @@ test_builders = {
 
 
 @pytest.mark.parametrize(
-    ("builder", "kwargs", "node_count", "action_count", "source_list", "target_list", "env"),
+    ("builder", "kwargs", "node_count", "action_count", "source_list", "target_list", "expected_env_kwargs"),
     test_builders.values(),
     ids=test_builders.keys(),
 )
-def test_builders(builder, kwargs, node_count, action_count, source_list, target_list, env) -> None:
+def test_builders(
+    builder: str,
+    kwargs: dict,
+    node_count: int,
+    action_count: int,
+    source_list: list[str],
+    target_list: list[str],
+    expected_env_kwargs: dict,
+) -> None:
     env = SCons.Environment.Environment()
     expected_string = (
         "${cd_action_prefix} ${program} ${subcommand} ${required} ${options} "
@@ -118,4 +127,4 @@ def test_builders(builder, kwargs, node_count, action_count, source_list, target
     builder_function = getattr(scons_extensions, builder)
     env.Append(BUILDERS={builder: builder_function(**kwargs)})
     nodes = env["BUILDERS"][builder](env, target=target_list, source=source_list)
-    check_nodes(nodes, [], node_count, action_count, expected_string, env)
+    check_nodes(nodes, [], node_count, action_count, expected_string, expected_env_kwargs)

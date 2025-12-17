@@ -81,7 +81,7 @@ create_valid_identifier_tests = {
     create_valid_identifier_tests.values(),
     ids=create_valid_identifier_tests.keys(),
 )
-def test_create_valid_identifier(identifier, expected) -> None:
+def test_create_valid_identifier(identifier: str, expected: str) -> None:
     returned = create_valid_identifier(identifier)
     assert returned == expected
 

@@ -72,8 +72,8 @@ def test_search_commands() -> None:
 
 
 find_command = {
-    "first": (["first", "second"], "first", does_not_raise()),
-    "second": (["first", "second"], "second", does_not_raise()),
+    "first": (["first", "second"], "first", does_not_raise),
+    "second": (["first", "second"], "second", does_not_raise),
     "none": (["first", "second"], None, pytest.raises(FileNotFoundError)),
 }
 
