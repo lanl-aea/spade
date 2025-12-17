@@ -30,4 +30,3 @@ clang_tidy = env.Command(
 )
 env.AlwaysBuild(clang_tidy)
 env.Alias("clang-tidy", clang_tidy)
-env.Alias("style", clang_tidy)

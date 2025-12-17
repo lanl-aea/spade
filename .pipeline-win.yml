@@ -49,7 +49,7 @@ win-style-guide:
   variables:
     environment_file: "style.yml"
   script:
-    - scons style --abaqus-command="C:\SIMULIA\Commands\abq2025.bat"
+    - scons style clang-tidy --abaqus-command="C:\SIMULIA\Commands\abq2025.bat"
 
 win-developer-test:
   extends:
