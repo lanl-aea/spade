@@ -68,7 +68,7 @@ else:
     conda_include_path = next((path for path in conda_prefix.rglob("**/include")), None)
     conda_lib_path = next((path for path in conda_prefix.rglob("**/lib")), None)
 if conda_include_path is None or conda_lib_path is None:
-    sys.exit("Could not find the expected Windows CONDA_PREFIX 'include' or 'lib' path")
+    sys.exit("Could not find the expected OS-specific CONDA_PREFIX 'include' or 'lib' path")
 
 # Construct OS-specific flags
 if windows_system:
