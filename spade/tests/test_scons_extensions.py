@@ -1,5 +1,4 @@
 """Test spade SCons builders and support functions."""
-import pathlib
 
 import pytest
 import SCons
@@ -51,7 +50,7 @@ test_cli_builder = {
             "abaqus_commands": " ".join(str(path) for path in _settings._default_abaqus_commands),
         },
     ),
-    "cli_builder": (
+    "cli_builder with subcommand": (
         "cli_builder",
         {"subcommand": "subcommand"},
         1,
