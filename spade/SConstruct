@@ -42,8 +42,8 @@ user_env = os.environ.copy()
 env = Environment(
     ENV=user_env,
     recompile=GetOption("recompile"),
-    project_name_cpp=_settings._project_name_cpp,
 )
+env.Tool("compilation_db")
 
 # Abaqus and system settings
 env["ABAQUS_PROGRAM"] = shutil.which(GetOption("abaqus_command"), path=env["ENV"]["PATH"])

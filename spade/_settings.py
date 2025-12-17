@@ -7,7 +7,6 @@ _project_description = (
     "Tool for extracting data from an Abaqus output database (odb) file into a hierarchical data format (hdf5) file"
 )
 _project_name_short = "spade"
-_project_name_cpp = "spade"
 _project_source = "src"
 _default_abaqus_commands = [pathlib.Path("abaqus"), pathlib.Path("abq2025")]
 _compiler_flags_gcc = (
