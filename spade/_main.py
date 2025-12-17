@@ -7,7 +7,7 @@ _exclude_from_namespace = set(globals().keys())
 
 
 def main() -> None:
-    """This is the main function that performs actions based on command line arguments."""
+    """Run the SPADE command line interface."""
     parser = get_parser()
     args = parser.parse_args()
 
