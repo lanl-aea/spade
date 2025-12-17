@@ -48,7 +48,7 @@ test_cli_builder = {
         {
             "program": "spade",
             "subcommand": "",
-            "abaqus_commands": _settings._default_abaqus_commands,
+            "abaqus_commands": " ".join(str(path) for path in _settings._default_abaqus_commands),
         },
     ),
     "cli_builder": (
@@ -61,7 +61,7 @@ test_cli_builder = {
         {
             "program": "spade",
             "subcommand": "subcommand",
-            "abaqus_commands": _settings._default_abaqus_commands,
+            "abaqus_commands": " ".join(str(path) for path in _settings._default_abaqus_commands),
         },
     ),
 }
@@ -90,7 +90,7 @@ def test_cli_builder(
 
     env.Append(BUILDERS={builder: scons_extensions.cli_builder(**kwargs)})
     nodes = env["BUILDERS"][builder](env, target=target_list, source=source_list)
-    check_nodes(nodes, [], node_count, action_count, expected_string, env)
+    check_nodes(nodes, [], node_count, action_count, expected_string, expected_env_kwargs)
 
 
 test_builders = {
@@ -104,7 +104,7 @@ test_builders = {
         {
             "program": "spade",
             "subcommand": "extract",
-            "abaqus_commands": " ".join([str(path) for path in _settings._default_abaqus_commands]),
+            "abaqus_commands": " ".join(str(path) for path in _settings._default_abaqus_commands),
             "required": "${SOURCE.abspath} --extracted-file ${TARGET.abspath} --force-overwrite",
         },
     ),
