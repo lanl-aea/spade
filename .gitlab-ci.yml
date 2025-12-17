@@ -78,7 +78,7 @@ default:
 
 .style-guide: &style-guide
   script:
-    - scons flake8 black-check
+    - scons style
 
 aea-developer-test:
   extends:
