@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 """Configure the SPADE demonstration project."""
+
 import os
 
 import spade
