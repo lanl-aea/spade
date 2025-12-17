@@ -11,11 +11,12 @@ Import(["env", "project_variables_substitution"])
 
 # VVV Sphinx Builder prototype
 def sphinx_build(
-    program="sphinx-build",
-    options="",
-    builder="html",
-    tags="",
-):
+    program: str = "sphinx-build",
+    options: str = "",
+    builder: str = "html",
+    tags: str = "",
+) -> SCons.Builder.Builder:
+    """Return a Sphinx builder."""
     sphinx_builder = Builder(
         action=["${program} ${sphinx_options} -b ${builder} ${TARGET.dir.dir.abspath} ${TARGET.dir.abspath} ${tags}"],
         program=program,
@@ -31,7 +32,7 @@ def _custom_scanner(
     suffixes: typing.Iterable[str],
     flags: int | None = None,
 ) -> SCons.Scanner.Scanner:
-    """Custom Scons scanner.
+    """Return a custom SCons scanner.
 
     constructs a scanner object based on a regular expression pattern. Will only search for files matching the list of
     suffixes provided. ``_custom_scanner`` will always use the ``re.MULTILINE`` flag
