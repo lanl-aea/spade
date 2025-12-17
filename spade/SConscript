@@ -9,9 +9,9 @@ Import("env", "compile_cpp", "link_exe")
 # Clang-tidy compilation database for linting
 compilation_database = env.CompilationDatabase()
 clang_tidy = env.Command(
-    target=["dummy"],
+    target=["fixes.yaml"],
     source=[compilation_database, "cmd_line_arguments.cpp", "logging.cpp", "spade_object.cpp", "spade.cpp"],
-    action=["clang-tidy -p ${SOURCES[0].dir} ${SOURCES[1:]}"],
+    action=["clang-tidy -p ${SOURCES[0].dir} --export-fixes=${TARGETS[0]} ${SOURCES[1:]}"],
 )
 env.Alias("clang-tidy", clang_tidy)
 
