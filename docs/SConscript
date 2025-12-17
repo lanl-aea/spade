@@ -59,8 +59,8 @@ def _custom_scanner(
 
     def regex_scan(
         node: SCons.Node.FS,
-        env: SCons.Environment.Environment,
-        path: str,
+        env: SCons.Environment.Environment,  # noqa: ARG001, interface  dictated by SCons API
+        path: str,  # noqa: ARG001, interface  dictated by SCons API
     ) -> list:
         """Scan function for extracting dependencies from the content of a file based on the given regular expression.
 
