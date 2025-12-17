@@ -158,10 +158,10 @@ def get_parser() -> argparse.ArgumentParser:
         nargs="+",
         type=pathlib.Path,
         default=_settings._default_abaqus_commands,
-        # fmt: off
-        help="Ordered list of Abaqus executable paths. Use first found "
-             f"(default: {_utilities.character_delimited_list(_settings._default_abaqus_commands)})",
-        # fmt: on
+        help=(
+            "Ordered list of Abaqus executable paths. Use first found "
+            f"(default: {_utilities.character_delimited_list(_settings._default_abaqus_commands)})"
+        ),
     )
     parser.add_argument(
         "--format",

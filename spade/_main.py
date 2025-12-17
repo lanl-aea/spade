@@ -47,10 +47,10 @@ def get_parser():
     subparsers.add_parser(
         "docs",
         help=f"Open the {_settings._project_name_short.upper()} HTML documentation",
-        # fmt: off
-        description=f"Open the packaged {_settings._project_name_short.upper()} HTML documentation in the  "
-                    "system default web browser",
-        # fmt: on
+        description=(
+            f"Open the packaged {_settings._project_name_short.upper()} HTML documentation in the "
+            "system default web browser"
+        ),
         parents=[_docs.get_parser()],
     )
 
