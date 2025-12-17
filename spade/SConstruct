@@ -46,7 +46,10 @@ env = Environment(
 env.Tool("compilation_db")
 
 # Abaqus and system settings
-env["ABAQUS_PROGRAM"] = shutil.which(GetOption("abaqus_command"), path=env["ENV"]["PATH"])
+abaqus_command = GetOption("abaqus_command")
+env["ABAQUS_PROGRAM"] = shutil.which(abaqus_command, path=env["ENV"]["PATH"])
+if env["ABAQUS_PROGRAM"] is None:
+    sys.exit(f"Could not find the Abaqus executable at {abaqus_command}")
 abaqus_version = _utilities.abaqus_official_version(env["ABAQUS_PROGRAM"])
 abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_abaqus_code_paths(env["ABAQUS_PROGRAM"])
 
