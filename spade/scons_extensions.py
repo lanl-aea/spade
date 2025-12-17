@@ -2,8 +2,8 @@
 
 .. warning::
 
-The CLI design is in flux, so the SCons extensions API is also in flux. The API is subject to change without warning.
-Treat as experimental.
+   The CLI design is in flux, so the SCons extensions API is also in flux. The API is subject to change without warning.
+   Treat as experimental.
 """
 
 import pathlib
