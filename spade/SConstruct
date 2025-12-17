@@ -62,18 +62,18 @@ if env["CXX"] == "$CC":
 # Search for OS-specific include and library paths
 conda_prefix = pathlib.Path(user_env["CONDA_PREFIX"])
 if windows_system:
-    conda_include_path = next((path for path in conda_prefix.rglob("**/Library/include")), None)
-    conda_lib_path = next((path for path in conda_prefix.rglob("**/Library/lib")), None)
+    conda_include_paths = [path for path in conda_prefix.glob("Library/include")]
+    conda_lib_path = next((path for path in conda_prefix.glob("Library/lib")), None)
 else:
-    conda_include_path = next((path for path in conda_prefix.rglob("**/include")), None)
-    conda_lib_path = next((path for path in conda_prefix.rglob("**/lib")), None)
-if conda_include_path is None or conda_lib_path is None:
+    conda_include_paths = [path for path in conda_prefix.glob("include")]
+    conda_lib_path = next((path for path in conda_prefix.glob("lib")), None)
+if not conda_include_paths or conda_lib_path is None:
     sys.exit("Could not find the expected OS-specific CONDA_PREFIX 'include' or 'lib' path")
 
 # Construct OS-specific flags
 if windows_system:
-    env["CXXFLAGS"] = (
-        f"  /TP /MD /external:W0 /external:I{conda_include_path.as_posix()} /std:c++17 /EHsc /DH5_BUILT_AS_DYNAMIC_LIB "
+    env["CXXFLAGS"] = " /TP /MD /external:W0 /std:c++17 /EHsc /DH5_BUILT_AS_DYNAMIC_LIB " + " ".join(
+        f"/external:I{path.as_posix()}" for path in conda_include_paths
     )
     env["ABAQUSCXXFLAGS"] = (
         env["CXXFLAGS"]
@@ -94,7 +94,9 @@ if windows_system:
         " getopt.lib hdf5.lib hdf5_cpp.lib hdf5_hl.lib"
     )
 else:
-    env["CXXFLAGS"] = env["CXXFLAGS"] + f" -isystem {conda_include_path.as_posix()} -std=c++17 "
+    env["CXXFLAGS"] = (
+        env["CXXFLAGS"] + " -std=c++17 " + " ".join(f"-isystem {path.as_posix()}" for path in conda_include_paths)
+    )
     env["ABAQUSCXXFLAGS"] = (
         env["CXXFLAGS"]
         + _settings._compiler_flags_gcc
