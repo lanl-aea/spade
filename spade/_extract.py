@@ -14,13 +14,13 @@ _exclude_from_namespace = set(globals().keys())
 
 # TODO: Find a better way to define optional print functions when using API instead of CLI/main function
 # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/40
-print_verbose = lambda *a, **k: None  # noqa: E731
-print_debug = lambda *a, **k: None  # noqa: E731
+print_verbose = lambda *a, **k: None  # noqa: E731,ARG005
+print_debug = lambda *a, **k: None  # noqa: E731,ARG005
 
 
 # TODO: full API
 def main(args: argparse.Namespace) -> None:
-    """Main parser behavior when no subcommand is specified.
+    """Extract Abaqus ODB file to H5.
 
     :param args: argument namespace
 
@@ -31,17 +31,17 @@ def main(args: argparse.Namespace) -> None:
 
     # TODO: Find a better way to define optional print functions when using API instead of CLI/main function
     # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/40
-    global print_verbose
-    global print_debug
-    print_verbose = print if args.verbose else lambda *a, **k: None
-    print_debug = print if args.debug else lambda *a, **k: None
+    global print_verbose  # noqa: PLW0603
+    global print_debug  # noqa: PLW0603
+    print_verbose = print if args.verbose else lambda *a, **k: None  # noqa: ARG005
+    print_debug = print if args.debug else lambda *a, **k: None  # noqa: ARG005
     current_env = os.environ.copy()
 
     # Find Abaqus
     try:
         abaqus_command = _utilities.find_command(args.abaqus_commands)
     except FileNotFoundError as err:
-        raise RuntimeError(str(err))
+        raise RuntimeError(str(err)) from err
     print_verbose(f"Found Abaqus command: {abaqus_command}")
     abaqus_version = _utilities.abaqus_official_version(abaqus_command)
     print_verbose(f"Found Abaqus version: {abaqus_version}")
@@ -245,7 +245,7 @@ def cpp_compile(
             )
         except subprocess.CalledProcessError as err:
             message = f"Could not compile with Abaqus command '{abaqus_command}': {err!s}"
-            raise RuntimeError(message)
+            raise RuntimeError(message) from err
     return spade_executable
 
 
@@ -281,7 +281,7 @@ def cpp_execute(
         subprocess.run(command_line_arguments, env=environment, cwd=working_directory, check=True)
     except subprocess.CalledProcessError as err:
         message = f"{_settings._project_name_short} extract failed in Abaqus ODB application: {err!s}"
-        raise RuntimeError(message)
+        raise RuntimeError(message) from err
 
 
 def cpp_wrapper(args: argparse.Namespace) -> str:
