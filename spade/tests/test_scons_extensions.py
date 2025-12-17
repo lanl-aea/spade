@@ -68,11 +68,19 @@ test_cli_builder = {
 
 
 @pytest.mark.parametrize(
-    ("builder", "kwargs", "node_count", "action_count", "source_list", "target_list", "env"),
+    ("builder", "kwargs", "node_count", "action_count", "source_list", "target_list", "expected_env_kwargs"),
     test_cli_builder.values(),
     ids=test_cli_builder.keys(),
 )
-def test_cli_builder(builder, kwargs, node_count, action_count, source_list, target_list, env) -> None:
+def test_cli_builder(
+    builder: str,
+    kwargs: dict,
+    node_count: int,
+    action_count: int,
+    source_list: list[str],
+    target_list: list[str],
+    expected_env_kwargs: dict,
+) -> None:
     env = SCons.Environment.Environment()
     expected_string = (
         "${cd_action_prefix} ${program} ${subcommand} ${required} ${options} "
