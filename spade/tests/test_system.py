@@ -321,8 +321,8 @@ def run_system_test(
     try:
         for command in commands:
             if isinstance(command, string.Template):
-                command = command.substitute(template_substitution)
-            subprocess.check_output(command, env=env, cwd=temporary_path, text=True, shell=True)
+                command_string = command.substitute(template_substitution)
+            subprocess.check_output(command_string, env=env, cwd=temporary_path, text=True, shell=True)
     except Exception as err:
         raise err
     else:
