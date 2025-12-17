@@ -62,10 +62,10 @@ if env["CXX"] == "$CC":
 # Search for OS-specific include and library paths
 conda_prefix = pathlib.Path(user_env["CONDA_PREFIX"])
 if windows_system:
-    conda_include_paths = [path for path in conda_prefix.glob("Library/include")]
+    conda_include_paths = list(conda_prefix.glob("Library/include"))
     conda_lib_path = next((path for path in conda_prefix.glob("Library/lib")), None)
 else:
-    conda_include_paths = [path for path in conda_prefix.glob("include")]
+    conda_include_paths = list(conda_prefix.glob("include"))
     conda_lib_path = next((path for path in conda_prefix.glob("lib")), None)
 if not conda_include_paths or conda_lib_path is None:
     sys.exit("Could not find the expected OS-specific CONDA_PREFIX 'include' or 'lib' path")
