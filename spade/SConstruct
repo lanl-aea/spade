@@ -72,11 +72,11 @@ if conda_include_path is None or conda_lib_path is None:
 
 # Construct OS-specific flags
 if windows_system:
-    env["CXXFLAGS"] = f"  /TP /MD /I{conda_include_path.as_posix()} /std:c++17 /EHsc /DH5_BUILT_AS_DYNAMIC_LIB "
+    env["CXXFLAGS"] = f"  /TP /MD /external:W0 /external:I{conda_include_path.as_posix()} /std:c++17 /EHsc /DH5_BUILT_AS_DYNAMIC_LIB "
     env["ABAQUSCXXFLAGS"] = (
         env["CXXFLAGS"]
         + _settings._compiler_flags_msvc
-        + f" /I{abaqus_code_include.as_posix()} /I{abaqus_installation.as_posix()}"
+        + f" /external:I{abaqus_code_include.as_posix()} /external:I{abaqus_installation.as_posix()}"
     )
     compile_cpp = string.Template("${CXX} ${ABAQUSCXXFLAGS}")
     link_exe = string.Template(
@@ -92,11 +92,11 @@ if windows_system:
         " getopt.lib hdf5.lib hdf5_cpp.lib hdf5_hl.lib"
     )
 else:
-    env["CXXFLAGS"] = env["CXXFLAGS"] + f" -I{conda_include_path.as_posix()} -std=c++17 "
+    env["CXXFLAGS"] = env["CXXFLAGS"] + f" -isystem {conda_include_path.as_posix()} -std=c++17 "
     env["ABAQUSCXXFLAGS"] = (
         env["CXXFLAGS"]
         + _settings._compiler_flags_gcc
-        + f" -I{abaqus_code_include.as_posix()} -I{abaqus_installation.as_posix()}"
+        + f" -isystem {abaqus_code_include.as_posix()} -isystem {abaqus_installation.as_posix()}"
     )
     compile_cpp = string.Template("${CXX} ${ABAQUSCXXFLAGS}")
     link_exe = string.Template(
