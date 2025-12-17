@@ -1,6 +1,6 @@
 import pathlib
-from unittest.mock import patch
 from contextlib import nullcontext as does_not_raise
+from unittest.mock import patch
 
 import pytest
 

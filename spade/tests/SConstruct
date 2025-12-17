@@ -3,7 +3,6 @@ import os
 
 import spade
 
-
 AddOption(
     "--spade-command",
     dest="spade_command",

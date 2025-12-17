@@ -1,10 +1,9 @@
-from unittest.mock import patch
 from contextlib import nullcontext as does_not_raise
+from unittest.mock import patch
 
 import pytest
 
-from spade import _settings
-from spade import _docs
+from spade import _docs, _settings
 
 
 def test_docs():

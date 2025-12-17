@@ -4,8 +4,7 @@ import pytest
 import SCons
 import SCons.Environment
 
-from spade import scons_extensions
-from spade import _settings
+from spade import _settings, scons_extensions
 
 
 def check_nodes(nodes, post_action, node_count, action_count, expected_string, expected_env_kwargs):

@@ -1,10 +1,10 @@
 #! /usr/bin/env python
-import re
-import sys
-import shutil
-import typing
 import pathlib
+import re
+import shutil
 import subprocess
+import sys
+import typing
 
 
 def compiler_help(env):
@@ -106,7 +106,6 @@ def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
 def character_delimited_list(sequence: typing.Iterable, character: str = " ") -> str:
     """Map a list of non-strings to a character delimited string
 
-
     :param character: Character(s) to use when joining sequence elements
 
     :returns: string delimited by specified character
@@ -116,7 +115,6 @@ def character_delimited_list(sequence: typing.Iterable, character: str = " ") ->
 
 def quoted_string(list_or_string) -> str:
     """Make a string with double quotes on either side from a list or string
-
 
     :param list_or_string: list or string to be returned as a string with double quotes on either side
 
@@ -130,7 +128,7 @@ def quoted_string(list_or_string) -> str:
 
 
 # Comes from WAVES scons extensions. Keep a SPADE specific version here because this project *must* be upstream of WAVES
-def search_commands(options: typing.Iterable[str]) -> typing.Optional[str]:
+def search_commands(options: typing.Iterable[str]) -> str | None:
     """Return the first found command in the list of options. Return None if none are found.
 
     :param list options: executable path(s) to test

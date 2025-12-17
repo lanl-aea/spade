@@ -1,7 +1,6 @@
-import sys
-import pathlib
 import argparse
-
+import pathlib
+import sys
 
 _exclude_from_namespace = set(globals().keys())
 
@@ -33,7 +32,6 @@ def main(documentation_index: pathlib.Path, print_local_path: bool = False) -> N
 
     :param print_local_path: Flag to print the local path to terminal instead of calling the default web browser
     """
-
     if print_local_path:
         if documentation_index.exists():
             print(documentation_index, file=sys.stdout)

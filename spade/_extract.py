@@ -1,16 +1,14 @@
-import os
-import sys
+import argparse
 import errno
-import shlex
+import os
 import pathlib
 import platform
-import argparse
-import tempfile
+import shlex
 import subprocess
+import sys
+import tempfile
 
-from spade import _settings
-from spade import _utilities
-
+from spade import _settings, _utilities
 
 _exclude_from_namespace = set(globals().keys())
 
@@ -206,7 +204,7 @@ def cpp_compile(
     build_directory: pathlib.Path = pathlib.Path("build"),
     abaqus_command: pathlib.Path = pathlib.Path("abaqus"),
     environment: dict = dict(),
-    working_directory: pathlib.Path = pathlib.Path("."),
+    working_directory: pathlib.Path = pathlib.Path(),
     recompile: bool = False,
     debug: bool = False,
 ) -> pathlib.Path:
@@ -244,7 +242,7 @@ def cpp_compile(
                 stdout=scons_stdout,
             )
         except subprocess.CalledProcessError as err:
-            message = f"Could not compile with Abaqus command '{abaqus_command}': {str(err)}"
+            message = f"Could not compile with Abaqus command '{abaqus_command}': {err!s}"
             raise RuntimeError(message)
     return spade_executable
 
@@ -254,7 +252,7 @@ def cpp_execute(
     abaqus_bin: pathlib.Path,
     args: argparse.Namespace,
     environment: dict = dict(),
-    working_directory: pathlib.Path = pathlib.Path("."),
+    working_directory: pathlib.Path = pathlib.Path(),
 ) -> None:
     """Run the SPADE c++ executable
 
@@ -278,7 +276,7 @@ def cpp_execute(
     try:
         subprocess.run(command_line_arguments, env=environment, cwd=working_directory, check=True)
     except subprocess.CalledProcessError as err:
-        message = f"{_settings._project_name_short} extract failed in Abaqus ODB application: {str(err)}"
+        message = f"{_settings._project_name_short} extract failed in Abaqus ODB application: {err!s}"
         raise RuntimeError(message)
 
 

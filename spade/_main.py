@@ -1,11 +1,7 @@
-import sys
 import argparse
+import sys
 
-from spade import _settings
-from spade import __version__
-from spade import _docs
-from spade import _extract
-
+from spade import __version__, _docs, _extract, _settings
 
 _exclude_from_namespace = set(globals().keys())
 

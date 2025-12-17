@@ -6,9 +6,8 @@ import shutil
 import string
 import sys
 
-import _utilities
 import _settings
-
+import _utilities
 
 # Project command line options
 AddOption(

@@ -1,14 +1,14 @@
 import getpass
 import importlib
-import os
-import re
-import string
-import typing
 import inspect
+import os
 import pathlib
 import platform
-import tempfile
+import re
+import string
 import subprocess
+import tempfile
+import typing
 from unittest.mock import Mock, patch
 
 import pytest
@@ -264,7 +264,7 @@ for inp_file in inp_files:
 @pytest.mark.require_third_party
 @pytest.mark.parametrize("commands", system_tests_require_third_party)
 def test_system_require_third_party(
-    system_test_directory: typing.Optional[pathlib.Path],
+    system_test_directory: pathlib.Path | None,
     keep_system_tests: bool,
     request: pytest.FixtureRequest,
     commands: typing.Iterable[str],

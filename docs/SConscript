@@ -1,11 +1,10 @@
 #! /usr/bin/env python
+import pathlib
 import re
 import typing
-import pathlib
 
-import SCons.Defaults
 import SCons.Builder
-
+import SCons.Defaults
 
 Import(["env", "project_variables_substitution"])
 
@@ -30,7 +29,7 @@ def sphinx_build(
 def _custom_scanner(
     pattern: str,
     suffixes: typing.Iterable[str],
-    flags: typing.Optional[int] = None,
+    flags: int | None = None,
 ) -> SCons.Scanner.Scanner:
     """Custom Scons scanner
 
