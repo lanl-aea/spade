@@ -61,7 +61,7 @@ def test_check_installed() -> None:
 
 
 def create_valid_identifier(identifier: str) -> None:
-    """Create a valid Python identifier from an arbitray string by replacing invalid characters with underscores
+    """Create a valid Python identifier from an arbitray string by replacing invalid characters with underscores.
 
     :param identifier: String to convert to valid Python identifier
     """
@@ -77,7 +77,7 @@ create_valid_identifier_tests = {
 
 
 @pytest.mark.parametrize(
-    "identifier, expected",
+    ("identifier", "expected"),
     create_valid_identifier_tests.values(),
     ids=create_valid_identifier_tests.keys(),
 )
@@ -168,8 +168,8 @@ def test_return_temporary_directory_kwargs(
 env = os.environ.copy()
 spade_command = "spade"
 system = platform.system().lower()
-testing_windows = True if system == "windows" else False
-testing_macos = True if system == "darwin" else False
+testing_windows = system == "windows"
+testing_macos = system == "darwin"
 testing_ci_user = check_ci_user()
 installed = check_installed()
 if not installed:

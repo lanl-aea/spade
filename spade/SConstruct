@@ -35,7 +35,7 @@ AddOption(
 )
 
 # Project environment
-windows_system = True if platform.system().lower() == "windows" else False
+windows_system = platform.system().lower() == "windows"
 user_env = os.environ.copy()
 env = Environment(
     ENV=user_env,

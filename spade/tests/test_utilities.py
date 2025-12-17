@@ -7,7 +7,7 @@ import pytest
 from spade import _utilities
 
 
-def test_find_abaqus_paths():
+def test_find_abaqus_paths() -> None:
     expected_paths = [
         pathlib.Path("/install/path/1234"),
         pathlib.Path("/install/path/1234/bin"),
@@ -22,7 +22,7 @@ def test_find_abaqus_paths():
     assert abaqus_paths == expected_paths
 
 
-def test_return_abaqus_code_paths():
+def test_return_abaqus_code_paths() -> None:
     expected_paths = (
         pathlib.Path("/install/path/1234"),
         pathlib.Path("/install/path/1234/code/bin"),
@@ -41,7 +41,7 @@ def test_return_abaqus_code_paths():
     assert abaqus_paths == expected_paths
 
 
-def test_abaqus_official_version():
+def test_abaqus_official_version() -> None:
     expected_version = "1234.HF5"
     mock_abaqus_version = (
         "Abaqus dummy text\nMore dummy text\n\n"
@@ -54,8 +54,8 @@ def test_abaqus_official_version():
     assert abaqus_version == expected_version
 
 
-def test_search_commands():
-    """Test :meth:`spade._utilities.search_command`"""
+def test_search_commands() -> None:
+    """Test :meth:`spade._utilities.search_command`."""
     with patch("shutil.which", return_value=None):
         command_abspath = _utilities.search_commands(["notfound"])
         assert command_abspath is None
@@ -72,9 +72,9 @@ find_command = {
 }
 
 
-@pytest.mark.parametrize("options, found, outcome", find_command.values(), ids=find_command.keys())
-def test_find_command(options, found, outcome):
-    """Test :meth:`spade._utilities.find_command`"""
+@pytest.mark.parametrize(("options", "found", "outcome"), find_command.values(), ids=find_command.keys())
+def test_find_command(options, found, outcome) -> None:
+    """Test :meth:`spade._utilities.find_command`."""
     with patch("spade._utilities.search_commands", return_value=found), outcome:
         try:
             command_abspath = _utilities.find_command(options)
@@ -98,10 +98,10 @@ character_delimited_list = {
 
 
 @pytest.mark.parametrize(
-    "sequence, character, expected",
+    ("sequence", "character", "expected"),
     character_delimited_list.values(),
     ids=character_delimited_list.keys(),
 )
-def test_character_delimited_list(sequence, character, expected):
+def test_character_delimited_list(sequence, character, expected) -> None:
     string = _utilities.character_delimited_list(sequence, character=character)
     assert string == expected

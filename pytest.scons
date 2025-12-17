@@ -39,7 +39,7 @@ env.Alias("regression", pytest_node)
 env.AlwaysBuild(pytest_node)
 
 # System tests
-source = pytest_source_list + [env["package_directory"] / "tests/test_system.py"]
+source = [*pytest_source_list, env["package_directory"] / "tests/test_system.py"]
 systemtest_node = env.Command(
     target=["systemtest_results.xml"],
     source=source,

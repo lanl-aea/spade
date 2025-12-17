@@ -23,7 +23,7 @@ def _first_target_emitter(
     appending_suffixes: typing.Iterable[str] = [],
     stdout_extension: str = _settings._stdout_extension,
 ) -> tuple[list, list]:
-    """Appends the target list with the builder managed targets
+    """Appends the target list with the builder managed targets.
 
     Searches for a file ending in the stdout extension. If none is found, creates a target by appending the stdout
     extension to the first target in the ``target`` list. The associated Builder requires at least one target for this

@@ -76,7 +76,7 @@ def return_abaqus_code_paths(abaqus_program, code_directory="code"):
 
 
 def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
-    """Return 'official version' string from abaqus_command 'information=version"
+    """Return 'official version' string from abaqus_command 'information=version".
 
     :param str abaqus_command: string value used to call Abaqus via subprocess
 
@@ -104,7 +104,7 @@ def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
 
 # Ripped from Turbo-Turtle. Probably worth keeping a project specific version.
 def character_delimited_list(sequence: typing.Iterable, character: str = " ") -> str:
-    """Map a list of non-strings to a character delimited string
+    """Map a list of non-strings to a character delimited string.
 
     :param character: Character(s) to use when joining sequence elements
 
@@ -114,7 +114,7 @@ def character_delimited_list(sequence: typing.Iterable, character: str = " ") ->
 
 
 def quoted_string(list_or_string) -> str:
-    """Make a string with double quotes on either side from a list or string
+    """Make a string with double quotes on either side from a list or string.
 
     :param list_or_string: list or string to be returned as a string with double quotes on either side
 

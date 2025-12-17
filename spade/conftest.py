@@ -5,7 +5,7 @@ import pathlib
 import pytest
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser) -> None:
     """Add the custom pytest options to the pytest command-line parser."""
     parser.addoption(
         "--system-test-dir",
@@ -45,8 +45,8 @@ def keep_system_tests(request: pytest.FixtureRequest) -> bool:
 
 
 def pytest_generate_tests(metafunc) -> None:
-    """Parametrize systemt tests one per abaqus command"""
-    if not metafunc.function.__name__ == "test_system_require_third_party":
+    """Parametrize systemt tests one per abaqus command."""
+    if metafunc.function.__name__ != "test_system_require_third_party":
         return
     else:
         abaqus_commands = metafunc.config.getoption("abaqus_command")

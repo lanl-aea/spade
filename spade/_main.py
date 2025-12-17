@@ -21,7 +21,7 @@ def main() -> None:
 
 
 def get_parser():
-    """Get parser object for command line options
+    """Get parser object for command line options.
 
     :return: parser
     :rtype: ArgumentParser

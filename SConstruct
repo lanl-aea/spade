@@ -23,7 +23,7 @@ project_variables = {
     "project_directory": project_directory,
     "package_directory": package_directory,
 }
-project_variables_substitution = dict()
+project_variables_substitution = {}
 for key, value in project_variables.items():
     project_variables_substitution[f"@{key}@"] = value
 

@@ -20,7 +20,7 @@ print_debug = lambda *a, **k: None  # noqa: E731
 
 # TODO: full API
 def main(args: argparse.Namespace) -> None:
-    """Main parser behavior when no subcommand is specified
+    """Main parser behavior when no subcommand is specified.
 
     :param args: argument namespace
 
@@ -82,7 +82,7 @@ def main(args: argparse.Namespace) -> None:
 
 
 def get_parser() -> argparse.ArgumentParser:
-    """Return a 'no-help' parser for the extract subcommand
+    """Return a 'no-help' parser for the extract subcommand.
 
     :return: parser
     """
@@ -203,12 +203,12 @@ def get_parser() -> argparse.ArgumentParser:
 def cpp_compile(
     build_directory: pathlib.Path = pathlib.Path("build"),
     abaqus_command: pathlib.Path = pathlib.Path("abaqus"),
-    environment: dict = dict(),
+    environment: dict | None = None,
     working_directory: pathlib.Path = pathlib.Path(),
     recompile: bool = False,
     debug: bool = False,
 ) -> pathlib.Path:
-    """Compile the SPADE c++ executable
+    """Compile the SPADE c++ executable.
 
     :param build_directory: Absolute or relative path for the SCons build directory
     :param abaqus_command: Abaqus executable path
@@ -221,6 +221,8 @@ def cpp_compile(
 
     :raises RuntimeError: If the SCons command raises a ``subprocess.CalledProcessError``
     """
+    if environment is None:
+        environment = {}
     spade_executable = build_directory / _settings._project_name_short
     spade_executable = spade_executable.resolve()
     if not spade_executable.exists() or recompile:
@@ -251,10 +253,10 @@ def cpp_execute(
     spade_executable: pathlib.Path,
     abaqus_bin: pathlib.Path,
     args: argparse.Namespace,
-    environment: dict = dict(),
+    environment: dict | None = None,
     working_directory: pathlib.Path = pathlib.Path(),
 ) -> None:
-    """Run the SPADE c++ executable
+    """Run the SPADE c++ executable.
 
     :param spade_executable: Spade c++ executable path
     :param abaqus_bin: Abaqus bin path
@@ -263,6 +265,8 @@ def cpp_execute(
 
     :raises RuntimeError: If the spade c++ command raises a ``subprocess.CalledProcessError``
     """
+    if environment is None:
+        environment = {}
     full_command_line_arguments = f"{spade_executable.resolve()}" + cpp_wrapper(args)
     if platform.system().lower() == "windows":
         environment["PATH"] = f"{abaqus_bin};{abaqus_bin}32;{environment['PATH']}"
@@ -281,7 +285,7 @@ def cpp_execute(
 
 
 def cpp_wrapper(args) -> str:
-    """Reconstruct the c++ executable CLI from the Python CLI wrapper
+    """Reconstruct the c++ executable CLI from the Python CLI wrapper.
 
     :returns: c++ CLI arguments
     """
