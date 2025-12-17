@@ -1,14 +1,14 @@
 import getpass
 import importlib
-import os
-import re
-import string
-import typing
 import inspect
+import os
 import pathlib
 import platform
-import tempfile
+import re
+import string
 import subprocess
+import tempfile
+import typing
 from unittest.mock import Mock, patch
 
 import pytest
@@ -61,7 +61,7 @@ def test_check_installed() -> None:
 
 
 def create_valid_identifier(identifier: str) -> None:
-    """Create a valid Python identifier from an arbitray string by replacing invalid characters with underscores
+    """Create a valid Python identifier from an arbitray string by replacing invalid characters with underscores.
 
     :param identifier: String to convert to valid Python identifier
     """
@@ -77,11 +77,11 @@ create_valid_identifier_tests = {
 
 
 @pytest.mark.parametrize(
-    "identifier, expected",
+    ("identifier", "expected"),
     create_valid_identifier_tests.values(),
     ids=create_valid_identifier_tests.keys(),
 )
-def test_create_valid_identifier(identifier, expected) -> None:
+def test_create_valid_identifier(identifier: str, expected: str) -> None:
     returned = create_valid_identifier(identifier)
     assert returned == expected
 
@@ -168,15 +168,15 @@ def test_return_temporary_directory_kwargs(
 env = os.environ.copy()
 spade_command = "spade"
 system = platform.system().lower()
-testing_windows = True if system == "windows" else False
-testing_macos = True if system == "darwin" else False
+testing_windows = system == "windows"
+testing_macos = system == "darwin"
 testing_ci_user = check_ci_user()
 installed = check_installed()
 if not installed:
     spade_command = "python -m spade._main"
     key = "PYTHONPATH"
     if key in env:
-        env[key] = f"{package_parent_path}{os.pathsep}{env[key]}"
+        env[key] = f"{PACKAGE_PARENT_PATH}{os.pathsep}{env[key]}"
     else:
         env[key] = f"{PACKAGE_PARENT_PATH}"
 
@@ -217,7 +217,7 @@ inp_files = [
 spade_options = "--recompile --force-overwrite --verbose --debug"
 system_tests_require_third_party = []
 for odb_file in odb_files:
-    system_tests_require_third_party.append(
+    system_tests_require_third_party.append(  # noqa: PERF401
         pytest.param(
             [
                 string.Template(f"${{abaqus_command}} fetch -job {odb_file}"),
@@ -264,7 +264,7 @@ for inp_file in inp_files:
 @pytest.mark.require_third_party
 @pytest.mark.parametrize("commands", system_tests_require_third_party)
 def test_system_require_third_party(
-    system_test_directory: typing.Optional[pathlib.Path],
+    system_test_directory: pathlib.Path | None,
     keep_system_tests: bool,
     request: pytest.FixtureRequest,
     commands: typing.Iterable[str],
@@ -321,8 +321,8 @@ def run_system_test(
     try:
         for command in commands:
             if isinstance(command, string.Template):
-                command = command.substitute(template_substitution)
-            subprocess.check_output(command, env=env, cwd=temporary_path, text=True, shell=True)
+                command_string = command.substitute(template_substitution)
+            subprocess.check_output(command_string, env=env, cwd=temporary_path, text=True, shell=True)
     except Exception as err:
         raise err
     else:

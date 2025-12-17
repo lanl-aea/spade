@@ -1,13 +1,15 @@
 #! /usr/bin/env python
-import re
-import sys
-import shutil
-import typing
 import pathlib
+import re
+import shutil
 import subprocess
+import sys
+import typing
+
+import SCons.Environment
 
 
-def compiler_help(env):
+def compiler_help(env: SCons.Environment.Environment) -> str:
     compiler_help_message = "\nEnvironment:\n"
     keys = [
         "CC",
@@ -39,7 +41,7 @@ def compiler_help(env):
     return compiler_help_message
 
 
-def find_abaqus_paths(abaqus_program):
+def find_abaqus_paths(abaqus_program: str) -> list[pathlib.Path] | None:
     subprocess_command = [abaqus_program, "information=environment"]
     abaqus_environment = subprocess.check_output(subprocess_command, text=True)
     abaqus_paths_regex = r"Abaqus is located in the directory(.*)"
@@ -53,7 +55,7 @@ def find_abaqus_paths(abaqus_program):
     return abaqus_paths
 
 
-def return_abaqus_code_paths(abaqus_program, code_directory="code"):
+def return_abaqus_code_paths(abaqus_program: str, code_directory: str = "code") -> pathlib.Path:
     abaqus_paths = find_abaqus_paths(abaqus_program)
 
     if abaqus_paths:
@@ -76,7 +78,7 @@ def return_abaqus_code_paths(abaqus_program, code_directory="code"):
 
 
 def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
-    """Return 'official version' string from abaqus_command 'information=version"
+    """Return 'official version' string from abaqus_command 'information=version".
 
     :param str abaqus_command: string value used to call Abaqus via subprocess
 
@@ -85,11 +87,11 @@ def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
     try:
         abaqus_version = subprocess.check_output([abaqus_command, "information=version"], text=True)
 
-    except FileNotFoundError:
-        raise RuntimeError(f"Abaqus command not found at: '{abaqus_command}'")
+    except FileNotFoundError as err:
+        raise RuntimeError(f"Abaqus command not found at: '{abaqus_command}'") from err
 
-    except OSError:
-        raise RuntimeError(f"Abaqus command failed. Command used: '{abaqus_command}'")
+    except OSError as err:
+        raise RuntimeError(f"Abaqus command failed. Command used: '{abaqus_command}'") from err
 
     # TODO: Figure out what exceptions are likely to raise and convert to RuntimeError
     official_version_regex = r"(?i)official\s+version:\s+abaqus\s+(.*)"
@@ -104,8 +106,7 @@ def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
 
 # Ripped from Turbo-Turtle. Probably worth keeping a project specific version.
 def character_delimited_list(sequence: typing.Iterable, character: str = " ") -> str:
-    """Map a list of non-strings to a character delimited string
-
+    """Map a list of non-strings to a character delimited string.
 
     :param character: Character(s) to use when joining sequence elements
 
@@ -114,9 +115,8 @@ def character_delimited_list(sequence: typing.Iterable, character: str = " ") ->
     return character.join(map(str, sequence))
 
 
-def quoted_string(list_or_string) -> str:
-    """Make a string with double quotes on either side from a list or string
-
+def quoted_string(list_or_string: list | str) -> str:
+    """Make a string with double quotes on either side from a list or string.
 
     :param list_or_string: list or string to be returned as a string with double quotes on either side
 
@@ -130,7 +130,7 @@ def quoted_string(list_or_string) -> str:
 
 
 # Comes from WAVES scons extensions. Keep a SPADE specific version here because this project *must* be upstream of WAVES
-def search_commands(options: typing.Iterable[str]) -> typing.Optional[str]:
+def search_commands(options: typing.Iterable[str]) -> str | None:
     """Return the first found command in the list of options. Return None if none are found.
 
     :param list options: executable path(s) to test

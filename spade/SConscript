@@ -28,7 +28,7 @@ env.Substfile(
 # Build executable with Abaqus make
 env.Command(
     target=[env["project_name_cpp"]],
-    source=[f"{env['project_name_cpp']}.cpp"] + objects,
+    source=[f"{env['project_name_cpp']}.cpp", *objects],
     action=["${ABAQUS_PROGRAM} make job=${project_name_cpp}.cpp"],
     # FIXME: If we can use SCons to re-build the compile_cpp string with the SCons controlled arguments we won't have to
     # change directory. SCons parses ``-I.`` to correct for the build directory, but we're writing odb_flags string

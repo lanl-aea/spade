@@ -3,10 +3,8 @@ channels:
 
 dependencies:
   - python
-  - black
   - boa
   - cxx-compiler
-  - flake8
   - getopt-win32
   - hdf5
   - pip
@@ -14,6 +12,7 @@ dependencies:
   - pytest-cov
   - pytest-xdist
   - python-build
+  - ruff
   - scons >=4.6
   - setuptools >=77
   - setuptools_scm >=8

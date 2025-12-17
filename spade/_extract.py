@@ -1,28 +1,26 @@
-import os
-import sys
+import argparse
 import errno
-import shlex
+import os
 import pathlib
 import platform
-import argparse
-import tempfile
+import shlex
 import subprocess
+import sys
+import tempfile
 
-from spade import _settings
-from spade import _utilities
-
+from spade import _settings, _utilities
 
 _exclude_from_namespace = set(globals().keys())
 
 # TODO: Find a better way to define optional print functions when using API instead of CLI/main function
 # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/40
-print_verbose = lambda *a, **k: None  # noqa: E731
-print_debug = lambda *a, **k: None  # noqa: E731
+print_verbose = lambda *a, **k: None  # noqa: E731,ARG005
+print_debug = lambda *a, **k: None  # noqa: E731,ARG005
 
 
 # TODO: full API
 def main(args: argparse.Namespace) -> None:
-    """Main parser behavior when no subcommand is specified
+    """Extract Abaqus ODB file to H5.
 
     :param args: argument namespace
 
@@ -33,17 +31,17 @@ def main(args: argparse.Namespace) -> None:
 
     # TODO: Find a better way to define optional print functions when using API instead of CLI/main function
     # https://re-git.lanl.gov/aea/python-projects/spade/-/issues/40
-    global print_verbose
-    global print_debug
-    print_verbose = print if args.verbose else lambda *a, **k: None
-    print_debug = print if args.debug else lambda *a, **k: None
+    global print_verbose  # noqa: PLW0603
+    global print_debug  # noqa: PLW0603
+    print_verbose = print if args.verbose else lambda *a, **k: None  # noqa: ARG005
+    print_debug = print if args.debug else lambda *a, **k: None  # noqa: ARG005
     current_env = os.environ.copy()
 
     # Find Abaqus
     try:
         abaqus_command = _utilities.find_command(args.abaqus_commands)
     except FileNotFoundError as err:
-        raise RuntimeError(str(err))
+        raise RuntimeError(str(err)) from err
     print_verbose(f"Found Abaqus command: {abaqus_command}")
     abaqus_version = _utilities.abaqus_official_version(abaqus_command)
     print_verbose(f"Found Abaqus version: {abaqus_version}")
@@ -84,7 +82,7 @@ def main(args: argparse.Namespace) -> None:
 
 
 def get_parser() -> argparse.ArgumentParser:
-    """Return a 'no-help' parser for the extract subcommand
+    """Return a 'no-help' parser for the extract subcommand.
 
     :return: parser
     """
@@ -158,10 +156,10 @@ def get_parser() -> argparse.ArgumentParser:
         nargs="+",
         type=pathlib.Path,
         default=_settings._default_abaqus_commands,
-        # fmt: off
-        help="Ordered list of Abaqus executable paths. Use first found "
-             f"(default: {_utilities.character_delimited_list(_settings._default_abaqus_commands)})",
-        # fmt: on
+        help=(
+            "Ordered list of Abaqus executable paths. Use first found "
+            f"(default: {_utilities.character_delimited_list(_settings._default_abaqus_commands)})"
+        ),
     )
     parser.add_argument(
         "--format",
@@ -205,12 +203,12 @@ def get_parser() -> argparse.ArgumentParser:
 def cpp_compile(
     build_directory: pathlib.Path = pathlib.Path("build"),
     abaqus_command: pathlib.Path = pathlib.Path("abaqus"),
-    environment: dict = dict(),
-    working_directory: pathlib.Path = pathlib.Path("."),
+    environment: dict | None = None,
+    working_directory: pathlib.Path = pathlib.Path(),
     recompile: bool = False,
     debug: bool = False,
 ) -> pathlib.Path:
-    """Compile the SPADE c++ executable
+    """Compile the SPADE c++ executable.
 
     :param build_directory: Absolute or relative path for the SCons build directory
     :param abaqus_command: Abaqus executable path
@@ -223,6 +221,8 @@ def cpp_compile(
 
     :raises RuntimeError: If the SCons command raises a ``subprocess.CalledProcessError``
     """
+    if environment is None:
+        environment = {}
     spade_executable = build_directory / _settings._project_name_short
     spade_executable = spade_executable.resolve()
     if not spade_executable.exists() or recompile:
@@ -244,8 +244,8 @@ def cpp_compile(
                 stdout=scons_stdout,
             )
         except subprocess.CalledProcessError as err:
-            message = f"Could not compile with Abaqus command '{abaqus_command}': {str(err)}"
-            raise RuntimeError(message)
+            message = f"Could not compile with Abaqus command '{abaqus_command}': {err!s}"
+            raise RuntimeError(message) from err
     return spade_executable
 
 
@@ -253,10 +253,10 @@ def cpp_execute(
     spade_executable: pathlib.Path,
     abaqus_bin: pathlib.Path,
     args: argparse.Namespace,
-    environment: dict = dict(),
-    working_directory: pathlib.Path = pathlib.Path("."),
+    environment: dict | None = None,
+    working_directory: pathlib.Path = pathlib.Path(),
 ) -> None:
-    """Run the SPADE c++ executable
+    """Run the SPADE c++ executable.
 
     :param spade_executable: Spade c++ executable path
     :param abaqus_bin: Abaqus bin path
@@ -265,6 +265,8 @@ def cpp_execute(
 
     :raises RuntimeError: If the spade c++ command raises a ``subprocess.CalledProcessError``
     """
+    if environment is None:
+        environment = {}
     full_command_line_arguments = f"{spade_executable.resolve()}" + cpp_wrapper(args)
     if platform.system().lower() == "windows":
         environment["PATH"] = f"{abaqus_bin};{abaqus_bin}32;{environment['PATH']}"
@@ -278,12 +280,12 @@ def cpp_execute(
     try:
         subprocess.run(command_line_arguments, env=environment, cwd=working_directory, check=True)
     except subprocess.CalledProcessError as err:
-        message = f"{_settings._project_name_short} extract failed in Abaqus ODB application: {str(err)}"
-        raise RuntimeError(message)
+        message = f"{_settings._project_name_short} extract failed in Abaqus ODB application: {err!s}"
+        raise RuntimeError(message) from err
 
 
-def cpp_wrapper(args) -> str:
-    """Reconstruct the c++ executable CLI from the Python CLI wrapper
+def cpp_wrapper(args: argparse.Namespace) -> str:
+    """Reconstruct the c++ executable CLI from the Python CLI wrapper.
 
     :returns: c++ CLI arguments
     """

@@ -212,16 +212,16 @@ There is also a separate style guide check run as
 
 .. code-block::
 
-    $ scons flake8 black-check
+    $ scons style
 
 If the CI job fails, you can run the following and commit the changes
 
 .. code-block::
 
-    $ scons black-format
+    $ scons ruff-format
 
-It is also possible to run ``flake8`` and ``black`` directly, but the SCons aliases include the canonical options for
-the continuous integration jobs.
+It is also possible to run ``ruff`` directly, but the SCons aliases include the canonical options for the continuous
+integration jobs.
 
 The full list of available aliases can be found as ``scons -h``.
 

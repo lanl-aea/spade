@@ -1,31 +1,29 @@
-import sys
 import argparse
+import sys
 
-from spade import _settings
-from spade import __version__
-from spade import _docs
-from spade import _extract
-
+from spade import __version__, _docs, _extract, _settings
 
 _exclude_from_namespace = set(globals().keys())
 
 
 def main() -> None:
-    """This is the main function that performs actions based on command line arguments."""
+    """Run the SPADE command line interface."""
     parser = get_parser()
     args = parser.parse_args()
 
     try:
         if args.subcommand == "docs":
             _docs.main(_settings._installed_docs_index, print_local_path=args.print_local_path)
-        else:
+        elif args.subcommand == "extract":
             _extract.main(args)
+        else:
+            parser.print_help()
     except RuntimeError as err:
         sys.exit(str(err))
 
 
-def get_parser():
-    """Get parser object for command line options
+def get_parser() -> argparse.ArgumentParser:
+    """Get parser object for command line options.
 
     :return: parser
     :rtype: ArgumentParser
@@ -47,10 +45,10 @@ def get_parser():
     subparsers.add_parser(
         "docs",
         help=f"Open the {_settings._project_name_short.upper()} HTML documentation",
-        # fmt: off
-        description=f"Open the packaged {_settings._project_name_short.upper()} HTML documentation in the  "
-                    "system default web browser",
-        # fmt: on
+        description=(
+            f"Open the packaged {_settings._project_name_short.upper()} HTML documentation in the "
+            "system default web browser"
+        ),
         parents=[_docs.get_parser()],
     )
 

@@ -1,22 +1,22 @@
 #! /usr/bin/env python
+import pathlib
 import re
 import typing
-import pathlib
 
-import SCons.Defaults
 import SCons.Builder
-
+import SCons.Defaults
 
 Import(["env", "project_variables_substitution"])
 
 
 # VVV Sphinx Builder prototype
 def sphinx_build(
-    program="sphinx-build",
-    options="",
-    builder="html",
-    tags="",
-):
+    program: str = "sphinx-build",
+    options: str = "",
+    builder: str = "html",
+    tags: str = "",
+) -> SCons.Builder.Builder:
+    """Return a Sphinx builder."""
     sphinx_builder = Builder(
         action=["${program} ${sphinx_options} -b ${builder} ${TARGET.dir.dir.abspath} ${TARGET.dir.abspath} ${tags}"],
         program=program,
@@ -30,9 +30,9 @@ def sphinx_build(
 def _custom_scanner(
     pattern: str,
     suffixes: typing.Iterable[str],
-    flags: typing.Optional[int] = None,
+    flags: int | None = None,
 ) -> SCons.Scanner.Scanner:
-    """Custom Scons scanner
+    """Return a custom SCons scanner.
 
     constructs a scanner object based on a regular expression pattern. Will only search for files matching the list of
     suffixes provided. ``_custom_scanner`` will always use the ``re.MULTILINE`` flag
@@ -50,7 +50,7 @@ def _custom_scanner(
     expression = re.compile(pattern, flags)
 
     def suffix_only(node_list: list) -> list:
-        """Recursively search for files that end in the given suffixes
+        """Recursively search for files that end in the given suffixes.
 
         :param node_list: List of SCons Node objects representing the nodes to process
 
@@ -60,8 +60,8 @@ def _custom_scanner(
 
     def regex_scan(
         node: SCons.Node.FS,
-        env: SCons.Environment.Environment,
-        path: str,
+        env: SCons.Environment.Environment,  # noqa: ARG001, interface  dictated by SCons API
+        path: str,  # noqa: ARG001, interface  dictated by SCons API
     ) -> list:
         """Scan function for extracting dependencies from the content of a file based on the given regular expression.
 
@@ -85,7 +85,7 @@ def _custom_scanner(
 
 
 def sphinx_scanner() -> SCons.Scanner.Scanner:
-    """SCons scanner that searches for directives
+    """SCons scanner that searches for directives.
 
     * ``.. include::``
     * ``.. literalinclude::``
@@ -158,18 +158,18 @@ html = env.SphinxBuild(
     source=sources,
     builder="html",
 )
-env.Clean(html, [Dir("html")] + sources)
+env.Clean(html, [Dir("html"), *sources])
 env.Alias("html", html)
 
 targets = ["man/spade.1"]
-sources = ["man_index.rst"] + sphinx_configuration_files
+sources = ["man_index.rst", *sphinx_configuration_files]
 man = env.SphinxBuild(
     target=targets,
     source=sources,
     builder="man",
     tags="-t man",
 )
-env.Clean(man, [Dir("man")] + sources)
+env.Clean(man, [Dir("man"), *sources])
 env.Alias("man", man)
 
 targets = f"latex/spade-{env['version']}.pdf"
@@ -181,7 +181,7 @@ latexpdf = env.Command(
     program="sphinx-build",
     sphinx_options="-W",
 )
-env.Clean(latexpdf, [Dir("latex")] + sources)
+env.Clean(latexpdf, [Dir("latex"), *sources])
 env.Alias("latexpdf", latexpdf)
 
 env.Alias("documentation", html + man + latexpdf)

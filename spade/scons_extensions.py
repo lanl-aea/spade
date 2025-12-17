@@ -1,18 +1,17 @@
-"""
+"""Provide common SCons extensions for SPADE builders.
+
 .. warning::
 
    The CLI design is in flux, so the SCons extensions API is also in flux. The API is subject to change without warning.
    Treat as experimental.
 """
 
-import typing
 import pathlib
+import typing
 
 import SCons.Builder
 
-from spade import _settings
-from spade import _utilities
-
+from spade import _settings, _utilities
 
 _exclude_from_namespace = set(globals().keys())
 
@@ -21,12 +20,12 @@ _exclude_from_namespace = set(globals().keys())
 def _first_target_emitter(
     target: list,
     source: list,
-    env,
+    env: SCons.Environment.Environment,  # noqa: ARG001
     suffixes: typing.Iterable[str] = [],
     appending_suffixes: typing.Iterable[str] = [],
     stdout_extension: str = _settings._stdout_extension,
-) -> typing.Tuple[list, list]:
-    """Appends the target list with the builder managed targets
+) -> tuple[list, list]:
+    """Append the target list with the builder managed targets.
 
     Searches for a file ending in the stdout extension. If none is found, creates a target by appending the stdout
     extension to the first target in the ``target`` list. The associated Builder requires at least one target for this
@@ -76,7 +75,7 @@ def cli_builder(
     subcommand: str = "",
     required: str = "",
     options: str = "",
-    abaqus_commands: typing.List[str] = _settings._default_abaqus_commands,
+    abaqus_commands: list[str] = _settings._default_abaqus_commands,
 ) -> SCons.Builder.Builder:
     """Return a generic SPADE CLI builder.
 
@@ -164,7 +163,7 @@ def extract(
     subcommand: str = "extract",
     required: str = "${SOURCE.abspath} --extracted-file ${TARGET.abspath} --force-overwrite",
     options: str = "",
-    abaqus_commands: typing.List[str] = _settings._default_abaqus_commands,
+    abaqus_commands: list[str] = _settings._default_abaqus_commands,
 ) -> SCons.Builder.Builder:
     """Return a SPADE extract subcommand CLI builder.
 

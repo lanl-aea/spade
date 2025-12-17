@@ -51,9 +51,23 @@ markers = [
 ]
 addopts = "--tb=long --showlocals --failed-first --strict-markers -m 'not systemtest' -ra"
 
-[tool.black]
-target-version = ["py310", "py311", "py312", "py313"]
-extend-exclude = ".txt|.toml|.yaml|.csv"
-force-exclude = "build*/|install*/|conda-environment/|conda-pkgs/"
+[tool.ruff]
+target-version = "py310"
 line-length = 120
-include = ".py|SConstruct|SConscript|.scons"
+extend-exclude = ["build", "install", "conda-environment", "conda-pkgs", "pip-build-test"]
+extend-include = ["*SConstruct", "*SConscript", "*.scons"]
+
+[tool.ruff.lint]
+extend-select = [
+    "A", "B", "D", "E", "F", "I", "N", "Q", "W",
+    "ANN", "ARG", "C4", "FURB", "ERA", "ISC", "NPY", "PD", "PERF", "PGH", "PIE", "PLC", "PLE", "PLW", "PT", "PTH", "PYI",
+    "RSE", "RUF", "SIM", "T10", "UP"
+]
+# TODO: decide how to handle *args/**kwargs type annotations and remove ignores for ANN00[23]
+extend-ignore = ["B028", "D203", "D213", "PIE808", "PIE790", "SIM108", "PLC0415", "ANN002", "ANN003"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"*SConstruct" = ["F821", "D100"]
+"*SConscript" = ["F821", "D100"]
+"*.scons" = ["F821"]
+"spade/tests/test_*.py" = ["RUF012", "D100", "D103"]

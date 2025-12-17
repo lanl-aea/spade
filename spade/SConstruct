@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+"""Configure the SPADE c++ compilation."""
+
 import os
 import pathlib
 import platform
@@ -6,9 +8,8 @@ import shutil
 import string
 import sys
 
-import _utilities
 import _settings
-
+import _utilities
 
 # Project command line options
 AddOption(
@@ -36,7 +37,7 @@ AddOption(
 )
 
 # Project environment
-windows_system = True if platform.system().lower() == "windows" else False
+windows_system = platform.system().lower() == "windows"
 user_env = os.environ.copy()
 env = Environment(
     ENV=user_env,
@@ -50,7 +51,7 @@ abaqus_version = _utilities.abaqus_official_version(env["ABAQUS_PROGRAM"])
 abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_abaqus_code_paths(env["ABAQUS_PROGRAM"])
 
 # Add CXX if missing; Use compiler name directly instead of inheriting from $CC
-if "CXX" in user_env and not "CXX" in env:
+if "CXX" in user_env and "CXX" not in env:
     env["CXX"] = user_env["CXX"]
 if env["CXX"] == "$CC":
     env["CXX"] = env["CC"]

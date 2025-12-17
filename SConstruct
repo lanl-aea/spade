@@ -1,12 +1,12 @@
 #! /usr/bin/env python
+"""Configure the SPADE project."""
 
-import os
 import inspect
+import os
 import pathlib
 import warnings
 
 import setuptools_scm
-
 
 warnings.filterwarnings(action="ignore", message="tag", category=UserWarning, module="setuptools_scm")
 
@@ -24,7 +24,7 @@ project_variables = {
     "project_directory": project_directory,
     "package_directory": package_directory,
 }
-project_variables_substitution = dict()
+project_variables_substitution = {}
 for key, value in project_variables.items():
     project_variables_substitution[f"@{key}@"] = value
 

@@ -1,13 +1,12 @@
-from unittest.mock import patch
 from contextlib import nullcontext as does_not_raise
+from unittest.mock import patch
 
 import pytest
 
-from spade import _settings
-from spade import _docs
+from spade import _docs, _settings
 
 
-def test_docs():
+def test_docs() -> None:
     # No print. Should call webbrowser.open successfully
     with (
         patch("builtins.print") as mock_print,
@@ -22,13 +21,11 @@ def test_docs():
     with (
         patch("builtins.print") as mock_print,
         patch("webbrowser.open", return_value=False) as mock_webbrowser_open,
-        pytest.raises(RuntimeError, match="Could not open a web browser."),
+        pytest.raises(RuntimeError, match=r"Could not open a web browser."),
     ):
-        try:
-            _docs.main(_settings._installed_docs_index)
-        finally:
-            mock_webbrowser_open.assert_called_with(str(_settings._installed_docs_index))
-            mock_print.assert_not_called()
+        _docs.main(_settings._installed_docs_index)
+    mock_webbrowser_open.assert_called_with(str(_settings._installed_docs_index))
+    mock_print.assert_not_called()
 
     # Request print local path. Should print instead of webbrowser open.
     with (
@@ -49,8 +46,6 @@ def test_docs():
         patch("pathlib.Path.exists", return_value=False),
         pytest.raises(RuntimeError, match="Could not find package documentation HTML index file"),
     ):
-        try:
-            _docs.main(_settings._installed_docs_index, print_local_path=True)
-        finally:
-            mock_webbrowser_open.assert_not_called()
-            mock_print.assert_not_called()
+        _docs.main(_settings._installed_docs_index, print_local_path=True)
+    mock_webbrowser_open.assert_not_called()
+    mock_print.assert_not_called()
