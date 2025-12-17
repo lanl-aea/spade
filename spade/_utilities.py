@@ -6,8 +6,10 @@ import subprocess
 import sys
 import typing
 
+import SCons.Environment
 
-def compiler_help(env):
+
+def compiler_help(env: SCons.Environment.Environment) -> str:
     compiler_help_message = "\nEnvironment:\n"
     keys = [
         "CC",
@@ -39,7 +41,7 @@ def compiler_help(env):
     return compiler_help_message
 
 
-def find_abaqus_paths(abaqus_program):
+def find_abaqus_paths(abaqus_program: str) -> list[pathlib.Path] | None:
     subprocess_command = [abaqus_program, "information=environment"]
     abaqus_environment = subprocess.check_output(subprocess_command, text=True)
     abaqus_paths_regex = r"Abaqus is located in the directory(.*)"
@@ -53,7 +55,7 @@ def find_abaqus_paths(abaqus_program):
     return abaqus_paths
 
 
-def return_abaqus_code_paths(abaqus_program, code_directory="code"):
+def return_abaqus_code_paths(abaqus_program: str, code_directory: str = "code") -> pathlib.Path:
     abaqus_paths = find_abaqus_paths(abaqus_program)
 
     if abaqus_paths:
@@ -85,11 +87,11 @@ def abaqus_official_version(abaqus_command: pathlib.Path) -> str:
     try:
         abaqus_version = subprocess.check_output([abaqus_command, "information=version"], text=True)
 
-    except FileNotFoundError:
-        raise RuntimeError(f"Abaqus command not found at: '{abaqus_command}'")
+    except FileNotFoundError as err:
+        raise RuntimeError(f"Abaqus command not found at: '{abaqus_command}'") from err
 
-    except OSError:
-        raise RuntimeError(f"Abaqus command failed. Command used: '{abaqus_command}'")
+    except OSError as err:
+        raise RuntimeError(f"Abaqus command failed. Command used: '{abaqus_command}'") from err
 
     # TODO: Figure out what exceptions are likely to raise and convert to RuntimeError
     official_version_regex = r"(?i)official\s+version:\s+abaqus\s+(.*)"
@@ -113,7 +115,7 @@ def character_delimited_list(sequence: typing.Iterable, character: str = " ") ->
     return character.join(map(str, sequence))
 
 
-def quoted_string(list_or_string) -> str:
+def quoted_string(list_or_string: list | str) -> str:
     """Make a string with double quotes on either side from a list or string.
 
     :param list_or_string: list or string to be returned as a string with double quotes on either side
