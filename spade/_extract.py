@@ -284,7 +284,7 @@ def cpp_execute(
         raise RuntimeError(message)
 
 
-def cpp_wrapper(args) -> str:
+def cpp_wrapper(args: argparse.Namespace) -> str:
     """Reconstruct the c++ executable CLI from the Python CLI wrapper.
 
     :returns: c++ CLI arguments
