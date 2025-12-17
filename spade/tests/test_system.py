@@ -217,7 +217,7 @@ inp_files = [
 spade_options = "--recompile --force-overwrite --verbose --debug"
 system_tests_require_third_party = []
 for odb_file in odb_files:
-    system_tests_require_third_party.append(
+    system_tests_require_third_party.append(  # noqa: PERF401
         pytest.param(
             [
                 string.Template(f"${{abaqus_command}} fetch -job {odb_file}"),
