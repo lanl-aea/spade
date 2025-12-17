@@ -4,6 +4,7 @@ channels:
 dependencies:
   - python
   - boa
+  - clang-tools
   - cxx-compiler
   - hdf5
   - pip
