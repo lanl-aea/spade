@@ -70,4 +70,4 @@ extend-ignore = ["B028", "D203", "D213", "PIE808", "PIE790", "SIM108", "PLC0415"
 "*SConstruct" = ["F821"]
 "*SConscript" = ["F821"]
 "*.scons" = ["F821"]
-"waves/_tests/test_*.py" = ["RUF012"]
+"spade/tests/test_*.py" = ["RUF012", "D100"]

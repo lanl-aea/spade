@@ -1,13 +1,17 @@
+import contextlib
 import pathlib
-from contextlib import nullcontext as does_not_raise
+import typing
 from unittest.mock import patch
 
 import pytest
 
 from spade import _utilities
 
+does_not_raise = contextlib.nullcontext()
+
 
 def test_find_abaqus_paths() -> None:
+    """Test :meth:`spade._utilities.find_abaqus_paths`."""
     expected_paths = [
         pathlib.Path("/install/path/1234"),
         pathlib.Path("/install/path/1234/bin"),
@@ -23,6 +27,7 @@ def test_find_abaqus_paths() -> None:
 
 
 def test_return_abaqus_code_paths() -> None:
+    """Test :meth:`spade._utilities.return_abaqus_code_paths`."""
     expected_paths = (
         pathlib.Path("/install/path/1234"),
         pathlib.Path("/install/path/1234/code/bin"),
@@ -42,6 +47,7 @@ def test_return_abaqus_code_paths() -> None:
 
 
 def test_abaqus_official_version() -> None:
+    """Test :meth:`spade._utilities.abaqus_official_version`."""
     expected_version = "1234.HF5"
     mock_abaqus_version = (
         "Abaqus dummy text\nMore dummy text\n\n"
@@ -73,7 +79,9 @@ find_command = {
 
 
 @pytest.mark.parametrize(("options", "found", "outcome"), find_command.values(), ids=find_command.keys())
-def test_find_command(options, found, outcome) -> None:
+def test_find_command(
+    options: list[str], found: str | None, outcome: contextlib.nullcontext | pytest.RaisesExc
+) -> None:
     """Test :meth:`spade._utilities.find_command`."""
     with patch("spade._utilities.search_commands", return_value=found), outcome:
         try:
@@ -102,6 +110,7 @@ character_delimited_list = {
     character_delimited_list.values(),
     ids=character_delimited_list.keys(),
 )
-def test_character_delimited_list(sequence, character, expected) -> None:
+def test_character_delimited_list(sequence: typing.Sequence, character: str, expected: str) -> None:
+    """Test :method:`spade._utilities.character_delimited_list`."""
     string = _utilities.character_delimited_list(sequence, character=character)
     assert string == expected
