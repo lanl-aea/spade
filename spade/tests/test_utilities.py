@@ -56,11 +56,11 @@ def test_abaqus_official_version():
 
 def test_search_commands():
     """Test :meth:`spade._utilities.search_command`"""
-    with patch("shutil.which", return_value=None) as shutil_which:
+    with patch("shutil.which", return_value=None):
         command_abspath = _utilities.search_commands(["notfound"])
         assert command_abspath is None
 
-    with patch("shutil.which", return_value="found") as shutil_which:
+    with patch("shutil.which", return_value="found"):
         command_abspath = _utilities.search_commands(["found"])
         assert command_abspath == "found"
 

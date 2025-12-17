@@ -176,7 +176,7 @@ if not installed:
     spade_command = "python -m spade._main"
     key = "PYTHONPATH"
     if key in env:
-        env[key] = f"{package_parent_path}{os.pathsep}{env[key]}"
+        env[key] = f"{PACKAGE_PARENT_PATH}{os.pathsep}{env[key]}"
     else:
         env[key] = f"{PACKAGE_PARENT_PATH}"
 
