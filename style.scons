@@ -21,3 +21,12 @@ ruff_format = env.Command(
 )
 env.AlwaysBuild(ruff_format)
 env.Alias("ruff-format", ruff_format)
+
+clang_tidy = env.Command(
+    target=["spade/build/fixes.yaml"],
+    source=[pyproject],
+    action=["cd spade && scons clang-tidy"],
+)
+env.AlwaysBuild(clang_tidy)
+env.Alias("clang-tidy", clang_tidy)
+env.Alias("style", clang_tidy)
