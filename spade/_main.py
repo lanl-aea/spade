@@ -20,7 +20,7 @@ def main() -> None:
         sys.exit(str(err))
 
 
-def get_parser():
+def get_parser() -> argparse.ArgumentParser:
     """Get parser object for command line options.
 
     :return: parser
