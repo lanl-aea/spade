@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+"""Configure the SPADE c++ compilation."""
 import os
 import pathlib
 import platform

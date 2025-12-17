@@ -1,4 +1,6 @@
-""".. warning::
+"""Provide common SCons extensions for SPADE builders.
+
+.. warning::
 
 The CLI design is in flux, so the SCons extensions API is also in flux. The API is subject to change without warning.
 Treat as experimental.
@@ -18,12 +20,12 @@ _exclude_from_namespace = set(globals().keys())
 def _first_target_emitter(
     target: list,
     source: list,
-    env,
+    env: SCons.Environment.Environment,  # noqa: ARG001
     suffixes: typing.Iterable[str] = [],
     appending_suffixes: typing.Iterable[str] = [],
     stdout_extension: str = _settings._stdout_extension,
 ) -> tuple[list, list]:
-    """Appends the target list with the builder managed targets.
+    """Append the target list with the builder managed targets.
 
     Searches for a file ending in the stdout extension. If none is found, creates a target by appending the stdout
     extension to the first target in the ``target`` list. The associated Builder requires at least one target for this

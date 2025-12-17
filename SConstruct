@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+"""Configure the SPADE project."""
 
 import inspect
 import os
