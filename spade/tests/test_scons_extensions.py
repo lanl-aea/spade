@@ -7,15 +7,20 @@ import SCons.Environment
 from spade import _settings, scons_extensions
 
 
-def check_nodes(nodes, post_action, node_count, action_count, expected_string, expected_env_kwargs) -> None:
+def check_nodes(
+    nodes: SCons.Node.NodeList,
+    node_count: int,
+    action_count: int,
+    expected_string: str,
+    expected_env_kwargs: dict,
+) -> None:
     """Verify the expected action string against a builder's target nodes.
 
-    :param SCons.Node.NodeList nodes: Target node list returned by a builder
-    :param list post_action: list of post action strings passed to builder
-    :param int node_count: expected length of ``nodes``
-    :param int action_count: expected length of action list for each node
-    :param str expected_string: the builder's action string.
-    :param dict expected_env_kwargs: the builder's expected environment keyword arguments
+    :param nodes: Target node list returned by a builder
+    :param node_count: expected length of ``nodes``
+    :param action_count: expected length of action list for each node
+    :param expected_string: the builder's action string.
+    :param expected_env_kwargs: the builder's expected environment keyword arguments
 
     .. note::
 
@@ -24,8 +29,6 @@ def check_nodes(nodes, post_action, node_count, action_count, expected_string, e
        separated string. The ``action_count`` should be set to ``1`` until this method is updated to search for the
        finalized action list.
     """
-    for action in post_action:
-        expected_string = expected_string + f"\ncd ${{TARGET.dir.abspath}} && {action}"
     assert len(nodes) == node_count
     for node in nodes:
         node.get_executor()
@@ -89,7 +92,7 @@ def test_cli_builder(
 
     env.Append(BUILDERS={builder: scons_extensions.cli_builder(**kwargs)})
     nodes = env["BUILDERS"][builder](env, target=target_list, source=source_list)
-    check_nodes(nodes, [], node_count, action_count, expected_string, expected_env_kwargs)
+    check_nodes(nodes, node_count, action_count, expected_string, expected_env_kwargs)
 
 
 test_builders = {
@@ -134,4 +137,4 @@ def test_builders(
     builder_function = getattr(scons_extensions, builder)
     env.Append(BUILDERS={builder: builder_function(**kwargs)})
     nodes = env["BUILDERS"][builder](env, target=target_list, source=source_list)
-    check_nodes(nodes, [], node_count, action_count, expected_string, expected_env_kwargs)
+    check_nodes(nodes, node_count, action_count, expected_string, expected_env_kwargs)
