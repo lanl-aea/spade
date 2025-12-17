@@ -42,11 +42,14 @@ user_env = os.environ.copy()
 env = Environment(
     ENV=user_env,
     recompile=GetOption("recompile"),
-    project_name_cpp=_settings._project_name_cpp,
 )
+env.Tool("compilation_db")
 
 # Abaqus and system settings
-env["ABAQUS_PROGRAM"] = shutil.which(GetOption("abaqus_command"), path=env["ENV"]["PATH"])
+abaqus_command = GetOption("abaqus_command")
+env["ABAQUS_PROGRAM"] = shutil.which(abaqus_command, path=env["ENV"]["PATH"])
+if env["ABAQUS_PROGRAM"] is None:
+    sys.exit(f"Could not find the Abaqus executable at '{abaqus_command}'")
 abaqus_version = _utilities.abaqus_official_version(env["ABAQUS_PROGRAM"])
 abaqus_installation, abaqus_code_bin, abaqus_code_include = _utilities.return_abaqus_code_paths(env["ABAQUS_PROGRAM"])
 
@@ -59,21 +62,23 @@ if env["CXX"] == "$CC":
 # Search for OS-specific include and library paths
 conda_prefix = pathlib.Path(user_env["CONDA_PREFIX"])
 if windows_system:
-    conda_include_path = next((path for path in conda_prefix.rglob("**/Library/include")), None)
-    conda_lib_path = next((path for path in conda_prefix.rglob("**/Library/lib")), None)
+    conda_include_paths = list(conda_prefix.glob("Library/include"))
+    conda_lib_path = next((path for path in conda_prefix.glob("Library/lib")), None)
 else:
-    conda_include_path = next((path for path in conda_prefix.rglob("**/include")), None)
-    conda_lib_path = next((path for path in conda_prefix.rglob("**/lib")), None)
-if conda_include_path is None or conda_lib_path is None:
-    sys.exit("Could not find the expected Windows CONDA_PREFIX 'include' or 'lib' path")
+    conda_include_paths = list(conda_prefix.glob("include"))
+    conda_lib_path = next((path for path in conda_prefix.glob("lib")), None)
+if not conda_include_paths or conda_lib_path is None:
+    sys.exit("Could not find the expected OS-specific CONDA_PREFIX 'include' or 'lib' path")
 
 # Construct OS-specific flags
 if windows_system:
-    env["CXXFLAGS"] = f"  /TP /MD /I{conda_include_path.as_posix()} /std:c++17 /EHsc /DH5_BUILT_AS_DYNAMIC_LIB "
+    env["CXXFLAGS"] = " /TP /MD /external:W0 /std:c++17 /EHsc /DH5_BUILT_AS_DYNAMIC_LIB " + " ".join(
+        f"/external:I{path.as_posix()}" for path in conda_include_paths
+    )
     env["ABAQUSCXXFLAGS"] = (
         env["CXXFLAGS"]
         + _settings._compiler_flags_msvc
-        + f" /I{abaqus_code_include.as_posix()} /I{abaqus_installation.as_posix()}"
+        + f" /external:I{abaqus_code_include.as_posix()} /external:I{abaqus_installation.as_posix()}"
     )
     compile_cpp = string.Template("${CXX} ${ABAQUSCXXFLAGS}")
     link_exe = string.Template(
@@ -89,11 +94,13 @@ if windows_system:
         " getopt.lib hdf5.lib hdf5_cpp.lib hdf5_hl.lib"
     )
 else:
-    env["CXXFLAGS"] = env["CXXFLAGS"] + f" -I{conda_include_path.as_posix()} -std=c++17 "
+    env["CXXFLAGS"] = (
+        env["CXXFLAGS"] + " -std=c++17 " + " ".join(f"-isystem {path.as_posix()}" for path in conda_include_paths)
+    )
     env["ABAQUSCXXFLAGS"] = (
         env["CXXFLAGS"]
         + _settings._compiler_flags_gcc
-        + f" -I{abaqus_code_include.as_posix()} -I{abaqus_installation.as_posix()}"
+        + f" -isystem {abaqus_code_include.as_posix()} -isystem {abaqus_installation.as_posix()}"
     )
     compile_cpp = string.Template("${CXX} ${ABAQUSCXXFLAGS}")
     link_exe = string.Template(

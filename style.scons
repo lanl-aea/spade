@@ -21,3 +21,12 @@ ruff_format = env.Command(
 )
 env.AlwaysBuild(ruff_format)
 env.Alias("ruff-format", ruff_format)
+
+clang_tidy = env.Command(
+    target=["spade/build/fixes.yaml"],
+    source=[pyproject],
+    action=["cd spade && scons clang-tidy ${abaqus_command}"],
+    abaqus_command=" ".join(f'--abaqus-command="{command}"' for command in env["abaqus_command"]),
+)
+env.AlwaysBuild(clang_tidy)
+env.Alias("clang-tidy", clang_tidy)

@@ -4,6 +4,8 @@ channels:
 
 dependencies:
   - python
+  - clang-tools
+  - cxx-compiler
   - ruff
   - scons >=4.6
   - setuptools >=77

@@ -12,6 +12,12 @@ Bug fixes
 =========
 - Fix command-line behavior when no subcommand is provided. Print the help message instead of raising an exception
   (:issue:`135`, :merge:`147`). By `Kyle Brindley`_.
+- Fix internal spade compilation source/target list associations (:issue:`136`, :merge:`148`). By `Kyle Brindley`_.
+- Fix expected spade executable name on Windows (:issue:`136`, :merge:`148`). By `Kyle Brindley`_.
+
+Documentation
+=============
+- Improve error message for missing Abaqus executable (:issue:`136`, :merge:`148`). By `Kyle Brindley`_.
 
 Internal Changes
 ================
@@ -21,6 +27,11 @@ Internal Changes
   (:issue:`135`, :merge:`147`). By `Kyle Brindley`_.
 - Fix unit test behaviors where some test cases overrode others and some expectations were unused (:issue:`135`,
   :merge:`147`). By `Kyle Brindley`_.
+- Add Conda and Abaqus include paths as system/external paths (:issue:`136`, :merge:`148`). By `Kyle Brindley`_.
+- Simplify the spade executable task definition (:issue:`136`, :merge:`148`). By `Kyle Brindley`_.
+- Run style checks on Windows CI server (:issue:`136`, :merge:`148`). By `Kyle Brindley`_.
+- Add a clang-tidy task for c++ code linting. Not yet implemented as a CI check (:issue:`136`, :merge:`148`). By `Kyle
+  Brindley`_.
 
 *******************
 v0.4.9 (2025-12-16)

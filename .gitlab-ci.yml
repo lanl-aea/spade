@@ -78,7 +78,7 @@ default:
 
 .style-guide: &style-guide
   script:
-    - scons style
+    - scons style --abaqus-command=/apps/abaqus/Commands/abq2025
 
 aea-developer-test:
   extends:
