@@ -1,7 +1,3 @@
-rules:
-  - if: $PARENT_CI_PIPELINE_SOURCE == "schedule"
-  - if: $PARENT_CI_PIPELINE_SOURCE == "merge_request_event"
-
 stages:
   - test
 
@@ -47,6 +43,9 @@ win-style-guide:
   extends:
     - .win-job-environment
   stage: test
+  rules:
+    - if: $PARENT_CI_PIPELINE_SOURCE == "schedule"
+    - if: $PARENT_CI_PIPELINE_SOURCE == "merge_request_event"
   variables:
     environment_file: "style.yml"
   script:
@@ -56,6 +55,9 @@ win-developer-test:
   extends:
     - .win-job-environment
   stage: test
+  rules:
+    - if: $PARENT_CI_PIPELINE_SOURCE == "schedule"
+    - if: $PARENT_CI_PIPELINE_SOURCE == "merge_request_event"
   script: scons regression --abaqus-command='C:SIMULIA\Commands\abq2025.bat' --abaqus-command='C:\SIMULIA\Commands\abq2024.bat'
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
 
@@ -63,6 +65,9 @@ win-conda-build:
   extends:
     - .win-job-environment
   stage: test
+  rules:
+    - if: $PARENT_CI_PIPELINE_SOURCE == "schedule"
+    - if: $PARENT_CI_PIPELINE_SOURCE == "merge_request_event"
   variables:
     environment_file: "conda-build.yml"
     recipe_directory: "recipe"
