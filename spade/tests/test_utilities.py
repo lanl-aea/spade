@@ -1,5 +1,4 @@
 import pathlib
-import subprocess
 from unittest.mock import patch
 from contextlib import nullcontext as does_not_raise
 
