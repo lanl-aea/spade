@@ -8,6 +8,11 @@ Changelog
 v0.4.11 (unreleased)
 ********************
 
+Bug fixes
+=========
+- Require ``sysroot_linux-64`` to match the ``__glibc`` spec in the conda package (:issue:`145`, :merge:`151`). By `Kyle
+  Brindley`_.
+
 ********************
 v0.4.10 (2025-12-18)
 ********************
