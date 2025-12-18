@@ -8,6 +8,8 @@ workflow:
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
       when: never
 
+include: ".pipeline-common.yml"
+
 stages:
   - test
   - deploy
@@ -18,67 +20,13 @@ default:
     - aea
     - linux
 
-.nix-job-environment: &nix-job-environment
+aea-style-guide:
+  extends:
+    - .nix-job-environment
+    - .style-guide
+  stage: test
   variables:
-    GIT_STRATEGY: clone
-    conda_installation: "/apps/miniconda3/3.13-miniconda-25.5.1"
-    environment_file: "environment.yml"
-    conda_artifacts_directory: "conda-bld"
-  before_script:
-    - function check_directory_variable () { echo "$1"; if [[ -z $1 ]] || [[ ! -d $1 ]]; then exit 1; fi; }
-    - check_directory_variable "${conda_installation}"
-    - echo ${environment_file}
-    - if [[ -z ${environment_file} ]]; then exit 1; fi
-    - echo ${conda_artifacts_directory}
-    - if [[ -z ${conda_artifacts_directory} ]]; then exit 1; fi
-    # Common job variables
-    - prefix="$PWD/conda-environment"
-    - conda_pkgs_dirs="$PWD/conda-pkgs"
-    - echo ${prefix}
-    - echo ${conda_pkgs_dirs}
-    - if [[ -z ${prefix} ]]; then exit 1; fi
-    - if [[ -z ${conda_pkgs_dirs} ]]; then exit 1; fi
-    # Put texlive on PATH for AEA/HPC
-    - module load texlive || true
-    # Environment creation
-    - export CONDA_PKGS_DIRS="${conda_pkgs_dirs}"
-    - export CONDA_OVERRIDE_GLIBC="2.28"
-    - source ${conda_installation}/etc/profile.d/conda.sh
-    - conda info
-    - conda env create --prefix ${prefix} --file ${environment_file} --yes --solver=libmamba
-    - conda activate ${prefix}
-    - conda info
-    - conda env export
-  after_script:
-    - rm -r $PWD/conda-environment $PWD/conda-pkgs || true
-
-.developer-test: &developer-test
-  script:
-    - scons regression --abaqus-command=/apps/abaqus/Commands/abq2025 --abaqus-command=/apps/abaqus/Commands/abq2024 --abaqus-command=/apps/abaqus/Commands/abq2023 --abaqus-command=/apps/abaqus/Commands/abq2022
-  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
-
-.conda-build: &conda-build
-  variables:
-    recipe_directory: "recipe"
-  script:
-    # Only build one compiler variant during merge request testing
-    - python_version="3.12"
-    - variants=""
-    - if [[ $CI_PIPELINE_SOURCE == "merge_request_event" ]]; then variants="--variants {'python':['${python_version}']}"; fi
-    - echo $variants
-    # Override default permissions. Set group to rx with no write permissions.
-    - umask 0022
-    - mkdir ${conda_artifacts_directory}
-    - VERSION=$(python -m setuptools_scm) conda mambabuild ${recipe_directory} --channel conda-forge --no-anaconda-upload --output-folder ${conda_artifacts_directory} ${variants}
-    # Help downstream deploy pipeline find this job by ID
-    - tag_job_file_root="/nettmp/aea_service"
-    - tag_job_file_parent="${tag_job_file_root}/${CI_PROJECT_PATH}"
-    - tag_job_file="${tag_job_file_parent}/tag_conda_build.txt"
-    - if [[ ! -z ${CI_COMMIT_TAG} ]] && [[ -d ${tag_job_file_root} ]]; then mkdir -p ${tag_job_file_parent}; echo ${CI_JOB_ID} > ${tag_job_file}; fi
-
-.style-guide: &style-guide
-  script:
-    - scons style --abaqus-command=/apps/abaqus/Commands/abq2025
+    environment_file: "style.yml"
 
 aea-developer-test:
   extends:
@@ -93,13 +41,14 @@ aea-developer-test:
         coverage_format: cobertura
         path: build/pytest/coverage.xml
 
-aea-style-guide:
+aea-conda-build:
   extends:
     - .nix-job-environment
-    - .style-guide
+    - .conda-build
   stage: test
   variables:
-    environment_file: "style.yml"
+    environment_file: "conda-build.yml"
+    recipe_directory: "recipe"
 
 aea-conda-build-internal:
   extends:
@@ -113,15 +62,6 @@ aea-conda-build-internal:
     expire_in: '2 hrs'
     paths:
       - conda-bld/noarch/spade-*-*.tar.bz2
-
-aea-conda-build:
-  extends:
-    - .nix-job-environment
-    - .conda-build
-  stage: test
-  variables:
-    environment_file: "conda-build.yml"
-    recipe_directory: "recipe"
 
 # https://re-git.lanl.gov/aea/developer-operations/aea-conda
 aea-conda-deploy:
@@ -196,6 +136,15 @@ pages:
       # It MUST be called public
       - public
 
+hpc:
+  stage: test
+  trigger:
+    include:
+      - local: .pipeline-hpc.yml
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
 win:
   stage: test
   trigger:
@@ -204,6 +153,3 @@ win:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-  variables:
-    PARENT_CI_PIPELINE_SOURCE: $CI_PIPELINE_SOURCE
-    PARENT_CI_COMMIT_BRANCH: $CI_COMMIT_BRANCH

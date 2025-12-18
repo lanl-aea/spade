@@ -1,0 +1,93 @@
+.nix-job-environment: &nix-job-environment
+  variables:
+    GIT_STRATEGY: clone
+    conda_installation: "/apps/miniconda3/3.13-miniconda-25.5.1"
+    environment_file: "environment.yml"
+    conda_artifacts_directory: "conda-bld"
+  before_script:
+    - function check_directory_variable () { echo "$1"; if [[ -z $1 ]] || [[ ! -d $1 ]]; then exit 1; fi; }
+    - check_directory_variable "${conda_installation}"
+    - echo ${environment_file}
+    - if [[ -z ${environment_file} ]]; then exit 1; fi
+    - echo ${conda_artifacts_directory}
+    - if [[ -z ${conda_artifacts_directory} ]]; then exit 1; fi
+    # Common job variables
+    - prefix="$PWD/conda-environment"
+    - conda_pkgs_dirs="$PWD/conda-pkgs"
+    - echo ${prefix}
+    - echo ${conda_pkgs_dirs}
+    - if [[ -z ${prefix} ]]; then exit 1; fi
+    - if [[ -z ${conda_pkgs_dirs} ]]; then exit 1; fi
+    # Put texlive on PATH for AEA/HPC
+    - module load texlive || true
+    # Environment creation
+    - export CONDA_PKGS_DIRS="${conda_pkgs_dirs}"
+    - export CONDA_OVERRIDE_GLIBC="2.28"
+    - source ${conda_installation}/etc/profile.d/conda.sh
+    - conda info
+    - conda env create --prefix ${prefix} --file ${environment_file} --yes --solver=libmamba
+    - conda activate ${prefix}
+    - conda info
+    - conda env export
+  after_script:
+    - rm -r $PWD/conda-environment $PWD/conda-pkgs || true
+
+.win-job-environment: &win-job-environment
+  variables:
+    GIT_STRATEGY: clone
+    conda_installation: "C:/ProgramData/miniconda3"
+    environment_file: "environment-win.yml"
+  before_script:
+    - $PSVersionTable
+    - $env:username
+    - git config --list --show-origin | Select-String -Pattern "symlinks="
+    - git ls-tree -r HEAD | Select-String -Pattern "^120" | Measure-Object -Line
+    - Get-ChildItem -Recurse | Where-Object { $_.LinkType -eq 'SymbolicLink' } | Measure-Object -Line
+    - if ([string]::IsNullOrEmpty($environment_file)) { exit 1 }
+    - if ([string]::IsNullOrEmpty($conda_installation)) { exit 1 }
+    # Common job variables
+    - $prefix="$pwd\conda-environment"
+    - $conda_pkgs_dirs="$pwd\conda-pkgs"
+    - Write-Output $conda_installation
+    - Write-Output $environment_file
+    - Write-Output $prefix
+    - Write-Output $conda_pkgs_dirs
+    - if (!(Test-Path -Path $conda_installation -PathType Container)) { exit 1 }
+    - if ([string]::IsNullOrEmpty($prefix)) { exit 1 }
+    # Environment creation
+    - $env:CONDA_PKGS_DIRS=$conda_pkgs_dirs
+    - (& "$conda_installation\Scripts\conda.exe" "shell.powershell" "hook") | Out-String | ?{$_} | Invoke-Expression
+    - conda info
+    - conda env create --prefix $prefix --file $environment_file --yes
+    - conda activate $prefix
+    - conda info
+  after_script:
+    - Remove-Item -Force -Recurse $pwd\conda-environment -ErrorAction Continue
+    - Remove-Item -Force -Recurse $pwd\conda-pkgs -ErrorAction Continue
+
+.style-guide: &style-guide
+  variables:
+    abaqus_command: '--abaqus-command=/apps/abaqus/Commands/abq2025'
+  script:
+    - scons style $abaqus_command
+
+.developer-test: &developer-test
+  variables:
+    abaqus_command: "--abaqus-command=/apps/abaqus/Commands/abq2025 --abaqus-command=/apps/abaqus/Commands/abq2024 --abaqus-command=/apps/abaqus/Commands/abq2023 --abaqus-command=/apps/abaqus/Commands/abq2022"
+  script:
+    - scons regression $abaqus_command
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+
+.conda-build: &conda-build
+  variables:
+    recipe_directory: "recipe"
+  script:
+    # Override default permissions. Set group to rx with no write permissions.
+    - umask 0022
+    - mkdir ${conda_artifacts_directory}
+    - VERSION=$(python -m setuptools_scm) conda mambabuild ${recipe_directory} --channel conda-forge --no-anaconda-upload --output-folder ${conda_artifacts_directory}
+    # Help downstream deploy pipeline find this job by ID
+    - tag_job_file_root="/nettmp/aea_service"
+    - tag_job_file_parent="${tag_job_file_root}/${CI_PROJECT_PATH}"
+    - tag_job_file="${tag_job_file_parent}/tag_conda_build.txt"
+    - if [[ ! -z ${CI_COMMIT_TAG} ]] && [[ -d ${tag_job_file_root} ]]; then mkdir -p ${tag_job_file_parent}; echo ${CI_JOB_ID} > ${tag_job_file}; fi
