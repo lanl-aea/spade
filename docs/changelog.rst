@@ -32,6 +32,7 @@ Internal Changes
 - Run style checks on Windows CI server (:issue:`136`, :merge:`148`). By `Kyle Brindley`_.
 - Add a clang-tidy task for c++ code linting. Not yet implemented as a CI check (:issue:`136`, :merge:`148`). By `Kyle
   Brindley`_.
+- Add macOS CI tests (:issue:`141`, :merge:`150`). By `Kyle Brindley`_.
 
 *******************
 v0.4.9 (2025-12-16)

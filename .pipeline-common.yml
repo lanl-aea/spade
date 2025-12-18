@@ -22,7 +22,7 @@
     - module load texlive || true
     # Environment creation
     - export CONDA_PKGS_DIRS="${conda_pkgs_dirs}"
-    - export CONDA_OVERRIDE_GLIBC="2.28"
+    - if [[ $(uname -s) == "Linux" ]]; then export CONDA_OVERRIDE_GLIBC="2.28"; fi
     - source ${conda_installation}/etc/profile.d/conda.sh
     - conda info
     - conda env create --prefix ${prefix} --file ${environment_file} --yes --solver=libmamba
