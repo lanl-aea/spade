@@ -22,3 +22,9 @@ identifiers:
   - description: "0.4.7"
     type: doi
     value: 10.5281/zenodo.17860134
+  - description: "0.4.9"
+    type: doi
+    value: 10.5281/zenodo.17981684
+  - description: "0.4.10"
+    type: doi
+    value: 10.5281/zenodo.17981681
